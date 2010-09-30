@@ -41,6 +41,7 @@ import android.widget.RemoteViews;
 
 public class SonetService extends Service {
 	private static final String ACTION = "com.piusvelte.sonet.APPWIDGET_UPDATE";
+	private static final String REFRESH = "com.piusvelte.sonet.REFRESH";
 	private static final int TWITTER = 0;
 	private static final int FACEBOOK = 1;
 
@@ -48,17 +49,19 @@ public class SonetService extends Service {
 	@Override
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
-		init();
+		init(intent);
 	}
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		super.onStart(intent, startId);
-		init();
+		init(intent);
 		return START_STICKY;
 	}
 
-	public void init() {
+	public void init(Intent intent) {
+		// cancel the alarm on REFRESH, it's set again later
+		if  (intent.getAction().equals(REFRESH)) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, new Intent(this, SonetService.class).setAction(ACTION), 0));
 		// check backgroundData settings and connection
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 		// Build an update that holds the updated widget contents
@@ -95,10 +98,6 @@ public class SonetService extends Service {
 			}
 			cursor.close();
 			db.close();
-
-			// set the button onclicklisteners
-			// refresh...
-			//				((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, new Intent(this, UpdateService.class).setAction(ACTION), 0));
 			// list content
 			// empty list will display "loading..."
 			// apply styles
@@ -111,10 +110,6 @@ public class SonetService extends Service {
 		ComponentName thisWidget = new ComponentName(this, SonetWidget_4x2.class);
 		AppWidgetManager manager = AppWidgetManager.getInstance(this);
 		manager.updateAppWidget(thisWidget, updateViews);
-		/*
-		 * if refresh was clicked, cancel any existing alarm
-		 * ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, new Intent(this, SonetService.class).setAction(ACTION), 0));
-		*/
 		((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + Integer.parseInt((String) sp.getString(getString(R.string.key_interval), getString(R.string.default_interval))), PendingIntent.getBroadcast(this, 0, new Intent(this, SonetService.class).setAction(ACTION), 0));
 	}
 

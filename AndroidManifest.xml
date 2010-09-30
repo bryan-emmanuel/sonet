@@ -20,7 +20,7 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.piusvelte.sonet"
-      android:versionCode="1"
+      android:versionCode="2"
       android:versionName="1.0"
       android:installLocation="auto">
     <application android:icon="@drawable/icon" android:label="@string/app_name">
@@ -44,19 +44,32 @@
             <intent-filter>
                 <action android:name="com.piusvelte.sonet.APPWIDGET_UPDATE" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="com.piusvelte.sonet.REFRESH" />
+            </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_4x2" />
         </receiver>
         <receiver android:name=".SonetWidget_4x3" android:label="@string/sonet_4x3">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <intent-filter>
                 <action android:name="com.piusvelte.sonet.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.piusvelte.sonet.REFRESH" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_4x3" />
         </receiver>
         <receiver android:name=".SonetWidget_4x4" android:label="@string/sonet_4x4">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <intent-filter>
                 <action android:name="com.piusvelte.sonet.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.piusvelte.sonet.REFRESH" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_4x4" />
         </receiver>

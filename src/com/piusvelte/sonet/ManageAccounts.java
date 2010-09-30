@@ -5,6 +5,9 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.PASSWORD;
 import static com.piusvelte.sonet.SonetDatabaseHelper.SERVICE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.USERNAME;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
+import oauth.signpost.OAuthProvider;
+import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
+import twitter4j.Twitter;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -30,6 +33,15 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 public class ManageAccounts extends ListActivity implements OnClickListener, android.content.DialogInterface.OnClickListener {
 	private static final int DELETE_ID = Menu.FIRST;
 	private SonetDatabaseHelper mSonetDatabaseHelper;
+	private static final String APP = 	"OAUTH";
+
+	private Twitter twitter;
+	private OAuthProvider provider;
+	private CommonsHttpOAuthConsumer consumer;
+
+	private String CONSUMER_KEY = 		"put it here";
+	private String CONSUMER_SECRET = 	"put it here";
+	private String CALLBACK_URL = 		"myapp://oauth";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
