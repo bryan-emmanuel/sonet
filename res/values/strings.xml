@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ * Sonet - Android Social Networking Widget
+ * Copyright (C) 2009 Bryan Emmanuel
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *  
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  
+ *  Bryan Emmanuel piusvelte@gmail.com
+-->
+<resources>
+    <string name="app_name">Sonet</string>
+    <string name="sonet_4x2">Sonet 4x2</string>
+    <string name="sonet_4x3">Sonet 4x3</string>
+    <string name="sonet_4x4">Sonet 4x4</string>
+    <string name="user_agent">"%s/%s (Linux; Android)"</string>
+    <string name="loading">Loading...</string>
+    <string name="no_connection">No connection</string>
+    <string name="settings">Settings</string>
+    <string name="accounts">Accounts</string>
+    <string name="button_post">Post</string>
+    <string name="button_refresh">Refresh</string>
+    <string name="button_settings">Settings</string>
+    <string name="button_add_account">Add Account</string>
+    <string name="reply">\u003E</string>
+    <string name="delete_account">Delete Account</string>
+    <string name="default_interval">3600000</string>
+	<string name="default_head_background">#99000000</string>
+	<string name="default_head_text">#ffffffff</string>
+	<string name="default_body_background">#33000000</string>
+	<string name="default_body_text">#ffffffff</string>
+    <string name="key_preferences">sonet</string>
+    <string name="category_update">Update</string>
+    <string name="interval">Interval</string>
+    <string name="key_interval">interval</string>
+    <string name="category_colors">Colors</string>
+    <string name="head_background">Head Background</string>
+    <string name="key_head_background">headBackground</string>
+    <string name="head_text">Head Text</string>
+    <string name="key_head_text">headText</string>
+    <string name="body_background">Body Background</string>
+    <string name="key_body_background">bodyBackground</string>
+    <string name="body_text">Body Text</string>
+    <string name="key_body_text">bodyText</string>
+    <string name="username">username</string>
+    <string name="password">password</string>
+</resources>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ * Sonet - Android Social Networking Widget
+ * Copyright (C) 2009 Bryan Emmanuel
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *  
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  
+ *  Bryan Emmanuel piusvelte@gmail.com
+-->
+<PreferenceScreen
+  xmlns:android="http://schemas.android.com/apk/res/android">
+  <PreferenceCategory android:title="@string/category_update" />
+	<ListPreference android:key="@string/key_interval"
+		android:title="@string/interval"
+		android:entries="@array/interval_entries" android:entryValues="@array/interval_values"
+		android:defaultValue="@string/default_interval" />
+  <PreferenceCategory android:title="@string/category_colors" />
+  <EditTextPreference android:key="@string/key_head_background" android:title="@string/head_background" android:defaultValue="@string/default_head_background" />
+  <EditTextPreference android:key="@string/key_head_text" android:title="@string/head_text" android:defaultValue="@string/default_head_text" />
+  <EditTextPreference android:key="@string/key_body_background" android:title="@string/body_background" android:defaultValue="@string/default_body_background" />
+  <EditTextPreference android:key="@string/key_body_text" android:title="@string/body_text" android:defaultValue="@string/default_body_text" />
+</PreferenceScreen>
