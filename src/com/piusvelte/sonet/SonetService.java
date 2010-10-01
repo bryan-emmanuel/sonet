@@ -20,10 +20,22 @@
 package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.SonetDatabaseHelper._ID;
-import static com.piusvelte.sonet.SonetDatabaseHelper.PASSWORD;
-import static com.piusvelte.sonet.SonetDatabaseHelper.SERVICE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.USERNAME;
+import static com.piusvelte.sonet.SonetDatabaseHelper.SECRET;
+import static com.piusvelte.sonet.SonetDatabaseHelper.SERVICE;
+import static com.piusvelte.sonet.SonetDatabaseHelper.TOKEN;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
+import static com.piusvelte.sonet.SonetDatabaseHelper.TAG;
+import static com.piusvelte.sonet.SonetDatabaseHelper.TWITTER_KEY;
+import static com.piusvelte.sonet.SonetDatabaseHelper.TWITTER_SECRET;
+
+import java.util.List;
+
+import twitter4j.Status;
+import twitter4j.Twitter;
+import twitter4j.TwitterException;
+import twitter4j.TwitterFactory;
+import twitter4j.http.AccessToken;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -37,6 +49,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.os.IBinder;
+import android.util.Log;
 import android.widget.RemoteViews;
 
 public class SonetService extends Service {
@@ -61,37 +74,52 @@ public class SonetService extends Service {
 
 	public void init(Intent intent) {
 		// cancel the alarm on REFRESH, it's set again later
-		if  (intent.getAction().equals(REFRESH)) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, new Intent(this, SonetService.class).setAction(ACTION), 0));
+		if  ((intent != null) && (intent.getAction() != null) && intent.getAction().equals(REFRESH)) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, new Intent(this, SonetService.class).setAction(ACTION), 0));
 		// check backgroundData settings and connection
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 		// Build an update that holds the updated widget contents
 		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
 		RemoteViews updateViews = new RemoteViews(getPackageName(), R.layout.widget);
 		if (cm.getBackgroundDataSetting() && cm.getActiveNetworkInfo().isConnected()) {
-			RemoteViews view = new RemoteViews(getPackageName(), R.layout.widget_item);
-			view.setTextViewText(R.id.item, getString(R.string.loading));
-			updateViews.addView(R.id.body, view);
+			updateViews.removeAllViews(R.id.body);
 			// Build the widget update for today
 			// sort results
 			// update
 			// Pick out month names from resources
-//			Resources res = context.getResources();
-			
+			//			Resources res = context.getResources();
+
 			SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
 			SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
 
 			// query accounts
-			Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, USERNAME, PASSWORD, SERVICE}, null, null, null, null, null);
+			Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, USERNAME, TOKEN, SECRET, SERVICE}, null, null, null, null, null);
 			if (cursor.getCount() > 0) {
 				cursor.moveToFirst();
-				int index = cursor.getColumnIndex(SERVICE);
+				int service = cursor.getColumnIndex(SERVICE),
+				token = cursor.getColumnIndex(TOKEN),
+				secret = cursor.getColumnIndex(SECRET);
 				while (!cursor.isAfterLast()) {
-					int service = cursor.getInt(index);
-					//					String username = accounts.getString(accounts.getColumnIndex(DatabaseAdapter.username)), password = accounts.getString(accounts.getColumnIndex(DatabaseAdapter.password));
-					if (service == TWITTER) {
-						//							Twitter twitter = new Twitter(username, password);
-					} else if (service == FACEBOOK) {
-
+					switch (cursor.getInt(service)) {
+					case TWITTER:
+						TwitterFactory factory = new TwitterFactory();
+						Twitter twitter = factory.getInstance();
+						twitter.setOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
+						AccessToken accessToken = new AccessToken(cursor.getString(token), cursor.getString(secret));
+						twitter.setOAuthAccessToken(accessToken);
+						try {
+							List<Status> statuses = twitter.getFriendsTimeline();
+							for (Status status : statuses) {
+								RemoteViews v = new RemoteViews(getPackageName(), R.layout.friend_status);
+								v.setTextViewText(R.id.friend, status.getUser().getScreenName());
+								v.setTextViewText(R.id.status, status.getText());
+								updateViews.addView(R.id.body, v);
+							}
+						} catch (TwitterException te) {
+							Log.e(TAG, te.toString());
+						}
+						break;
+					case FACEBOOK:
+						break;					
 					}
 					cursor.moveToNext();
 				}
@@ -102,8 +130,9 @@ public class SonetService extends Service {
 			// empty list will display "loading..."
 			// apply styles
 		} else {
-			RemoteViews view = new RemoteViews(getPackageName(), R.layout.widget_item);
-			view.setTextViewText(R.id.item, getString(R.string.no_connection));
+			updateViews.removeAllViews(R.id.body);
+			RemoteViews view = new RemoteViews(getPackageName(), R.layout.friend_status);
+			view.setTextViewText(R.id.status, getString(R.string.no_connection));
 			updateViews.addView(R.id.body, view);
 		}
 		// Push update for this widget to the home screen
