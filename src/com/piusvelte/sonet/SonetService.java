@@ -53,8 +53,9 @@ import android.util.Log;
 import android.widget.RemoteViews;
 
 public class SonetService extends Service {
-	private static final String ACTION = "com.piusvelte.sonet.APPWIDGET_UPDATE";
-	private static final String REFRESH = "com.piusvelte.sonet.REFRESH";
+	private static final String REFRESH = "com.piusvelte.Intent.REFRESH";
+	private static final String POST = "com.piusvelte.Intent.POST";
+	private static final String CONFIGURE = "com.piusvelte.Intent.CONFIGURE";
 	private static final int TWITTER = 0;
 	private static final int FACEBOOK = 1;
 
@@ -73,15 +74,30 @@ public class SonetService extends Service {
 	}
 
 	public void init(Intent intent) {
-		// cancel the alarm on REFRESH, it's set again later
-		if  ((intent != null) && (intent.getAction() != null) && intent.getAction().equals(REFRESH)) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, new Intent(this, SonetService.class).setAction(ACTION), 0));
+		if  ((intent != null) && (intent.getAction() != null)) {
+			if (intent.getAction().equals(AppWidgetManager.ACTION_APPWIDGET_UPDATE) || intent.getAction().equals(CONFIGURE)) {
+				// Build an update that holds the updated widget contents
+				SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
+				RemoteViews updateViews = new RemoteViews(getPackageName(), R.layout.widget);
+				// set buttons
+				updateViews.setOnClickPendingIntent(R.id.button_post, PendingIntent.getBroadcast(this, 0, (new Intent(this, SonetService.class)).setAction(POST), 0));
+				updateViews.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getBroadcast(this, 0, (new Intent(this, SonetService.class)).setAction(CONFIGURE), 0));
+				updateViews.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getBroadcast(this, 0, (new Intent(this, SonetService.class)).setAction(REFRESH), 0));
+				updateView(updateViews, Integer.parseInt((String) sp.getString(getString(R.string.key_interval), getString(R.string.default_interval))));
+
+			} else if (intent.getAction().equals(REFRESH)) updateView(new RemoteViews(getPackageName(), R.layout.widget), Integer.parseInt((String) ((SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE)).getString(getString(R.string.key_interval), getString(R.string.default_interval))));
+			else if (intent.getAction().equals(POST)) {
+
+			}
+		}
+	}
+	
+	public void updateView(RemoteViews view, int interval) {
+		((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, new Intent(this, SonetService.class).setAction(REFRESH), 0));
 		// check backgroundData settings and connection
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-		// Build an update that holds the updated widget contents
-		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
-		RemoteViews updateViews = new RemoteViews(getPackageName(), R.layout.widget);
 		if (cm.getBackgroundDataSetting() && cm.getActiveNetworkInfo().isConnected()) {
-			updateViews.removeAllViews(R.id.body);
+			view.removeAllViews(R.id.body);
 			// Build the widget update for today
 			// sort results
 			// update
@@ -112,7 +128,7 @@ public class SonetService extends Service {
 								RemoteViews v = new RemoteViews(getPackageName(), R.layout.friend_status);
 								v.setTextViewText(R.id.friend, status.getUser().getScreenName());
 								v.setTextViewText(R.id.status, status.getText());
-								updateViews.addView(R.id.body, v);
+								view.addView(R.id.body, v);
 							}
 						} catch (TwitterException te) {
 							Log.e(TAG, te.toString());
@@ -130,16 +146,16 @@ public class SonetService extends Service {
 			// empty list will display "loading..."
 			// apply styles
 		} else {
-			updateViews.removeAllViews(R.id.body);
-			RemoteViews view = new RemoteViews(getPackageName(), R.layout.friend_status);
-			view.setTextViewText(R.id.status, getString(R.string.no_connection));
-			updateViews.addView(R.id.body, view);
+			view.removeAllViews(R.id.body);
+			RemoteViews v = new RemoteViews(getPackageName(), R.layout.friend_status);
+			v.setTextViewText(R.id.status, getString(R.string.no_connection));
+			view.addView(R.id.body, v);
 		}
 		// Push update for this widget to the home screen
 		ComponentName thisWidget = new ComponentName(this, SonetWidget_4x2.class);
 		AppWidgetManager manager = AppWidgetManager.getInstance(this);
-		manager.updateAppWidget(thisWidget, updateViews);
-		((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + Integer.parseInt((String) sp.getString(getString(R.string.key_interval), getString(R.string.default_interval))), PendingIntent.getBroadcast(this, 0, new Intent(this, SonetService.class).setAction(ACTION), 0));
+		manager.updateAppWidget(thisWidget, view);
+		((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval, PendingIntent.getBroadcast(this, 0, new Intent(this, SonetService.class).setAction(REFRESH), 0));
 	}
 
 	@Override

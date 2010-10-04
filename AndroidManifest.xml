@@ -46,10 +46,13 @@
 				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
 			</intent-filter>
 			<intent-filter>
-				<action android:name="com.piusvelte.sonet.APPWIDGET_UPDATE" />
+				<action android:name="com.piusvelte.Intent.REFRESH" />
 			</intent-filter>
 			<intent-filter>
-				<action android:name="com.piusvelte.sonet.REFRESH" />
+				<action android:name="com.piusvelte.Intent.POST" />
+			</intent-filter>
+			<intent-filter>
+				<action android:name="com.piusvelte.Intent.CONFIGURE" />
 			</intent-filter>
 			<meta-data android:name="android.appwidget.provider"
 				android:resource="@xml/widget_4x2" />
@@ -59,10 +62,13 @@
 				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
 			</intent-filter>
 			<intent-filter>
-				<action android:name="com.piusvelte.sonet.APPWIDGET_UPDATE" />
+				<action android:name="com.piusvelte.Intent.REFRESH" />
 			</intent-filter>
 			<intent-filter>
-				<action android:name="com.piusvelte.sonet.REFRESH" />
+				<action android:name="com.piusvelte.Intent.POST" />
+			</intent-filter>
+			<intent-filter>
+				<action android:name="com.piusvelte.Intent.CONFIGURE" />
 			</intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_4x3" />
         </receiver>
@@ -70,12 +76,15 @@
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
-            <intent-filter>
-                <action android:name="com.piusvelte.sonet.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="com.piusvelte.sonet.REFRESH" />
-            </intent-filter>
+			<intent-filter>
+				<action android:name="com.piusvelte.Intent.REFRESH" />
+			</intent-filter>
+			<intent-filter>
+				<action android:name="com.piusvelte.Intent.POST" />
+			</intent-filter>
+			<intent-filter>
+				<action android:name="com.piusvelte.Intent.CONFIGURE" />
+			</intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_4x4" />
         </receiver>
         
