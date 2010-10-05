@@ -19,23 +19,16 @@
  */
 package com.piusvelte.sonet;
 
-//import static com.piusvelte.sonet.UI.TAG;
-
-//import winterwell.jtwitter.Twitter;
-
-//import com.piusvelte.sonet.FeedHelper.ApiException;
+import static com.piusvelte.sonet.SonetService.APPWIDGETIDS;
 
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 
 public class SonetWidget_4x2 extends AppWidgetProvider {
 	@Override
-	public void onUpdate(Context context, AppWidgetManager appWidgetManager,
-			int[] appWidgetIds) {
-		if (appWidgetIds == null) appWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(context, SonetWidget_4x2.class));
-		context.startService(new Intent(context, SonetService.class));
+	public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
+		context.startService(new Intent(context, SonetService.class).putExtra(APPWIDGETIDS, appWidgetIds));
 	}
 }

@@ -54,12 +54,10 @@ import android.widget.RemoteViews;
 
 public class SonetService extends Service {
 	private static final String REFRESH = "com.piusvelte.Intent.REFRESH";
-	private static final String POST = "com.piusvelte.Intent.POST";
-	private static final String CONFIGURE = "com.piusvelte.Intent.CONFIGURE";
 	private static final int TWITTER = 0;
 	private static final int FACEBOOK = 1;
-
-
+	public static final String APPWIDGETIDS = "appwidgetids";
+	
 	@Override
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
@@ -74,90 +72,82 @@ public class SonetService extends Service {
 	}
 
 	public void init(Intent intent) {
-		if  ((intent != null) && (intent.getAction() != null)) {
-			if (intent.getAction().equals(AppWidgetManager.ACTION_APPWIDGET_UPDATE) || intent.getAction().equals(CONFIGURE)) {
-				// Build an update that holds the updated widget contents
-				SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
-				RemoteViews updateViews = new RemoteViews(getPackageName(), R.layout.widget);
-				// set buttons
-				updateViews.setOnClickPendingIntent(R.id.button_post, PendingIntent.getBroadcast(this, 0, (new Intent(this, SonetService.class)).setAction(POST), 0));
-				updateViews.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getBroadcast(this, 0, (new Intent(this, SonetService.class)).setAction(CONFIGURE), 0));
-				updateViews.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getBroadcast(this, 0, (new Intent(this, SonetService.class)).setAction(REFRESH), 0));
-				updateView(updateViews, Integer.parseInt((String) sp.getString(getString(R.string.key_interval), getString(R.string.default_interval))));
+		int[] appWidgetIds = intent.getExtras().getIntArray(APPWIDGETIDS);
+        final int N = appWidgetIds.length;
+		((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, new Intent(this, SonetService.class).setAction(REFRESH), 0));
 
-			} else if (intent.getAction().equals(REFRESH)) updateView(new RemoteViews(getPackageName(), R.layout.widget), Integer.parseInt((String) ((SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE)).getString(getString(R.string.key_interval), getString(R.string.default_interval))));
-			else if (intent.getAction().equals(POST)) {
+		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
+		ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+		boolean hasConnection = cm.getBackgroundDataSetting() && cm.getActiveNetworkInfo().isConnected();
+		SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
+		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
+        // Perform this loop procedure for each App Widget that belongs to this provider
+        for (int i=0; i<N; i++) {
+            int appWidgetId = appWidgetIds[i];
+			// Build an update that holds the updated widget contents
+			RemoteViews views = new RemoteViews(getPackageName(), R.layout.widget);
+			// set buttons
+			views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getBroadcast(this, 0, (new Intent(this, UI.class)), 0));
+			views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getBroadcast(this, 0, (new Intent(this, UI.class)), 0));
+			views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getBroadcast(this, 0, (new Intent(this, SonetService.class)).setAction(REFRESH), 0));
+			// set head styles
+			views.removeAllViews(R.id.body);
+			if (hasConnection) {
+				// Build the widget update for today
+				// sort results
+				// update
+				// Pick out month names from resources
+				//			Resources res = context.getResources();
 
+				// query accounts
+				Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, USERNAME, TOKEN, SECRET, SERVICE}, null, null, null, null, null);
+				if (cursor.getCount() > 0) {
+					cursor.moveToFirst();
+					int service = cursor.getColumnIndex(SERVICE),
+					token = cursor.getColumnIndex(TOKEN),
+					secret = cursor.getColumnIndex(SECRET);
+					while (!cursor.isAfterLast()) {
+						switch (cursor.getInt(service)) {
+						case TWITTER:
+							TwitterFactory factory = new TwitterFactory();
+							Twitter twitter = factory.getInstance();
+							twitter.setOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
+							AccessToken accessToken = new AccessToken(cursor.getString(token), cursor.getString(secret));
+							twitter.setOAuthAccessToken(accessToken);
+							try {
+								List<Status> statuses = twitter.getFriendsTimeline();
+								for (Status status : statuses) {
+									RemoteViews v = new RemoteViews(getPackageName(), R.layout.friend_status);
+									v.setTextViewText(R.id.friend, status.getUser().getScreenName());
+									v.setTextViewText(R.id.status, status.getText());
+									views.addView(R.id.body, v);
+								}
+							} catch (TwitterException te) {
+								Log.e(TAG, te.toString());
+							}
+							break;
+						case FACEBOOK:
+							break;					
+						}
+						cursor.moveToNext();
+					}
+				}
+				cursor.close();
+				db.close();
+				// list content
+				// empty list will display "loading..."
+				// apply styles
+			} else {
+				RemoteViews v = new RemoteViews(getPackageName(), R.layout.friend_status);
+				v.setTextViewText(R.id.status, getString(R.string.no_connection));
+				views.addView(R.id.body, v);
 			}
-		}
+			// Push update for this widget to the home screen
+			(AppWidgetManager.getInstance(this)).updateAppWidget(appWidgetId, views);
+        }
+		((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + Integer.parseInt((String) sp.getString(getString(R.string.key_interval), getString(R.string.default_interval))), PendingIntent.getService(this, 0, new Intent(this, SonetService.class), 0));
 	}
 	
-	public void updateView(RemoteViews view, int interval) {
-		((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, new Intent(this, SonetService.class).setAction(REFRESH), 0));
-		// check backgroundData settings and connection
-		ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-		if (cm.getBackgroundDataSetting() && cm.getActiveNetworkInfo().isConnected()) {
-			view.removeAllViews(R.id.body);
-			// Build the widget update for today
-			// sort results
-			// update
-			// Pick out month names from resources
-			//			Resources res = context.getResources();
-
-			SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
-			SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
-
-			// query accounts
-			Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, USERNAME, TOKEN, SECRET, SERVICE}, null, null, null, null, null);
-			if (cursor.getCount() > 0) {
-				cursor.moveToFirst();
-				int service = cursor.getColumnIndex(SERVICE),
-				token = cursor.getColumnIndex(TOKEN),
-				secret = cursor.getColumnIndex(SECRET);
-				while (!cursor.isAfterLast()) {
-					switch (cursor.getInt(service)) {
-					case TWITTER:
-						TwitterFactory factory = new TwitterFactory();
-						Twitter twitter = factory.getInstance();
-						twitter.setOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
-						AccessToken accessToken = new AccessToken(cursor.getString(token), cursor.getString(secret));
-						twitter.setOAuthAccessToken(accessToken);
-						try {
-							List<Status> statuses = twitter.getFriendsTimeline();
-							for (Status status : statuses) {
-								RemoteViews v = new RemoteViews(getPackageName(), R.layout.friend_status);
-								v.setTextViewText(R.id.friend, status.getUser().getScreenName());
-								v.setTextViewText(R.id.status, status.getText());
-								view.addView(R.id.body, v);
-							}
-						} catch (TwitterException te) {
-							Log.e(TAG, te.toString());
-						}
-						break;
-					case FACEBOOK:
-						break;					
-					}
-					cursor.moveToNext();
-				}
-			}
-			cursor.close();
-			db.close();
-			// list content
-			// empty list will display "loading..."
-			// apply styles
-		} else {
-			view.removeAllViews(R.id.body);
-			RemoteViews v = new RemoteViews(getPackageName(), R.layout.friend_status);
-			v.setTextViewText(R.id.status, getString(R.string.no_connection));
-			view.addView(R.id.body, v);
-		}
-		// Push update for this widget to the home screen
-		ComponentName thisWidget = new ComponentName(this, SonetWidget_4x2.class);
-		AppWidgetManager manager = AppWidgetManager.getInstance(this);
-		manager.updateAppWidget(thisWidget, view);
-		((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval, PendingIntent.getBroadcast(this, 0, new Intent(this, SonetService.class).setAction(REFRESH), 0));
-	}
-
 	@Override
 	public IBinder onBind(Intent intent) {
 		// We don't need to bind to this service

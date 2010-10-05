@@ -48,12 +48,6 @@
 			<intent-filter>
 				<action android:name="com.piusvelte.Intent.REFRESH" />
 			</intent-filter>
-			<intent-filter>
-				<action android:name="com.piusvelte.Intent.POST" />
-			</intent-filter>
-			<intent-filter>
-				<action android:name="com.piusvelte.Intent.CONFIGURE" />
-			</intent-filter>
 			<meta-data android:name="android.appwidget.provider"
 				android:resource="@xml/widget_4x2" />
 		</receiver>
@@ -64,12 +58,6 @@
 			<intent-filter>
 				<action android:name="com.piusvelte.Intent.REFRESH" />
 			</intent-filter>
-			<intent-filter>
-				<action android:name="com.piusvelte.Intent.POST" />
-			</intent-filter>
-			<intent-filter>
-				<action android:name="com.piusvelte.Intent.CONFIGURE" />
-			</intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_4x3" />
         </receiver>
         <receiver android:name=".SonetWidget_4x4" android:label="@string/sonet_4x4">
@@ -78,12 +66,6 @@
             </intent-filter>
 			<intent-filter>
 				<action android:name="com.piusvelte.Intent.REFRESH" />
-			</intent-filter>
-			<intent-filter>
-				<action android:name="com.piusvelte.Intent.POST" />
-			</intent-filter>
-			<intent-filter>
-				<action android:name="com.piusvelte.Intent.CONFIGURE" />
 			</intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_4x4" />
         </receiver>
