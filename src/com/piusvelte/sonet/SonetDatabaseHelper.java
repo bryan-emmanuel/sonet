@@ -14,9 +14,9 @@ public class SonetDatabaseHelper extends SQLiteOpenHelper {
 	public static final String TOKEN = "token";
 	public static final String SECRET = "secret";
 	public static final String SERVICE = "service";
-	public static final String TWITTER_URL_REQUEST = "https://api.twitter.com/oauth/request_token";
-	public static final String TWITTER_URL_ACCESS = "https://api.twitter.com/oauth/access_token";
-	public static final String TWITTER_URL_AUTHORIZE = "https://api.twitter.com/oauth/authorize";
+	public static final String TWITTER_URL_REQUEST = "http://api.twitter.com/oauth/request_token";
+	public static final String TWITTER_URL_ACCESS = "http://api.twitter.com/oauth/access_token";
+	public static final String TWITTER_URL_AUTHORIZE = "http://api.twitter.com/oauth/authorize";
 	public static final String TWITTER_KEY = "";
 	public static final String TWITTER_SECRET = "";
 	public static final String FACEBOOK_KEY = "";

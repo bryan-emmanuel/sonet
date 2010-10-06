@@ -56,7 +56,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	private OAuthProvider provider;
 	private CommonsHttpOAuthConsumer consumer;
 
-	private String CALLBACK_URL = "sonet://twitter";
+	private String CALLBACK_URL = "sonet://oauth";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -65,10 +65,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		registerForContextMenu(getListView());
 		((Button) findViewById(R.id.button_add_account)).setOnClickListener(this);
 		mSonetDatabaseHelper = new SonetDatabaseHelper(this);
-		SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-		Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, TOKEN, SECRET, SERVICE}, null, null, null, null, null);
-		startManagingCursor(cursor);
-		setListAdapter(new SimpleCursorAdapter(this, R.layout.accounts_row, cursor, new String[] {TOKEN}, new int[] {R.id.account_username}));
+		listAccounts();
 	}
 	
 	@Override
@@ -202,10 +199,9 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			try {
 				// this will populate token and token_secret in consumer
 				provider.retrieveAccessToken(consumer, verifier);
-				TwitterFactory factory = new TwitterFactory();
-				Twitter twitter = factory.getInstance();
-				twitter.setOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
 				AccessToken accessToken = new AccessToken(consumer.getToken(), consumer.getTokenSecret());
+				Twitter twitter = new TwitterFactory().getInstance();
+				twitter.setOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
 				twitter.setOAuthAccessToken(accessToken);
 				SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
 				ContentValues values = new ContentValues();
@@ -241,6 +237,14 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			break;
 		}
 
+	}
+	
+	private void listAccounts() {
+		SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+		Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, TOKEN, SECRET, SERVICE}, null, null, null, null, null);
+		startManagingCursor(cursor);
+		setListAdapter(new SimpleCursorAdapter(this, R.layout.accounts_row, cursor, new String[] {TOKEN}, new int[] {R.id.account_username}));
+		db.close();
 	}
 
 }
