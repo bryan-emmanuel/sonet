@@ -56,7 +56,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	private OAuthProvider provider;
 	private CommonsHttpOAuthConsumer consumer;
 
-	private String CALLBACK_URL = "sonet://oauth";
+	private Uri CALLBACK_URL = Uri.parse("sonet://oauth");
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -67,7 +67,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		mSonetDatabaseHelper = new SonetDatabaseHelper(this);
 		listAccounts();
 	}
-	
+
 	@Override
 	protected void onListItemClick(ListView list, View view, int position, long id) {
 		super.onListItemClick(list, view, position, id);
@@ -188,11 +188,10 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 
 	@Override
 	protected void onNewIntent(Intent intent) {
-
 		super.onNewIntent(intent);
-
 		Uri uri = intent.getData();
-		if (uri != null && uri.toString().startsWith(CALLBACK_URL)) {
+		if (uri != null) Log.v(TAG,CALLBACK_URL.getScheme()+"=="+uri.getScheme());
+		if (uri != null && CALLBACK_URL.getScheme().equals(uri.getScheme())) {
 
 			String verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
 
@@ -203,6 +202,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 				Twitter twitter = new TwitterFactory().getInstance();
 				twitter.setOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
 				twitter.setOAuthAccessToken(accessToken);
+				Log.v(TAG,consumer.getToken()+","+consumer.getTokenSecret()+","+twitter.getScreenName());
 				SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
 				ContentValues values = new ContentValues();
 				values.put(USERNAME, twitter.getScreenName());
@@ -216,6 +216,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			}
 
 		}
+		listAccounts();
 	}
 
 	private void getAuth(int service, long account) {
@@ -226,7 +227,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 				consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
 				provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
 				provider.setOAuth10a(true);
-				String authUrl = provider.retrieveRequestToken(consumer, CALLBACK_URL);
+				String authUrl = provider.retrieveRequestToken(consumer, CALLBACK_URL.toString());
 				startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)));
 			} catch (Exception e) {
 				Log.e(TAG, e.getMessage());
@@ -238,7 +239,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		}
 
 	}
-	
+
 	private void listAccounts() {
 		SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
 		Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, TOKEN, SECRET, SERVICE}, null, null, null, null, null);

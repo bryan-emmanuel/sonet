@@ -25,7 +25,6 @@ package com.piusvelte.sonet;
 
 //import com.piusvelte.sonet.FeedHelper.ApiException;
 
-import static com.piusvelte.sonet.SonetService.APPWIDGETIDS;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
@@ -36,6 +35,6 @@ public class SonetWidget_4x4 extends AppWidgetProvider {
 	@Override
 	public void onUpdate(Context context, AppWidgetManager appWidgetManager,
 			int[] appWidgetIds) {
-		context.startService(new Intent(context, SonetService.class).putExtra(APPWIDGETIDS, appWidgetIds));
+		context.startService(new Intent(context, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds));
 	}
 }

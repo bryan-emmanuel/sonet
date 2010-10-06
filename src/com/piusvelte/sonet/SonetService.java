@@ -47,7 +47,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
 import android.os.IBinder;
 import android.util.Log;
@@ -57,34 +56,29 @@ public class SonetService extends Service {
 	private static final String REFRESH = "com.piusvelte.Intent.REFRESH";
 	private static final int TWITTER = 0;
 	private static final int FACEBOOK = 1;
-	public static final String APPWIDGETIDS = "appwidgetids";
 	
 	@Override
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
-		init(intent);
+		init();
 	}
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		super.onStart(intent, startId);
-		init(intent);
+		init();
 		return START_STICKY;
 	}
 
-	public void init(Intent intent) {
-		int[] appWidgetIds = intent.getExtras().getIntArray(APPWIDGETIDS);
-        final int N = appWidgetIds.length;
+	public void init() {
 		((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, new Intent(this, SonetService.class).setAction(REFRESH), 0));
-
 		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 		boolean hasConnection = cm.getBackgroundDataSetting() && cm.getActiveNetworkInfo().isConnected();
 		SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
 		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
         // Perform this loop procedure for each App Widget that belongs to this provider
-        for (int i=0; i<N; i++) {
-            int appWidgetId = appWidgetIds[i];
+		AppWidgetManager manager = AppWidgetManager.getInstance(this);
 			// Build an update that holds the updated widget contents
 			RemoteViews views = new RemoteViews(getPackageName(), R.layout.widget);
 			// set buttons
@@ -144,8 +138,12 @@ public class SonetService extends Service {
 				views.addView(R.id.body, v);
 			}
 			// Push update for this widget to the home screen
-			(AppWidgetManager.getInstance(this)).updateAppWidget(appWidgetId, views);
-        }
+			int[] sonetWidget_4x2 = manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x2.class));
+			for (int i=0; i<sonetWidget_4x2.length; i++) manager.updateAppWidget(sonetWidget_4x2[i], views);
+			int[] sonetWidget_4x3 = manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x3.class));
+			for (int i=0; i<sonetWidget_4x3.length; i++) manager.updateAppWidget(sonetWidget_4x3[i], views);
+			int[] sonetWidget_4x4 = manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x4.class));
+			for (int i=0; i<sonetWidget_4x4.length; i++) manager.updateAppWidget(sonetWidget_4x4[i], views);
 		((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + Integer.parseInt((String) sp.getString(getString(R.string.key_interval), getString(R.string.default_interval))), PendingIntent.getService(this, 0, new Intent(this, SonetService.class), 0));
 	}
 	
