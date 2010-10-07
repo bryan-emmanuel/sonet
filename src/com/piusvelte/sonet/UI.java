@@ -18,6 +18,7 @@ public class UI extends Activity implements OnClickListener {
 		setContentView(R.layout.main);
 		((Button) findViewById(R.id.button_accounts)).setOnClickListener(this);
 		((Button) findViewById(R.id.button_settings)).setOnClickListener(this);
+		((Button) findViewById(R.id.button_close)).setOnClickListener(this);
 	}
 
 	@Override
@@ -28,6 +29,9 @@ public class UI extends Activity implements OnClickListener {
 			break;
 		case R.id.button_settings:
 			startActivity(new Intent(this, Settings.class));
+			break;
+		case R.id.button_close:
+			finish();
 			break;
 		}
 	}

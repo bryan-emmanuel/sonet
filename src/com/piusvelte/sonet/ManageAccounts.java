@@ -64,7 +64,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		registerForContextMenu(getListView());
 		((Button) findViewById(R.id.button_add_account)).setOnClickListener(this);
 		mSonetDatabaseHelper = new SonetDatabaseHelper(this);
-		listAccounts();
 	}
 
 	@Override

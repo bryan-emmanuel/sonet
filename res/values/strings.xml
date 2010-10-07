@@ -56,4 +56,5 @@
     <string name="password">password</string>
     <string name="key_requesttoken">requesttoken</string>
     <string name="key_requestsecret">requestsecret</string>
+    <string name="close">Close</string>
 </resources>
