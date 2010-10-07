@@ -1,17 +1,17 @@
 package com.piusvelte.sonet;
 
-import static com.piusvelte.sonet.SonetDatabaseHelper.TAG;
+import static com.piusvelte.sonet.Sonet.TAG;
 import static com.piusvelte.sonet.SonetDatabaseHelper._ID;
 import static com.piusvelte.sonet.SonetDatabaseHelper.USERNAME;
 import static com.piusvelte.sonet.SonetDatabaseHelper.SECRET;
 import static com.piusvelte.sonet.SonetDatabaseHelper.SERVICE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TOKEN;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
-import static com.piusvelte.sonet.SonetDatabaseHelper.TWITTER_KEY;
-import static com.piusvelte.sonet.SonetDatabaseHelper.TWITTER_SECRET;
-import static com.piusvelte.sonet.SonetDatabaseHelper.TWITTER_URL_ACCESS;
-import static com.piusvelte.sonet.SonetDatabaseHelper.TWITTER_URL_AUTHORIZE;
-import static com.piusvelte.sonet.SonetDatabaseHelper.TWITTER_URL_REQUEST;
+import static com.piusvelte.sonet.Sonet.TWITTER_KEY;
+import static com.piusvelte.sonet.Sonet.TWITTER_SECRET;
+import static com.piusvelte.sonet.Sonet.TWITTER_URL_ACCESS;
+import static com.piusvelte.sonet.Sonet.TWITTER_URL_AUTHORIZE;
+import static com.piusvelte.sonet.Sonet.TWITTER_URL_REQUEST;
 
 import oauth.signpost.OAuthProvider;
 import oauth.signpost.basic.DefaultOAuthProvider;
@@ -25,6 +25,8 @@ import android.app.ListActivity;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
@@ -52,9 +54,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	private static final int TWITTER = 0;
 	private static final int FACEBOOK = 1;
 	private int mService = 0;
-
-	private OAuthProvider provider;
-	private CommonsHttpOAuthConsumer consumer;
 
 	private Uri CALLBACK_URL = Uri.parse("sonet://oauth");
 
@@ -185,18 +184,34 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		 */
 		dialog.cancel();
 	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		listAccounts();
+	}
 
 	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
 		Uri uri = intent.getData();
-		if (uri != null) Log.v(TAG,CALLBACK_URL.getScheme()+"=="+uri.getScheme());
 		if (uri != null && CALLBACK_URL.getScheme().equals(uri.getScheme())) {
 
 			String verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
 
 			try {
 				// this will populate token and token_secret in consumer
+				SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
+				CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
+				// use the requestToken and secret from earlier
+				consumer.setTokenWithSecret(sp.getString(getString(R.string.key_requesttoken), ""), sp.getString(getString(R.string.key_requestsecret), ""));
+				// throw away cached requesttoken & secret
+				Editor spe = sp.edit();
+				spe.putString(getString(R.string.key_requesttoken), "");
+				spe.putString(getString(R.string.key_requestsecret), "");
+				spe.commit();
+				OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
+				provider.setOAuth10a(true);
 				provider.retrieveAccessToken(consumer, verifier);
 				AccessToken accessToken = new AccessToken(consumer.getToken(), consumer.getTokenSecret());
 				Twitter twitter = new TwitterFactory().getInstance();
@@ -216,7 +231,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			}
 
 		}
-		listAccounts();
 	}
 
 	private void getAuth(int service, long account) {
@@ -224,10 +238,18 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		case TWITTER:
 			mService = TWITTER;
 			try {
-				consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
-				provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
+				CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
+				OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
 				provider.setOAuth10a(true);
 				String authUrl = provider.retrieveRequestToken(consumer, CALLBACK_URL.toString());
+				SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
+				Editor spe = sp.edit();
+				spe.putString(getString(R.string.key_requesttoken), consumer.getToken());
+				spe.putString(getString(R.string.key_requestsecret), consumer.getTokenSecret());
+				spe.commit();
+				/*
+				 * need to save the requestToken and secret
+				 */
 				startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)));
 			} catch (Exception e) {
 				Log.e(TAG, e.getMessage());
@@ -242,9 +264,9 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 
 	private void listAccounts() {
 		SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-		Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, TOKEN, SECRET, SERVICE}, null, null, null, null, null);
+		Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, USERNAME, SERVICE}, null, null, null, null, null);
 		startManagingCursor(cursor);
-		setListAdapter(new SimpleCursorAdapter(this, R.layout.accounts_row, cursor, new String[] {TOKEN}, new int[] {R.id.account_username}));
+		setListAdapter(new SimpleCursorAdapter(this, R.layout.accounts_row, cursor, new String[] {USERNAME}, new int[] {R.id.account_username}));
 		db.close();
 	}
 

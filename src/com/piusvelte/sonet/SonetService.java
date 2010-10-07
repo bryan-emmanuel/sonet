@@ -25,9 +25,9 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.SECRET;
 import static com.piusvelte.sonet.SonetDatabaseHelper.SERVICE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TOKEN;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
-import static com.piusvelte.sonet.SonetDatabaseHelper.TAG;
-import static com.piusvelte.sonet.SonetDatabaseHelper.TWITTER_KEY;
-import static com.piusvelte.sonet.SonetDatabaseHelper.TWITTER_SECRET;
+import static com.piusvelte.sonet.Sonet.TAG;
+import static com.piusvelte.sonet.Sonet.TWITTER_KEY;
+import static com.piusvelte.sonet.Sonet.TWITTER_SECRET;
 
 import java.util.List;
 

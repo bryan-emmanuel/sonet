@@ -68,6 +68,8 @@ public final class R {
         public static final int key_head_text=0x7f06001c;
         public static final int key_interval=0x7f060017;
         public static final int key_preferences=0x7f060014;
+        public static final int key_requestsecret=0x7f060024;
+        public static final int key_requesttoken=0x7f060023;
         public static final int loading=0x7f060005;
         public static final int no_connection=0x7f060006;
         public static final int password=0x7f060022;

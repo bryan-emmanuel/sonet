@@ -54,4 +54,6 @@
     <string name="key_body_text">bodyText</string>
     <string name="username">username</string>
     <string name="password">password</string>
+    <string name="key_requesttoken">requesttoken</string>
+    <string name="key_requestsecret">requestsecret</string>
 </resources>
