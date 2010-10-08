@@ -29,6 +29,7 @@ import static com.piusvelte.sonet.Sonet.TAG;
 import static com.piusvelte.sonet.Sonet.TWITTER_KEY;
 import static com.piusvelte.sonet.Sonet.TWITTER_SECRET;
 
+import java.io.IOException;
 import java.util.List;
 
 import twitter4j.Status;
@@ -47,6 +48,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.os.IBinder;
@@ -81,28 +83,25 @@ public class SonetService extends Service {
 		if ((sonetWidget_4x2.length > 0) || (sonetWidget_4x3.length > 0) || (sonetWidget_4x4.length > 0)) {
 			SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
 			ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-			boolean hasConnection = cm.getBackgroundDataSetting() && cm.getActiveNetworkInfo().isConnected();
 			SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
 			SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
 			// Build an update that holds the updated widget contents
 			RemoteViews views = new RemoteViews(getPackageName(), R.layout.widget);
 			// set buttons
 			int head_text = Color.parseColor(sp.getString(getString(R.string.key_head_text), getString(R.string.default_head_text)));
-			views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getBroadcast(this, 0, (new Intent(this, UI.class)), 0));
+			views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, (new Intent(this, UI.class)), 0));
 			views.setTextColor(R.id.button_post, head_text);
-			views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getBroadcast(this, 0, (new Intent(this, UI.class)), 0));
+			views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, (new Intent(this, UI.class)), 0));
 			views.setTextColor(R.id.button_post, head_text);
-			views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getBroadcast(this, 0, (new Intent(this, SonetService.class)), 0));
+			views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getActivity(this, 0, (new Intent(this, SonetService.class)), 0));
 			views.setTextColor(R.id.button_post, head_text);
 			// set head styles
-			views.removeAllViews(R.id.body);
-			if (hasConnection) {
-				// Build the widget update for today
-				// sort results
-				// update
-				// Pick out month names from resources
-				//			Resources res = context.getResources();
-
+//			views.removeAllViews(R.id.body);
+			int[] map_icon = {R.id.icon0, R.id.icon1, R.id.icon2, R.id.icon3, R.id.icon4, R.id.icon5},
+			map_status = {R.id.status0, R.id.status1, R.id.status2, R.id.status3, R.id.status4, R.id.status5},
+			map_friend = {R.id.friend0, R.id.friend1, R.id.friend2, R.id.friend3, R.id.friend4, R.id.friend5};
+			int count_status = 0, max_status = map_icon.length;
+			if (cm.getBackgroundDataSetting() && cm.getActiveNetworkInfo().isConnected()) {
 				// query accounts
 				Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, USERNAME, TOKEN, SECRET, SERVICE}, null, null, null, null, null);
 				if (cursor.getCount() > 0) {
@@ -122,12 +121,30 @@ public class SonetService extends Service {
 							try {
 								List<Status> statuses = twitter.getFriendsTimeline();
 								for (Status status : statuses) {
-									RemoteViews v = new RemoteViews(getPackageName(), R.layout.friend_status);
-									v.setTextViewText(R.id.friend, status.getUser().getScreenName());
-									v.setTextColor(R.id.friend, body_text);
-									v.setTextViewText(R.id.status, status.getText());
-									v.setTextColor(R.id.status, body_text);
-									views.addView(R.id.body, v);
+									if (count_status < max_status) {
+										views.setTextViewText(map_friend[count_status], status.getUser().getScreenName());
+										views.setTextColor(map_friend[count_status], body_text);
+										views.setTextViewText(map_status[count_status], status.getText());
+										views.setTextColor(map_status[count_status], body_text);
+										try {
+											views.setImageViewBitmap(map_icon[count_status], BitmapFactory.decodeStream(status.getUser().getProfileImageURL().openConnection().getInputStream()));
+										} catch (IOException e) {
+											Log.e(TAG,e.getMessage());
+										}										
+										count_status++;
+									}
+//									RemoteViews v = new RemoteViews(getPackageName(), R.layout.friend_status);
+//									v.setTextViewText(R.id.friend, status.getUser().getScreenName());
+//									v.setTextColor(R.id.friend, body_text);
+//									v.setTextViewText(R.id.status, status.getText());
+//									v.setTextColor(R.id.status, body_text);
+//									try {
+//										v.setImageViewBitmap(R.id.icon, BitmapFactory.decodeStream(status.getUser().getProfileImageURL().openConnection().getInputStream()));
+//									} catch (IOException e) {
+//										Log.e(TAG,e.getMessage());
+//									}
+//									Log.v(TAG,"friend:"+status.getUser().getScreenName());
+//									views.addView(R.id.body, v);
 								}
 							} catch (TwitterException te) {
 								Log.e(TAG, te.toString());

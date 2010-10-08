@@ -30,13 +30,112 @@
 		<TextView android:id="@+id/button_configure"
 			android:layout_width="wrap_content" android:layout_height="wrap_content"
 			android:text="@string/button_settings" android:layout_alignParentTop="true"
-			android:layout_toRightOf="@id/button_post" android:clickable="true" android:padding="4dip" />
+			android:layout_toRightOf="@id/button_post" android:clickable="true"
+			android:padding="4dip" />
 		<TextView android:id="@+id/button_refresh"
 			android:layout_width="wrap_content" android:layout_height="wrap_content"
 			android:text="@string/button_refresh" android:layout_alignParentTop="true"
-			android:layout_alignParentRight="true" android:clickable="true" android:padding="4dip" />
+			android:layout_alignParentRight="true" android:clickable="true"
+			android:padding="4dip" />
 	</RelativeLayout>
-	<LinearLayout android:id="@+id/body"
-		android:layout_width="fill_parent" android:layout_height="fill_parent"
-		android:layout_below="@id/head" android:orientation="vertical" />
+	<LinearLayout android:id="@+id/body" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:layout_below="@id/head"
+		android:orientation="vertical">
+		<LinearLayout android:orientation="horizontal"
+			android:layout_width="fill_parent" android:layout_height="wrap_content"
+			android:paddingRight="4dip" android:paddingBottom="4dip"
+			android:paddingLeft="4dip">
+			<ImageView android:id="@+id/icon0" android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:layout_alignParentBottom="true" android:layout_marginRight="4dip" />
+			<LinearLayout android:orientation="vertical"
+				android:layout_width="fill_parent" android:layout_height="wrap_content">
+				<TextView android:id="@+id/status0" android:layout_width="fill_parent"
+					android:layout_height="wrap_content" />
+				<TextView android:id="@+id/friend0" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:gravity="right"
+					android:textSize="8sp" />
+			</LinearLayout>
+		</LinearLayout>
+		<LinearLayout android:orientation="horizontal"
+			android:layout_width="fill_parent" android:layout_height="wrap_content"
+			android:paddingRight="4dip" android:paddingBottom="4dip"
+			android:paddingLeft="4dip">
+			<ImageView android:id="@+id/icon1" android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:layout_alignParentBottom="true" android:layout_marginRight="4dip" />
+			<LinearLayout android:orientation="vertical"
+				android:layout_width="fill_parent" android:layout_height="wrap_content">
+				<TextView android:id="@+id/status1" android:layout_width="fill_parent"
+					android:layout_height="wrap_content" />
+				<TextView android:id="@+id/friend1" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:gravity="right"
+					android:textSize="8sp" />
+			</LinearLayout>
+		</LinearLayout>
+		<LinearLayout android:orientation="horizontal"
+			android:layout_width="fill_parent" android:layout_height="wrap_content"
+			android:paddingRight="4dip" android:paddingBottom="4dip"
+			android:paddingLeft="4dip">
+			<ImageView android:id="@+id/icon2" android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:layout_alignParentBottom="true" android:layout_marginRight="4dip" />
+			<LinearLayout android:orientation="vertical"
+				android:layout_width="fill_parent" android:layout_height="wrap_content">
+				<TextView android:id="@+id/status2" android:layout_width="fill_parent"
+					android:layout_height="wrap_content" />
+				<TextView android:id="@+id/friend2" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:gravity="right"
+					android:textSize="8sp" />
+			</LinearLayout>
+		</LinearLayout>
+		<LinearLayout android:orientation="horizontal"
+			android:layout_width="fill_parent" android:layout_height="wrap_content"
+			android:paddingRight="4dip" android:paddingBottom="4dip"
+			android:paddingLeft="4dip">
+			<ImageView android:id="@+id/icon3" android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:layout_alignParentBottom="true" android:layout_marginRight="4dip" />
+			<LinearLayout android:orientation="vertical"
+				android:layout_width="fill_parent" android:layout_height="wrap_content">
+				<TextView android:id="@+id/status3" android:layout_width="fill_parent"
+					android:layout_height="wrap_content" />
+				<TextView android:id="@+id/friend3" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:gravity="right"
+					android:textSize="8sp" />
+			</LinearLayout>
+		</LinearLayout>
+		<LinearLayout android:orientation="horizontal"
+			android:layout_width="fill_parent" android:layout_height="wrap_content"
+			android:paddingRight="4dip" android:paddingBottom="4dip"
+			android:paddingLeft="4dip">
+			<ImageView android:id="@+id/icon4" android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:layout_alignParentBottom="true" android:layout_marginRight="4dip" />
+			<LinearLayout android:orientation="vertical"
+				android:layout_width="fill_parent" android:layout_height="wrap_content">
+				<TextView android:id="@+id/status4" android:layout_width="fill_parent"
+					android:layout_height="wrap_content" />
+				<TextView android:id="@+id/friend4" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:gravity="right"
+					android:textSize="8sp" />
+			</LinearLayout>
+		</LinearLayout>
+		<LinearLayout android:orientation="horizontal"
+			android:layout_width="fill_parent" android:layout_height="wrap_content"
+			android:paddingRight="4dip" android:paddingBottom="4dip"
+			android:paddingLeft="4dip">
+			<ImageView android:id="@+id/icon5" android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:layout_alignParentBottom="true" android:layout_marginRight="4dip" />
+			<LinearLayout android:orientation="vertical"
+				android:layout_width="fill_parent" android:layout_height="wrap_content">
+				<TextView android:id="@+id/status5" android:layout_width="fill_parent"
+					android:layout_height="wrap_content" />
+				<TextView android:id="@+id/friend5" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:gravity="right"
+					android:textSize="8sp" />
+			</LinearLayout>
+		</LinearLayout>
+	</LinearLayout>
 </RelativeLayout>
