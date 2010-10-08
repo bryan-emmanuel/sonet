@@ -26,112 +26,17 @@
 		<TextView android:id="@+id/button_post" android:layout_width="wrap_content"
 			android:layout_height="wrap_content" android:text="@string/button_post"
 			android:layout_alignParentTop="true" android:layout_alignParentLeft="true"
-			android:clickable="true" />
+			android:clickable="true" android:padding="4dip" />
 		<TextView android:id="@+id/button_configure"
 			android:layout_width="wrap_content" android:layout_height="wrap_content"
 			android:text="@string/button_settings" android:layout_alignParentTop="true"
-			android:layout_toRightOf="@id/button_post" android:clickable="true" />
+			android:layout_toRightOf="@id/button_post" android:clickable="true" android:padding="4dip" />
 		<TextView android:id="@+id/button_refresh"
 			android:layout_width="wrap_content" android:layout_height="wrap_content"
 			android:text="@string/button_refresh" android:layout_alignParentTop="true"
-			android:layout_alignParentRight="true" android:clickable="true" />
+			android:layout_alignParentRight="true" android:clickable="true" android:padding="4dip" />
 	</RelativeLayout>
-	<RelativeLayout android:id="@+id/body"
+	<LinearLayout android:id="@+id/body"
 		android:layout_width="fill_parent" android:layout_height="fill_parent"
-		android:layout_below="@id/head">
-		<TextView android:id="@+id/friend_0" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" />
-		<TextView android:id="@+id/status_0" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:layout_toRightOf="@id/friend_0" />
-		<TextView android:id="@+id/friend_1" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:layout_below="@id/friend_0" />
-		<TextView android:id="@+id/status_1" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:layout_toRightOf="@id/friend_1"
-			android:layout_below="@id/status_0" />
-		<TextView android:id="@+id/friend_2" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:layout_below="@id/friend_1" />
-		<TextView android:id="@+id/status_2" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:layout_toRightOf="@id/friend_2"
-			android:layout_below="@id/status_1" />
-		<TextView android:id="@+id/friend_3" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:layout_below="@id/friend_2" />
-		<TextView android:id="@+id/status_3" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:layout_toRightOf="@id/friend_3"
-			android:layout_below="@id/status_2" />
-		<TextView android:id="@+id/friend_4" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:layout_below="@id/friend_3" />
-		<TextView android:id="@+id/status_4" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:layout_toRightOf="@id/friend_4"
-			android:layout_below="@id/status_3" />
-		<TextView android:id="@+id/friend_5" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:layout_below="@id/friend_4" />
-		<TextView android:id="@+id/status_5" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:layout_toRightOf="@id/friend_5"
-			android:layout_below="@id/status_4" />
-		<TextView android:id="@+id/friend_6" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:layout_below="@id/friend_5" />
-		<TextView android:id="@+id/status_6" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:layout_toRightOf="@id/friend_6"
-			android:layout_below="@id/status_5" />
-		<TextView android:id="@+id/friend_7" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:layout_below="@id/friend_6" />
-		<TextView android:id="@+id/status_7" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:layout_toRightOf="@id/friend_7"
-			android:layout_below="@id/status_6" />
-		<TextView android:id="@+id/friend_8" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:layout_below="@id/friend_7" />
-		<TextView android:id="@+id/status_8" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:layout_toRightOf="@id/friend_8"
-			android:layout_below="@id/status_7" />
-		<TextView android:id="@+id/friend_9" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:layout_below="@id/friend_8" />
-		<TextView android:id="@+id/status_9" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:layout_toRightOf="@id/friend_9"
-			android:layout_below="@id/status_8" />
-		<TextView android:id="@+id/friend_10" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:layout_below="@id/friend_9" />
-		<TextView android:id="@+id/status_10" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:layout_toRightOf="@id/friend_10"
-			android:layout_below="@id/status_9" />
-		<TextView android:id="@+id/friend_11" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:layout_below="@id/friend_10" />
-		<TextView android:id="@+id/status_11" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:layout_toRightOf="@id/friend_11"
-			android:layout_below="@id/status_10" />
-		<TextView android:id="@+id/friend_12" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:layout_below="@id/friend_11" />
-		<TextView android:id="@+id/status_12" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:layout_toRightOf="@id/friend_12"
-			android:layout_below="@id/status_11" />
-		<TextView android:id="@+id/friend_13" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:layout_below="@id/friend_12" />
-		<TextView android:id="@+id/status_13" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:layout_toRightOf="@id/friend_13"
-			android:layout_below="@id/status_12" />
-		<TextView android:id="@+id/friend_14" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:layout_below="@id/friend_13" />
-		<TextView android:id="@+id/status_14" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:layout_toRightOf="@id/friend_14"
-			android:layout_below="@id/status_13" />
-		<TextView android:id="@+id/friend_15" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:layout_below="@id/friend_14" />
-		<TextView android:id="@+id/status_15" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:layout_toRightOf="@id/friend_15"
-			android:layout_below="@id/status_14" />
-		<TextView android:id="@+id/friend_16" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:layout_below="@id/friend_15" />
-		<TextView android:id="@+id/status_16" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:layout_toRightOf="@id/friend_16"
-			android:layout_below="@id/status_15" />
-		<TextView android:id="@+id/friend_17" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:layout_below="@id/friend_16" />
-		<TextView android:id="@+id/status_17" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:layout_toRightOf="@id/friend_17"
-			android:layout_below="@id/status_16" />
-		<TextView android:id="@+id/friend_18" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:layout_below="@id/friend_17" />
-		<TextView android:id="@+id/status_18" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:layout_toRightOf="@id/friend_18"
-			android:layout_below="@id/status_17" />
-	</RelativeLayout>
+		android:layout_below="@id/head" android:orientation="vertical" />
 </RelativeLayout>

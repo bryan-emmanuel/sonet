@@ -69,8 +69,6 @@
 			</intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_4x4" />
         </receiver>
-        
-        <!-- Service to perform web API queries -->        
         <service android:name=".SonetService" />
     </application>
     
