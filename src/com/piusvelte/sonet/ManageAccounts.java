@@ -216,7 +216,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 				Twitter twitter = new TwitterFactory().getInstance();
 				twitter.setOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
 				twitter.setOAuthAccessToken(accessToken);
-				Log.v(TAG,consumer.getToken()+","+consumer.getTokenSecret()+","+twitter.getScreenName());
 				SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
 				ContentValues values = new ContentValues();
 				values.put(USERNAME, twitter.getScreenName());
