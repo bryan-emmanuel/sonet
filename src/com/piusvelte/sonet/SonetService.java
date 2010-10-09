@@ -32,6 +32,7 @@ import static com.piusvelte.sonet.Sonet.TWITTER_SECRET;
 import java.io.IOException;
 import java.util.List;
 
+import twitter4j.Paging;
 import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
@@ -81,7 +82,8 @@ public class SonetService extends Service {
 		int[] sonetWidget_4x2 = manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x2.class));
 		int[] sonetWidget_4x3 = manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x3.class));
 		int[] sonetWidget_4x4 = manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x4.class));
-		if ((sonetWidget_4x2.length > 0) || (sonetWidget_4x3.length > 0) || (sonetWidget_4x4.length > 0)) {
+		int max_widget_items = sonetWidget_4x4.length > 0 ? 6 : sonetWidget_4x3.length > 0 ? 4 : sonetWidget_4x2.length > 0 ? 2 : 0;
+		if (max_widget_items > 0) {
 			SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
 			ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 			SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
@@ -103,7 +105,7 @@ public class SonetService extends Service {
 			map_status = {R.id.status0, R.id.status1, R.id.status2, R.id.status3, R.id.status4, R.id.status5},
 			map_friend = {R.id.friend0, R.id.friend1, R.id.friend2, R.id.friend3, R.id.friend4, R.id.friend5};
 			int count_status = 0, max_status = map_item.length;
-			if (cm.getBackgroundDataSetting() && cm.getActiveNetworkInfo().isConnected()) {
+			if (cm.getBackgroundDataSetting() && (cm.getActiveNetworkInfo() != null) && cm.getActiveNetworkInfo().isConnected()) {
 				// query accounts
 				Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, USERNAME, TOKEN, SECRET, SERVICE}, null, null, null, null, null);
 				if (cursor.getCount() > 0) {
@@ -122,7 +124,7 @@ public class SonetService extends Service {
 							AccessToken accessToken = new AccessToken(cursor.getString(token), cursor.getString(secret));
 							twitter.setOAuthAccessToken(accessToken);
 							try {
-								List<Status> statuses = twitter.getFriendsTimeline();
+								List<Status> statuses = twitter.getFriendsTimeline(new Paging(1, max_widget_items));
 								for (Status status : statuses) {
 									if (count_status < max_status) {
 										String screenname = status.getUser().getScreenName();
