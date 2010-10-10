@@ -30,6 +30,7 @@ import static com.piusvelte.sonet.Sonet.TWITTER_KEY;
 import static com.piusvelte.sonet.Sonet.TWITTER_SECRET;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 
 import twitter4j.Paging;
@@ -100,15 +101,20 @@ public class SonetService extends Service {
 			views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(this, 0, (new Intent(this, SonetService.class)), 0));
 			views.setTextColor(R.id.button_post, head_text);
 			// set head styles
-			int[] map_item = {R.id.item0, R.id.icon1, R.id.item2, R.id.item3, R.id.item4, R.id.item5},
-			map_icon = {R.id.icon0, R.id.icon1, R.id.icon2, R.id.icon3, R.id.icon4, R.id.icon5},
-			map_status = {R.id.status0, R.id.status1, R.id.status2, R.id.status3, R.id.status4, R.id.status5},
-			map_friend = {R.id.friend0, R.id.friend1, R.id.friend2, R.id.friend3, R.id.friend4, R.id.friend5};
-			int count_status = 0, max_status = map_item.length;
 			if (cm.getBackgroundDataSetting() && (cm.getActiveNetworkInfo() != null) && cm.getActiveNetworkInfo().isConnected()) {
 				// query accounts
 				Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, USERNAME, TOKEN, SECRET, SERVICE}, null, null, null, null, null);
 				if (cursor.getCount() > 0) {
+					int[] map_item = {R.id.item0, R.id.icon1, R.id.item2, R.id.item3, R.id.item4, R.id.item5},
+					map_icon = {R.id.icon0, R.id.icon1, R.id.icon2, R.id.icon3, R.id.icon4, R.id.icon5},
+					map_status = {R.id.status0, R.id.status1, R.id.status2, R.id.status3, R.id.status4, R.id.status5},
+					map_friend = {R.id.friend0, R.id.friend1, R.id.friend2, R.id.friend3, R.id.friend4, R.id.friend5};
+					int count_status = 0, max_status = map_item.length;
+					Long current_time = (new Date()).getTime();
+					int day = 86400000;
+					int hour = 3600000;
+					int minute = 60000;
+					int second = 1000;
 					cursor.moveToFirst();
 					int service = cursor.getColumnIndex(SERVICE),
 					token = cursor.getColumnIndex(TOKEN),
@@ -128,12 +134,29 @@ public class SonetService extends Service {
 								for (Status status : statuses) {
 									if (count_status < max_status) {
 										String screenname = status.getUser().getScreenName();
-										Log.v(TAG,String.format(status_url, screenname, Long.toString(status.getId())));
+										Long elapsed_time = current_time - status.getCreatedAt().getTime();
+										int time_unit;
 										views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, (new Intent(Intent.ACTION_VIEW, Uri.parse(String.format(status_url, screenname, Long.toString(status.getId()))))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(browser), 0));
-										views.setTextViewText(map_friend[count_status], screenname);
-										views.setTextColor(map_friend[count_status], body_text);
 										views.setTextViewText(map_status[count_status], status.getText());
 										views.setTextColor(map_status[count_status], body_text);
+										if (elapsed_time > day) {
+											elapsed_time = (long) Math.floor(elapsed_time / day);
+											time_unit = R.string.days;
+										} else if (elapsed_time > hour) {
+											elapsed_time = (long) Math.floor(elapsed_time / hour);
+											time_unit = R.string.hours;
+										} else if (elapsed_time > minute) {
+											elapsed_time = (long) Math.floor(elapsed_time / minute);
+											time_unit = R.string.minutes;
+										} else if (elapsed_time > second){
+											elapsed_time = (long) Math.floor(elapsed_time / second);
+											time_unit = R.string.seconds;
+										} else {
+											elapsed_time = (long) 0;
+											time_unit = R.string.seconds;
+										}
+										views.setTextViewText(map_friend[count_status], String.format(getString(R.string.status_detail), screenname, Long.toString(elapsed_time), getString(time_unit)));
+										views.setTextColor(map_friend[count_status], body_text);
 										try {
 											views.setImageViewBitmap(map_icon[count_status], BitmapFactory.decodeStream(status.getUser().getProfileImageURL().openConnection().getInputStream()));
 										} catch (IOException e) {

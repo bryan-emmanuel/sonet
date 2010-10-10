@@ -57,4 +57,9 @@
     <string name="key_requesttoken">requesttoken</string>
     <string name="key_requestsecret">requestsecret</string>
     <string name="close">Close</string>
+    <string name="seconds">seconds</string>
+    <string name="minutes">minutes</string>
+    <string name="hours">hours</string>
+    <string name="days">days</string>
+    <string name="status_detail">%s, %s %s ago</string>
 </resources>

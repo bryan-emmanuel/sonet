@@ -79,6 +79,7 @@ public final class R {
         public static final int category_colors=0x7f060018;
         public static final int category_update=0x7f060015;
         public static final int close=0x7f060025;
+        public static final int days=0x7f060029;
         public static final int default_body_background=0x7f060012;
         public static final int default_body_text=0x7f060013;
         public static final int default_head_background=0x7f060010;
@@ -87,6 +88,7 @@ public final class R {
         public static final int delete_account=0x7f06000e;
         public static final int head_background=0x7f060019;
         public static final int head_text=0x7f06001b;
+        public static final int hours=0x7f060028;
         public static final int interval=0x7f060016;
         public static final int key_body_background=0x7f06001e;
         public static final int key_body_text=0x7f060020;
@@ -97,13 +99,16 @@ public final class R {
         public static final int key_requestsecret=0x7f060024;
         public static final int key_requesttoken=0x7f060023;
         public static final int loading=0x7f060005;
+        public static final int minutes=0x7f060027;
         public static final int no_connection=0x7f060006;
         public static final int password=0x7f060022;
         public static final int reply=0x7f06000d;
+        public static final int seconds=0x7f060026;
         public static final int settings=0x7f060007;
         public static final int sonet_4x2=0x7f060001;
         public static final int sonet_4x3=0x7f060002;
         public static final int sonet_4x4=0x7f060003;
+        public static final int status_detail=0x7f06002a;
         public static final int user_agent=0x7f060004;
         public static final int username=0x7f060021;
     }

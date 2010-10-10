@@ -54,7 +54,7 @@
 					android:layout_height="wrap_content" />
 				<TextView android:id="@+id/friend0" android:layout_width="wrap_content"
 					android:layout_height="wrap_content" android:gravity="right"
-					android:textSize="8sp" />
+					android:textSize="12sp" />
 			</LinearLayout>
 		</LinearLayout>
 		<LinearLayout android:id="@+id/item1" android:orientation="horizontal"
@@ -70,7 +70,7 @@
 					android:layout_height="wrap_content" />
 				<TextView android:id="@+id/friend1" android:layout_width="wrap_content"
 					android:layout_height="wrap_content" android:gravity="right"
-					android:textSize="8sp" />
+					android:textSize="12sp" />
 			</LinearLayout>
 		</LinearLayout>
 		<LinearLayout android:id="@+id/item2" android:orientation="horizontal"
@@ -86,7 +86,7 @@
 					android:layout_height="wrap_content" />
 				<TextView android:id="@+id/friend2" android:layout_width="wrap_content"
 					android:layout_height="wrap_content" android:gravity="right"
-					android:textSize="8sp" />
+					android:textSize="12sp" />
 			</LinearLayout>
 		</LinearLayout>
 		<LinearLayout android:id="@+id/item3" android:orientation="horizontal"
@@ -102,7 +102,7 @@
 					android:layout_height="wrap_content" />
 				<TextView android:id="@+id/friend3" android:layout_width="wrap_content"
 					android:layout_height="wrap_content" android:gravity="right"
-					android:textSize="8sp" />
+					android:textSize="12sp" />
 			</LinearLayout>
 		</LinearLayout>
 		<LinearLayout android:id="@+id/item4" android:orientation="horizontal"
@@ -118,7 +118,7 @@
 					android:layout_height="wrap_content" />
 				<TextView android:id="@+id/friend4" android:layout_width="wrap_content"
 					android:layout_height="wrap_content" android:gravity="right"
-					android:textSize="8sp" />
+					android:textSize="12sp" />
 			</LinearLayout>
 		</LinearLayout>
 		<LinearLayout android:id="@+id/item5" android:orientation="horizontal"
@@ -134,7 +134,7 @@
 					android:layout_height="wrap_content" />
 				<TextView android:id="@+id/friend5" android:layout_width="wrap_content"
 					android:layout_height="wrap_content" android:gravity="right"
-					android:textSize="8sp" />
+					android:textSize="12sp" />
 			</LinearLayout>
 		</LinearLayout>
 	</LinearLayout>
