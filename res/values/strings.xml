@@ -62,4 +62,5 @@
     <string name="hours">hours</string>
     <string name="days">days</string>
     <string name="status_detail">%s, %s %s ago</string>
+    <string name="head_spacer">.</string>
 </resources>

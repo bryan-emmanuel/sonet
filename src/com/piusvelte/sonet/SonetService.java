@@ -30,6 +30,8 @@ import static com.piusvelte.sonet.Sonet.TWITTER_KEY;
 import static com.piusvelte.sonet.Sonet.TWITTER_SECRET;
 
 import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -56,12 +58,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.Bitmap.Config;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.RectShape;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.IBinder;
@@ -94,7 +91,7 @@ public class SonetService extends Service {
 		int[] sonetWidget_4x2 = manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x2.class));
 		int[] sonetWidget_4x3 = manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x3.class));
 		int[] sonetWidget_4x4 = manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x4.class));
-		int max_widget_items = sonetWidget_4x4.length > 0 ? 6 : sonetWidget_4x3.length > 0 ? 4 : sonetWidget_4x2.length > 0 ? 2 : 0;
+		int max_widget_items = sonetWidget_4x4.length > 0 ? 6 : sonetWidget_4x3.length > 0 ? 5 : sonetWidget_4x2.length > 0 ? 3 : 0;
 		if (max_widget_items > 0) {
 			SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
 			ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
@@ -124,16 +121,19 @@ public class SonetService extends Service {
 				// query accounts
 				Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, USERNAME, TOKEN, SECRET, SERVICE}, null, null, null, null, null);
 				if (cursor.getCount() > 0) {
+					/* get statuses for all accounts
+					 * then sort them by datetime, descending
+					 */
 					int[] map_item = {R.id.item0, R.id.icon1, R.id.item2, R.id.item3, R.id.item4, R.id.item5},
 					map_icon = {R.id.icon0, R.id.icon1, R.id.icon2, R.id.icon3, R.id.icon4, R.id.icon5},
 					map_status = {R.id.status0, R.id.status1, R.id.status2, R.id.status3, R.id.status4, R.id.status5},
 					map_friend = {R.id.friend0, R.id.friend1, R.id.friend2, R.id.friend3, R.id.friend4, R.id.friend5};
-					int count_status = 0, max_status = map_item.length;
 					Long current_time = (new Date()).getTime();
 					int day = 86400000;
 					int hour = 3600000;
 					int minute = 60000;
 					int second = 1000;
+					List<StatusItem> status_items = new ArrayList<StatusItem>();
 					cursor.moveToFirst();
 					int service = cursor.getColumnIndex(SERVICE),
 					token = cursor.getColumnIndex(TOKEN),
@@ -151,38 +151,12 @@ public class SonetService extends Service {
 							try {
 								List<Status> statuses = twitter.getFriendsTimeline(new Paging(1, max_widget_items));
 								for (Status status : statuses) {
-									if (count_status < max_status) {
-										String screenname = status.getUser().getScreenName();
-										Long elapsed_time = current_time - status.getCreatedAt().getTime();
-										int time_unit;
-										views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, (new Intent(Intent.ACTION_VIEW, Uri.parse(String.format(status_url, screenname, Long.toString(status.getId()))))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(browser), 0));
-										views.setTextViewText(map_status[count_status], status.getText());
-										views.setTextColor(map_status[count_status], body_text);
-										if (elapsed_time > day) {
-											elapsed_time = (long) Math.floor(elapsed_time / day);
-											time_unit = R.string.days;
-										} else if (elapsed_time > hour) {
-											elapsed_time = (long) Math.floor(elapsed_time / hour);
-											time_unit = R.string.hours;
-										} else if (elapsed_time > minute) {
-											elapsed_time = (long) Math.floor(elapsed_time / minute);
-											time_unit = R.string.minutes;
-										} else if (elapsed_time > second){
-											elapsed_time = (long) Math.floor(elapsed_time / second);
-											time_unit = R.string.seconds;
-										} else {
-											elapsed_time = (long) 0;
-											time_unit = R.string.seconds;
-										}
-										views.setTextViewText(map_friend[count_status], String.format(getString(R.string.status_detail), screenname, Long.toString(elapsed_time), getString(time_unit)));
-										views.setTextColor(map_friend[count_status], body_text);
-										try {
-											views.setImageViewBitmap(map_icon[count_status], BitmapFactory.decodeStream(status.getUser().getProfileImageURL().openConnection().getInputStream()));
-										} catch (IOException e) {
-											Log.e(TAG,e.getMessage());
-										}										
-										count_status++;
-									}
+									String screenname = status.getUser().getScreenName();
+									status_items.add(new StatusItem(status.getCreatedAt().getTime(),
+											Uri.parse(String.format(status_url, screenname, Long.toString(status.getId()))),
+											screenname,
+											status.getUser().getProfileImageURL(),
+											status.getText()));
 								}
 							} catch (TwitterException te) {
 								Log.e(TAG, te.toString());
@@ -196,11 +170,47 @@ public class SonetService extends Service {
 						}
 						cursor.moveToNext();
 					}
+					/*
+					 * TODO: sort status_items by created datetime
+					 */
+					// list content
+					int count_status = 0, max_status = map_item.length;
+					for  (StatusItem item : status_items) {
+						if (count_status < max_status) {
+							String screenname = item.mFriend;
+							Long elapsed_time = current_time - item.mCreated;
+							int time_unit;
+							views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, (new Intent(Intent.ACTION_VIEW, item.mLink)).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(browser), 0));
+							views.setTextViewText(map_status[count_status], item.mMessage);
+							views.setTextColor(map_status[count_status], body_text);
+							if (elapsed_time > day) {
+								elapsed_time = (long) Math.floor(elapsed_time / day);
+								time_unit = R.string.days;
+							} else if (elapsed_time > hour) {
+								elapsed_time = (long) Math.floor(elapsed_time / hour);
+								time_unit = R.string.hours;
+							} else if (elapsed_time > minute) {
+								elapsed_time = (long) Math.floor(elapsed_time / minute);
+								time_unit = R.string.minutes;
+							} else if (elapsed_time > second){
+								elapsed_time = (long) Math.floor(elapsed_time / second);
+								time_unit = R.string.seconds;
+							} else {
+								elapsed_time = (long) 0;
+								time_unit = R.string.seconds;
+							}
+							views.setTextViewText(map_friend[count_status], String.format(getString(R.string.status_detail), screenname, Long.toString(elapsed_time), getString(time_unit)));
+							views.setTextColor(map_friend[count_status], body_text);
+							try {
+								views.setImageViewBitmap(map_icon[count_status], BitmapFactory.decodeStream(item.mProfile.openConnection().getInputStream()));
+							} catch (IOException e) {
+								Log.e(TAG,e.getMessage());
+							}										
+							count_status++;
+						} else break;
+					}
 				}
 				cursor.close();
-				// list content
-				// empty list will display "loading..."
-				// apply styles
 			}
 			db.close();
 			// Push update for this widget to the home screen
@@ -218,4 +228,20 @@ public class SonetService extends Service {
 		// We don't need to bind to this service
 		return null;
 	}
+	
+	private class StatusItem {
+		private Long mCreated;
+		private Uri mLink;
+		private String mFriend;
+		private URL mProfile;
+		private String mMessage;
+		StatusItem(Long created, Uri link, String friend, URL profile, String message) {
+			mCreated = created;
+			mLink = link;
+			mFriend = friend;
+			mProfile = profile;
+			mMessage = message;
+		}
+	}
+	
 }

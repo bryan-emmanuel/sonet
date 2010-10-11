@@ -20,9 +20,25 @@
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="fill_parent" android:layout_height="fill_parent">
+	<TextView android:id="@+id/head_spacer" android:layout_width="wrap_content"
+		android:layout_height="wrap_content" android:text="@string/head_spacer"
+		android:layout_alignParentTop="true" android:layout_alignParentLeft="true"
+		android:padding="4dip" />
+	<ImageView android:id="@+id/body_background"
+		android:layout_width="fill_parent" android:layout_height="fill_parent"
+		android:layout_alignParentRight="true"
+		android:layout_alignParentBottom="true"
+		android:layout_alignParentLeft="true" android:layout_below="@id/head_spacer"
+		android:scaleType="fitXY" />
+	<ImageView android:id="@+id/head_background"
+		android:layout_width="fill_parent" android:layout_height="fill_parent"
+		android:layout_above="@id/body_background"
+		android:scaleType="fitXY"
+		android:layout_alignParentTop="true" android:layout_alignParentRight="true"
+		android:layout_alignParentLeft="true" />
 	<RelativeLayout android:id="@+id/head"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
-		android:layout_alignParentTop="true" >
+		android:layout_alignParentTop="true" android:layout_above="@id/body_background">
 		<TextView android:id="@+id/button_post" android:layout_width="wrap_content"
 			android:layout_height="wrap_content" android:text="@string/button_post"
 			android:layout_alignParentTop="true" android:layout_alignParentLeft="true"
@@ -38,15 +54,6 @@
 			android:layout_alignParentRight="true" android:clickable="true"
 			android:padding="4dip" />
 	</RelativeLayout>
-	<ImageView android:id="@+id/body_background"
-		android:layout_width="fill_parent" android:layout_height="fill_parent"
-		android:layout_below="@id/head" android:layout_alignParentRight="true"
-		android:layout_alignParentBottom="true"
-		android:layout_alignParentLeft="true" />
-	<ImageView android:id="@+id/head_background"
-		android:layout_width="fill_parent" android:layout_height="fill_parent" android:layout_above="@id/body_background"
-		android:layout_alignParentTop="true" android:layout_alignParentRight="true"
-		android:layout_alignParentLeft="true" />
 	<LinearLayout android:id="@+id/body" android:layout_width="fill_parent"
 		android:layout_height="fill_parent" android:layout_below="@id/head"
 		android:orientation="vertical">
