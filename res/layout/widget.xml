@@ -22,7 +22,7 @@
 	android:layout_width="fill_parent" android:layout_height="fill_parent">
 	<RelativeLayout android:id="@+id/head"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
-		android:layout_alignParentTop="true">
+		android:layout_alignParentTop="true" >
 		<TextView android:id="@+id/button_post" android:layout_width="wrap_content"
 			android:layout_height="wrap_content" android:text="@string/button_post"
 			android:layout_alignParentTop="true" android:layout_alignParentLeft="true"
@@ -38,13 +38,22 @@
 			android:layout_alignParentRight="true" android:clickable="true"
 			android:padding="4dip" />
 	</RelativeLayout>
+	<ImageView android:id="@+id/body_background"
+		android:layout_width="fill_parent" android:layout_height="fill_parent"
+		android:layout_below="@id/head" android:layout_alignParentRight="true"
+		android:layout_alignParentBottom="true"
+		android:layout_alignParentLeft="true" />
+	<ImageView android:id="@+id/head_background"
+		android:layout_width="fill_parent" android:layout_height="fill_parent" android:layout_above="@id/body_background"
+		android:layout_alignParentTop="true" android:layout_alignParentRight="true"
+		android:layout_alignParentLeft="true" />
 	<LinearLayout android:id="@+id/body" android:layout_width="fill_parent"
 		android:layout_height="fill_parent" android:layout_below="@id/head"
 		android:orientation="vertical">
-		<LinearLayout android:id="@+id/item0" android:orientation="horizontal"
-			android:layout_width="fill_parent" android:layout_height="wrap_content"
-			android:paddingRight="4dip" android:paddingBottom="4dip"
-			android:paddingLeft="4dip">
+		<LinearLayout android:id="@+id/item0"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content" android:paddingRight="4dip"
+			android:paddingBottom="4dip" android:paddingLeft="4dip">
 			<ImageView android:id="@+id/icon0" android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:layout_alignParentTop="true"
 				android:layout_alignParentBottom="true" android:layout_marginRight="4dip" />
@@ -57,10 +66,10 @@
 					android:textSize="12sp" />
 			</LinearLayout>
 		</LinearLayout>
-		<LinearLayout android:id="@+id/item1" android:orientation="horizontal"
-			android:layout_width="fill_parent" android:layout_height="wrap_content"
-			android:paddingRight="4dip" android:paddingBottom="4dip"
-			android:paddingLeft="4dip">
+		<LinearLayout android:id="@+id/item1"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content" android:paddingRight="4dip"
+			android:paddingBottom="4dip" android:paddingLeft="4dip">
 			<ImageView android:id="@+id/icon1" android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:layout_alignParentTop="true"
 				android:layout_alignParentBottom="true" android:layout_marginRight="4dip" />
@@ -73,10 +82,10 @@
 					android:textSize="12sp" />
 			</LinearLayout>
 		</LinearLayout>
-		<LinearLayout android:id="@+id/item2" android:orientation="horizontal"
-			android:layout_width="fill_parent" android:layout_height="wrap_content"
-			android:paddingRight="4dip" android:paddingBottom="4dip"
-			android:paddingLeft="4dip">
+		<LinearLayout android:id="@+id/item2"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content" android:paddingRight="4dip"
+			android:paddingBottom="4dip" android:paddingLeft="4dip">
 			<ImageView android:id="@+id/icon2" android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:layout_alignParentTop="true"
 				android:layout_alignParentBottom="true" android:layout_marginRight="4dip" />
@@ -89,10 +98,10 @@
 					android:textSize="12sp" />
 			</LinearLayout>
 		</LinearLayout>
-		<LinearLayout android:id="@+id/item3" android:orientation="horizontal"
-			android:layout_width="fill_parent" android:layout_height="wrap_content"
-			android:paddingRight="4dip" android:paddingBottom="4dip"
-			android:paddingLeft="4dip">
+		<LinearLayout android:id="@+id/item3"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content" android:paddingRight="4dip"
+			android:paddingBottom="4dip" android:paddingLeft="4dip">
 			<ImageView android:id="@+id/icon3" android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:layout_alignParentTop="true"
 				android:layout_alignParentBottom="true" android:layout_marginRight="4dip" />
@@ -105,10 +114,10 @@
 					android:textSize="12sp" />
 			</LinearLayout>
 		</LinearLayout>
-		<LinearLayout android:id="@+id/item4" android:orientation="horizontal"
-			android:layout_width="fill_parent" android:layout_height="wrap_content"
-			android:paddingRight="4dip" android:paddingBottom="4dip"
-			android:paddingLeft="4dip">
+		<LinearLayout android:id="@+id/item4"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content" android:paddingRight="4dip"
+			android:paddingBottom="4dip" android:paddingLeft="4dip">
 			<ImageView android:id="@+id/icon4" android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:layout_alignParentTop="true"
 				android:layout_alignParentBottom="true" android:layout_marginRight="4dip" />
@@ -121,10 +130,10 @@
 					android:textSize="12sp" />
 			</LinearLayout>
 		</LinearLayout>
-		<LinearLayout android:id="@+id/item5" android:orientation="horizontal"
-			android:layout_width="fill_parent" android:layout_height="wrap_content"
-			android:paddingRight="4dip" android:paddingBottom="4dip"
-			android:paddingLeft="4dip">
+		<LinearLayout android:id="@+id/item5"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content" android:paddingRight="4dip"
+			android:paddingBottom="4dip" android:paddingLeft="4dip">
 			<ImageView android:id="@+id/icon5" android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:layout_alignParentTop="true"
 				android:layout_alignParentBottom="true" android:layout_marginRight="4dip" />

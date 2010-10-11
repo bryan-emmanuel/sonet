@@ -33,6 +33,8 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
+import com.facebook.android.Facebook;
+
 import twitter4j.Paging;
 import twitter4j.Status;
 import twitter4j.Twitter;
@@ -50,8 +52,16 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Bitmap.Config;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.shapes.RectShape;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.IBinder;
@@ -62,6 +72,7 @@ public class SonetService extends Service {
 	private static final String REFRESH = "com.piusvelte.Intent.REFRESH";
 	private static final int TWITTER = 0;
 	private static final int FACEBOOK = 1;
+	private Facebook mFacebook;
 
 	@Override
 	public void onStart(Intent intent, int startId) {
@@ -94,6 +105,14 @@ public class SonetService extends Service {
 			// set buttons
 			ComponentName browser = new ComponentName("com.android.browser", "com.android.browser.BrowserActivity");
 			int head_text = Color.parseColor(sp.getString(getString(R.string.key_head_text), getString(R.string.default_head_text)));
+			Bitmap bg_bitmap = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+			Canvas bg_canvas = new Canvas(bg_bitmap);
+			bg_canvas.drawColor(Color.parseColor(sp.getString(getString(R.string.key_head_background), getString(R.string.default_head_background))));
+			views.setImageViewBitmap(R.id.head_background, bg_bitmap);
+			Bitmap bd_bitmap = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+			Canvas bd_canvas = new Canvas(bd_bitmap);
+			bd_canvas.drawColor(Color.parseColor(sp.getString(getString(R.string.key_body_background), getString(R.string.default_body_background))));
+			views.setImageViewBitmap(R.id.body_background, bd_bitmap);
 			views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, (new Intent(Intent.ACTION_VIEW, Uri.parse("http://twitter.com"))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(browser), 0));
 			views.setTextColor(R.id.button_post, head_text);
 			views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, (new Intent(this, UI.class)), 0));
@@ -170,6 +189,9 @@ public class SonetService extends Service {
 							}
 							break;
 						case FACEBOOK:
+							mFacebook = new Facebook();
+							mFacebook.setAccessToken(cursor.getString(token));
+							mFacebook.setAccessExpires(Long.parseLong(cursor.getString(secret)));
 							break;					
 						}
 						cursor.moveToNext();
