@@ -21,47 +21,115 @@ package com.piusvelte.sonet;
 
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-import android.graphics.Color;
 import android.os.Bundle;
+import android.preference.Preference;
 import android.preference.PreferenceActivity;
-import android.widget.CompoundButton;
-import android.widget.RemoteViews;
+import android.preference.PreferenceScreen;
 
-public class Settings extends PreferenceActivity implements OnSharedPreferenceChangeListener, CompoundButton.OnCheckedChangeListener {
+public class Settings extends PreferenceActivity {
+	private SharedPreferences mSharedPreferences;
+	private Preference mHeadBackground;
+	private Preference mHeadText;
+	private Preference mBodyBackground;
+	private Preference mBodyText;
+
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		getPreferenceManager().setSharedPreferencesName(getString(R.string.key_preferences));
 		addPreferencesFromResource(R.xml.preferences);
-	}
-	
-	@Override
-	protected void onResume() {
-		super.onResume();
-		(getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE)).registerOnSharedPreferenceChangeListener(this);
-	}
-	
-	@Override
-	protected void onPause() {
-		super.onPause();
-		(getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE)).unregisterOnSharedPreferenceChangeListener(this);
-	}
-	
-	@Override
-	public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+		PreferenceScreen prefSet = getPreferenceScreen();
+		mHeadBackground = prefSet.findPreference(getString(R.string.key_head_background));
+		mHeadText = prefSet.findPreference(getString(R.string.key_head_text));
+		mBodyBackground = prefSet.findPreference(getString(R.string.key_body_background));
+		mBodyText = prefSet.findPreference(getString(R.string.key_body_text));
+		mSharedPreferences = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
 	}
 
-	@Override
-	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
-			String key) {
-		if (key.equals(getResources().getString(R.string.key_body_background))) {
-//			(new RemoteViews(this.getPackageName(), R.layout.widget)).setTextColor(android.R.id.list, Color.parseColor(sharedPreferences.getString(key, getResources().getString(R.string.default_body_background))));
-		} else if (key.equals(getResources().getString(R.string.key_body_text))) (new RemoteViews(this.getPackageName(), R.layout.widget)).setTextColor(android.R.id.list, Color.parseColor(sharedPreferences.getString(key, getResources().getString(R.string.default_body_text))));
-		else if (key.equals(getResources().getString(R.string.key_head_background))) {
-//			(new RemoteViews(this.getPackageName(), R.layout.widget)).setTextColor(R.id.head, Color.parseColor(sharedPreferences.getString(key, getResources().getString(R.string.default_head_background))));
-		} else if (key.equals(getResources().getString(R.string.key_head_text))) (new RemoteViews(this.getPackageName(), R.layout.widget)).setTextColor(R.id.head, Color.parseColor(sharedPreferences.getString(key, getResources().getString(R.string.default_head_text))));
+	public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen, Preference preference) {
+		if (preference == mHeadBackground) {
+			ColorPickerDialog cp = new ColorPickerDialog(this, mHeadBackgroundColorListener, readHeadBackgroundColor());
+			cp.show();
+		} else if (preference == mHeadText) {
+			ColorPickerDialog cp = new ColorPickerDialog(this, mHeadTextColorListener, readHeadTextColor());
+			cp.show();
+		} else if (preference == mBodyBackground) {
+			ColorPickerDialog cp = new ColorPickerDialog(this, mBodyBackgroundColorListener, readBodyBackgroundColor());
+			cp.show();
+		} else if (preference == mBodyText) {
+			ColorPickerDialog cp = new ColorPickerDialog(this, mBodyTextColorListener, readBodyTextColor());
+			cp.show();
+		}
+		return true;
 	}
+
+	private int readHeadBackgroundColor() {
+		return Integer.parseInt(mSharedPreferences.getString(getString(R.string.key_head_background), getString(R.string.default_head_background)));
+	}
+	ColorPickerDialog.OnColorChangedListener mHeadBackgroundColorListener =
+		new ColorPickerDialog.OnColorChangedListener() {
+		@Override
+		public void colorChanged(int color) {
+			Editor spe = mSharedPreferences.edit();
+			spe.putString(getResources().getString(R.string.key_head_background), Integer.toString(color));
+			spe.commit();
+		}
+
+		@Override
+		public void colorUpdate(int color) {
+		}
+	};
+
+	private int readHeadTextColor() {
+		return Integer.parseInt(mSharedPreferences.getString(getString(R.string.key_head_text), getString(R.string.default_head_text)));
+	}
+	ColorPickerDialog.OnColorChangedListener mHeadTextColorListener =
+		new ColorPickerDialog.OnColorChangedListener() {
+		@Override
+		public void colorChanged(int color) {
+			Editor spe = mSharedPreferences.edit();
+			spe.putString(getResources().getString(R.string.key_head_text), Integer.toString(color));
+			spe.commit();
+		}
+
+		@Override
+		public void colorUpdate(int color) {
+		}
+	};
+
+	private int readBodyBackgroundColor() {
+		return Integer.parseInt(mSharedPreferences.getString(getString(R.string.key_body_background), getString(R.string.default_body_background)));
+	}
+	ColorPickerDialog.OnColorChangedListener mBodyBackgroundColorListener =
+		new ColorPickerDialog.OnColorChangedListener() {
+		@Override
+		public void colorChanged(int color) {
+			Editor spe = mSharedPreferences.edit();
+			spe.putString(getResources().getString(R.string.key_body_background), Integer.toString(color));
+			spe.commit();
+		}
+
+		@Override
+		public void colorUpdate(int color) {
+		}
+	};
+
+	private int readBodyTextColor() {
+		return Integer.parseInt(mSharedPreferences.getString(getString(R.string.key_body_text), getString(R.string.default_body_text)));
+	}
+	ColorPickerDialog.OnColorChangedListener mBodyTextColorListener =
+		new ColorPickerDialog.OnColorChangedListener() {
+		@Override
+		public void colorChanged(int color) {
+			Editor spe = mSharedPreferences.edit();
+			spe.putString(getResources().getString(R.string.key_body_text), Integer.toString(color));
+			spe.commit();
+		}
+
+		@Override
+		public void colorUpdate(int color) {
+		}
+	};
 
 }

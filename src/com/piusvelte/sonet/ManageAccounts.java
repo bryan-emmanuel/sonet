@@ -85,41 +85,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			cursor.moveToFirst();
 			getAuth(cursor.getInt(cursor.getColumnIndex(SERVICE)), id);
 		}
-		/* login prompt
-		LayoutInflater inflater = LayoutInflater.from(this);
-		final View authentication = inflater.inflate(R.layout.authentication, null);
-		final EditText user = (EditText) authentication.findViewById(R.id.username);
-		final EditText pass = (EditText) authentication.findViewById(R.id.password);
-		pass.setTransformationMethod(new PasswordTransformationMethod());
-		final SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-		Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, USERNAME, PASSWORD}, _ID + "=" + account, null, null, null, null);
-		if (cursor.getCount() > 0) {
-			cursor.moveToFirst();
-			user.setText(cursor.getString(cursor.getColumnIndex(USERNAME)));
-			pass.setText(cursor.getString(cursor.getColumnIndex(PASSWORD)));
-		}
-		cursor.close();
-		user.setOnClickListener(this);
-		pass.setOnClickListener(this);
-		(new AlertDialog.Builder(this))
-		.setView(authentication)
-		.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				ContentValues values = new ContentValues();
-				values.put(USERNAME, user.getText().toString());
-				values.put(PASSWORD, pass.getText().toString());
-				db.update(TABLE_ACCOUNTS, values, _ID + "=" + account, null);
-			}
-		})
-		.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.cancel();
-			}
-		})
-		.show();
-		 */
 	}
 
 	@Override

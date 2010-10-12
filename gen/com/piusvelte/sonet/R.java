@@ -11,7 +11,11 @@ public final class R {
     public static final class array {
         public static final int interval_entries=0x7f050000;
         public static final int interval_values=0x7f050001;
+        /** <item>Facebook</item>
+         */
         public static final int service_entries=0x7f050002;
+        /** <item>1</item>
+         */
         public static final int service_values=0x7f050003;
     }
     public static final class attr {
@@ -110,6 +114,7 @@ public final class R {
         public static final int sonet_4x3=0x7f060002;
         public static final int sonet_4x4=0x7f060003;
         public static final int status_detail=0x7f06002a;
+        public static final int title_color_picker=0x7f06002c;
         public static final int user_agent=0x7f060004;
         public static final int username=0x7f060021;
     }

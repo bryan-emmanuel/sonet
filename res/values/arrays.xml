@@ -31,10 +31,10 @@
 	</string-array>
 	<string-array name="service_entries">
 		<item>Twitter</item>
-		<item>Facebook</item>
+		<!--<item>Facebook</item>-->
 	</string-array>
 	<string-array name="service_values">
 		<item>0</item>
-		<item>1</item>
+		<!--<item>1</item>-->
 	</string-array>
 </resources>

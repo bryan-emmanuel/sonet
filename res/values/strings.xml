@@ -35,10 +35,10 @@
     <string name="reply">\u003E</string>
     <string name="delete_account">Delete Account</string>
     <string name="default_interval">3600000</string>
-	<string name="default_head_background">#99000000</string>
-	<string name="default_head_text">#ffffffff</string>
-	<string name="default_body_background">#33000000</string>
-	<string name="default_body_text">#ffffffff</string>
+	<string name="default_head_background">-16777216</string>
+	<string name="default_head_text">-1</string>
+	<string name="default_body_background">-16777216</string>
+	<string name="default_body_text">-1</string>
     <string name="key_preferences">sonet</string>
     <string name="category_update">Update</string>
     <string name="interval">Interval</string>
@@ -63,4 +63,5 @@
     <string name="days">days</string>
     <string name="status_detail">%s, %s %s ago</string>
     <string name="head_spacer">.</string>
+    <string name="title_color_picker">Pick a color</string>
 </resources>

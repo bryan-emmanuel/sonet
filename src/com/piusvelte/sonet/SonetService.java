@@ -32,6 +32,7 @@ import static com.piusvelte.sonet.Sonet.TWITTER_SECRET;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -101,14 +102,14 @@ public class SonetService extends Service {
 			RemoteViews views = new RemoteViews(getPackageName(), R.layout.widget);
 			// set buttons
 			ComponentName browser = new ComponentName("com.android.browser", "com.android.browser.BrowserActivity");
-			int head_text = Color.parseColor(sp.getString(getString(R.string.key_head_text), getString(R.string.default_head_text)));
+			int head_text = Integer.parseInt(sp.getString(getString(R.string.key_head_text), getString(R.string.default_head_text)));
 			Bitmap bg_bitmap = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
 			Canvas bg_canvas = new Canvas(bg_bitmap);
-			bg_canvas.drawColor(Color.parseColor(sp.getString(getString(R.string.key_head_background), getString(R.string.default_head_background))));
+			bg_canvas.drawColor(Integer.parseInt(sp.getString(getString(R.string.key_head_background), getString(R.string.default_head_background))));
 			views.setImageViewBitmap(R.id.head_background, bg_bitmap);
 			Bitmap bd_bitmap = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
 			Canvas bd_canvas = new Canvas(bd_bitmap);
-			bd_canvas.drawColor(Color.parseColor(sp.getString(getString(R.string.key_body_background), getString(R.string.default_body_background))));
+			bd_canvas.drawColor(Integer.parseInt(sp.getString(getString(R.string.key_body_background), getString(R.string.default_body_background))));
 			views.setImageViewBitmap(R.id.body_background, bd_bitmap);
 			views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, (new Intent(Intent.ACTION_VIEW, Uri.parse("http://twitter.com"))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(browser), 0));
 			views.setTextColor(R.id.button_post, head_text);
@@ -138,7 +139,7 @@ public class SonetService extends Service {
 					int service = cursor.getColumnIndex(SERVICE),
 					token = cursor.getColumnIndex(TOKEN),
 					secret = cursor.getColumnIndex(SECRET),
-					body_text = Color.parseColor(sp.getString(getString(R.string.key_body_text), getString(R.string.default_body_text)));
+					body_text = Integer.parseInt(sp.getString(getString(R.string.key_body_text), getString(R.string.default_body_text)));
 					while (!cursor.isAfterLast()) {
 						switch (cursor.getInt(service)) {
 						case TWITTER:
@@ -170,18 +171,17 @@ public class SonetService extends Service {
 						}
 						cursor.moveToNext();
 					}
-					/*
-					 * TODO: sort status_items by created datetime
-					 */
+					// sort statuses
+					Collections.sort(status_items);
 					// list content
 					int count_status = 0, max_status = map_item.length;
 					for  (StatusItem item : status_items) {
 						if (count_status < max_status) {
-							String screenname = item.mFriend;
-							Long elapsed_time = current_time - item.mCreated;
+							String screenname = item.friend;
+							Long elapsed_time = current_time - item.created;
 							int time_unit;
-							views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, (new Intent(Intent.ACTION_VIEW, item.mLink)).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(browser), 0));
-							views.setTextViewText(map_status[count_status], item.mMessage);
+							views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, (new Intent(Intent.ACTION_VIEW, item.link)).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(browser), 0));
+							views.setTextViewText(map_status[count_status], item.message);
 							views.setTextColor(map_status[count_status], body_text);
 							if (elapsed_time > day) {
 								elapsed_time = (long) Math.floor(elapsed_time / day);
@@ -202,7 +202,7 @@ public class SonetService extends Service {
 							views.setTextViewText(map_friend[count_status], String.format(getString(R.string.status_detail), screenname, Long.toString(elapsed_time), getString(time_unit)));
 							views.setTextColor(map_friend[count_status], body_text);
 							try {
-								views.setImageViewBitmap(map_icon[count_status], BitmapFactory.decodeStream(item.mProfile.openConnection().getInputStream()));
+								views.setImageViewBitmap(map_icon[count_status], BitmapFactory.decodeStream(item.profile.openConnection().getInputStream()));
 							} catch (IOException e) {
 								Log.e(TAG,e.getMessage());
 							}										
@@ -229,18 +229,23 @@ public class SonetService extends Service {
 		return null;
 	}
 	
-	private class StatusItem {
-		private Long mCreated;
-		private Uri mLink;
-		private String mFriend;
-		private URL mProfile;
-		private String mMessage;
+	private class StatusItem implements Comparable<StatusItem> {
+		private Long created;
+		private Uri link;
+		private String friend;
+		private URL profile;
+		private String message;
 		StatusItem(Long created, Uri link, String friend, URL profile, String message) {
-			mCreated = created;
-			mLink = link;
-			mFriend = friend;
-			mProfile = profile;
-			mMessage = message;
+			this.created = created;
+			this.link = link;
+			this.friend = friend;
+			this.profile = profile;
+			this.message = message;
+		}
+		@Override
+		public int compareTo(StatusItem si) {
+			// sort descending
+			return created.compareTo(si.created);
 		}
 	}
 	
