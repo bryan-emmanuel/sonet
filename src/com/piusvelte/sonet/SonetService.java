@@ -36,7 +36,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import com.facebook.android.Facebook;
+//import com.facebook.android.Facebook;
 
 import twitter4j.Paging;
 import twitter4j.Status;
@@ -58,7 +58,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Bitmap.Config;
 import android.net.ConnectivityManager;
 import android.net.Uri;
@@ -70,7 +69,7 @@ public class SonetService extends Service {
 	private static final String REFRESH = "com.piusvelte.Intent.REFRESH";
 	private static final int TWITTER = 0;
 	private static final int FACEBOOK = 1;
-	private Facebook mFacebook;
+//	private Facebook mFacebook;
 
 	@Override
 	public void onStart(Intent intent, int startId) {
@@ -169,9 +168,9 @@ public class SonetService extends Service {
 							}
 							break;
 						case FACEBOOK:
-							mFacebook = new Facebook();
-							mFacebook.setAccessToken(cursor.getString(token));
-							mFacebook.setAccessExpires(Long.parseLong(cursor.getString(secret)));
+//							mFacebook = new Facebook();
+//							mFacebook.setAccessToken(cursor.getString(token));
+//							mFacebook.setAccessExpires(Long.parseLong(cursor.getString(secret)));
 							break;					
 						}
 						cursor.moveToNext();

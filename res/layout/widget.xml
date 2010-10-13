@@ -56,14 +56,17 @@
 	</RelativeLayout>
 	<LinearLayout android:id="@+id/body" android:layout_width="fill_parent"
 		android:layout_height="fill_parent" android:layout_below="@id/head"
-		android:orientation="vertical">
+		android:orientation="vertical"
+		android:paddingRight="4dip"
+		android:layout_marginRight="4dip">
 		<LinearLayout android:id="@+id/item0"
 			android:orientation="horizontal" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:paddingRight="4dip"
-			android:paddingBottom="4dip" android:paddingLeft="4dip">
+			android:layout_height="wrap_content"
+			android:paddingTop="4dip"
+			android:paddingBottom="4dip">
 			<ImageView android:id="@+id/icon0" android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:layout_alignParentTop="true"
-				android:layout_alignParentBottom="true" android:layout_marginRight="4dip" />
+				android:layout_alignParentBottom="true"/>
 			<LinearLayout android:orientation="vertical"
 				android:layout_width="fill_parent" android:layout_height="wrap_content">
 				<TextView android:id="@+id/status0" android:layout_width="fill_parent"
@@ -75,8 +78,8 @@
 		</LinearLayout>
 		<LinearLayout android:id="@+id/item1"
 			android:orientation="horizontal" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:paddingRight="4dip"
-			android:paddingBottom="4dip" android:paddingLeft="4dip">
+			android:layout_height="wrap_content"
+			android:paddingBottom="4dip">
 			<ImageView android:id="@+id/icon1" android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:layout_alignParentTop="true"
 				android:layout_alignParentBottom="true" android:layout_marginRight="4dip" />
@@ -91,8 +94,8 @@
 		</LinearLayout>
 		<LinearLayout android:id="@+id/item2"
 			android:orientation="horizontal" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:paddingRight="4dip"
-			android:paddingBottom="4dip" android:paddingLeft="4dip">
+			android:layout_height="wrap_content"
+			android:paddingBottom="4dip">
 			<ImageView android:id="@+id/icon2" android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:layout_alignParentTop="true"
 				android:layout_alignParentBottom="true" android:layout_marginRight="4dip" />
@@ -107,8 +110,8 @@
 		</LinearLayout>
 		<LinearLayout android:id="@+id/item3"
 			android:orientation="horizontal" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:paddingRight="4dip"
-			android:paddingBottom="4dip" android:paddingLeft="4dip">
+			android:layout_height="wrap_content"
+			android:paddingBottom="4dip">
 			<ImageView android:id="@+id/icon3" android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:layout_alignParentTop="true"
 				android:layout_alignParentBottom="true" android:layout_marginRight="4dip" />
@@ -123,8 +126,8 @@
 		</LinearLayout>
 		<LinearLayout android:id="@+id/item4"
 			android:orientation="horizontal" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:paddingRight="4dip"
-			android:paddingBottom="4dip" android:paddingLeft="4dip">
+			android:layout_height="wrap_content"
+			android:paddingBottom="4dip">
 			<ImageView android:id="@+id/icon4" android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:layout_alignParentTop="true"
 				android:layout_alignParentBottom="true" android:layout_marginRight="4dip" />
@@ -139,8 +142,8 @@
 		</LinearLayout>
 		<LinearLayout android:id="@+id/item5"
 			android:orientation="horizontal" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:paddingRight="4dip"
-			android:paddingBottom="4dip" android:paddingLeft="4dip">
+			android:layout_height="wrap_content"
+			android:paddingBottom="4dip">
 			<ImageView android:id="@+id/icon5" android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:layout_alignParentTop="true"
 				android:layout_alignParentBottom="true" android:layout_marginRight="4dip" />

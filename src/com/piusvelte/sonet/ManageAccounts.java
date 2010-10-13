@@ -16,11 +16,11 @@ import static com.piusvelte.sonet.Sonet.TWITTER_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_REQUEST;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_PERMISSIONS;
 
-import com.facebook.android.AsyncFacebookRunner;
-import com.facebook.android.DialogError;
-import com.facebook.android.Facebook;
-import com.facebook.android.FacebookError;
-import com.facebook.android.Facebook.DialogListener;
+//import com.facebook.android.AsyncFacebookRunner;
+//import com.facebook.android.DialogError;
+//import com.facebook.android.Facebook;
+//import com.facebook.android.FacebookError;
+//import com.facebook.android.Facebook.DialogListener;
 
 import oauth.signpost.OAuthProvider;
 import oauth.signpost.basic.DefaultOAuthProvider;
@@ -63,7 +63,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	private static final int TWITTER = 0;
 	private static final int FACEBOOK = 1;
 	private int mService = 0;
-	private Facebook mFacebook;
+//	private Facebook mFacebook;
 
 	private Uri CALLBACK_URL = Uri.parse("sonet://oauth");
 
@@ -201,8 +201,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			}
 			break;
 		case FACEBOOK:
-	       	mFacebook = new Facebook();
-            mFacebook.authorize(this, FACEBOOK_KEY, FACEBOOK_PERMISSIONS, new LoginDialogListener());
+//	       	mFacebook = new Facebook();
+//            mFacebook.authorize(this, FACEBOOK_KEY, FACEBOOK_PERMISSIONS, new LoginDialogListener());
 			break;
 		}
 
@@ -216,25 +216,25 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		db.close();
 	}
 	
-    private final class LoginDialogListener implements DialogListener {
-        public void onComplete(Bundle values) {
-			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-			ContentValues contentvalues = new ContentValues();
-			contentvalues.put(USERNAME, "facebook");
-			contentvalues.put(TOKEN, mFacebook.getAccessToken());
-			contentvalues.put(SECRET, Long.toString(mFacebook.getAccessExpires()));
-			contentvalues.put(SERVICE, mService);
-			db.insert(TABLE_ACCOUNTS, TOKEN, contentvalues);
-        }
-
-        public void onFacebookError(FacebookError error) {
-        }
-        
-        public void onError(DialogError error) {
-        }
-
-        public void onCancel() {
-        }
-    }
+//    private final class LoginDialogListener implements DialogListener {
+//        public void onComplete(Bundle values) {
+//			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+//			ContentValues contentvalues = new ContentValues();
+//			contentvalues.put(USERNAME, "facebook");
+//			contentvalues.put(TOKEN, mFacebook.getAccessToken());
+//			contentvalues.put(SECRET, Long.toString(mFacebook.getAccessExpires()));
+//			contentvalues.put(SERVICE, mService);
+//			db.insert(TABLE_ACCOUNTS, TOKEN, contentvalues);
+//        }
+//
+//        public void onFacebookError(FacebookError error) {
+//        }
+//        
+//        public void onError(DialogError error) {
+//        }
+//
+//        public void onCancel() {
+//        }
+//    }
 
 }
