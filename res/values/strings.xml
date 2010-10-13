@@ -43,14 +43,13 @@
     <string name="category_update">Update</string>
     <string name="interval">Interval</string>
     <string name="key_interval">interval</string>
-    <string name="category_colors">Colors</string>
-    <string name="head_background">Head Background</string>
+    <string name="head_background">Buttons Background Color</string>
     <string name="key_head_background">headBackground</string>
-    <string name="head_text">Head Text</string>
+    <string name="head_text">Buttons Text Color</string>
     <string name="key_head_text">headText</string>
-    <string name="body_background">Body Background</string>
+    <string name="body_background">Messages Background Color</string>
     <string name="key_body_background">bodyBackground</string>
-    <string name="body_text">Body Text</string>
+    <string name="body_text">Messages Text Color</string>
     <string name="key_body_text">bodyText</string>
     <string name="username">username</string>
     <string name="password">password</string>
@@ -64,4 +63,8 @@
     <string name="status_detail">%s, %s %s ago</string>
     <string name="head_spacer">.</string>
     <string name="title_color_picker">Pick a color</string>
+    <string name="category_buttons">Buttons</string>
+    <string name="key_display_buttons">displayButtons</string>
+    <string name="display_buttons">Display Buttons</string>
+    <string name="category_messages">Messages</string>
 </resources>

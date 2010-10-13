@@ -98,26 +98,31 @@ public class SonetService extends Service {
 			ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 			SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
 			SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
-			// Build an update that holds the updated widget contents
-			RemoteViews views = new RemoteViews(getPackageName(), R.layout.widget);
-			// set buttons
 			ComponentName browser = new ComponentName("com.android.browser", "com.android.browser.BrowserActivity");
-			int head_text = Integer.parseInt(sp.getString(getString(R.string.key_head_text), getString(R.string.default_head_text)));
-			Bitmap bg_bitmap = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-			Canvas bg_canvas = new Canvas(bg_bitmap);
-			bg_canvas.drawColor(Integer.parseInt(sp.getString(getString(R.string.key_head_background), getString(R.string.default_head_background))));
-			views.setImageViewBitmap(R.id.head_background, bg_bitmap);
+			RemoteViews views;
+			if (sp.getBoolean(getString(R.string.key_display_buttons), true)) {
+				// display the buttons, setting style on onclick
+				views = new RemoteViews(getPackageName(), R.layout.widget);
+				// set buttons
+				int head_text = Integer.parseInt(sp.getString(getString(R.string.key_head_text), getString(R.string.default_head_text))),
+				head_background = Integer.parseInt(sp.getString(getString(R.string.key_head_background), getString(R.string.default_head_background)));
+				Bitmap bg_bitmap = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+				Canvas bg_canvas = new Canvas(bg_bitmap);
+				bg_canvas.drawColor(head_background);
+				views.setImageViewBitmap(R.id.head_background, bg_bitmap);
+				views.setTextColor(R.id.head_spacer, head_background);
+				views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, (new Intent(Intent.ACTION_VIEW, Uri.parse("http://twitter.com"))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(browser), 0));
+				views.setTextColor(R.id.button_post, head_text);
+				views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, (new Intent(this, UI.class)), 0));
+				views.setTextColor(R.id.button_post, head_text);
+				views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(this, 0, (new Intent(this, SonetService.class)), 0));
+				views.setTextColor(R.id.button_post, head_text);
+			} else views = new RemoteViews(getPackageName(), R.layout.widget_nobuttons);
+			// set messages background
 			Bitmap bd_bitmap = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
 			Canvas bd_canvas = new Canvas(bd_bitmap);
 			bd_canvas.drawColor(Integer.parseInt(sp.getString(getString(R.string.key_body_background), getString(R.string.default_body_background))));
 			views.setImageViewBitmap(R.id.body_background, bd_bitmap);
-			views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, (new Intent(Intent.ACTION_VIEW, Uri.parse("http://twitter.com"))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(browser), 0));
-			views.setTextColor(R.id.button_post, head_text);
-			views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, (new Intent(this, UI.class)), 0));
-			views.setTextColor(R.id.button_post, head_text);
-			views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(this, 0, (new Intent(this, SonetService.class)), 0));
-			views.setTextColor(R.id.button_post, head_text);
-			// set head styles
 			if (cm.getBackgroundDataSetting() && (cm.getActiveNetworkInfo() != null) && cm.getActiveNetworkInfo().isConnected()) {
 				// query accounts
 				Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, USERNAME, TOKEN, SECRET, SERVICE}, null, null, null, null, null);
@@ -228,7 +233,7 @@ public class SonetService extends Service {
 		// We don't need to bind to this service
 		return null;
 	}
-	
+
 	private class StatusItem implements Comparable<StatusItem> {
 		private Long created;
 		private Uri link;
@@ -248,5 +253,5 @@ public class SonetService extends Service {
 			return created.compareTo(si.created);
 		}
 	}
-	
+
 }

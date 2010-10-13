@@ -25,9 +25,11 @@
 		android:title="@string/interval"
 		android:entries="@array/interval_entries" android:entryValues="@array/interval_values"
 		android:defaultValue="@string/default_interval" />
-  <PreferenceCategory android:title="@string/category_colors" />
-  <Preference android:key="@string/key_head_background" android:title="@string/head_background" android:defaultValue="@string/default_head_background" />
-  <Preference android:key="@string/key_head_text" android:title="@string/head_text" android:defaultValue="@string/default_head_text" />
+  <PreferenceCategory android:title="@string/category_buttons" />
+  <CheckBoxPreference android:key="@string/key_display_buttons" android:title="@string/display_buttons" android:defaultValue="true" />
+  <Preference android:key="@string/key_head_background" android:title="@string/head_background" android:defaultValue="@string/default_head_background" android:dependency="@string/key_display_buttons" />
+  <Preference android:key="@string/key_head_text" android:title="@string/head_text" android:defaultValue="@string/default_head_text" android:dependency="@string/key_display_buttons" />
+  <PreferenceCategory android:title="@string/category_messages" />
   <Preference android:key="@string/key_body_background" android:title="@string/body_background" android:defaultValue="@string/default_body_background" />
   <Preference android:key="@string/key_body_text" android:title="@string/body_text" android:defaultValue="@string/default_body_text" />
 </PreferenceScreen>
