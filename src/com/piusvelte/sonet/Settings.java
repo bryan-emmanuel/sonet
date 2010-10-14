@@ -32,6 +32,7 @@ public class Settings extends PreferenceActivity {
 	private Preference mHeadText;
 	private Preference mBodyBackground;
 	private Preference mBodyText;
+	private Preference mFriendText;
 
 
 	@Override
@@ -44,6 +45,7 @@ public class Settings extends PreferenceActivity {
 		mHeadText = prefSet.findPreference(getString(R.string.key_head_text));
 		mBodyBackground = prefSet.findPreference(getString(R.string.key_body_background));
 		mBodyText = prefSet.findPreference(getString(R.string.key_body_text));
+		mFriendText = prefSet.findPreference(getString(R.string.key_friend_text));
 		mSharedPreferences = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
 	}
 
@@ -59,6 +61,9 @@ public class Settings extends PreferenceActivity {
 			cp.show();
 		} else if (preference == mBodyText) {
 			ColorPickerDialog cp = new ColorPickerDialog(this, mBodyTextColorListener, readBodyTextColor());
+			cp.show();
+		} else if (preference == mFriendText) {
+			ColorPickerDialog cp = new ColorPickerDialog(this, mFriendTextColorListener, readFriendTextColor());
 			cp.show();
 		}
 		return true;
@@ -124,6 +129,23 @@ public class Settings extends PreferenceActivity {
 		public void colorChanged(int color) {
 			Editor spe = mSharedPreferences.edit();
 			spe.putString(getResources().getString(R.string.key_body_text), Integer.toString(color));
+			spe.commit();
+		}
+
+		@Override
+		public void colorUpdate(int color) {
+		}
+	};
+
+	private int readFriendTextColor() {
+		return Integer.parseInt(mSharedPreferences.getString(getString(R.string.key_friend_text), getString(R.string.default_friend_text)));
+	}
+	ColorPickerDialog.OnColorChangedListener mFriendTextColorListener =
+		new ColorPickerDialog.OnColorChangedListener() {
+		@Override
+		public void colorChanged(int color) {
+			Editor spe = mSharedPreferences.edit();
+			spe.putString(getResources().getString(R.string.key_friend_text), Integer.toString(color));
 			spe.commit();
 		}
 

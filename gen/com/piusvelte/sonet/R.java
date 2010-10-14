@@ -11,17 +11,14 @@ public final class R {
     public static final class array {
         public static final int interval_entries=0x7f050000;
         public static final int interval_values=0x7f050001;
-        /** <item>Facebook</item>
-         */
         public static final int service_entries=0x7f050002;
-        /** <item>1</item>
-         */
         public static final int service_values=0x7f050003;
     }
     public static final class attr {
     }
     public static final class drawable {
-        public static final int icon=0x7f020000;
+        public static final int facebook_icon=0x7f020000;
+        public static final int icon=0x7f020001;
     }
     public static final class id {
         public static final int account_username=0x7f070001;
@@ -88,11 +85,13 @@ public final class R {
         public static final int days=0x7f060028;
         public static final int default_body_background=0x7f060012;
         public static final int default_body_text=0x7f060013;
+        public static final int default_friend_text=0x7f060031;
         public static final int default_head_background=0x7f060010;
         public static final int default_head_text=0x7f060011;
         public static final int default_interval=0x7f06000f;
         public static final int delete_account=0x7f06000e;
         public static final int display_buttons=0x7f06002e;
+        public static final int friend_text=0x7f060032;
         public static final int head_background=0x7f060018;
         public static final int head_spacer=0x7f06002a;
         public static final int head_text=0x7f06001a;
@@ -101,6 +100,7 @@ public final class R {
         public static final int key_body_background=0x7f06001d;
         public static final int key_body_text=0x7f06001f;
         public static final int key_display_buttons=0x7f06002d;
+        public static final int key_friend_text=0x7f060030;
         public static final int key_head_background=0x7f060019;
         public static final int key_head_text=0x7f06001b;
         public static final int key_interval=0x7f060017;

@@ -25,6 +25,7 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.SECRET;
 import static com.piusvelte.sonet.SonetDatabaseHelper.SERVICE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TOKEN;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
+import static com.piusvelte.sonet.SonetDatabaseHelper.EXPIRY;
 import static com.piusvelte.sonet.Sonet.TAG;
 import static com.piusvelte.sonet.Sonet.TWITTER_KEY;
 import static com.piusvelte.sonet.Sonet.TWITTER_SECRET;
@@ -36,7 +37,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-//import com.facebook.android.Facebook;
+import com.facebook.android.Facebook;
 
 import twitter4j.Paging;
 import twitter4j.Status;
@@ -69,7 +70,7 @@ public class SonetService extends Service {
 	private static final String REFRESH = "com.piusvelte.Intent.REFRESH";
 	private static final int TWITTER = 0;
 	private static final int FACEBOOK = 1;
-//	private Facebook mFacebook;
+	private Facebook mFacebook;
 
 	@Override
 	public void onStart(Intent intent, int startId) {
@@ -124,7 +125,7 @@ public class SonetService extends Service {
 			views.setImageViewBitmap(R.id.body_background, bd_bitmap);
 			if (cm.getBackgroundDataSetting() && (cm.getActiveNetworkInfo() != null) && cm.getActiveNetworkInfo().isConnected()) {
 				// query accounts
-				Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, USERNAME, TOKEN, SECRET, SERVICE}, null, null, null, null, null);
+				Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, USERNAME, TOKEN, SECRET, SERVICE, EXPIRY}, null, null, null, null, null);
 				if (cursor.getCount() > 0) {
 					/* get statuses for all accounts
 					 * then sort them by datetime, descending
@@ -143,7 +144,9 @@ public class SonetService extends Service {
 					int service = cursor.getColumnIndex(SERVICE),
 					token = cursor.getColumnIndex(TOKEN),
 					secret = cursor.getColumnIndex(SECRET),
-					body_text = Integer.parseInt(sp.getString(getString(R.string.key_body_text), getString(R.string.default_body_text)));
+					expiry = cursor.getColumnIndex(EXPIRY),
+					body_text = Integer.parseInt(sp.getString(getString(R.string.key_body_text), getString(R.string.default_body_text))),
+					friend_text = Integer.parseInt(sp.getString(getString(R.string.key_friend_text), getString(R.string.default_friend_text)));
 					while (!cursor.isAfterLast()) {
 						switch (cursor.getInt(service)) {
 						case TWITTER:
@@ -168,9 +171,9 @@ public class SonetService extends Service {
 							}
 							break;
 						case FACEBOOK:
-//							mFacebook = new Facebook();
-//							mFacebook.setAccessToken(cursor.getString(token));
-//							mFacebook.setAccessExpires(Long.parseLong(cursor.getString(secret)));
+							mFacebook = new Facebook();
+							mFacebook.setAccessToken(cursor.getString(token));
+							mFacebook.setAccessExpires(Long.parseLong(cursor.getString(expiry)));
 							break;					
 						}
 						cursor.moveToNext();
@@ -204,7 +207,7 @@ public class SonetService extends Service {
 								time_unit = R.string.seconds;
 							}
 							views.setTextViewText(map_friend[count_status], String.format(getString(R.string.status_detail), screenname, Long.toString(elapsed_time), getString(time_unit)));
-							views.setTextColor(map_friend[count_status], body_text);
+							views.setTextColor(map_friend[count_status], friend_text);
 							try {
 								views.setImageViewBitmap(map_icon[count_status], BitmapFactory.decodeStream(item.profile.openConnection().getInputStream()));
 							} catch (IOException e) {

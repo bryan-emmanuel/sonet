@@ -7,6 +7,7 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.SECRET;
 import static com.piusvelte.sonet.SonetDatabaseHelper.SERVICE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TOKEN;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
+import static com.piusvelte.sonet.SonetDatabaseHelper.EXPIRY;
 import static com.piusvelte.sonet.Sonet.TWITTER_KEY;
 import static com.piusvelte.sonet.Sonet.TWITTER_SECRET;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_KEY;
@@ -16,7 +17,11 @@ import static com.piusvelte.sonet.Sonet.TWITTER_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_REQUEST;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_PERMISSIONS;
 
-//import com.facebook.android.AsyncFacebookRunner;
+import com.facebook.android.AsyncFacebookRunner;
+import com.facebook.android.DialogError;
+import com.facebook.android.Facebook;
+import com.facebook.android.FacebookError;
+import com.facebook.android.Facebook.DialogListener;
 //import com.facebook.android.DialogError;
 //import com.facebook.android.Facebook;
 //import com.facebook.android.FacebookError;
@@ -56,14 +61,14 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class ManageAccounts extends ListActivity implements OnClickListener, android.content.DialogInterface.OnClickListener {
+public class ManageAccounts extends ListActivity implements OnClickListener, android.content.DialogInterface.OnClickListener, DialogListener {
 	private static final int DELETE_ID = Menu.FIRST;
 	private SonetDatabaseHelper mSonetDatabaseHelper;
 	private static final long NO_ACCOUNT = -1;
 	private static final int TWITTER = 0;
 	private static final int FACEBOOK = 1;
 	private int mService = 0;
-//	private Facebook mFacebook;
+	private Facebook mFacebook;
 
 	private Uri CALLBACK_URL = Uri.parse("sonet://oauth");
 
@@ -201,8 +206,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			}
 			break;
 		case FACEBOOK:
-//	       	mFacebook = new Facebook();
-//            mFacebook.authorize(this, FACEBOOK_KEY, FACEBOOK_PERMISSIONS, new LoginDialogListener());
+	       	mFacebook = new Facebook();
+            mFacebook.authorize(this, FACEBOOK_KEY, FACEBOOK_PERMISSIONS, this);
 			break;
 		}
 
@@ -215,26 +220,24 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		setListAdapter(new SimpleCursorAdapter(this, R.layout.accounts_row, cursor, new String[] {USERNAME}, new int[] {R.id.account_username}));
 		db.close();
 	}
-	
-//    private final class LoginDialogListener implements DialogListener {
-//        public void onComplete(Bundle values) {
-//			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-//			ContentValues contentvalues = new ContentValues();
-//			contentvalues.put(USERNAME, "facebook");
-//			contentvalues.put(TOKEN, mFacebook.getAccessToken());
-//			contentvalues.put(SECRET, Long.toString(mFacebook.getAccessExpires()));
-//			contentvalues.put(SERVICE, mService);
-//			db.insert(TABLE_ACCOUNTS, TOKEN, contentvalues);
-//        }
-//
-//        public void onFacebookError(FacebookError error) {
-//        }
-//        
-//        public void onError(DialogError error) {
-//        }
-//
-//        public void onCancel() {
-//        }
-//    }
+
+	public void onComplete(Bundle values) {
+		SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+		ContentValues contentvalues = new ContentValues();
+		contentvalues.put(USERNAME, "facebook");
+		contentvalues.put(TOKEN, mFacebook.getAccessToken());
+		contentvalues.put(EXPIRY, Long.toString(mFacebook.getAccessExpires()));
+		contentvalues.put(SERVICE, mService);
+		db.insert(TABLE_ACCOUNTS, TOKEN, contentvalues);
+	}
+
+	public void onFacebookError(FacebookError error) {
+	}
+
+	public void onError(DialogError error) {
+	}
+
+	public void onCancel() {
+	}
 
 }

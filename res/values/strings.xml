@@ -67,4 +67,7 @@
     <string name="key_display_buttons">displayButtons</string>
     <string name="display_buttons">Display Buttons</string>
     <string name="category_messages">Messages</string>
+    <string name="key_friend_text">friendText</string>
+    <string name="default_friend_text">-1</string>
+    <string name="friend_text">Name and Time Color</string>
 </resources>

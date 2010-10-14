@@ -19,8 +19,8 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.piusvelte.sonet" android:versionCode="23"
-	android:versionName="0.2.3" android:installLocation="auto">
+	package="com.piusvelte.sonet" android:versionCode="24"
+	android:versionName="0.2.4" android:installLocation="auto">
 	<application android:icon="@drawable/icon" android:label="@string/app_name">
 		<activity android:name=".UI" android:label="@string/app_name">
 			<intent-filter>
