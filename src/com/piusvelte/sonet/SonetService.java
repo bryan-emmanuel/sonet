@@ -92,7 +92,7 @@ public class SonetService extends Service {
 		int[] sonetWidget_4x2 = manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x2.class));
 		int[] sonetWidget_4x3 = manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x3.class));
 		int[] sonetWidget_4x4 = manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x4.class));
-		int max_widget_items = sonetWidget_4x4.length > 0 ? 6 : sonetWidget_4x3.length > 0 ? 5 : sonetWidget_4x2.length > 0 ? 3 : 0;
+		int max_widget_items = sonetWidget_4x4.length > 0 ? 7 : sonetWidget_4x3.length > 0 ? 5 : sonetWidget_4x2.length > 0 ? 3 : 0;
 		if (max_widget_items > 0) {
 			SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
 			ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
@@ -130,10 +130,10 @@ public class SonetService extends Service {
 					/* get statuses for all accounts
 					 * then sort them by datetime, descending
 					 */
-					int[] map_item = {R.id.item0, R.id.icon1, R.id.item2, R.id.item3, R.id.item4, R.id.item5},
-					map_icon = {R.id.icon0, R.id.icon1, R.id.icon2, R.id.icon3, R.id.icon4, R.id.icon5},
-					map_status = {R.id.status0, R.id.status1, R.id.status2, R.id.status3, R.id.status4, R.id.status5},
-					map_friend = {R.id.friend0, R.id.friend1, R.id.friend2, R.id.friend3, R.id.friend4, R.id.friend5};
+					int[] map_item = {R.id.item0, R.id.icon1, R.id.item2, R.id.item3, R.id.item4, R.id.item5, R.id.item6},
+					map_icon = {R.id.icon0, R.id.icon1, R.id.icon2, R.id.icon3, R.id.icon4, R.id.icon5, R.id.icon6},
+					map_status = {R.id.status0, R.id.status1, R.id.status2, R.id.status3, R.id.status4, R.id.status5, R.id.status6},
+					map_friend = {R.id.friend0, R.id.friend1, R.id.friend2, R.id.friend3, R.id.friend4, R.id.friend5, R.id.friend6};
 					Long current_time = (new Date()).getTime();
 					int day = 86400000;
 					int hour = 3600000;
@@ -252,7 +252,7 @@ public class SonetService extends Service {
 		@Override
 		public int compareTo(StatusItem si) {
 			// sort descending
-			return created.compareTo(si.created);
+			return si.created.compareTo(created);
 		}
 	}
 
