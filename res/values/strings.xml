@@ -64,6 +64,8 @@
     <string name="category_messages">Messages</string>
     <string name="key_friend_text">friendText</string>
     <string name="default_friend_text">-1</string>
-    <string name="friend_text">Name and Time Color</string>
-    <string name="Yesterday">Yesterday, %s</string>
+    <string name="friend_text">Name Color</string>
+    <string name="key_created_text">createdText</string>
+    <string name="default_created_text">-1</string>
+    <string name="created_text">Time Color</string>
 </resources>

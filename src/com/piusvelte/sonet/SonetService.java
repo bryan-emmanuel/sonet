@@ -130,15 +130,12 @@ public class SonetService extends Service {
 					/* get statuses for all accounts
 					 * then sort them by datetime, descending
 					 */
-					int[] map_item = {R.id.item0, R.id.icon1, R.id.item2, R.id.item3, R.id.item4, R.id.item5, R.id.item6},
-					map_icon = {R.id.icon0, R.id.icon1, R.id.icon2, R.id.icon3, R.id.icon4, R.id.icon5, R.id.icon6},
-					map_status = {R.id.status0, R.id.status1, R.id.status2, R.id.status3, R.id.status4, R.id.status5, R.id.status6},
-					map_friend = {R.id.friend0, R.id.friend1, R.id.friend2, R.id.friend3, R.id.friend4, R.id.friend5, R.id.friend6};
-					Long current_time = (new Date()).getTime();
-					int day = 86400000;
-					int hour = 3600000;
-					int minute = 60000;
-					int second = 1000;
+					int[] map_item = {R.id.item0, R.id.item1, R.id.item2, R.id.item3, R.id.item4, R.id.item5, R.id.item6},
+					map_profile = {R.id.profile0, R.id.profile1, R.id.profile2, R.id.profile3, R.id.profile4, R.id.profile5, R.id.profile6},
+					map_message = {R.id.message0, R.id.message1, R.id.message2, R.id.message3, R.id.message4, R.id.message5, R.id.message6},
+					map_screenname = {R.id.screenname0, R.id.screenname1, R.id.screenname2, R.id.screenname3, R.id.screenname4, R.id.screenname5, R.id.screenname6},
+					map_created = {R.id.created0, R.id.created1, R.id.created2, R.id.created3, R.id.created4, R.id.created5, R.id.created6};
+					Date now = new Date();
 					List<StatusItem> status_items = new ArrayList<StatusItem>();
 					cursor.moveToFirst();
 					int service = cursor.getColumnIndex(SERVICE),
@@ -146,7 +143,8 @@ public class SonetService extends Service {
 					secret = cursor.getColumnIndex(SECRET),
 					expiry = cursor.getColumnIndex(EXPIRY),
 					body_text = Integer.parseInt(sp.getString(getString(R.string.key_body_text), getString(R.string.default_body_text))),
-					friend_text = Integer.parseInt(sp.getString(getString(R.string.key_friend_text), getString(R.string.default_friend_text)));
+					friend_text = Integer.parseInt(sp.getString(getString(R.string.key_friend_text), getString(R.string.default_friend_text))),
+					created_text = Integer.parseInt(sp.getString(getString(R.string.key_created_text), getString(R.string.default_created_text)));
 					while (!cursor.isAfterLast()) {
 						switch (cursor.getInt(service)) {
 						case TWITTER:
@@ -160,7 +158,7 @@ public class SonetService extends Service {
 								List<Status> statuses = twitter.getFriendsTimeline(new Paging(1, max_widget_items));
 								for (Status status : statuses) {
 									String screenname = status.getUser().getScreenName();
-									status_items.add(new StatusItem(status.getCreatedAt().getTime(),
+									status_items.add(new StatusItem(status.getCreatedAt(),
 											Uri.parse(String.format(status_url, screenname, Long.toString(status.getId()))),
 											screenname,
 											status.getUser().getProfileImageURL(),
@@ -184,32 +182,18 @@ public class SonetService extends Service {
 					int count_status = 0, max_status = map_item.length;
 					for  (StatusItem item : status_items) {
 						if (count_status < max_status) {
-							String screenname = item.friend;
-							Long elapsed_time = current_time - item.created;
-							int time_unit;
 							views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, (new Intent(Intent.ACTION_VIEW, item.link)).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(browser), 0));
-							views.setTextViewText(map_status[count_status], item.message);
-							views.setTextColor(map_status[count_status], body_text);
-							if (elapsed_time > day) {
-								elapsed_time = (long) Math.floor(elapsed_time / day);
-								time_unit = R.string.days;
-							} else if (elapsed_time > hour) {
-								elapsed_time = (long) Math.floor(elapsed_time / hour);
-								time_unit = R.string.hours;
-							} else if (elapsed_time > minute) {
-								elapsed_time = (long) Math.floor(elapsed_time / minute);
-								time_unit = R.string.minutes;
-							} else if (elapsed_time > second){
-								elapsed_time = (long) Math.floor(elapsed_time / second);
-								time_unit = R.string.seconds;
-							} else {
-								elapsed_time = (long) 0;
-								time_unit = R.string.seconds;
-							}
-							views.setTextViewText(map_friend[count_status], String.format(getString(R.string.status_detail), screenname, Long.toString(elapsed_time), getString(time_unit)));
-							views.setTextColor(map_friend[count_status], friend_text);
+							views.setTextViewText(map_message[count_status], item.message);
+							views.setTextColor(map_message[count_status], body_text);
+							views.setTextViewText(map_screenname[count_status], item.friend);
+							views.setTextColor(map_screenname[count_status], friend_text);
+							views.setTextViewText(map_created[count_status],
+									(item.created.getDay() == now.getDay() ?
+											(Integer.toString(item.created.getHours()) + ":" + Integer.toString(item.created.getMinutes()))
+											: (getResources().getStringArray(R.array.months)[item.created.getMonth()] + Integer.toString(item.created.getDay()))));
+							views.setTextColor(map_created[count_status], created_text);
 							try {
-								views.setImageViewBitmap(map_icon[count_status], BitmapFactory.decodeStream(item.profile.openConnection().getInputStream()));
+								views.setImageViewBitmap(map_profile[count_status], BitmapFactory.decodeStream(item.profile.openConnection().getInputStream()));
 							} catch (IOException e) {
 								Log.e(TAG,e.getMessage());
 							}										
@@ -237,22 +221,22 @@ public class SonetService extends Service {
 	}
 
 	private class StatusItem implements Comparable<StatusItem> {
-		private Long created;
+		private Date created;
 		private Uri link;
 		private String friend;
 		private URL profile;
 		private String message;
-		StatusItem(Long created, Uri link, String friend, URL profile, String message) {
+		StatusItem(Date created, Uri link, String friend, URL profile, String message) {
 			this.created = created;
 			this.link = link;
 			this.friend = friend;
 			this.profile = profile;
 			this.message = message;
 		}
-		@Override
+
 		public int compareTo(StatusItem si) {
 			// sort descending
-			return si.created.compareTo(created);
+			return ((Long)si.created.getTime()).compareTo(created.getTime());
 		}
 	}
 

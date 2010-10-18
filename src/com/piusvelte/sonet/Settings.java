@@ -33,6 +33,7 @@ public class Settings extends PreferenceActivity {
 	private Preference mBodyBackground;
 	private Preference mBodyText;
 	private Preference mFriendText;
+	private Preference mCreatedText;
 
 
 	@Override
@@ -46,6 +47,7 @@ public class Settings extends PreferenceActivity {
 		mBodyBackground = prefSet.findPreference(getString(R.string.key_body_background));
 		mBodyText = prefSet.findPreference(getString(R.string.key_body_text));
 		mFriendText = prefSet.findPreference(getString(R.string.key_friend_text));
+		mCreatedText = prefSet.findPreference(getString(R.string.key_created_text));
 		mSharedPreferences = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
 	}
 
@@ -65,6 +67,9 @@ public class Settings extends PreferenceActivity {
 		} else if (preference == mFriendText) {
 			ColorPickerDialog cp = new ColorPickerDialog(this, mFriendTextColorListener, readFriendTextColor());
 			cp.show();
+		} else if (preference == mCreatedText) {
+			ColorPickerDialog cp = new ColorPickerDialog(this, mCreatedTextColorListener, readCreatedTextColor());
+			cp.show();
 		}
 		return true;
 	}
@@ -74,14 +79,13 @@ public class Settings extends PreferenceActivity {
 	}
 	ColorPickerDialog.OnColorChangedListener mHeadBackgroundColorListener =
 		new ColorPickerDialog.OnColorChangedListener() {
-		@Override
+
 		public void colorChanged(int color) {
 			Editor spe = mSharedPreferences.edit();
 			spe.putString(getResources().getString(R.string.key_head_background), Integer.toString(color));
 			spe.commit();
 		}
 
-		@Override
 		public void colorUpdate(int color) {
 		}
 	};
@@ -91,14 +95,13 @@ public class Settings extends PreferenceActivity {
 	}
 	ColorPickerDialog.OnColorChangedListener mHeadTextColorListener =
 		new ColorPickerDialog.OnColorChangedListener() {
-		@Override
+
 		public void colorChanged(int color) {
 			Editor spe = mSharedPreferences.edit();
 			spe.putString(getResources().getString(R.string.key_head_text), Integer.toString(color));
 			spe.commit();
 		}
 
-		@Override
 		public void colorUpdate(int color) {
 		}
 	};
@@ -108,14 +111,13 @@ public class Settings extends PreferenceActivity {
 	}
 	ColorPickerDialog.OnColorChangedListener mBodyBackgroundColorListener =
 		new ColorPickerDialog.OnColorChangedListener() {
-		@Override
+
 		public void colorChanged(int color) {
 			Editor spe = mSharedPreferences.edit();
 			spe.putString(getResources().getString(R.string.key_body_background), Integer.toString(color));
 			spe.commit();
 		}
 
-		@Override
 		public void colorUpdate(int color) {
 		}
 	};
@@ -125,14 +127,13 @@ public class Settings extends PreferenceActivity {
 	}
 	ColorPickerDialog.OnColorChangedListener mBodyTextColorListener =
 		new ColorPickerDialog.OnColorChangedListener() {
-		@Override
+
 		public void colorChanged(int color) {
 			Editor spe = mSharedPreferences.edit();
 			spe.putString(getResources().getString(R.string.key_body_text), Integer.toString(color));
 			spe.commit();
 		}
 
-		@Override
 		public void colorUpdate(int color) {
 		}
 	};
@@ -142,14 +143,29 @@ public class Settings extends PreferenceActivity {
 	}
 	ColorPickerDialog.OnColorChangedListener mFriendTextColorListener =
 		new ColorPickerDialog.OnColorChangedListener() {
-		@Override
+
 		public void colorChanged(int color) {
 			Editor spe = mSharedPreferences.edit();
 			spe.putString(getResources().getString(R.string.key_friend_text), Integer.toString(color));
 			spe.commit();
 		}
 
-		@Override
+		public void colorUpdate(int color) {
+		}
+	};
+
+	private int readCreatedTextColor() {
+		return Integer.parseInt(mSharedPreferences.getString(getString(R.string.key_created_text), getString(R.string.default_created_text)));
+	}
+	ColorPickerDialog.OnColorChangedListener mCreatedTextColorListener =
+		new ColorPickerDialog.OnColorChangedListener() {
+
+		public void colorChanged(int color) {
+			Editor spe = mSharedPreferences.edit();
+			spe.putString(getResources().getString(R.string.key_created_text), Integer.toString(color));
+			spe.commit();
+		}
+
 		public void colorUpdate(int color) {
 		}
 	};

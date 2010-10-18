@@ -22,6 +22,10 @@ import com.facebook.android.DialogError;
 import com.facebook.android.Facebook;
 import com.facebook.android.FacebookError;
 import com.facebook.android.Facebook.DialogListener;
+//import com.facebook.android.DialogError;
+//import com.facebook.android.Facebook;
+//import com.facebook.android.FacebookError;
+//import com.facebook.android.Facebook.DialogListener;
 
 import oauth.signpost.OAuthProvider;
 import oauth.signpost.basic.DefaultOAuthProvider;
@@ -103,7 +107,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		return super.onContextItemSelected(item);
 	}
 
-	@Override
 	public void onClick(View v) {
 		switch (v.getId()) {
 		case R.id.button_add_account:
@@ -123,12 +126,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			((EditText) v).setText("");
 			break;
 		}
-	}
-
-	@Override
-	public void onClick(DialogInterface dialog, int which) {
-		getAuth(which, NO_ACCOUNT);
-		dialog.cancel();
 	}
 	
 	@Override
@@ -234,6 +231,11 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	}
 
 	public void onCancel() {
+	}
+
+	public void onClick(DialogInterface dialog, int which) {
+		getAuth(which, NO_ACCOUNT);
+		dialog.cancel();
 	}
 
 }

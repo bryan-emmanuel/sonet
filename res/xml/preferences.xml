@@ -33,4 +33,5 @@
   <Preference android:key="@string/key_body_background" android:title="@string/body_background" android:defaultValue="@string/default_body_background" />
   <Preference android:key="@string/key_body_text" android:title="@string/body_text" android:defaultValue="@string/default_body_text" />
   <Preference android:key="@string/key_friend_text" android:title="@string/friend_text" android:defaultValue="@string/default_friend_text" />
+  <Preference android:key="@string/key_created_text" android:title="@string/created_text" android:defaultValue="@string/default_created_text" />
 </PreferenceScreen>

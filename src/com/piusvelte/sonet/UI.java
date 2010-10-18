@@ -28,7 +28,6 @@ public class UI extends Activity implements OnClickListener {
 		super.onPause();
 	}
 
-	@Override
 	public void onClick(View v) {
 		switch (v.getId()) {
 		case R.id.button_accounts:
