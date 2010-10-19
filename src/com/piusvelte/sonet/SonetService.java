@@ -136,6 +136,7 @@ public class SonetService extends Service {
 					map_screenname = {R.id.screenname0, R.id.screenname1, R.id.screenname2, R.id.screenname3, R.id.screenname4, R.id.screenname5, R.id.screenname6},
 					map_created = {R.id.created0, R.id.created1, R.id.created2, R.id.created3, R.id.created4, R.id.created5, R.id.created6};
 					Date now = new Date();
+					boolean use24hr = sp.getBoolean(getString(R.string.key_time_12_24), false);
 					List<StatusItem> status_items = new ArrayList<StatusItem>();
 					cursor.moveToFirst();
 					int service = cursor.getColumnIndex(SERVICE),
@@ -189,7 +190,9 @@ public class SonetService extends Service {
 							views.setTextColor(map_screenname[count_status], friend_text);
 							views.setTextViewText(map_created[count_status],
 									(item.created.getDay() == now.getDay() ?
-											(Integer.toString(item.created.getHours()) + ":" + Integer.toString(item.created.getMinutes()))
+											(use24hr ?
+													String.format("%d:%02d", item.created.getHours(), item.created.getMinutes())
+													: String.format("%d:%02d%s", item.created.getHours() < 13 ? item.created.getHours() : item.created.getHours() - 12, item.created.getMinutes(), getString(item.created.getHours() < 13 ? R.string.am : R.string.pm)))
 											: (getResources().getStringArray(R.array.months)[item.created.getMonth()] + Integer.toString(item.created.getDay()))));
 							views.setTextColor(map_created[count_status], created_text);
 							try {

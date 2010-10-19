@@ -68,4 +68,9 @@
     <string name="key_created_text">createdText</string>
     <string name="default_created_text">-1</string>
     <string name="created_text">Time Color</string>
+    <string name="am">a.m.</string>
+    <string name="pm">p.m.</string>
+    <string name="key_time_12_24">time1224</string>
+    <string name="time_12_24">Use 24-hour format</string>
+    <string name="category_time">Time</string>
 </resources>
