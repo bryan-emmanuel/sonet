@@ -15,18 +15,29 @@ import static com.piusvelte.sonet.Sonet.FACEBOOK_SECRET;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_ACCESS;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_REQUEST;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_PERMISSIONS;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_ACCESS;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_AUTHORIZE;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_REQUEST;
 
-import com.facebook.android.AsyncFacebookRunner;
-import com.facebook.android.DialogError;
-import com.facebook.android.Facebook;
-import com.facebook.android.FacebookError;
-import com.facebook.android.Facebook.DialogListener;
-//import com.facebook.android.DialogError;
-//import com.facebook.android.Facebook;
-//import com.facebook.android.FacebookError;
-//import com.facebook.android.Facebook.DialogListener;
+import org.apache.http.HttpVersion;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.scheme.PlainSocketFactory;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
+import org.apache.http.params.HttpProtocolParams;
+import org.apache.http.protocol.HTTP;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
+import oauth.signpost.OAuthConsumer;
 import oauth.signpost.OAuthProvider;
 import oauth.signpost.basic.DefaultOAuthProvider;
 import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
@@ -48,7 +59,6 @@ import android.os.Bundle;
 import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
 import android.view.ContextMenu;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -61,14 +71,13 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class ManageAccounts extends ListActivity implements OnClickListener, android.content.DialogInterface.OnClickListener, DialogListener {
+public class ManageAccounts extends ListActivity implements OnClickListener, android.content.DialogInterface.OnClickListener {
 	private static final int DELETE_ID = Menu.FIRST;
 	private SonetDatabaseHelper mSonetDatabaseHelper;
 	private static final long NO_ACCOUNT = -1;
 	private static final int TWITTER = 0;
 	private static final int FACEBOOK = 1;
 	private int mService = 0;
-	private Facebook mFacebook;
 
 	private Uri CALLBACK_URL = Uri.parse("sonet://oauth");
 
@@ -141,35 +150,80 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		if (uri != null && CALLBACK_URL.getScheme().equals(uri.getScheme())) {
 
 			String verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
-
-			try {
-				// this will populate token and token_secret in consumer
-				SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
-				CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
-				// use the requestToken and secret from earlier
-				consumer.setTokenWithSecret(sp.getString(getString(R.string.key_requesttoken), ""), sp.getString(getString(R.string.key_requestsecret), ""));
-				// throw away cached requesttoken & secret
-				Editor spe = sp.edit();
-				spe.putString(getString(R.string.key_requesttoken), "");
-				spe.putString(getString(R.string.key_requestsecret), "");
-				spe.commit();
-				OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
-				provider.setOAuth10a(true);
-				provider.retrieveAccessToken(consumer, verifier);
-				AccessToken accessToken = new AccessToken(consumer.getToken(), consumer.getTokenSecret());
-				Twitter twitter = new TwitterFactory().getInstance();
-				twitter.setOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
-				twitter.setOAuthAccessToken(accessToken);
-				SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-				ContentValues values = new ContentValues();
-				values.put(USERNAME, twitter.getScreenName());
-				values.put(TOKEN, consumer.getToken());
-				values.put(SECRET, consumer.getTokenSecret());
-				values.put(SERVICE, mService);
-				db.insert(TABLE_ACCOUNTS, TOKEN, values);
-			} catch (Exception e) {
-				Log.e(TAG, e.getMessage());
-				Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+			switch (mService) {
+			case TWITTER:
+				try {
+					// this will populate token and token_secret in consumer
+					SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
+					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
+					// use the requestToken and secret from earlier
+					consumer.setTokenWithSecret(sp.getString(getString(R.string.key_requesttoken), ""), sp.getString(getString(R.string.key_requestsecret), ""));
+					// throw away cached requesttoken & secret
+					Editor spe = sp.edit();
+					spe.putString(getString(R.string.key_requesttoken), "");
+					spe.putString(getString(R.string.key_requestsecret), "");
+					spe.commit();
+					OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
+					provider.setOAuth10a(true);
+					provider.retrieveAccessToken(consumer, verifier);
+					AccessToken accessToken = new AccessToken(consumer.getToken(), consumer.getTokenSecret());
+					Twitter twitter = new TwitterFactory().getInstance();
+					twitter.setOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
+					twitter.setOAuthAccessToken(accessToken);
+					SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+					ContentValues values = new ContentValues();
+					values.put(USERNAME, twitter.getScreenName());
+					values.put(TOKEN, consumer.getToken());
+					values.put(SECRET, consumer.getTokenSecret());
+					values.put(SERVICE, mService);
+					db.insert(TABLE_ACCOUNTS, TOKEN, values);
+				} catch (Exception e) {
+					Log.e(TAG, e.getMessage());
+					Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+				}
+				break;
+			case FACEBOOK:
+				try {
+					// this will populate token and token_secret in consumer
+					SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
+					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(FACEBOOK_KEY, FACEBOOK_SECRET);
+					// use the requestToken and secret from earlier
+					consumer.setTokenWithSecret(sp.getString(getString(R.string.key_requesttoken), ""), sp.getString(getString(R.string.key_requestsecret), ""));
+					// throw away cached requesttoken & secret
+					Editor spe = sp.edit();
+					spe.putString(getString(R.string.key_requesttoken), "");
+					spe.putString(getString(R.string.key_requestsecret), "");
+					spe.commit();
+					OAuthProvider provider = new DefaultOAuthProvider(FACEBOOK_URL_REQUEST, FACEBOOK_URL_ACCESS, FACEBOOK_URL_AUTHORIZE);
+					provider.retrieveAccessToken(consumer, verifier);
+					Uri u = Uri.parse("https://graph.facebook.com/me");
+					Uri.Builder b = u.buildUpon();
+					HttpGet request = new HttpGet(b.build().toString());
+					consumer.sign(request);
+			        HttpParams parameters = new BasicHttpParams();
+			        HttpProtocolParams.setVersion(parameters, HttpVersion.HTTP_1_1);
+			        HttpProtocolParams.setContentCharset(parameters, HTTP.DEFAULT_CONTENT_CHARSET);
+			        HttpProtocolParams.setUseExpectContinue(parameters, false);
+			        HttpConnectionParams.setTcpNoDelay(parameters, true);
+			        HttpConnectionParams.setSocketBufferSize(parameters, 8192);
+			        SchemeRegistry schReg = new SchemeRegistry();
+			        schReg.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+			        ClientConnectionManager tsccm = new ThreadSafeClientConnManager(parameters, schReg);
+			        HttpClient client = new DefaultHttpClient(tsccm, parameters);
+					String response = client.execute(request, new BasicResponseHandler());
+					JSONObject jobj = new JSONObject(response);					
+					SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+					ContentValues values = new ContentValues();
+					values.put(USERNAME, jobj.getString("name"));
+					values.put(TOKEN, consumer.getToken());
+					values.put(SECRET, consumer.getTokenSecret());
+					values.put(SERVICE, mService);
+					db.insert(TABLE_ACCOUNTS, TOKEN, values);
+				} catch (Exception e) {
+					Log.e(TAG, e.getMessage());
+					Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+				}
+				break;
 			}
 
 		}
@@ -184,14 +238,14 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 				OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
 				provider.setOAuth10a(true);
 				String authUrl = provider.retrieveRequestToken(consumer, CALLBACK_URL.toString());
+				/*
+				 * need to save the requestToken and secret
+				 */
 				SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
 				Editor spe = sp.edit();
 				spe.putString(getString(R.string.key_requesttoken), consumer.getToken());
 				spe.putString(getString(R.string.key_requestsecret), consumer.getTokenSecret());
 				spe.commit();
-				/*
-				 * need to save the requestToken and secret
-				 */
 				startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)));
 			} catch (Exception e) {
 				Log.e(TAG, e.getMessage());
@@ -199,8 +253,24 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			}
 			break;
 		case FACEBOOK:
-	       	mFacebook = new Facebook();
-            mFacebook.authorize(this, FACEBOOK_KEY, FACEBOOK_PERMISSIONS, this);
+			mService = FACEBOOK;
+			try {
+				CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(FACEBOOK_KEY, FACEBOOK_SECRET);
+				OAuthProvider provider = new DefaultOAuthProvider(FACEBOOK_URL_REQUEST, FACEBOOK_URL_ACCESS, FACEBOOK_URL_AUTHORIZE);
+				String authUrl = provider.retrieveRequestToken(consumer, CALLBACK_URL.toString());
+				/*
+				 * need to save the requestToken and secret
+				 */
+				SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
+				Editor spe = sp.edit();
+				spe.putString(getString(R.string.key_requesttoken), consumer.getToken());
+				spe.putString(getString(R.string.key_requestsecret), consumer.getTokenSecret());
+				spe.commit();
+				startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)));
+			} catch (Exception e) {
+				Log.e(TAG, e.getMessage());
+				Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+			}
 			break;
 		}
 
@@ -212,25 +282,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		startManagingCursor(cursor);
 		setListAdapter(new SimpleCursorAdapter(this, R.layout.accounts_row, cursor, new String[] {USERNAME}, new int[] {R.id.account_username}));
 		db.close();
-	}
-
-	public void onComplete(Bundle values) {
-		SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-		ContentValues contentvalues = new ContentValues();
-		contentvalues.put(USERNAME, "facebook");
-		contentvalues.put(TOKEN, mFacebook.getAccessToken());
-		contentvalues.put(EXPIRY, Long.toString(mFacebook.getAccessExpires()));
-		contentvalues.put(SERVICE, mService);
-		db.insert(TABLE_ACCOUNTS, TOKEN, contentvalues);
-	}
-
-	public void onFacebookError(FacebookError error) {
-	}
-
-	public void onError(DialogError error) {
-	}
-
-	public void onCancel() {
 	}
 
 	public void onClick(DialogInterface dialog, int which) {

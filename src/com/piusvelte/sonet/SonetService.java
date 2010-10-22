@@ -29,15 +29,44 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.EXPIRY;
 import static com.piusvelte.sonet.Sonet.TAG;
 import static com.piusvelte.sonet.Sonet.TWITTER_KEY;
 import static com.piusvelte.sonet.Sonet.TWITTER_SECRET;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_KEY;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_SECRET;
 
 import java.io.IOException;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import com.facebook.android.Facebook;
+import oauth.signpost.OAuthConsumer;
+import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
+import oauth.signpost.exception.OAuthCommunicationException;
+import oauth.signpost.exception.OAuthExpectationFailedException;
+import oauth.signpost.exception.OAuthMessageSignerException;
+
+import org.apache.http.HttpVersion;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.HttpResponseException;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.scheme.PlainSocketFactory;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
+import org.apache.http.params.HttpProtocolParams;
+import org.apache.http.protocol.HTTP;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import twitter4j.Paging;
 import twitter4j.Status;
@@ -70,7 +99,6 @@ public class SonetService extends Service {
 	private static final String REFRESH = "com.piusvelte.Intent.REFRESH";
 	private static final int TWITTER = 0;
 	private static final int FACEBOOK = 1;
-	private Facebook mFacebook;
 
 	@Override
 	public void onStart(Intent intent, int startId) {
@@ -170,9 +198,72 @@ public class SonetService extends Service {
 							}
 							break;
 						case FACEBOOK:
-							mFacebook = new Facebook();
-							mFacebook.setAccessToken(cursor.getString(token));
-							mFacebook.setAccessExpires(Long.parseLong(cursor.getString(expiry)));
+							String name = "name",
+							created_time = "created_time",
+							icon = "icon",
+							message = "message",
+							actions = "actions",
+							link = "link",
+							comment = "Comment";
+							SimpleDateFormat format = new SimpleDateFormat("YYYY-MM-DD'T'HH:mm:ss'+0000'");
+							try {
+								Uri u = Uri.parse("https://graph.facebook.com/me/home");
+								Uri.Builder b = u.buildUpon();
+								HttpGet request = new HttpGet(b.build().toString());
+								OAuthConsumer consumer = new CommonsHttpOAuthConsumer(FACEBOOK_KEY, FACEBOOK_SECRET);
+								consumer.sign(request);
+						        HttpParams parameters = new BasicHttpParams();
+						        HttpProtocolParams.setVersion(parameters, HttpVersion.HTTP_1_1);
+						        HttpProtocolParams.setContentCharset(parameters, HTTP.DEFAULT_CONTENT_CHARSET);
+						        HttpProtocolParams.setUseExpectContinue(parameters, false);
+						        HttpConnectionParams.setTcpNoDelay(parameters, true);
+						        HttpConnectionParams.setSocketBufferSize(parameters, 8192);
+						        SchemeRegistry schReg = new SchemeRegistry();
+						        schReg.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+						        ClientConnectionManager tsccm = new ThreadSafeClientConnManager(parameters, schReg);
+						        HttpClient client = new DefaultHttpClient(tsccm, parameters);
+								String response = client.execute(request, new BasicResponseHandler());
+								JSONObject jobj = new JSONObject(response);
+								JSONArray jarr = jobj.getJSONArray("data");
+								for (int i = 0; i < jarr.length(); i++) {
+									JSONObject o = jarr.getJSONObject(i);
+									Date created;
+									try {
+										created = format.parse(o.getString(created_time));
+									} catch (ParseException e) {
+										created = new Date();
+										Log.e(TAG,e.toString());
+									}
+									JSONArray action = o.getJSONArray(actions);
+									Uri l = Uri.parse("http://www.facebook.com");
+									for (int a = 0; a < action.length(); a++) {
+										JSONObject n = action.getJSONObject(a);
+										if (n.getString(name) == comment) {
+											l = Uri.parse(n.getString(link));
+											break;
+										}
+									}
+									status_items.add(new StatusItem(created,
+											l,
+											o.getString(name),
+											new URL(o.getString(icon)),
+											o.getString(message)));
+								}
+							} catch (JSONException e) {
+								Log.e(TAG, e.toString());
+							} catch (OAuthMessageSignerException e) {
+								Log.e(TAG, e.toString());
+							} catch (OAuthExpectationFailedException e) {
+								Log.e(TAG, e.toString());
+							} catch (OAuthCommunicationException e) {
+								Log.e(TAG, e.toString());
+							} catch (HttpResponseException e) {
+								Log.e(TAG, e.toString());
+							} catch (ClientProtocolException e) {
+								Log.e(TAG, e.toString());
+							} catch (IOException e) {
+								Log.e(TAG, e.toString());
+							}
 							break;					
 						}
 						cursor.moveToNext();
