@@ -26,6 +26,7 @@ import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
@@ -148,7 +149,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		super.onNewIntent(intent);
 		Uri uri = intent.getData();
 		if (uri != null && CALLBACK_URL.getScheme().equals(uri.getScheme())) {
-
 			String verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
 			switch (mService) {
 			case TWITTER:
@@ -200,18 +200,19 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 					Uri.Builder b = u.buildUpon();
 					HttpGet request = new HttpGet(b.build().toString());
 					consumer.sign(request);
-			        HttpParams parameters = new BasicHttpParams();
-			        HttpProtocolParams.setVersion(parameters, HttpVersion.HTTP_1_1);
-			        HttpProtocolParams.setContentCharset(parameters, HTTP.DEFAULT_CONTENT_CHARSET);
-			        HttpProtocolParams.setUseExpectContinue(parameters, false);
-			        HttpConnectionParams.setTcpNoDelay(parameters, true);
-			        HttpConnectionParams.setSocketBufferSize(parameters, 8192);
-			        SchemeRegistry schReg = new SchemeRegistry();
-			        schReg.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
-			        ClientConnectionManager tsccm = new ThreadSafeClientConnManager(parameters, schReg);
-			        HttpClient client = new DefaultHttpClient(tsccm, parameters);
+			        HttpParams params = new BasicHttpParams();
+			        HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
+			        HttpProtocolParams.setContentCharset(params, HTTP.DEFAULT_CONTENT_CHARSET);
+			        HttpProtocolParams.setUseExpectContinue(params, false);
+			        HttpConnectionParams.setTcpNoDelay(params, true);
+			        HttpConnectionParams.setSocketBufferSize(params, 8192);
+			        SchemeRegistry sr = new SchemeRegistry();
+			        sr.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+			        sr.register(new Scheme("https", SSLSocketFactory.getSocketFactory(), 443));
+			        ClientConnectionManager tsccm = new ThreadSafeClientConnManager(params, sr);
+			        HttpClient client = new DefaultHttpClient(tsccm, params);
 					String response = client.execute(request, new BasicResponseHandler());
-					JSONObject jobj = new JSONObject(response);					
+					JSONObject jobj = new JSONObject(response);
 					SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
 					ContentValues values = new ContentValues();
 					values.put(USERNAME, jobj.getString("name"));
