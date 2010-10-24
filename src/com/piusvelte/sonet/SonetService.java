@@ -210,9 +210,8 @@ public class SonetService extends Service {
 							try {
 								Uri u = Uri.parse("https://graph.facebook.com/me/home");
 								Uri.Builder b = u.buildUpon();
+								b.appendQueryParameter("access_token", cursor.getString(token));
 								HttpGet request = new HttpGet(b.build().toString());
-								OAuthConsumer consumer = new CommonsHttpOAuthConsumer(FACEBOOK_KEY, FACEBOOK_SECRET);
-								consumer.sign(request);
 						        HttpParams params = new BasicHttpParams();
 						        HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
 						        HttpProtocolParams.setContentCharset(params, HTTP.DEFAULT_CONTENT_CHARSET);
@@ -252,12 +251,6 @@ public class SonetService extends Service {
 											o.getString(message)));
 								}
 							} catch (JSONException e) {
-								Log.e(TAG, e.toString());
-							} catch (OAuthMessageSignerException e) {
-								Log.e(TAG, e.toString());
-							} catch (OAuthExpectationFailedException e) {
-								Log.e(TAG, e.toString());
-							} catch (OAuthCommunicationException e) {
 								Log.e(TAG, e.toString());
 							} catch (HttpResponseException e) {
 								Log.e(TAG, e.toString());

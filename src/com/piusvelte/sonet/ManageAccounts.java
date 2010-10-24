@@ -137,7 +137,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			break;
 		}
 	}
-	
+
 	@Override
 	protected void onResume() {
 		super.onResume();
@@ -149,11 +149,11 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		super.onNewIntent(intent);
 		Uri uri = intent.getData();
 		if (uri != null && CALLBACK_URL.getScheme().equals(uri.getScheme())) {
-			String verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
 			switch (mService) {
 			case TWITTER:
 				try {
 					// this will populate token and token_secret in consumer
+					String verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
 					SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
 					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
 					// use the requestToken and secret from earlier
@@ -184,42 +184,58 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 				break;
 			case FACEBOOK:
 				try {
-					// this will populate token and token_secret in consumer
-					SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
-					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(FACEBOOK_KEY, FACEBOOK_SECRET);
-					// use the requestToken and secret from earlier
-					consumer.setTokenWithSecret(sp.getString(getString(R.string.key_requesttoken), ""), sp.getString(getString(R.string.key_requestsecret), ""));
-					// throw away cached requesttoken & secret
-					Editor spe = sp.edit();
-					spe.putString(getString(R.string.key_requesttoken), "");
-					spe.putString(getString(R.string.key_requestsecret), "");
-					spe.commit();
-					OAuthProvider provider = new DefaultOAuthProvider(FACEBOOK_URL_REQUEST, FACEBOOK_URL_ACCESS, FACEBOOK_URL_AUTHORIZE);
-					provider.retrieveAccessToken(consumer, verifier);
-					Uri u = Uri.parse("https://graph.facebook.com/me");
-					Uri.Builder b = u.buildUpon();
-					HttpGet request = new HttpGet(b.build().toString());
-					consumer.sign(request);
-			        HttpParams params = new BasicHttpParams();
-			        HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
-			        HttpProtocolParams.setContentCharset(params, HTTP.DEFAULT_CONTENT_CHARSET);
-			        HttpProtocolParams.setUseExpectContinue(params, false);
-			        HttpConnectionParams.setTcpNoDelay(params, true);
-			        HttpConnectionParams.setSocketBufferSize(params, 8192);
-			        SchemeRegistry sr = new SchemeRegistry();
-			        sr.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
-			        sr.register(new Scheme("https", SSLSocketFactory.getSocketFactory(), 443));
-			        ClientConnectionManager tsccm = new ThreadSafeClientConnManager(params, sr);
-			        HttpClient client = new DefaultHttpClient(tsccm, params);
-					String response = client.execute(request, new BasicResponseHandler());
-					JSONObject jobj = new JSONObject(response);
-					SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-					ContentValues values = new ContentValues();
-					values.put(USERNAME, jobj.getString("name"));
-					values.put(TOKEN, consumer.getToken());
-					values.put(SECRET, consumer.getTokenSecret());
-					values.put(SERVICE, mService);
-					db.insert(TABLE_ACCOUNTS, TOKEN, values);
+					// this callback could be the authorization or the access_token
+					String callback = uri.getQueryParameter("code");
+					if (callback != null) {
+						// received authorization, now get access_token
+						Uri u = Uri.parse(FACEBOOK_URL_ACCESS);
+						Uri.Builder b = u.buildUpon();
+						b.appendQueryParameter("client_id", FACEBOOK_KEY);
+						b.appendQueryParameter("client_secret", FACEBOOK_SECRET);
+						b.appendQueryParameter("redirect_uri", CALLBACK_URL.toString());
+						b.appendQueryParameter("code", callback);
+						HttpGet request = new HttpGet(b.build().toString());
+						HttpParams params = new BasicHttpParams();
+						HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
+						HttpProtocolParams.setContentCharset(params, HTTP.DEFAULT_CONTENT_CHARSET);
+						HttpProtocolParams.setUseExpectContinue(params, false);
+						HttpConnectionParams.setTcpNoDelay(params, true);
+						HttpConnectionParams.setSocketBufferSize(params, 8192);
+						SchemeRegistry sr = new SchemeRegistry();
+						sr.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+						sr.register(new Scheme("https", SSLSocketFactory.getSocketFactory(), 443));
+						ClientConnectionManager tsccm = new ThreadSafeClientConnManager(params, sr);
+						HttpClient client = new DefaultHttpClient(tsccm, params);
+						String response = client.execute(request, new BasicResponseHandler());
+					} else {
+						callback = uri.getQueryParameter("access_token");
+						if (callback != null) {
+							// get user name					
+							Uri u = Uri.parse("https://graph.facebook.com/me");
+							Uri.Builder b = u.buildUpon();
+							b.appendQueryParameter("access_token", callback);
+							HttpGet request = new HttpGet(b.build().toString());
+							HttpParams params = new BasicHttpParams();
+							HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
+							HttpProtocolParams.setContentCharset(params, HTTP.DEFAULT_CONTENT_CHARSET);
+							HttpProtocolParams.setUseExpectContinue(params, false);
+							HttpConnectionParams.setTcpNoDelay(params, true);
+							HttpConnectionParams.setSocketBufferSize(params, 8192);
+							SchemeRegistry sr = new SchemeRegistry();
+							sr.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+							sr.register(new Scheme("https", SSLSocketFactory.getSocketFactory(), 443));
+							ClientConnectionManager tsccm = new ThreadSafeClientConnManager(params, sr);
+							HttpClient client = new DefaultHttpClient(tsccm, params);
+							String response = client.execute(request, new BasicResponseHandler());
+							JSONObject jobj = new JSONObject(response);
+							SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+							ContentValues values = new ContentValues();
+							values.put(USERNAME, jobj.getString("name"));
+							values.put(TOKEN, callback);
+							values.put(SERVICE, mService);
+							db.insert(TABLE_ACCOUNTS, TOKEN, values);
+						} else Log.e(TAG, "unknown facebook callback");
+					}
 				} catch (Exception e) {
 					Log.e(TAG, e.getMessage());
 					Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
@@ -256,18 +272,14 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		case FACEBOOK:
 			mService = FACEBOOK;
 			try {
-				CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(FACEBOOK_KEY, FACEBOOK_SECRET);
-				OAuthProvider provider = new DefaultOAuthProvider(FACEBOOK_URL_REQUEST, FACEBOOK_URL_ACCESS, FACEBOOK_URL_AUTHORIZE);
-				String authUrl = provider.retrieveRequestToken(consumer, CALLBACK_URL.toString());
-				/*
-				 * need to save the requestToken and secret
-				 */
-				SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
-				Editor spe = sp.edit();
-				spe.putString(getString(R.string.key_requesttoken), consumer.getToken());
-				spe.putString(getString(R.string.key_requestsecret), consumer.getTokenSecret());
-				spe.commit();
-				startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)));
+				Uri u = Uri.parse(FACEBOOK_URL_AUTHORIZE);
+				Uri.Builder b = u.buildUpon();
+				b.appendQueryParameter("client_id", FACEBOOK_KEY);
+				b.appendQueryParameter("redirect_uri", CALLBACK_URL.toString());
+				// no expiry
+				b.appendQueryParameter("scope", "offline_access");
+				b.appendQueryParameter("display", "page");
+				startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(b.build().toString())));
 			} catch (Exception e) {
 				Log.e(TAG, e.getMessage());
 				Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
