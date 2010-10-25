@@ -8,6 +8,7 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.SERVICE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TOKEN;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
 import static com.piusvelte.sonet.SonetDatabaseHelper.EXPIRY;
+import static com.piusvelte.sonet.SonetDatabaseHelper.TIMEZONE;
 import static com.piusvelte.sonet.Sonet.TWITTER_KEY;
 import static com.piusvelte.sonet.Sonet.TWITTER_SECRET;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_KEY;
@@ -236,6 +237,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 						values.put(TOKEN, mFacebook.getAccessToken());
 						values.put(EXPIRY, mFacebook.getAccessExpires());
 						values.put(SERVICE, FACEBOOK);
+						values.put(TIMEZONE, json.getString(TIMEZONE));
 						db.insert(TABLE_ACCOUNTS, TOKEN, values);
 		                ManageAccounts.this.runOnUiThread(new Runnable() {
 		                    public void run() {

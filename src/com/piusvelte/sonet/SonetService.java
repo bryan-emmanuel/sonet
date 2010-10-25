@@ -26,6 +26,7 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.SERVICE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TOKEN;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
 import static com.piusvelte.sonet.SonetDatabaseHelper.EXPIRY;
+import static com.piusvelte.sonet.SonetDatabaseHelper.TIMEZONE;
 import static com.piusvelte.sonet.Sonet.TAG;
 import static com.piusvelte.sonet.Sonet.TWITTER_KEY;
 import static com.piusvelte.sonet.Sonet.TWITTER_SECRET;
@@ -35,6 +36,7 @@ import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -132,7 +134,7 @@ public class SonetService extends Service {
 			views.setImageViewBitmap(R.id.body_background, bd_bitmap);
 			if (cm.getBackgroundDataSetting() && (cm.getActiveNetworkInfo() != null) && cm.getActiveNetworkInfo().isConnected()) {
 				// query accounts
-				Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, USERNAME, TOKEN, SECRET, SERVICE, EXPIRY}, null, null, null, null, null);
+				Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, USERNAME, TOKEN, SECRET, SERVICE, EXPIRY, TIMEZONE}, null, null, null, null, null);
 				if (cursor.getCount() > 0) {
 					/* get statuses for all accounts
 					 * then sort them by datetime, descending
@@ -150,6 +152,7 @@ public class SonetService extends Service {
 					token = cursor.getColumnIndex(TOKEN),
 					secret = cursor.getColumnIndex(SECRET),
 					expiry = cursor.getColumnIndex(EXPIRY),
+					timezone = cursor.getColumnIndex(TIMEZONE),
 					body_text = Integer.parseInt(sp.getString(getString(R.string.key_body_text), getString(R.string.default_body_text))),
 					friend_text = Integer.parseInt(sp.getString(getString(R.string.key_friend_text), getString(R.string.default_friend_text))),
 					created_text = Integer.parseInt(sp.getString(getString(R.string.key_created_text), getString(R.string.default_created_text)));
@@ -179,11 +182,16 @@ public class SonetService extends Service {
 						case FACEBOOK:
 							String name = "name",
 							created_time = "created_time",
-							icon = "icon",
 							message = "message",
 							actions = "actions",
 							link = "link",
-							comment = "Comment";
+							comment = "Comment",
+							from = "from",
+							id = "id",
+							type = "type",
+							status = "status",
+							profile = "http://graph.facebook.com/%s/picture";
+							int tz = cursor.getInt(timezone);
 							SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'+0000'");
 							Facebook facebook = new Facebook();
 							facebook.setAccessToken(cursor.getString(token));
@@ -193,27 +201,37 @@ public class SonetService extends Service {
 								JSONArray jarr = jobj.getJSONArray("data");
 								for (int i = 0; i < jarr.length(); i++) {
 									JSONObject o = jarr.getJSONObject(i);
-									Date created;
-									try {
-										created = format.parse(o.getString(created_time));
-									} catch (ParseException e) {
-										created = new Date();
-										Log.e(TAG,e.toString());
-									}
-									JSONArray action = o.getJSONArray(actions);
-									Uri l = Uri.parse("http://www.facebook.com");
-									for (int a = 0; a < action.length(); a++) {
-										JSONObject n = action.getJSONObject(a);
-										if (n.getString(name) == comment) {
-											l = Uri.parse(n.getString(link));
-											break;
+									// only parse status types, not photo, video or link
+									if (o.getString(type) == status) {
+										// parse the date
+										Date created;
+										try {
+											created = format.parse(o.getString(created_time));
+										} catch (ParseException e) {
+											created = new Date();
+											Log.e(TAG,e.toString());
 										}
+										// apply the timezone
+										Calendar cal = Calendar.getInstance();
+										cal.setTime(created);
+										cal.add(Calendar.HOUR, tz);
+										// parse the link
+										JSONArray action = o.getJSONArray(actions);
+										Uri l = Uri.parse("http://www.facebook.com");
+										for (int a = 0; a < action.length(); a++) {
+											JSONObject n = action.getJSONObject(a);
+											if (n.getString(name) == comment) {
+												l = Uri.parse(n.getString(link));
+												break;
+											}
+										}
+										JSONObject f = o.getJSONObject(from);
+										status_items.add(new StatusItem(cal.getTime(),
+												l,
+												f.getString(name),
+												new URL(String.format(profile, f.getString(id))),
+												o.getString(message)));
 									}
-									status_items.add(new StatusItem(created,
-											l,
-											o.getString(name),
-											new URL(o.getString(icon)),
-											o.getString(message)));
 								}
 							} catch (JSONException e) {
 								Log.e(TAG, e.toString());

@@ -37,6 +37,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.facebook.android.Facebook.DialogListener;
+import com.piusvelte.sonet.R;
 
 public class FbDialog extends Dialog {
 
@@ -87,7 +88,7 @@ public class FbDialog extends Dialog {
     private void setUpTitle() {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         Drawable icon = getContext().getResources().getDrawable(
-                R.drawable.facebook_icon);
+        		R.drawable.facebook_icon);
         mTitle = new TextView(getContext());
         mTitle.setText("Facebook");
         mTitle.setTextColor(Color.WHITE);
