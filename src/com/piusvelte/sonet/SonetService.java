@@ -29,8 +29,6 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.EXPIRY;
 import static com.piusvelte.sonet.Sonet.TAG;
 import static com.piusvelte.sonet.Sonet.TWITTER_KEY;
 import static com.piusvelte.sonet.Sonet.TWITTER_SECRET;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_KEY;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_SECRET;
 
 import java.io.IOException;
 import java.net.URL;
@@ -41,33 +39,13 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import oauth.signpost.OAuthConsumer;
-import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
-import oauth.signpost.exception.OAuthCommunicationException;
-import oauth.signpost.exception.OAuthExpectationFailedException;
-import oauth.signpost.exception.OAuthMessageSignerException;
-
-import org.apache.http.HttpVersion;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.HttpResponseException;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.conn.scheme.PlainSocketFactory;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
-import org.apache.http.params.HttpProtocolParams;
-import org.apache.http.protocol.HTTP;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import com.facebook.android.Facebook;
+import com.facebook.android.FacebookError;
+import com.facebook.android.Util;
 
 import twitter4j.Paging;
 import twitter4j.Status;
@@ -206,25 +184,12 @@ public class SonetService extends Service {
 							actions = "actions",
 							link = "link",
 							comment = "Comment";
-							SimpleDateFormat format = new SimpleDateFormat("YYYY-MM-DD'T'HH:mm:ss'+0000'");
+							SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'+0000'");
+							Facebook facebook = new Facebook();
+							facebook.setAccessToken(cursor.getString(token));
+							facebook.setAccessExpires((long)cursor.getInt(expiry));
 							try {
-								Uri u = Uri.parse("https://graph.facebook.com/me/home");
-								Uri.Builder b = u.buildUpon();
-								b.appendQueryParameter("access_token", cursor.getString(token));
-								HttpGet request = new HttpGet(b.build().toString());
-						        HttpParams params = new BasicHttpParams();
-						        HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
-						        HttpProtocolParams.setContentCharset(params, HTTP.DEFAULT_CONTENT_CHARSET);
-						        HttpProtocolParams.setUseExpectContinue(params, false);
-						        HttpConnectionParams.setTcpNoDelay(params, true);
-						        HttpConnectionParams.setSocketBufferSize(params, 8192);
-						        SchemeRegistry sr = new SchemeRegistry();
-						        sr.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
-						        sr.register(new Scheme("https", SSLSocketFactory.getSocketFactory(), 443));
-						        ClientConnectionManager tsccm = new ThreadSafeClientConnManager(params, sr);
-						        HttpClient client = new DefaultHttpClient(tsccm, params);
-								String response = client.execute(request, new BasicResponseHandler());
-								JSONObject jobj = new JSONObject(response);
+								JSONObject jobj = Util.parseJson(facebook.request("me/home"));
 								JSONArray jarr = jobj.getJSONArray("data");
 								for (int i = 0; i < jarr.length(); i++) {
 									JSONObject o = jarr.getJSONObject(i);
@@ -252,9 +217,7 @@ public class SonetService extends Service {
 								}
 							} catch (JSONException e) {
 								Log.e(TAG, e.toString());
-							} catch (HttpResponseException e) {
-								Log.e(TAG, e.toString());
-							} catch (ClientProtocolException e) {
+							} catch (FacebookError e) {
 								Log.e(TAG, e.toString());
 							} catch (IOException e) {
 								Log.e(TAG, e.toString());
@@ -279,7 +242,7 @@ public class SonetService extends Service {
 											(use24hr ?
 													String.format("%d:%02d", item.created.getHours(), item.created.getMinutes())
 													: String.format("%d:%02d%s", item.created.getHours() < 13 ? item.created.getHours() : item.created.getHours() - 12, item.created.getMinutes(), getString(item.created.getHours() < 13 ? R.string.am : R.string.pm)))
-											: (getResources().getStringArray(R.array.months)[item.created.getMonth()] + Integer.toString(item.created.getDay()))));
+													: (getResources().getStringArray(R.array.months)[item.created.getMonth()] + Integer.toString(item.created.getDay()))));
 							views.setTextColor(map_created[count_status], created_text);
 							try {
 								views.setImageViewBitmap(map_profile[count_status], BitmapFactory.decodeStream(item.profile.openConnection().getInputStream()));

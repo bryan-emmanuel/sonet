@@ -11,34 +11,26 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.EXPIRY;
 import static com.piusvelte.sonet.Sonet.TWITTER_KEY;
 import static com.piusvelte.sonet.Sonet.TWITTER_SECRET;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_KEY;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_SECRET;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_ACCESS;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_REQUEST;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_ACCESS;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_AUTHORIZE;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_REQUEST;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_PERMISSIONS;
 
-import org.apache.http.HttpVersion;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.conn.scheme.PlainSocketFactory;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
-import org.apache.http.params.HttpProtocolParams;
-import org.apache.http.protocol.HTTP;
-import org.json.JSONArray;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.MalformedURLException;
+
+import org.json.JSONException;
 import org.json.JSONObject;
 
-import oauth.signpost.OAuthConsumer;
+import com.facebook.android.AsyncFacebookRunner;
+import com.facebook.android.DialogError;
+import com.facebook.android.Facebook;
+import com.facebook.android.FacebookError;
+import com.facebook.android.Util;
+import com.facebook.android.AsyncFacebookRunner.RequestListener;
+import com.facebook.android.Facebook.DialogListener;
+
 import oauth.signpost.OAuthProvider;
 import oauth.signpost.basic.DefaultOAuthProvider;
 import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
@@ -78,9 +70,10 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	private static final long NO_ACCOUNT = -1;
 	private static final int TWITTER = 0;
 	private static final int FACEBOOK = 1;
-	private int mService = 0;
+    private Facebook mFacebook;
+    private AsyncFacebookRunner mAsyncRunner;
 
-	private Uri CALLBACK_URL = Uri.parse("sonet://oauth");
+	private static Uri TWITTER_CALLBACK = Uri.parse("sonet://twitter");
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -148,9 +141,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
 		Uri uri = intent.getData();
-		if (uri != null && CALLBACK_URL.getScheme().equals(uri.getScheme())) {
-			switch (mService) {
-			case TWITTER:
+		if (uri != null) {
+			if (TWITTER_CALLBACK.getScheme().equals(uri.getScheme())) {
 				try {
 					// this will populate token and token_secret in consumer
 					String verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
@@ -175,86 +167,24 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 					values.put(USERNAME, twitter.getScreenName());
 					values.put(TOKEN, consumer.getToken());
 					values.put(SECRET, consumer.getTokenSecret());
-					values.put(SERVICE, mService);
+					values.put(SERVICE, TWITTER);
 					db.insert(TABLE_ACCOUNTS, TOKEN, values);
 				} catch (Exception e) {
 					Log.e(TAG, e.getMessage());
 					Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
 				}
-				break;
-			case FACEBOOK:
-				try {
-					// this callback could be the authorization or the access_token
-					String callback = uri.getQueryParameter("code");
-					if (callback != null) {
-						// received authorization, now get access_token
-						Uri u = Uri.parse(FACEBOOK_URL_ACCESS);
-						Uri.Builder b = u.buildUpon();
-						b.appendQueryParameter("client_id", FACEBOOK_KEY);
-						b.appendQueryParameter("client_secret", FACEBOOK_SECRET);
-						b.appendQueryParameter("redirect_uri", CALLBACK_URL.toString());
-						b.appendQueryParameter("code", callback);
-						HttpGet request = new HttpGet(b.build().toString());
-						HttpParams params = new BasicHttpParams();
-						HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
-						HttpProtocolParams.setContentCharset(params, HTTP.DEFAULT_CONTENT_CHARSET);
-						HttpProtocolParams.setUseExpectContinue(params, false);
-						HttpConnectionParams.setTcpNoDelay(params, true);
-						HttpConnectionParams.setSocketBufferSize(params, 8192);
-						SchemeRegistry sr = new SchemeRegistry();
-						sr.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
-						sr.register(new Scheme("https", SSLSocketFactory.getSocketFactory(), 443));
-						ClientConnectionManager tsccm = new ThreadSafeClientConnManager(params, sr);
-						HttpClient client = new DefaultHttpClient(tsccm, params);
-						String response = client.execute(request, new BasicResponseHandler());
-					} else {
-						callback = uri.getQueryParameter("access_token");
-						if (callback != null) {
-							// get user name					
-							Uri u = Uri.parse("https://graph.facebook.com/me");
-							Uri.Builder b = u.buildUpon();
-							b.appendQueryParameter("access_token", callback);
-							HttpGet request = new HttpGet(b.build().toString());
-							HttpParams params = new BasicHttpParams();
-							HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
-							HttpProtocolParams.setContentCharset(params, HTTP.DEFAULT_CONTENT_CHARSET);
-							HttpProtocolParams.setUseExpectContinue(params, false);
-							HttpConnectionParams.setTcpNoDelay(params, true);
-							HttpConnectionParams.setSocketBufferSize(params, 8192);
-							SchemeRegistry sr = new SchemeRegistry();
-							sr.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
-							sr.register(new Scheme("https", SSLSocketFactory.getSocketFactory(), 443));
-							ClientConnectionManager tsccm = new ThreadSafeClientConnManager(params, sr);
-							HttpClient client = new DefaultHttpClient(tsccm, params);
-							String response = client.execute(request, new BasicResponseHandler());
-							JSONObject jobj = new JSONObject(response);
-							SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-							ContentValues values = new ContentValues();
-							values.put(USERNAME, jobj.getString("name"));
-							values.put(TOKEN, callback);
-							values.put(SERVICE, mService);
-							db.insert(TABLE_ACCOUNTS, TOKEN, values);
-						} else Log.e(TAG, "unknown facebook callback");
-					}
-				} catch (Exception e) {
-					Log.e(TAG, e.getMessage());
-					Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-				}
-				break;
 			}
-
 		}
 	}
 
 	private void getAuth(int service, long account) {
 		switch (service) {
 		case TWITTER:
-			mService = TWITTER;
 			try {
 				CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
 				OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
 				provider.setOAuth10a(true);
-				String authUrl = provider.retrieveRequestToken(consumer, CALLBACK_URL.toString());
+				String authUrl = provider.retrieveRequestToken(consumer, TWITTER_CALLBACK.toString());
 				/*
 				 * need to save the requestToken and secret
 				 */
@@ -270,20 +200,11 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			}
 			break;
 		case FACEBOOK:
-			mService = FACEBOOK;
-			try {
-				Uri u = Uri.parse(FACEBOOK_URL_AUTHORIZE);
-				Uri.Builder b = u.buildUpon();
-				b.appendQueryParameter("client_id", FACEBOOK_KEY);
-				b.appendQueryParameter("redirect_uri", CALLBACK_URL.toString());
-				// no expiry
-				b.appendQueryParameter("scope", "offline_access");
-				b.appendQueryParameter("display", "page");
-				startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(b.build().toString())));
-			} catch (Exception e) {
-				Log.e(TAG, e.getMessage());
-				Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-			}
+			mFacebook = new Facebook();
+	       	mAsyncRunner = new AsyncFacebookRunner(mFacebook);
+			mFacebook.setAccessToken(null);
+			mFacebook.setAccessExpires(0);
+            mFacebook.authorize(this, FACEBOOK_KEY, FACEBOOK_PERMISSIONS, new LoginDialogListener());
 			break;
 		}
 
@@ -301,5 +222,66 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		getAuth(which, NO_ACCOUNT);
 		dialog.cancel();
 	}
+	
+    private final class LoginDialogListener implements DialogListener {
+        public void onComplete(Bundle values) {
+        	mAsyncRunner.request("me", new RequestListener() {
+				@Override
+				public void onComplete(String response) {
+		            try {
+		                JSONObject json = Util.parseJson(response);
+						SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+						ContentValues values = new ContentValues();
+						values.put(USERNAME, json.getString("name"));
+						values.put(TOKEN, mFacebook.getAccessToken());
+						values.put(EXPIRY, mFacebook.getAccessExpires());
+						values.put(SERVICE, FACEBOOK);
+						db.insert(TABLE_ACCOUNTS, TOKEN, values);
+		                ManageAccounts.this.runOnUiThread(new Runnable() {
+		                    public void run() {
+		                        listAccounts();
+		                    }
+		                });
+		            } catch (JSONException e) {
+		            	Log.e(TAG, e.toString());
+		            } catch (FacebookError e) {
+		            	Log.e(TAG, e.toString());
+		            }
+				}
+
+				@Override
+				public void onFacebookError(FacebookError e) {
+					Log.e(TAG, e.toString());
+				}
+
+				@Override
+				public void onFileNotFoundException(FileNotFoundException e) {
+					Log.e(TAG, e.toString());
+				}
+
+				@Override
+				public void onIOException(IOException e) {
+					Log.e(TAG, e.toString());
+				}
+
+				@Override
+				public void onMalformedURLException(MalformedURLException e) {
+					Log.e(TAG, e.toString());
+				}
+        	});
+        }
+
+        public void onFacebookError(FacebookError error) {
+			Toast.makeText(ManageAccounts.this, error.getMessage(), Toast.LENGTH_LONG).show();
+        }
+        
+        public void onError(DialogError error) {
+			Toast.makeText(ManageAccounts.this, error.getMessage(), Toast.LENGTH_LONG).show();
+        }
+
+        public void onCancel() {
+			Toast.makeText(ManageAccounts.this, "Authorization canceled", Toast.LENGTH_LONG).show();
+        }
+    }
 
 }

@@ -8,10 +8,7 @@ public class Sonet {
 	static final String TWITTER_KEY = "";
 	static final String TWITTER_SECRET = "";
 	static final String FACEBOOK_KEY = "";
-	static final String FACEBOOK_SECRET = "";
-	public static final String FACEBOOK_URL_REQUEST = "https://graph.facebook.com/oauth/request_token";
-	public static final String FACEBOOK_URL_ACCESS = "https://graph.facebook.com/oauth/access_token";
-	public static final String FACEBOOK_URL_AUTHORIZE = "https://graph.facebook.com/oauth/authorize";
+    public static final String[] FACEBOOK_PERMISSIONS = new String[] {"offline_access"};
 	
 	public Sonet() {}
 
