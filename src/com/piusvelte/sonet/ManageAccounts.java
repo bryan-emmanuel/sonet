@@ -65,7 +65,7 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class ManageAccounts extends ListActivity implements OnClickListener, android.content.DialogInterface.OnClickListener {
+public class ManageAccounts extends ListActivity implements OnClickListener, android.content.DialogInterface.OnClickListener, DialogListener {
 	private static final int DELETE_ID = Menu.FIRST;
 	private SonetDatabaseHelper mSonetDatabaseHelper;
 	private static final long NO_ACCOUNT = -1;
@@ -90,10 +90,12 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		super.onListItemClick(list, view, position, id);
 		SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
 		Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{SERVICE}, _ID + "=" + id, null, null, null, null);
+		int service = -1;
 		if (cursor.getCount() > 0) {
 			cursor.moveToFirst();
-			getAuth(cursor.getInt(cursor.getColumnIndex(SERVICE)), id);
+			service = cursor.getInt(cursor.getColumnIndex(SERVICE));
 		}
+		if (service != -1) getAuth(service, id);
 	}
 
 	@Override
@@ -106,7 +108,9 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	public boolean onContextItemSelected(MenuItem item) {
 		if (item.getItemId() == DELETE_ID) {
 			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-			db.delete(TABLE_ACCOUNTS, _ID + "=" + ((AdapterContextMenuInfo) item.getMenuInfo()).position, null);
+			db.delete(TABLE_ACCOUNTS, _ID + "=" + (int) ((AdapterContextMenuInfo) item.getMenuInfo()).id, null);
+			db.close();
+			listAccounts();
 		}
 		return super.onContextItemSelected(item);
 	}
@@ -205,7 +209,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	       	mAsyncRunner = new AsyncFacebookRunner(mFacebook);
 			mFacebook.setAccessToken(null);
 			mFacebook.setAccessExpires(0);
-            mFacebook.authorize(this, FACEBOOK_KEY, FACEBOOK_PERMISSIONS, new LoginDialogListener());
+            mFacebook.authorize(this, FACEBOOK_KEY, FACEBOOK_PERMISSIONS, this);
 			break;
 		}
 
@@ -223,67 +227,65 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		getAuth(which, NO_ACCOUNT);
 		dialog.cancel();
 	}
-	
-    private final class LoginDialogListener implements DialogListener {
-        public void onComplete(Bundle values) {
-        	mAsyncRunner.request("me", new RequestListener() {
-				@Override
-				public void onComplete(String response) {
-		            try {
-		                JSONObject json = Util.parseJson(response);
-						SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-						ContentValues values = new ContentValues();
-						values.put(USERNAME, json.getString("name"));
-						values.put(TOKEN, mFacebook.getAccessToken());
-						values.put(EXPIRY, mFacebook.getAccessExpires());
-						values.put(SERVICE, FACEBOOK);
-						values.put(TIMEZONE, json.getString(TIMEZONE));
-						db.insert(TABLE_ACCOUNTS, TOKEN, values);
-		                ManageAccounts.this.runOnUiThread(new Runnable() {
-		                    public void run() {
-		                        listAccounts();
-		                    }
-		                });
-		            } catch (JSONException e) {
-		            	Log.e(TAG, e.toString());
-		            } catch (FacebookError e) {
-		            	Log.e(TAG, e.toString());
-		            }
-				}
 
-				@Override
-				public void onFacebookError(FacebookError e) {
-					Log.e(TAG, e.toString());
-				}
+    public void onComplete(Bundle values) {
+    	mAsyncRunner.request("me", new RequestListener() {
+			@Override
+			public void onComplete(String response) {
+	            try {
+	                JSONObject json = Util.parseJson(response);
+					SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+					ContentValues values = new ContentValues();
+					values.put(USERNAME, json.getString("name"));
+					values.put(TOKEN, mFacebook.getAccessToken());
+					values.put(EXPIRY, mFacebook.getAccessExpires());
+					values.put(SERVICE, FACEBOOK);
+					values.put(TIMEZONE, json.getString(TIMEZONE));
+					db.insert(TABLE_ACCOUNTS, TOKEN, values);
+	                ManageAccounts.this.runOnUiThread(new Runnable() {
+	                    public void run() {
+	                        listAccounts();
+	                    }
+	                });
+	            } catch (JSONException e) {
+	            	Log.e(TAG, e.toString());
+	            } catch (FacebookError e) {
+	            	Log.e(TAG, e.toString());
+	            }
+			}
 
-				@Override
-				public void onFileNotFoundException(FileNotFoundException e) {
-					Log.e(TAG, e.toString());
-				}
+			@Override
+			public void onFacebookError(FacebookError e) {
+				Log.e(TAG, e.toString());
+			}
 
-				@Override
-				public void onIOException(IOException e) {
-					Log.e(TAG, e.toString());
-				}
+			@Override
+			public void onFileNotFoundException(FileNotFoundException e) {
+				Log.e(TAG, e.toString());
+			}
 
-				@Override
-				public void onMalformedURLException(MalformedURLException e) {
-					Log.e(TAG, e.toString());
-				}
-        	});
-        }
+			@Override
+			public void onIOException(IOException e) {
+				Log.e(TAG, e.toString());
+			}
 
-        public void onFacebookError(FacebookError error) {
-			Toast.makeText(ManageAccounts.this, error.getMessage(), Toast.LENGTH_LONG).show();
-        }
-        
-        public void onError(DialogError error) {
-			Toast.makeText(ManageAccounts.this, error.getMessage(), Toast.LENGTH_LONG).show();
-        }
+			@Override
+			public void onMalformedURLException(MalformedURLException e) {
+				Log.e(TAG, e.toString());
+			}
+    	});
+    }
 
-        public void onCancel() {
-			Toast.makeText(ManageAccounts.this, "Authorization canceled", Toast.LENGTH_LONG).show();
-        }
+    public void onFacebookError(FacebookError error) {
+		Toast.makeText(ManageAccounts.this, error.getMessage(), Toast.LENGTH_LONG).show();
+    }
+    
+    public void onError(DialogError error) {
+		Toast.makeText(ManageAccounts.this, error.getMessage(), Toast.LENGTH_LONG).show();
+    }
+
+    public void onCancel() {
+		Toast.makeText(ManageAccounts.this, "Authorization canceled", Toast.LENGTH_LONG).show();
     }
 
 }
