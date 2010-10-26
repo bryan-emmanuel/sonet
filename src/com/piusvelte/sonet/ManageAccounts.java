@@ -22,6 +22,7 @@ import static com.piusvelte.sonet.Sonet.MYSPACE_SECRET;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.Map;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -35,6 +36,7 @@ import com.facebook.android.AsyncFacebookRunner.RequestListener;
 import com.facebook.android.Facebook.DialogListener;
 import com.myspace.sdk.MSLoginActivity;
 import com.myspace.sdk.MSRequest;
+import com.myspace.sdk.MSSDK;
 import com.myspace.sdk.MSSession;
 import com.myspace.sdk.MSSession.IMSSessionCallback;
 
@@ -151,6 +153,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		listAccounts();
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
@@ -303,13 +306,42 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 
 	@Override
 	public void sessionDidLogin(MSSession session) {
-//		MSRequest.Builder.getBuilder(requestCallback).get(API_STATUS_MOOD_URL, null);
-		session.getToken();
-		session.getTokenSecret();
+		mMSSession.setToken(session.getToken());
+		mMSSession.setTokenSecret(session.getTokenSecret());
+		MSSDK.getUserInfo(new MSRequestCallback());
 	}
 
 	@Override
 	public void sessionDidLogout(MSSession session) {
+	}
+	
+	private class MSRequestCallback extends MSRequest.MSRequestCallback {
+
+		@Override
+		public void requestDidFail(MSRequest request, Throwable error) {
+			Log.e(TAG, error.getMessage());
+		}
+
+		@Override
+		public void requestDidLoad(MSRequest request, Object result) {
+			Map<?, ?> data = (Map<?, ?>) result;
+			result = data.get("data");
+			if (result instanceof Map<?, ?>) {
+				Map<?, ?> userObject = (Map<?, ?>) result;
+				SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+				ContentValues values = new ContentValues();
+				values.put(USERNAME, (String) userObject.get("displayName"));
+				values.put(TOKEN, mMSSession.getToken());
+				values.put(SECRET, mMSSession.getTokenSecret());
+				values.put(SERVICE, MYSPACE);
+				db.insert(TABLE_ACCOUNTS, TOKEN, values);
+                ManageAccounts.this.runOnUiThread(new Runnable() {
+                    public void run() {
+                        listAccounts();
+                    }
+                });
+			}			
+		}
 	}
 
 }
