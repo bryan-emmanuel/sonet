@@ -11,11 +11,13 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.EXPIRY;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TIMEZONE;
 import static com.piusvelte.sonet.Sonet.TWITTER_KEY;
 import static com.piusvelte.sonet.Sonet.TWITTER_SECRET;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_KEY;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_ID;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_ACCESS;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_REQUEST;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_PERMISSIONS;
+import static com.piusvelte.sonet.Sonet.MYSPACE_KEY;
+import static com.piusvelte.sonet.Sonet.MYSPACE_SECRET;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -31,6 +33,10 @@ import com.facebook.android.FacebookError;
 import com.facebook.android.Util;
 import com.facebook.android.AsyncFacebookRunner.RequestListener;
 import com.facebook.android.Facebook.DialogListener;
+import com.myspace.sdk.MSLoginActivity;
+import com.myspace.sdk.MSRequest;
+import com.myspace.sdk.MSSession;
+import com.myspace.sdk.MSSession.IMSSessionCallback;
 
 import oauth.signpost.OAuthProvider;
 import oauth.signpost.basic.DefaultOAuthProvider;
@@ -65,16 +71,19 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class ManageAccounts extends ListActivity implements OnClickListener, android.content.DialogInterface.OnClickListener, DialogListener {
+public class ManageAccounts extends ListActivity implements OnClickListener, android.content.DialogInterface.OnClickListener, DialogListener, IMSSessionCallback {
 	private static final int DELETE_ID = Menu.FIRST;
 	private SonetDatabaseHelper mSonetDatabaseHelper;
 	private static final long NO_ACCOUNT = -1;
 	private static final int TWITTER = 0;
 	private static final int FACEBOOK = 1;
+	private static final int MYSPACE = 2;
     private Facebook mFacebook;
     private AsyncFacebookRunner mAsyncRunner;
+    private MSSession mMSSession;
 
 	private static Uri TWITTER_CALLBACK = Uri.parse("sonet://twitter");
+	private static Uri MYSPACE_CALLBACK = Uri.parse("sonet://myspace");
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -209,8 +218,12 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	       	mAsyncRunner = new AsyncFacebookRunner(mFacebook);
 			mFacebook.setAccessToken(null);
 			mFacebook.setAccessExpires(0);
-            mFacebook.authorize(this, FACEBOOK_KEY, FACEBOOK_PERMISSIONS, this);
+            mFacebook.authorize(this, FACEBOOK_ID, FACEBOOK_PERMISSIONS, this);
 			break;
+		case MYSPACE:
+			mMSSession = MSSession.getSession(MYSPACE_KEY, MYSPACE_SECRET, MYSPACE_CALLBACK.toString(), this);
+			startActivity(new Intent(this, MSLoginActivity.class));
+	        break;
 		}
 
 	}
@@ -287,5 +300,16 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
     public void onCancel() {
 		Toast.makeText(ManageAccounts.this, "Authorization canceled", Toast.LENGTH_LONG).show();
     }
+
+	@Override
+	public void sessionDidLogin(MSSession session) {
+//		MSRequest.Builder.getBuilder(requestCallback).get(API_STATUS_MOOD_URL, null);
+		session.getToken();
+		session.getTokenSecret();
+	}
+
+	@Override
+	public void sessionDidLogout(MSSession session) {
+	}
 
 }

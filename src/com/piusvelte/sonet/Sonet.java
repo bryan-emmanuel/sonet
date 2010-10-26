@@ -7,7 +7,9 @@ public class Sonet {
 	public static final String TWITTER_URL_AUTHORIZE = "https://api.twitter.com/oauth/authorize";
 	static final String TWITTER_KEY = "";
 	static final String TWITTER_SECRET = "";
-	static final String FACEBOOK_KEY = "";
+	static final String FACEBOOK_ID = "";
+	static final String MYSPACE_KEY = "";
+	static final String MYSPACE_SECRET = "";
     public static final String[] FACEBOOK_PERMISSIONS = new String[] {"offline_access"};
 	
 	public Sonet() {}
