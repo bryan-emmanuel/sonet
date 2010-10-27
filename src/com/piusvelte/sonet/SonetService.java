@@ -94,6 +94,7 @@ public class SonetService extends Service {
 		return START_STICKY;
 	}
 
+	@SuppressWarnings("deprecation")
 	public void init() {
 		((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, new Intent(this, SonetService.class).setAction(REFRESH), 0));
 		// Perform this loop procedure for each App Widget that belongs to this provider
@@ -120,7 +121,7 @@ public class SonetService extends Service {
 				bg_canvas.drawColor(head_background);
 				views.setImageViewBitmap(R.id.head_background, bg_bitmap);
 				views.setTextColor(R.id.head_spacer, head_background);
-				views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, (new Intent(Intent.ACTION_VIEW, Uri.parse("http://twitter.com"))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(browser), 0));
+				views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, (new Intent(this, PostDialog.class)), 0));
 				views.setTextColor(R.id.button_post, head_text);
 				views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, (new Intent(this, UI.class)), 0));
 				views.setTextColor(R.id.button_post, head_text);
@@ -159,6 +160,7 @@ public class SonetService extends Service {
 					while (!cursor.isAfterLast()) {
 						switch (cursor.getInt(service)) {
 						case TWITTER:
+							Log.v(TAG, "twitter");
 							String status_url = "http://twitter.com/%s/status/%s";
 							TwitterFactory factory = new TwitterFactory();
 							Twitter twitter = factory.getInstance();
@@ -169,6 +171,7 @@ public class SonetService extends Service {
 								List<Status> statuses = twitter.getFriendsTimeline(new Paging(1, max_widget_items));
 								for (Status status : statuses) {
 									String screenname = status.getUser().getScreenName();
+									Log.v(TAG, "add: "+screenname);
 									status_items.add(new StatusItem(status.getCreatedAt(),
 											Uri.parse(String.format(status_url, screenname, Long.toString(status.getId()))),
 											screenname,
@@ -180,6 +183,7 @@ public class SonetService extends Service {
 							}
 							break;
 						case FACEBOOK:
+							Log.v(TAG, "facebook");
 							String name = "name",
 							created_time = "created_time",
 							message = "message",
@@ -226,6 +230,7 @@ public class SonetService extends Service {
 											}
 										}
 										JSONObject f = o.getJSONObject(from);
+										Log.v(TAG, "add: "+f.getString(name));
 										status_items.add(new StatusItem(cal.getTime(),
 												l,
 												f.getString(name),

@@ -76,7 +76,6 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 public class ManageAccounts extends ListActivity implements OnClickListener, android.content.DialogInterface.OnClickListener, DialogListener, IMSSessionCallback {
 	private static final int DELETE_ID = Menu.FIRST;
 	private SonetDatabaseHelper mSonetDatabaseHelper;
-	private static final long NO_ACCOUNT = -1;
 	private static final int TWITTER = 0;
 	private static final int FACEBOOK = 1;
 	private static final int MYSPACE = 2;
@@ -106,7 +105,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			cursor.moveToFirst();
 			service = cursor.getInt(cursor.getColumnIndex(SERVICE));
 		}
-		if (service != -1) getAuth(service, id);
+		if (service != -1) getAuth(service);
 	}
 
 	@Override
@@ -194,7 +193,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		}
 	}
 
-	private void getAuth(int service, long account) {
+	private void getAuth(int service) {
 		switch (service) {
 		case TWITTER:
 			try {
@@ -240,7 +239,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	}
 
 	public void onClick(DialogInterface dialog, int which) {
-		getAuth(which, NO_ACCOUNT);
+		getAuth(which);
 		dialog.cancel();
 	}
 
