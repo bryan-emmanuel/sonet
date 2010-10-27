@@ -8,8 +8,6 @@ public class Sonet {
 	static final String TWITTER_KEY = "";
 	static final String TWITTER_SECRET = "";
 	static final String FACEBOOK_ID = "";
-	static final String MYSPACE_KEY = "";
-	static final String MYSPACE_SECRET = "";
     public static final String[] FACEBOOK_PERMISSIONS = new String[] {"offline_access"};
 	
 	public Sonet() {}

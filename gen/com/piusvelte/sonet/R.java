@@ -12,7 +12,11 @@ public final class R {
         public static final int interval_entries=0x7f050000;
         public static final int interval_values=0x7f050001;
         public static final int months=0x7f050004;
+        /** 		<item>Identi.ca</item>
+         */
         public static final int service_entries=0x7f050002;
+        /** 		<item>2</item>
+         */
         public static final int service_values=0x7f050003;
     }
     public static final class attr {

@@ -121,7 +121,7 @@ public class SonetService extends Service {
 				bg_canvas.drawColor(head_background);
 				views.setImageViewBitmap(R.id.head_background, bg_bitmap);
 				views.setTextColor(R.id.head_spacer, head_background);
-				views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, (new Intent(this, PostDialog.class)), 0));
+				views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, (new Intent(this, PostDialogLauncher.class)), 0));
 				views.setTextColor(R.id.button_post, head_text);
 				views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, (new Intent(this, UI.class)), 0));
 				views.setTextColor(R.id.button_post, head_text);

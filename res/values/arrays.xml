@@ -32,14 +32,12 @@
 	<string-array name="service_entries">
 		<item>Twitter</item>
 		<item>Facebook</item>
-		<item>MySpace</item>
-		<item>Identi.ca</item>
+<!--		<item>Identi.ca</item>-->
 	</string-array>
 	<string-array name="service_values">
 		<item>0</item>
 		<item>1</item>
-		<item>2</item>
-		<item>3</item>
+<!--		<item>2</item>-->
 	</string-array>
 	<string-array name="months">
 		<item>Jan</item>

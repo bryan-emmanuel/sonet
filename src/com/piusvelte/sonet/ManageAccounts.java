@@ -1,3 +1,22 @@
+/*
+ * Sonet - Android Social Networking Widget
+ * Copyright (C) 2009 Bryan Emmanuel
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *  
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  
+ *  Bryan Emmanuel piusvelte@gmail.com
+ */
 package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.TAG;
@@ -16,8 +35,6 @@ import static com.piusvelte.sonet.Sonet.TWITTER_URL_ACCESS;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_REQUEST;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_PERMISSIONS;
-import static com.piusvelte.sonet.Sonet.MYSPACE_KEY;
-import static com.piusvelte.sonet.Sonet.MYSPACE_SECRET;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -34,11 +51,6 @@ import com.facebook.android.FacebookError;
 import com.facebook.android.Util;
 import com.facebook.android.AsyncFacebookRunner.RequestListener;
 import com.facebook.android.Facebook.DialogListener;
-import com.myspace.sdk.MSLoginActivity;
-import com.myspace.sdk.MSRequest;
-import com.myspace.sdk.MSSDK;
-import com.myspace.sdk.MSSession;
-import com.myspace.sdk.MSSession.IMSSessionCallback;
 
 import oauth.signpost.OAuthProvider;
 import oauth.signpost.basic.DefaultOAuthProvider;
@@ -73,18 +85,15 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class ManageAccounts extends ListActivity implements OnClickListener, android.content.DialogInterface.OnClickListener, DialogListener, IMSSessionCallback {
+public class ManageAccounts extends ListActivity implements OnClickListener, android.content.DialogInterface.OnClickListener, DialogListener {
 	private static final int DELETE_ID = Menu.FIRST;
 	private SonetDatabaseHelper mSonetDatabaseHelper;
 	private static final int TWITTER = 0;
 	private static final int FACEBOOK = 1;
-	private static final int MYSPACE = 2;
     private Facebook mFacebook;
     private AsyncFacebookRunner mAsyncRunner;
-    private MSSession mMSSession;
 
 	private static Uri TWITTER_CALLBACK = Uri.parse("sonet://twitter");
-	private static Uri MYSPACE_CALLBACK = Uri.parse("sonet://myspace");
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -222,10 +231,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			mFacebook.setAccessExpires(0);
             mFacebook.authorize(this, FACEBOOK_ID, FACEBOOK_PERMISSIONS, this);
 			break;
-		case MYSPACE:
-			mMSSession = MSSession.getSession(MYSPACE_KEY, MYSPACE_SECRET, MYSPACE_CALLBACK.toString(), this);
-			startActivity(new Intent(this, MSLoginActivity.class));
-	        break;
 		}
 
 	}
@@ -302,45 +307,5 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
     public void onCancel() {
 		Toast.makeText(ManageAccounts.this, "Authorization canceled", Toast.LENGTH_LONG).show();
     }
-
-	@Override
-	public void sessionDidLogin(MSSession session) {
-		mMSSession.setToken(session.getToken());
-		mMSSession.setTokenSecret(session.getTokenSecret());
-		MSSDK.getUserInfo(new MSRequestCallback());
-	}
-
-	@Override
-	public void sessionDidLogout(MSSession session) {
-	}
-	
-	private class MSRequestCallback extends MSRequest.MSRequestCallback {
-
-		@Override
-		public void requestDidFail(MSRequest request, Throwable error) {
-			Log.e(TAG, error.getMessage());
-		}
-
-		@Override
-		public void requestDidLoad(MSRequest request, Object result) {
-			Map<?, ?> data = (Map<?, ?>) result;
-			result = data.get("data");
-			if (result instanceof Map<?, ?>) {
-				Map<?, ?> userObject = (Map<?, ?>) result;
-				SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-				ContentValues values = new ContentValues();
-				values.put(USERNAME, (String) userObject.get("displayName"));
-				values.put(TOKEN, mMSSession.getToken());
-				values.put(SECRET, mMSSession.getTokenSecret());
-				values.put(SERVICE, MYSPACE);
-				db.insert(TABLE_ACCOUNTS, TOKEN, values);
-                ManageAccounts.this.runOnUiThread(new Runnable() {
-                    public void run() {
-                        listAccounts();
-                    }
-                });
-			}			
-		}
-	}
 
 }
