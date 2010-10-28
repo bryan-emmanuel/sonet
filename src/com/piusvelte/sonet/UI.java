@@ -20,13 +20,6 @@ public class UI extends Activity implements OnClickListener {
 		((Button) findViewById(R.id.button_settings)).setOnClickListener(this);
 		((Button) findViewById(R.id.button_close)).setOnClickListener(this);
 	}
-	
-	@Override
-	protected void onPause() {
-		// update the widget if changes were made
-		startService(new Intent(this, SonetService.class));
-		super.onPause();
-	}
 
 	public void onClick(View v) {
 		switch (v.getId()) {
@@ -37,6 +30,8 @@ public class UI extends Activity implements OnClickListener {
 			startActivity(new Intent(this, Settings.class));
 			break;
 		case R.id.button_close:
+			// update the widget
+			startService(new Intent(this, SonetService.class));
 			finish();
 			break;
 		}

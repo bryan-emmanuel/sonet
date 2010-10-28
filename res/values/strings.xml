@@ -55,7 +55,7 @@
     <string name="password">password</string>
     <string name="key_requesttoken">requesttoken</string>
     <string name="key_requestsecret">requestsecret</string>
-    <string name="close">Close</string>
+    <string name="close">Close and Refresh</string>
     <string name="head_spacer">.</string>
     <string name="title_color_picker">Pick a color</string>
     <string name="category_buttons">Buttons</string>
@@ -73,6 +73,4 @@
     <string name="key_time_12_24">time1224</string>
     <string name="time_12_24">Use 24-hour format</string>
     <string name="category_time">Time</string>
-    <string name="twitter">Twitter</string>
-    <string name="facebook">Facebook</string>
 </resources>

@@ -29,15 +29,13 @@ public final class R {
         public static final int account_username=0x7f070001;
         public static final int body=0x7f070010;
         public static final int body_background=0x7f07000a;
-        public static final int btn_facebook=0x7f070008;
-        public static final int btn_twitter=0x7f070007;
-        public static final int button_accounts=0x7f070004;
+        public static final int button_accounts=0x7f070006;
         public static final int button_add_account=0x7f070000;
-        public static final int button_close=0x7f070006;
+        public static final int button_close=0x7f070008;
         public static final int button_configure=0x7f07000e;
         public static final int button_post=0x7f07000d;
         public static final int button_refresh=0x7f07000f;
-        public static final int button_settings=0x7f070005;
+        public static final int button_settings=0x7f070007;
         public static final int created0=0x7f070014;
         public static final int created1=0x7f070019;
         public static final int created2=0x7f07001e;
@@ -45,6 +43,7 @@ public final class R {
         public static final int created4=0x7f070028;
         public static final int created5=0x7f07002d;
         public static final int created6=0x7f070032;
+        public static final int friend=0x7f070004;
         public static final int head=0x7f07000c;
         public static final int head_background=0x7f07000b;
         public static final int head_spacer=0x7f070009;
@@ -77,14 +76,15 @@ public final class R {
         public static final int screenname4=0x7f070027;
         public static final int screenname5=0x7f07002c;
         public static final int screenname6=0x7f070031;
+        public static final int status=0x7f070005;
         public static final int username=0x7f070002;
     }
     public static final class layout {
         public static final int accounts=0x7f030000;
         public static final int accounts_row=0x7f030001;
         public static final int authentication=0x7f030002;
-        public static final int main=0x7f030003;
-        public static final int post_dialog=0x7f030004;
+        public static final int friend_status=0x7f030003;
+        public static final int main=0x7f030004;
         public static final int widget=0x7f030005;
         public static final int widget_nobuttons=0x7f030006;
     }
@@ -113,7 +113,6 @@ public final class R {
         public static final int default_interval=0x7f06000f;
         public static final int delete_account=0x7f06000e;
         public static final int display_buttons=0x7f060029;
-        public static final int facebook=0x7f060037;
         public static final int friend_text=0x7f06002d;
         public static final int head_background=0x7f060018;
         public static final int head_spacer=0x7f060025;
@@ -142,7 +141,6 @@ public final class R {
         public static final int sonet_4x4=0x7f060003;
         public static final int time_12_24=0x7f060034;
         public static final int title_color_picker=0x7f060026;
-        public static final int twitter=0x7f060036;
         public static final int user_agent=0x7f060004;
         public static final int username=0x7f060020;
     }

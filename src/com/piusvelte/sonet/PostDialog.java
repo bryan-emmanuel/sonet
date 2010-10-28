@@ -19,35 +19,48 @@
  */
 package com.piusvelte.sonet;
 
-import android.app.Dialog;
+import static com.piusvelte.sonet.Sonet.TWITTER;
+import static com.piusvelte.sonet.Sonet.FACEBOOK;
+
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ComponentName;
-import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
+import android.os.Bundle;
 
-public class PostDialog extends Dialog implements OnClickListener {
-	private Button mTwitter;
-	private Button mFacebook;
-	private Context mContext;
+public class PostDialog extends Activity implements DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
 
-	public PostDialog(Context context) {
-		super(context);
-		mContext = context;
-		setContentView(R.layout.post_dialog);
-		mTwitter = (Button) findViewById(R.id.btn_twitter);
-		mTwitter.setOnClickListener(this);
-		mFacebook = (Button) findViewById(R.id.btn_facebook);
-		mFacebook.setOnClickListener(this);
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		String[] services = getResources().getStringArray(R.array.service_entries);
+		CharSequence[] items = new CharSequence[services.length];
+		for (int i = 0; i < services.length; i++) items[i] = services[i];
+		(new AlertDialog.Builder(this))
+		.setItems(items, this)
+		.setCancelable(true)
+		.setOnCancelListener(this)
+		.show();
 	}
 
 	@Override
-	public void onClick(View v) {
-		if (v == mTwitter) mContext.startActivity((new Intent(Intent.ACTION_VIEW, Uri.parse("http://twitter.com"))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(new ComponentName("com.android.browser", "com.android.browser.BrowserActivity")));
-		else if (v == mFacebook) mContext.startActivity((new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.facebook.com"))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(new ComponentName("com.android.browser", "com.android.browser.BrowserActivity")));
-		dismiss();
+	public void onClick(DialogInterface dialog, int which) {
+		switch (which) {
+		case TWITTER:
+			startActivity((new Intent(Intent.ACTION_VIEW, Uri.parse("http://twitter.com"))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(new ComponentName("com.android.browser", "com.android.browser.BrowserActivity")));
+			break;
+		case FACEBOOK:
+			startActivity((new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.facebook.com"))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(new ComponentName("com.android.browser", "com.android.browser.BrowserActivity")));
+			break;
+		}
+		dialog.cancel();
 	}
+	
+	@Override
+	public void onCancel(DialogInterface dialog) {
+		finish();
+	}	
 
 }

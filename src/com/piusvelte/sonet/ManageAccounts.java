@@ -35,11 +35,12 @@ import static com.piusvelte.sonet.Sonet.TWITTER_URL_ACCESS;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_REQUEST;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_PERMISSIONS;
+import static com.piusvelte.sonet.Sonet.TWITTER;
+import static com.piusvelte.sonet.Sonet.FACEBOOK;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.Map;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -88,8 +89,6 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 public class ManageAccounts extends ListActivity implements OnClickListener, android.content.DialogInterface.OnClickListener, DialogListener {
 	private static final int DELETE_ID = Menu.FIRST;
 	private SonetDatabaseHelper mSonetDatabaseHelper;
-	private static final int TWITTER = 0;
-	private static final int FACEBOOK = 1;
     private Facebook mFacebook;
     private AsyncFacebookRunner mAsyncRunner;
 
