@@ -113,25 +113,8 @@ public class SonetService extends Service {
 			ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 			SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
 			ComponentName browser = new ComponentName("com.android.browser", "com.android.browser.BrowserActivity");
-			RemoteViews views;
-			if (sp.getBoolean(getString(R.string.key_display_buttons), true)) {
-				// display the buttons, setting style on onclick
-				views = new RemoteViews(getPackageName(), R.layout.widget);
-				// set buttons
-				int head_text = Integer.parseInt(sp.getString(getString(R.string.key_head_text), getString(R.string.default_head_text))),
-				head_background = Integer.parseInt(sp.getString(getString(R.string.key_head_background), getString(R.string.default_head_background)));
-				Bitmap bg_bitmap = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-				Canvas bg_canvas = new Canvas(bg_bitmap);
-				bg_canvas.drawColor(head_background);
-				views.setImageViewBitmap(R.id.head_background, bg_bitmap);
-				views.setTextColor(R.id.head_spacer, head_background);
-				views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, (new Intent(this, PostDialog.class)), 0));
-				views.setTextColor(R.id.button_post, head_text);
-				views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, (new Intent(this, UI.class)), 0));
-				views.setTextColor(R.id.button_post, head_text);
-				views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(this, 0, (new Intent(this, SonetService.class)), 0));
-				views.setTextColor(R.id.button_post, head_text);
-			} else views = new RemoteViews(getPackageName(), R.layout.widget_nobuttons);
+			Boolean displayButtons = sp.getBoolean(getString(R.string.key_display_buttons), true);
+			RemoteViews views = new RemoteViews(getPackageName(), displayButtons ? R.layout.widget : R.layout.widget_nobuttons);
 			// set messages background
 			Bitmap bd_bitmap = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
 			Canvas bd_canvas = new Canvas(bd_bitmap);
@@ -213,35 +196,41 @@ public class SonetService extends Service {
 									for (int i = 0; i < jarr.length(); i++) {
 										JSONObject o = jarr.getJSONObject(i);
 										// only parse status types, not photo, video or link
-										if (o.getString(type).equals(status)) {
+										if (o.has(type) && o.getString(type).equals(status) && o.has(from) && o.has(message)) {
 											// parse the date
 											Date created;
-											try {
-												created = format.parse(o.getString(created_time));
-											} catch (ParseException e) {
-												created = new Date();
-												Log.e(TAG,e.toString());
-											}
+											if (o.has(created_time)) {
+												try {
+													created = format.parse(o.getString(created_time));
+												} catch (ParseException e) {
+													created = new Date();
+													Log.e(TAG,e.toString());
+												}
+											} else created = new Date();
 											// apply the timezone
 											Calendar cal = Calendar.getInstance();
 											cal.setTime(created);
 											cal.add(Calendar.HOUR, tz);
 											// parse the link
-											JSONArray action = o.getJSONArray(actions);
 											Uri l = Uri.parse("http://www.facebook.com");
-											for (int a = 0; a < action.length(); a++) {
-												JSONObject n = action.getJSONObject(a);
-												if (n.getString(name) == comment) {
-													l = Uri.parse(n.getString(link));
-													break;
+											if (o.has(actions)) {											
+												JSONArray action = o.getJSONArray(actions);
+												for (int a = 0; a < action.length(); a++) {
+													JSONObject n = action.getJSONObject(a);
+													if (n.getString(name) == comment) {
+														l = Uri.parse(n.getString(link));
+														break;
+													}
 												}
 											}
 											JSONObject f = o.getJSONObject(from);
-											status_items.add(new StatusItem(cal.getTime(),
-													l,
-													f.getString(name),
-													new URL(String.format(profile, f.getString(id))),
-													o.getString(message)));
+											if (f.has(name) && f.has(id)) {
+												status_items.add(new StatusItem(cal.getTime(),
+														l,
+														f.getString(name),
+														new URL(String.format(profile, f.getString(id))),
+														o.getString(message)));
+											}
 										}
 									}
 								} catch (JSONException e) {
@@ -297,9 +286,60 @@ public class SonetService extends Service {
 				}
 			}
 			// Push update for this widget to the home screen
-			for (int i=0; i<sonetWidget_4x2.length; i++) manager.updateAppWidget(sonetWidget_4x2[i], views);
-			for (int i=0; i<sonetWidget_4x3.length; i++) manager.updateAppWidget(sonetWidget_4x3[i], views);
-			for (int i=0; i<sonetWidget_4x4.length; i++) manager.updateAppWidget(sonetWidget_4x4[i], views);
+			for (int i=0; i<sonetWidget_4x2.length; i++) {
+				if (displayButtons) {
+					int head_text = Integer.parseInt(sp.getString(getString(R.string.key_head_text), getString(R.string.default_head_text))),
+					head_background = Integer.parseInt(sp.getString(getString(R.string.key_head_background), getString(R.string.default_head_background)));
+					Bitmap bg_bitmap = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+					Canvas bg_canvas = new Canvas(bg_bitmap);
+					bg_canvas.drawColor(head_background);
+					views.setImageViewBitmap(R.id.head_background, bg_bitmap);
+					views.setTextColor(R.id.head_spacer, head_background);
+					views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, (new Intent(this, PostDialog.class)), 0));
+					views.setTextColor(R.id.button_post, head_text);
+					views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, (new Intent(this, UI.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, sonetWidget_4x2[i])), 0));
+					views.setTextColor(R.id.button_post, head_text);
+					views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(this, 0, (new Intent(this, SonetService.class)), 0));
+					views.setTextColor(R.id.button_post, head_text);
+				}
+				manager.updateAppWidget(sonetWidget_4x2[i], views);
+			}
+			for (int i=0; i<sonetWidget_4x3.length; i++) {
+				if (displayButtons) {
+					int head_text = Integer.parseInt(sp.getString(getString(R.string.key_head_text), getString(R.string.default_head_text))),
+					head_background = Integer.parseInt(sp.getString(getString(R.string.key_head_background), getString(R.string.default_head_background)));
+					Bitmap bg_bitmap = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+					Canvas bg_canvas = new Canvas(bg_bitmap);
+					bg_canvas.drawColor(head_background);
+					views.setImageViewBitmap(R.id.head_background, bg_bitmap);
+					views.setTextColor(R.id.head_spacer, head_background);
+					views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, (new Intent(this, PostDialog.class)), 0));
+					views.setTextColor(R.id.button_post, head_text);
+					views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, (new Intent(this, UI.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, sonetWidget_4x3[i])), 0));
+					views.setTextColor(R.id.button_post, head_text);
+					views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(this, 0, (new Intent(this, SonetService.class)), 0));
+					views.setTextColor(R.id.button_post, head_text);
+				}
+				manager.updateAppWidget(sonetWidget_4x3[i], views);
+			}
+			for (int i=0; i<sonetWidget_4x4.length; i++) {
+				if (displayButtons) {
+					int head_text = Integer.parseInt(sp.getString(getString(R.string.key_head_text), getString(R.string.default_head_text))),
+					head_background = Integer.parseInt(sp.getString(getString(R.string.key_head_background), getString(R.string.default_head_background)));
+					Bitmap bg_bitmap = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+					Canvas bg_canvas = new Canvas(bg_bitmap);
+					bg_canvas.drawColor(head_background);
+					views.setImageViewBitmap(R.id.head_background, bg_bitmap);
+					views.setTextColor(R.id.head_spacer, head_background);
+					views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, (new Intent(this, PostDialog.class)), 0));
+					views.setTextColor(R.id.button_post, head_text);
+					views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, (new Intent(this, UI.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, sonetWidget_4x4[i])), 0));
+					views.setTextColor(R.id.button_post, head_text);
+					views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(this, 0, (new Intent(this, SonetService.class)), 0));
+					views.setTextColor(R.id.button_post, head_text);
+				}
+				manager.updateAppWidget(sonetWidget_4x4[i], views);
+			}
 		}
 		if (mReceiver != null) {
 			IntentFilter f = new IntentFilter();
@@ -312,30 +352,30 @@ public class SonetService extends Service {
 		}
 	}
 
-@Override
-public IBinder onBind(Intent intent) {
-	// We don't need to bind to this service
-	return null;
-}
-
-private class StatusItem implements Comparable<StatusItem> {
-	private Date created;
-	private Uri link;
-	private String friend;
-	private URL profile;
-	private String message;
-	StatusItem(Date created, Uri link, String friend, URL profile, String message) {
-		this.created = created;
-		this.link = link;
-		this.friend = friend;
-		this.profile = profile;
-		this.message = message;
+	@Override
+	public IBinder onBind(Intent intent) {
+		// We don't need to bind to this service
+		return null;
 	}
 
-	public int compareTo(StatusItem si) {
-		// sort descending
-		return ((Long)si.created.getTime()).compareTo(created.getTime());
+	private class StatusItem implements Comparable<StatusItem> {
+		private Date created;
+		private Uri link;
+		private String friend;
+		private URL profile;
+		private String message;
+		StatusItem(Date created, Uri link, String friend, URL profile, String message) {
+			this.created = created;
+			this.link = link;
+			this.friend = friend;
+			this.profile = profile;
+			this.message = message;
+		}
+
+		public int compareTo(StatusItem si) {
+			// sort descending
+			return ((Long)si.created.getTime()).compareTo(created.getTime());
+		}
 	}
-}
 
 }

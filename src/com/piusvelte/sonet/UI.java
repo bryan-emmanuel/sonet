@@ -14,7 +14,9 @@ public class UI extends Activity implements OnClickListener {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-        setResult(Activity.RESULT_OK, (new Intent()).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, getIntent().getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId)));
+		Intent i = getIntent();
+		if (i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
+        setResult(Activity.RESULT_OK, (new Intent()).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 		setContentView(R.layout.main);
 		((Button) findViewById(R.id.button_accounts)).setOnClickListener(this);
 		((Button) findViewById(R.id.button_settings)).setOnClickListener(this);
@@ -24,7 +26,7 @@ public class UI extends Activity implements OnClickListener {
 	public void onClick(View v) {
 		switch (v.getId()) {
 		case R.id.button_accounts:
-			startActivity(new Intent(this, ManageAccounts.class));
+			startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 			break;
 		case R.id.button_settings:
 			startActivity(new Intent(this, Settings.class));

@@ -15,6 +15,8 @@ public class SonetDatabaseHelper extends SQLiteOpenHelper {
 	public static final String SERVICE = "service";
 	public static final String EXPIRY = "expiry";
 	public static final String TIMEZONE = "timezone";
+	public static final String WIDGET = "widget";
+//	public static final String TABLE_WIDGETS = "widgets";
 	
 	public SonetDatabaseHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);

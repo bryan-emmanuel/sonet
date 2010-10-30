@@ -62,6 +62,7 @@ import twitter4j.http.AccessToken;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.appwidget.AppWidgetManager;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -89,14 +90,17 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 public class ManageAccounts extends ListActivity implements OnClickListener, android.content.DialogInterface.OnClickListener, DialogListener {
 	private static final int DELETE_ID = Menu.FIRST;
 	private SonetDatabaseHelper mSonetDatabaseHelper;
-    private Facebook mFacebook;
-    private AsyncFacebookRunner mAsyncRunner;
+	private Facebook mFacebook;
+	private AsyncFacebookRunner mAsyncRunner;
+	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 
 	private static Uri TWITTER_CALLBACK = Uri.parse("sonet://twitter");
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		Intent i = getIntent();
+		if (i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
 		setContentView(R.layout.accounts);
 		registerForContextMenu(getListView());
 		((Button) findViewById(R.id.button_add_account)).setOnClickListener(this);
@@ -225,21 +229,23 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			break;
 		case FACEBOOK:
 			mFacebook = new Facebook();
-	       	mAsyncRunner = new AsyncFacebookRunner(mFacebook);
+			mAsyncRunner = new AsyncFacebookRunner(mFacebook);
 			mFacebook.setAccessToken(null);
 			mFacebook.setAccessExpires(0);
-            mFacebook.authorize(this, FACEBOOK_ID, FACEBOOK_PERMISSIONS, this);
+			mFacebook.authorize(this, FACEBOOK_ID, FACEBOOK_PERMISSIONS, this);
 			break;
 		}
 
 	}
 
 	private void listAccounts() {
-		SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-		Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, USERNAME, SERVICE}, null, null, null, null, null);
-		startManagingCursor(cursor);
-		setListAdapter(new SimpleCursorAdapter(this, R.layout.accounts_row, cursor, new String[] {USERNAME}, new int[] {R.id.account_username}));
-		db.close();
+		if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+			Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, USERNAME, SERVICE}, null, null, null, null, null);
+			startManagingCursor(cursor);
+			setListAdapter(new SimpleCursorAdapter(this, R.layout.accounts_row, cursor, new String[] {USERNAME}, new int[] {R.id.account_username}));
+			db.close();
+		}
 	}
 
 	public void onClick(DialogInterface dialog, int which) {
@@ -247,12 +253,12 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		dialog.cancel();
 	}
 
-    public void onComplete(Bundle values) {
-    	mAsyncRunner.request("me", new RequestListener() {
+	public void onComplete(Bundle values) {
+		mAsyncRunner.request("me", new RequestListener() {
 			@Override
 			public void onComplete(String response) {
-	            try {
-	                JSONObject json = Util.parseJson(response);
+				try {
+					JSONObject json = Util.parseJson(response);
 					SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
 					ContentValues values = new ContentValues();
 					values.put(USERNAME, json.getString("name"));
@@ -261,16 +267,16 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 					values.put(SERVICE, FACEBOOK);
 					values.put(TIMEZONE, json.getString(TIMEZONE));
 					db.insert(TABLE_ACCOUNTS, TOKEN, values);
-	                ManageAccounts.this.runOnUiThread(new Runnable() {
-	                    public void run() {
-	                        listAccounts();
-	                    }
-	                });
-	            } catch (JSONException e) {
-	            	Log.e(TAG, e.toString());
-	            } catch (FacebookError e) {
-	            	Log.e(TAG, e.toString());
-	            }
+					ManageAccounts.this.runOnUiThread(new Runnable() {
+						public void run() {
+							listAccounts();
+						}
+					});
+				} catch (JSONException e) {
+					Log.e(TAG, e.toString());
+				} catch (FacebookError e) {
+					Log.e(TAG, e.toString());
+				}
 			}
 
 			@Override
@@ -292,19 +298,19 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			public void onMalformedURLException(MalformedURLException e) {
 				Log.e(TAG, e.toString());
 			}
-    	});
-    }
+		});
+	}
 
-    public void onFacebookError(FacebookError error) {
+	public void onFacebookError(FacebookError error) {
 		Toast.makeText(ManageAccounts.this, error.getMessage(), Toast.LENGTH_LONG).show();
-    }
-    
-    public void onError(DialogError error) {
-		Toast.makeText(ManageAccounts.this, error.getMessage(), Toast.LENGTH_LONG).show();
-    }
+	}
 
-    public void onCancel() {
+	public void onError(DialogError error) {
+		Toast.makeText(ManageAccounts.this, error.getMessage(), Toast.LENGTH_LONG).show();
+	}
+
+	public void onCancel() {
 		Toast.makeText(ManageAccounts.this, "Authorization canceled", Toast.LENGTH_LONG).show();
-    }
+	}
 
 }
