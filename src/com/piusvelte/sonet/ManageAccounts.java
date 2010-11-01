@@ -56,7 +56,6 @@ import com.facebook.android.Facebook.DialogListener;
 import oauth.signpost.OAuthProvider;
 import oauth.signpost.basic.DefaultOAuthProvider;
 import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
-import twitter4j.Twitter;
 import twitter4j.TwitterFactory;
 import twitter4j.http.AccessToken;
 
@@ -93,6 +92,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	private Facebook mFacebook;
 	private AsyncFacebookRunner mAsyncRunner;
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
+	private String request_token,
+	request_secret;
 
 	private static Uri TWITTER_CALLBACK = Uri.parse("sonet://twitter");
 
@@ -164,7 +165,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		listAccounts();
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
@@ -172,27 +172,30 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		if (uri != null) {
 			if (TWITTER_CALLBACK.getScheme().equals(uri.getScheme())) {
 				try {
+					// use the requestToken and secret from earlier
+					if ((request_token == null) || (request_secret == null)) {
+						SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);					// throw away cached requesttoken & secret
+						request_token = sp.getString(getString(R.string.key_requesttoken), "");
+						request_secret = sp.getString(getString(R.string.key_requestsecret), "");
+						Editor spe = sp.edit();
+						spe.putString(getString(R.string.key_requesttoken), "");
+						spe.putString(getString(R.string.key_requestsecret), "");
+						spe.commit();						
+					} else {
+						request_token = null;
+						request_secret = null;
+					}
 					// this will populate token and token_secret in consumer
 					String verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
-					SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
 					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
-					// use the requestToken and secret from earlier
-					consumer.setTokenWithSecret(sp.getString(getString(R.string.key_requesttoken), ""), sp.getString(getString(R.string.key_requestsecret), ""));
-					// throw away cached requesttoken & secret
-					Editor spe = sp.edit();
-					spe.putString(getString(R.string.key_requesttoken), "");
-					spe.putString(getString(R.string.key_requestsecret), "");
-					spe.commit();
+					consumer.setTokenWithSecret(request_token, request_secret);
 					OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
 					provider.setOAuth10a(true);
 					provider.retrieveAccessToken(consumer, verifier);
-					AccessToken accessToken = new AccessToken(consumer.getToken(), consumer.getTokenSecret());
-					Twitter twitter = new TwitterFactory().getInstance();
-					twitter.setOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
-					twitter.setOAuthAccessToken(accessToken);
 					SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
 					ContentValues values = new ContentValues();
-					values.put(USERNAME, twitter.getScreenName());
+					Log.v(TAG,"twitter");
+					values.put(USERNAME, (new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(consumer.getToken(), consumer.getTokenSecret()))).getScreenName());
 					values.put(TOKEN, consumer.getToken());
 					values.put(SECRET, consumer.getTokenSecret());
 					values.put(SERVICE, TWITTER);
@@ -216,10 +219,12 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 				/*
 				 * need to save the requestToken and secret
 				 */
+				request_token = consumer.getToken();
+				request_secret = consumer.getTokenSecret();
 				SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
 				Editor spe = sp.edit();
-				spe.putString(getString(R.string.key_requesttoken), consumer.getToken());
-				spe.putString(getString(R.string.key_requestsecret), consumer.getTokenSecret());
+				spe.putString(getString(R.string.key_requesttoken), request_token);
+				spe.putString(getString(R.string.key_requestsecret), request_secret);
 				spe.commit();
 				startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)));
 			} catch (Exception e) {

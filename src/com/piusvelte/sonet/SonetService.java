@@ -53,7 +53,6 @@ import com.facebook.android.Util;
 
 import twitter4j.Paging;
 import twitter4j.Status;
-import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 import twitter4j.http.AccessToken;
@@ -99,7 +98,6 @@ public class SonetService extends Service {
 		return START_STICKY;
 	}
 
-	@SuppressWarnings("deprecation")
 	public void init() {
 		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
 		((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, new Intent(this, SonetService.class).setAction(REFRESH), 0));
@@ -154,13 +152,8 @@ public class SonetService extends Service {
 							switch (cursor.getInt(service)) {
 							case TWITTER:
 								String status_url = "http://twitter.com/%s/status/%s";
-								TwitterFactory factory = new TwitterFactory();
-								Twitter twitter = factory.getInstance();
-								twitter.setOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
-								AccessToken accessToken = new AccessToken(cursor.getString(token), cursor.getString(secret));
-								twitter.setOAuthAccessToken(accessToken);
 								try {
-									List<Status> statuses = twitter.getFriendsTimeline(new Paging(1, max_widget_items));
+									List<Status> statuses = (new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(cursor.getString(token), cursor.getString(secret)))).getFriendsTimeline(new Paging(1, max_widget_items));
 									for (Status status : statuses) {
 										String screenname = status.getUser().getScreenName();
 										status_items.add(new StatusItem(status.getCreatedAt(),
