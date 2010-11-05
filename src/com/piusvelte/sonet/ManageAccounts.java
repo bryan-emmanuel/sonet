@@ -65,6 +65,7 @@ import com.myspace.sdk.MSSession.IMSSessionCallback;
 import oauth.signpost.OAuthProvider;
 import oauth.signpost.basic.DefaultOAuthProvider;
 import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
+import oauth.signpost.signature.SignatureMethod;
 import twitter4j.TwitterFactory;
 import twitter4j.http.AccessToken;
 
@@ -104,7 +105,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	private MSSession mMSSession;
 
 	private static Uri TWITTER_CALLBACK = Uri.parse("sonet://twitter");
-	private static Uri MYSPACE_CALLBACK = Uri.parse("sonet://myspace");
+	private static String MYSPACE_CALLBACK = "sonet://myspace";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -186,11 +187,14 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 					spe.commit();
 					// this will populate token and token_secret in consumer
 					String verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
-					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
+//					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
+					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET, SignatureMethod.HMAC_SHA1);
 					consumer.setTokenWithSecret(request_token, request_secret);
-					OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
+//					OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
+					OAuthProvider provider = new DefaultOAuthProvider(consumer, TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
 					provider.setOAuth10a(true);
-					provider.retrieveAccessToken(consumer, verifier);
+//					provider.retrieveAccessToken(consumer, verifier);
+					provider.retrieveAccessToken(verifier);
 					SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
 					ContentValues values = new ContentValues();
 					values.put(USERNAME, (new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(consumer.getToken(), consumer.getTokenSecret()))).getScreenName());
@@ -211,10 +215,13 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		switch (service) {
 		case TWITTER:
 			try {
-				CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
-				OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
+//				CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
+				CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET, SignatureMethod.HMAC_SHA1);
+//				OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
+				OAuthProvider provider = new DefaultOAuthProvider(consumer, TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
 				provider.setOAuth10a(true);
-				String authUrl = provider.retrieveRequestToken(consumer, TWITTER_CALLBACK.toString());
+//				String authUrl = provider.retrieveRequestToken(consumer, TWITTER_CALLBACK.toString());
+				String authUrl = provider.retrieveRequestToken(TWITTER_CALLBACK.toString());
 				/*
 				 * need to save the requestToken and secret
 				 */
@@ -239,7 +246,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			mFacebook.authorize(this, FACEBOOK_ID, FACEBOOK_PERMISSIONS, this);
 			break;
 		case MYSPACE:
-			mMSSession = MSSession.getSession(MYSPACE_KEY, MYSPACE_SECRET, MYSPACE_CALLBACK.toString(), this);
+			mMSSession = MSSession.getSession(MYSPACE_KEY, MYSPACE_SECRET, MYSPACE_CALLBACK, this);
 			startActivity(new Intent(this, MSLoginActivity.class));
 			break;
 		}
@@ -326,6 +333,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	public void sessionDidLogin(MSSession session) {
 		mMSSession.setToken(session.getToken());
 		mMSSession.setTokenSecret(session.getTokenSecret());
+		Log.v(TAG,"ms:getUserInfo");
 		MSSDK.getUserInfo(new MSRequestCallback());
 	}
 
@@ -342,8 +350,10 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 
 		@Override
 		public void requestDidLoad(MSRequest request, Object result) {
+			Log.v(TAG,"ms:requestDidLoad");
 			Map<?, ?> data = (Map<?, ?>) result;
 			result = data.get("data");
+			Log.v(TAG,"ms:data:"+result.toString());
 			if (result instanceof Map<?, ?>) {
 				Map<?, ?> userObject = (Map<?, ?>) result;
 				SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();

@@ -48,9 +48,10 @@ import java.util.List;
 
 import oauth.signpost.OAuthConsumer;
 import oauth.signpost.basic.DefaultOAuthConsumer;
-import oauth.signpost.exception.OAuthCommunicationException;
+//import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
+import oauth.signpost.signature.SignatureMethod;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
@@ -248,7 +249,8 @@ public class SonetService extends Service {
 								}
 								break;
 							case MYSPACE:
-								OAuthConsumer consumer = new DefaultOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET);
+//								OAuthConsumer consumer = new DefaultOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET);
+								OAuthConsumer consumer = new DefaultOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET, SignatureMethod.HMAC_SHA1);
 								consumer.setTokenWithSecret(cursor.getString(token), cursor.getString(secret));
 								HttpClient client = new DefaultHttpClient();
 								HttpGet request = new HttpGet("http://api.myspace.com/1.0/activities/?format=json");
@@ -266,9 +268,10 @@ public class SonetService extends Service {
 									Log.e(TAG, e.toString());
 								} catch (OAuthExpectationFailedException e) {
 									Log.e(TAG, e.toString());
-								} catch (OAuthCommunicationException e) {
-									Log.e(TAG, e.toString());
 								}
+//								} catch (OAuthCommunicationException e) {
+//									Log.e(TAG, e.toString());
+//								}
 								break;
 							}
 							cursor.moveToNext();
