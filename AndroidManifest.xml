@@ -19,8 +19,8 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.piusvelte.sonet" android:versionCode="46"
-	android:versionName="0.4.6" android:installLocation="auto">
+	package="com.piusvelte.sonet" android:versionCode="47"
+	android:versionName="0.4.7" android:installLocation="auto">
 	<application android:icon="@drawable/icon" android:label="@string/app_name">
 		<activity android:name=".UI" android:label="@string/app_name">
 			<intent-filter>
@@ -38,9 +38,16 @@
 				<category android:name="android.intent.category.BROWSABLE"></category>
 				<data android:scheme="sonet" android:host="twitter"></data>
 			</intent-filter>
+			<intent-filter>
+				<action android:name="android.intent.action.VIEW"></action>
+				<category android:name="android.intent.category.DEFAULT"></category>
+				<category android:name="android.intent.category.BROWSABLE"></category>
+				<data android:scheme="sonet" android:host="myspace"></data>
+			</intent-filter>
 		</activity>
 		<activity android:name=".Settings" />
 		<activity android:name=".PostDialog" />
+		<activity android:name="com.myspace.sdk.MSLoginActivity" />
 		<!-- Broadcast Receiver that will process AppWidget updates -->
 		<receiver android:name=".SonetWidget_4x2" android:label="@string/sonet_4x2">
 			<intent-filter>

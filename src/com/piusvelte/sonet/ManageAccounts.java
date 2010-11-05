@@ -37,10 +37,14 @@ import static com.piusvelte.sonet.Sonet.TWITTER_URL_REQUEST;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_PERMISSIONS;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
+import static com.piusvelte.sonet.Sonet.MYSPACE;
+import static com.piusvelte.sonet.Sonet.MYSPACE_KEY;
+import static com.piusvelte.sonet.Sonet.MYSPACE_SECRET;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.Map;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -52,6 +56,11 @@ import com.facebook.android.FacebookError;
 import com.facebook.android.Util;
 import com.facebook.android.AsyncFacebookRunner.RequestListener;
 import com.facebook.android.Facebook.DialogListener;
+import com.myspace.sdk.MSLoginActivity;
+import com.myspace.sdk.MSRequest;
+import com.myspace.sdk.MSSDK;
+import com.myspace.sdk.MSSession;
+import com.myspace.sdk.MSSession.IMSSessionCallback;
 
 import oauth.signpost.OAuthProvider;
 import oauth.signpost.basic.DefaultOAuthProvider;
@@ -71,7 +80,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -80,13 +88,12 @@ import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View.OnClickListener;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class ManageAccounts extends ListActivity implements OnClickListener, android.content.DialogInterface.OnClickListener, DialogListener {
+public class ManageAccounts extends ListActivity implements OnClickListener, android.content.DialogInterface.OnClickListener, DialogListener, IMSSessionCallback {
 	private static final int DELETE_ID = Menu.FIRST;
 	private SonetDatabaseHelper mSonetDatabaseHelper;
 	private Facebook mFacebook;
@@ -94,8 +101,10 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private String request_token,
 	request_secret;
+	private MSSession mMSSession;
 
 	private static Uri TWITTER_CALLBACK = Uri.parse("sonet://twitter");
+	private static Uri MYSPACE_CALLBACK = Uri.parse("sonet://myspace");
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -149,13 +158,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			.setItems(items, this)
 			.show();
 			break;
-		case R.id.username:
-			((EditText) v).setText("");
-			break;
-		case R.id.password:
-			((EditText) v).setTransformationMethod(new PasswordTransformationMethod());
-			((EditText) v).setText("");
-			break;
 		}
 	}
 
@@ -173,18 +175,15 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			if (TWITTER_CALLBACK.getScheme().equals(uri.getScheme())) {
 				try {
 					// use the requestToken and secret from earlier
+					SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
 					if ((request_token == null) || (request_secret == null)) {
-						SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);					// throw away cached requesttoken & secret
 						request_token = sp.getString(getString(R.string.key_requesttoken), "");
 						request_secret = sp.getString(getString(R.string.key_requestsecret), "");
-						Editor spe = sp.edit();
-						spe.putString(getString(R.string.key_requesttoken), "");
-						spe.putString(getString(R.string.key_requestsecret), "");
-						spe.commit();						
-					} else {
-						request_token = null;
-						request_secret = null;
 					}
+					Editor spe = sp.edit();
+					spe.putString(getString(R.string.key_requesttoken), "");
+					spe.putString(getString(R.string.key_requestsecret), "");
+					spe.commit();
 					// this will populate token and token_secret in consumer
 					String verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
 					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
@@ -194,12 +193,12 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 					provider.retrieveAccessToken(consumer, verifier);
 					SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
 					ContentValues values = new ContentValues();
-					Log.v(TAG,"twitter");
 					values.put(USERNAME, (new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(consumer.getToken(), consumer.getTokenSecret()))).getScreenName());
 					values.put(TOKEN, consumer.getToken());
 					values.put(SECRET, consumer.getTokenSecret());
 					values.put(SERVICE, TWITTER);
 					db.insert(TABLE_ACCOUNTS, TOKEN, values);
+					listAccounts();
 				} catch (Exception e) {
 					Log.e(TAG, e.getMessage());
 					Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
@@ -239,18 +238,22 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			mFacebook.setAccessExpires(0);
 			mFacebook.authorize(this, FACEBOOK_ID, FACEBOOK_PERMISSIONS, this);
 			break;
+		case MYSPACE:
+			mMSSession = MSSession.getSession(MYSPACE_KEY, MYSPACE_SECRET, MYSPACE_CALLBACK.toString(), this);
+			startActivity(new Intent(this, MSLoginActivity.class));
+			break;
 		}
 
 	}
 
 	private void listAccounts() {
-		if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+//		if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
 			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
 			Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, USERNAME, SERVICE}, null, null, null, null, null);
 			startManagingCursor(cursor);
 			setListAdapter(new SimpleCursorAdapter(this, R.layout.accounts_row, cursor, new String[] {USERNAME}, new int[] {R.id.account_username}));
 			db.close();
-		}
+//		}
 	}
 
 	public void onClick(DialogInterface dialog, int which) {
@@ -318,4 +321,44 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		Toast.makeText(ManageAccounts.this, "Authorization canceled", Toast.LENGTH_LONG).show();
 	}
 
+
+	@Override
+	public void sessionDidLogin(MSSession session) {
+		mMSSession.setToken(session.getToken());
+		mMSSession.setTokenSecret(session.getTokenSecret());
+		MSSDK.getUserInfo(new MSRequestCallback());
+	}
+
+	@Override
+	public void sessionDidLogout(MSSession session) {
+	}
+
+	private class MSRequestCallback extends MSRequest.MSRequestCallback {
+
+		@Override
+		public void requestDidFail(MSRequest request, Throwable error) {
+			Log.e(TAG, error.getMessage());
+		}
+
+		@Override
+		public void requestDidLoad(MSRequest request, Object result) {
+			Map<?, ?> data = (Map<?, ?>) result;
+			result = data.get("data");
+			if (result instanceof Map<?, ?>) {
+				Map<?, ?> userObject = (Map<?, ?>) result;
+				SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+				ContentValues values = new ContentValues();
+				values.put(USERNAME, (String) userObject.get("displayName"));
+				values.put(TOKEN, mMSSession.getToken());
+				values.put(SECRET, mMSSession.getTokenSecret());
+				values.put(SERVICE, MYSPACE);
+				db.insert(TABLE_ACCOUNTS, TOKEN, values);
+				ManageAccounts.this.runOnUiThread(new Runnable() {
+					public void run() {
+						listAccounts();
+					}
+				});
+			}                       
+		}
+	}
 }

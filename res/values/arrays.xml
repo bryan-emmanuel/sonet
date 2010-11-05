@@ -32,7 +32,7 @@
 	<string-array name="service_entries">
 		<item>Twitter</item>
 		<item>Facebook</item>
-<!--		<item>Identi.ca</item>-->
+<!--		<item>MySpace</item>-->
 	</string-array>
 	<string-array name="service_values">
 		<item>0</item>

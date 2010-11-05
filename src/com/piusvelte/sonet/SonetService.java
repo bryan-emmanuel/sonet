@@ -32,6 +32,9 @@ import static com.piusvelte.sonet.Sonet.TWITTER_KEY;
 import static com.piusvelte.sonet.Sonet.TWITTER_SECRET;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
+import static com.piusvelte.sonet.Sonet.MYSPACE;
+import static com.piusvelte.sonet.Sonet.MYSPACE_KEY;
+import static com.piusvelte.sonet.Sonet.MYSPACE_SECRET;
 
 import java.io.IOException;
 import java.net.URL;
@@ -43,6 +46,16 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import oauth.signpost.OAuthConsumer;
+import oauth.signpost.basic.DefaultOAuthConsumer;
+import oauth.signpost.exception.OAuthCommunicationException;
+import oauth.signpost.exception.OAuthExpectationFailedException;
+import oauth.signpost.exception.OAuthMessageSignerException;
+
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -233,7 +246,30 @@ public class SonetService extends Service {
 								} catch (IOException e) {
 									Log.e(TAG, e.toString());
 								}
-								break;					
+								break;
+							case MYSPACE:
+								OAuthConsumer consumer = new DefaultOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET);
+								consumer.setTokenWithSecret(cursor.getString(token), cursor.getString(secret));
+								HttpClient client = new DefaultHttpClient();
+								HttpGet request = new HttpGet("http://api.myspace.com/1.0/activities/?format=json");
+								try {
+									consumer.sign(request);
+									JSONObject jobj = new JSONObject(client.execute(request).toString());
+									Log.v(TAG, jobj.toString());
+								} catch (ClientProtocolException e) {
+									Log.e(TAG, e.toString());
+								} catch (JSONException e) {
+									Log.e(TAG, e.toString());
+								} catch (IOException e) {
+									Log.e(TAG, e.toString());
+								} catch (OAuthMessageSignerException e) {
+									Log.e(TAG, e.toString());
+								} catch (OAuthExpectationFailedException e) {
+									Log.e(TAG, e.toString());
+								} catch (OAuthCommunicationException e) {
+									Log.e(TAG, e.toString());
+								}
+								break;
 							}
 							cursor.moveToNext();
 						}
