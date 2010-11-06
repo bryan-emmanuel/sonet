@@ -333,7 +333,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	public void sessionDidLogin(MSSession session) {
 		mMSSession.setToken(session.getToken());
 		mMSSession.setTokenSecret(session.getTokenSecret());
-		Log.v(TAG,"ms:getUserInfo");
 		MSSDK.getUserInfo(new MSRequestCallback());
 	}
 
@@ -350,15 +349,13 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 
 		@Override
 		public void requestDidLoad(MSRequest request, Object result) {
-			Log.v(TAG,"ms:requestDidLoad");
 			Map<?, ?> data = (Map<?, ?>) result;
 			result = data.get("data");
-			Log.v(TAG,"ms:data:"+result.toString());
 			if (result instanceof Map<?, ?>) {
 				Map<?, ?> userObject = (Map<?, ?>) result;
 				SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
 				ContentValues values = new ContentValues();
-				values.put(USERNAME, (String) userObject.get("displayName"));
+				values.put(USERNAME, (String) userObject.get("userName"));
 				values.put(TOKEN, mMSSession.getToken());
 				values.put(SECRET, mMSSession.getTokenSecret());
 				values.put(SERVICE, MYSPACE);

@@ -47,7 +47,7 @@ import java.util.Date;
 import java.util.List;
 
 import oauth.signpost.OAuthConsumer;
-import oauth.signpost.basic.DefaultOAuthConsumer;
+import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
 //import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
@@ -55,7 +55,9 @@ import oauth.signpost.signature.SignatureMethod;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -162,36 +164,42 @@ public class SonetService extends Service {
 						body_text = Integer.parseInt(sp.getString(getString(R.string.key_body_text), getString(R.string.default_body_text))),
 						friend_text = Integer.parseInt(sp.getString(getString(R.string.key_friend_text), getString(R.string.default_friend_text))),
 						created_text = Integer.parseInt(sp.getString(getString(R.string.key_created_text), getString(R.string.default_created_text)));
+						String name = "name",
+						created_time = "created_time",
+						message = "message",
+						actions = "actions",
+						link = "link",
+						comment = "Comment",
+						from = "from",
+						id = "id",
+						type = "type",
+						status = "status",
+						profile = "http://graph.facebook.com/%s/picture",
+						author = "author",
+						displayName = "displayName",
+						moodStatusLastUpdated = "moodStatusLastUpdated",
+						thumbnailUrl = "thumbnailUrl",
+						source = "source",
+						url = "url",
+						status_url = "http://twitter.com/%s/status/%s";
 						while (!cursor.isAfterLast()) {
 							switch (cursor.getInt(service)) {
 							case TWITTER:
-								String status_url = "http://twitter.com/%s/status/%s";
 								try {
 									List<Status> statuses = (new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(cursor.getString(token), cursor.getString(secret)))).getFriendsTimeline(new Paging(1, max_widget_items));
-									for (Status status : statuses) {
-										String screenname = status.getUser().getScreenName();
-										status_items.add(new StatusItem(status.getCreatedAt(),
-												Uri.parse(String.format(status_url, screenname, Long.toString(status.getId()))),
+									for (Status s : statuses) {
+										String screenname = s.getUser().getScreenName();
+										status_items.add(new StatusItem(s.getCreatedAt(),
+												Uri.parse(String.format(status_url, screenname, Long.toString(s.getId()))),
 												screenname,
-												status.getUser().getProfileImageURL(),
-												status.getText()));
+												s.getUser().getProfileImageURL(),
+												s.getText()));
 									}
 								} catch (TwitterException te) {
 									Log.e(TAG, te.toString());
 								}
 								break;
 							case FACEBOOK:
-								String name = "name",
-								created_time = "created_time",
-								message = "message",
-								actions = "actions",
-								link = "link",
-								comment = "Comment",
-								from = "from",
-								id = "id",
-								type = "type",
-								status = "status",
-								profile = "http://graph.facebook.com/%s/picture";
 								int tz = cursor.getInt(timezone);
 								SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'+0000'");
 								Facebook facebook = new Facebook();
@@ -250,14 +258,34 @@ public class SonetService extends Service {
 								break;
 							case MYSPACE:
 //								OAuthConsumer consumer = new DefaultOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET);
-								OAuthConsumer consumer = new DefaultOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET, SignatureMethod.HMAC_SHA1);
+								OAuthConsumer consumer = new CommonsHttpOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET, SignatureMethod.HMAC_SHA1);
 								consumer.setTokenWithSecret(cursor.getString(token), cursor.getString(secret));
 								HttpClient client = new DefaultHttpClient();
-								HttpGet request = new HttpGet("http://api.myspace.com/1.0/activities/?format=json");
+								ResponseHandler <String> responseHandler = new BasicResponseHandler();
+								HttpGet request = new HttpGet("http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?fields=author,recentcomments,source");
 								try {
 									consumer.sign(request);
-									JSONObject jobj = new JSONObject(client.execute(request).toString());
-									Log.v(TAG, jobj.toString());
+									JSONObject jobj = new JSONObject(client.execute(request, responseHandler));
+									JSONArray entries = jobj.getJSONArray("entry");
+									SimpleDateFormat msformat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+									for (int i = 0; i < entries.length(); i++) {
+										JSONObject entry = entries.getJSONObject(i);
+										JSONObject authorObj = entry.getJSONObject(author);
+										Calendar cal = Calendar.getInstance();
+										Date created;
+										try {
+											created = msformat.parse(entry.getString(moodStatusLastUpdated));
+										} catch (ParseException e) {
+											created = new Date();
+											Log.e(TAG,e.toString());
+										}
+										cal.setTime(created);
+										status_items.add(new StatusItem(cal.getTime(),
+												Uri.parse(entry.getJSONObject(source).getString(url)),
+												authorObj.getString(displayName),
+												new URL(authorObj.getString(thumbnailUrl)),
+												entry.getString(status)));
+									}
 								} catch (ClientProtocolException e) {
 									Log.e(TAG, e.toString());
 								} catch (JSONException e) {
