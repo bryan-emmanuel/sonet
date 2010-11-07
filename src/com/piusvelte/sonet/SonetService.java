@@ -200,8 +200,6 @@ public class SonetService extends Service {
 								}
 								break;
 							case FACEBOOK:
-								int tz = cursor.getInt(timezone);
-								SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'+0000'");
 								Facebook facebook = new Facebook();
 								facebook.setAccessToken(cursor.getString(token));
 								facebook.setAccessExpires((long)cursor.getInt(expiry));
@@ -212,20 +210,6 @@ public class SonetService extends Service {
 										JSONObject o = jarr.getJSONObject(i);
 										// only parse status types, not photo, video or link
 										if (o.has(type) && o.getString(type).equals(status) && o.has(from) && o.has(message)) {
-											// parse the date
-											Date created;
-											if (o.has(created_time)) {
-												try {
-													created = format.parse(o.getString(created_time));
-												} catch (ParseException e) {
-													created = new Date();
-													Log.e(TAG,e.toString());
-												}
-											} else created = new Date();
-											// apply the timezone
-											Calendar cal = Calendar.getInstance();
-											cal.setTime(created);
-											cal.add(Calendar.HOUR, tz);
 											// parse the link
 											Uri l = Uri.parse("http://www.facebook.com");
 											if (o.has(actions)) {											
@@ -240,7 +224,8 @@ public class SonetService extends Service {
 											}
 											JSONObject f = o.getJSONObject(from);
 											if (f.has(name) && f.has(id)) {
-												status_items.add(new StatusItem(cal.getTime(),
+												status_items.add(new StatusItem(
+														parseDate(o.getString(created_time), "yyyy-MM-dd'T'HH:mm:ss'+0000'", cursor.getInt(timezone)),
 														l,
 														f.getString(name),
 														new URL(String.format(profile, f.getString(id))),
@@ -262,25 +247,15 @@ public class SonetService extends Service {
 								consumer.setTokenWithSecret(cursor.getString(token), cursor.getString(secret));
 								HttpClient client = new DefaultHttpClient();
 								ResponseHandler <String> responseHandler = new BasicResponseHandler();
-								HttpGet request = new HttpGet("http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?fields=author,recentcomments,source");
+								HttpGet request = new HttpGet("http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
 								try {
 									consumer.sign(request);
 									JSONObject jobj = new JSONObject(client.execute(request, responseHandler));
 									JSONArray entries = jobj.getJSONArray("entry");
-									SimpleDateFormat msformat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 									for (int i = 0; i < entries.length(); i++) {
 										JSONObject entry = entries.getJSONObject(i);
 										JSONObject authorObj = entry.getJSONObject(author);
-										Calendar cal = Calendar.getInstance();
-										Date created;
-										try {
-											created = msformat.parse(entry.getString(moodStatusLastUpdated));
-										} catch (ParseException e) {
-											created = new Date();
-											Log.e(TAG,e.toString());
-										}
-										cal.setTime(created);
-										status_items.add(new StatusItem(cal.getTime(),
+										status_items.add(new StatusItem(parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", 0),
 												Uri.parse(entry.getJSONObject(source).getString(url)),
 												authorObj.getString(displayName),
 												new URL(authorObj.getString(thumbnailUrl)),
@@ -316,11 +291,11 @@ public class SonetService extends Service {
 								views.setTextViewText(map_screenname[count_status], item.friend);
 								views.setTextColor(map_screenname[count_status], friend_text);
 								views.setTextViewText(map_created[count_status],
-										(item.created.getDay() == now.getDay() ?
+										((now.getTime() - item.created.getTime()) < 86400000 ?
 												(use24hr ?
 														String.format("%d:%02d", item.created.getHours(), item.created.getMinutes())
 														: String.format("%d:%02d%s", item.created.getHours() < 13 ? item.created.getHours() : item.created.getHours() - 12, item.created.getMinutes(), getString(item.created.getHours() < 13 ? R.string.am : R.string.pm)))
-														: (getResources().getStringArray(R.array.months)[item.created.getMonth()] + Integer.toString(item.created.getDay()))));
+														: String.format("%s %d", getResources().getStringArray(R.array.months)[item.created.getMonth()], item.created.getDate())));
 								views.setTextColor(map_created[count_status], created_text);
 								try {
 									views.setImageViewBitmap(map_profile[count_status], BitmapFactory.decodeStream(item.profile.openConnection().getInputStream()));
@@ -416,6 +391,21 @@ public class SonetService extends Service {
 	public IBinder onBind(Intent intent) {
 		// We don't need to bind to this service
 		return null;
+	}
+	
+	private Date parseDate(String date, String format, int timezone) {
+		SimpleDateFormat msformat = new SimpleDateFormat(format);
+		Calendar cal = Calendar.getInstance();
+		Date created;
+		try {
+			created = msformat.parse(date);
+		} catch (ParseException e) {
+			created = new Date();
+			Log.e(TAG,e.toString());
+		}
+		cal.setTime(created);
+		if (timezone > 0) cal.add(Calendar.HOUR, timezone);
+		return cal.getTime();		
 	}
 
 	private class StatusItem implements Comparable<StatusItem> {

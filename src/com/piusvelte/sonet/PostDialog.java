@@ -21,6 +21,7 @@ package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
+import static com.piusvelte.sonet.Sonet.MYSPACE;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -53,6 +54,9 @@ public class PostDialog extends Activity implements DialogInterface.OnClickListe
 			break;
 		case FACEBOOK:
 			startActivity((new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.facebook.com"))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(new ComponentName("com.android.browser", "com.android.browser.BrowserActivity")));
+			break;
+		case MYSPACE:
+			startActivity((new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.myspace.com"))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(new ComponentName("com.android.browser", "com.android.browser.BrowserActivity")));
 			break;
 		}
 		dialog.cancel();
