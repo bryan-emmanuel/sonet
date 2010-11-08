@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class SonetDatabaseHelper extends SQLiteOpenHelper {
 	private static final String DATABASE_NAME = "sonet.db";
-	private static final int DATABASE_VERSION = 3;
+	private static final int DATABASE_VERSION = 4;
 	public static final String TABLE_ACCOUNTS = "accounts";
 	public static final String _ID = "_id";
 	public static final String USERNAME = "username";
@@ -16,7 +16,16 @@ public class SonetDatabaseHelper extends SQLiteOpenHelper {
 	public static final String EXPIRY = "expiry";
 	public static final String TIMEZONE = "timezone";
 	public static final String WIDGET = "widget";
-//	public static final String TABLE_WIDGETS = "widgets";
+	public static final String TABLE_WIDGETS = "widgets";
+	public static final String INTERVAL = "interval";
+	public static final String HASBUTTONS = "hasbuttons";
+	public static final String BUTTONS_BG_COLOR = "buttons_bg_color";
+	public static final String BUTTONS_COLOR = "buttons_color";
+	public static final String MESSAGE_BG_COLOR = "message_bg_color";
+	public static final String MESSAGE_COLOR = "message_color";
+	public static final String TIME24HR = "time24hr";
+	public static final String FRIEND_COLOR = "friend_color";
+	public static final String TIME_COLOR = "time_color";
 	
 	public SonetDatabaseHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -31,7 +40,20 @@ public class SonetDatabaseHelper extends SQLiteOpenHelper {
 				+ SECRET + " text, "
 				+ SERVICE + " integer, "
 				+ EXPIRY + " integer, "
-				+ TIMEZONE + " integer);");
+				+ TIMEZONE + " integer, "
+				+ WIDGET + " integer);");
+		db.execSQL("create table if not exists " + TABLE_WIDGETS
+				+ " (" + _ID + " integer primary key autoincrement, "
+				+ WIDGET + " integer, "
+				+ INTERVAL + " integer, "
+				+ HASBUTTONS + " integer, "
+				+ BUTTONS_BG_COLOR + " integer, "
+				+ BUTTONS_COLOR + " integer, "
+				+ FRIEND_COLOR + " integer, "
+				+ TIME_COLOR + " integer, "
+				+ MESSAGE_BG_COLOR + " integer, "
+				+ MESSAGE_COLOR + " integer, "
+				+ TIME24HR + " integer);");
 	}
 
 	@Override
@@ -66,6 +88,36 @@ public class SonetDatabaseHelper extends SQLiteOpenHelper {
 					+ TIMEZONE + " integer);");
 			db.execSQL("insert into " + TABLE_ACCOUNTS + " select " + _ID + "," + USERNAME + "," + TOKEN + "," + SECRET + "," + SERVICE + "," + EXPIRY + ",\"\" from " + TABLE_ACCOUNTS + "_bkp;");
 			db.execSQL("drop table if exists " + TABLE_ACCOUNTS + "_bkp;");
+		}
+		if (oldVersion < 4) {
+			// add column for widget
+			db.execSQL("drop table if exists " + TABLE_ACCOUNTS + "_bkp;");
+			db.execSQL("create temp table " + TABLE_ACCOUNTS + "_bkp as select * from " + TABLE_ACCOUNTS + ";");
+			db.execSQL("drop table if exists " + TABLE_ACCOUNTS + ";");
+			db.execSQL("create table if not exists " + TABLE_ACCOUNTS
+					+ " (" + _ID + " integer primary key autoincrement, "
+					+ USERNAME + " text, "
+					+ TOKEN + " text, "
+					+ SECRET + " text, "
+					+ SERVICE + " integer, "
+					+ EXPIRY + " integer, "
+					+ TIMEZONE + " integer, "
+					+ WIDGET + " integer);");
+			db.execSQL("insert into " + TABLE_ACCOUNTS + " select " + _ID + "," + USERNAME + "," + TOKEN + "," + SECRET + "," + SERVICE + "," + EXPIRY + "," + TIMEZONE + ",\"\" from " + TABLE_ACCOUNTS + "_bkp;");
+			db.execSQL("drop table if exists " + TABLE_ACCOUNTS + "_bkp;");
+			// move preferences to db
+			db.execSQL("create table if not exists " + TABLE_WIDGETS
+					+ " (" + _ID + " integer primary key autoincrement, "
+					+ WIDGET + " integer, "
+					+ INTERVAL + " integer, "
+					+ HASBUTTONS + " integer, "
+					+ BUTTONS_BG_COLOR + " integer, "
+					+ BUTTONS_COLOR + " integer, "
+					+ FRIEND_COLOR + " integer, "
+					+ TIME_COLOR + " integer, "
+					+ MESSAGE_BG_COLOR + " integer, "
+					+ MESSAGE_COLOR + " integer, "
+					+ TIME24HR + " integer);");
 		}
 	}
 

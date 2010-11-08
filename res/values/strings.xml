@@ -30,9 +30,8 @@
     <string name="accounts">Accounts</string>
     <string name="button_post">Post</string>
     <string name="button_refresh">Refresh</string>
-    <string name="button_settings">Settings</string>
     <string name="button_add_account">Add Account</string>
-    <string name="reply">\u003E</string>
+    <string name="reply">Reply</string>
     <string name="delete_account">Delete Account</string>
     <string name="default_interval">3600000</string>
 	<string name="default_head_background">-16777216</string>
@@ -55,7 +54,6 @@
     <string name="password">password</string>
     <string name="key_requesttoken">requesttoken</string>
     <string name="key_requestsecret">requestsecret</string>
-    <string name="close">Close and Refresh</string>
     <string name="head_spacer">.</string>
     <string name="title_color_picker">Pick a color</string>
     <string name="category_buttons">Buttons</string>

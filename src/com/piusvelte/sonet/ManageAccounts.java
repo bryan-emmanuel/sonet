@@ -28,9 +28,7 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.TOKEN;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
 import static com.piusvelte.sonet.SonetDatabaseHelper.EXPIRY;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TIMEZONE;
-import static com.piusvelte.sonet.Sonet.TWITTER_KEY;
-import static com.piusvelte.sonet.Sonet.TWITTER_SECRET;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_ID;
+import static com.piusvelte.sonet.SonetDatabaseHelper.WIDGET;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_ACCESS;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_REQUEST;
@@ -38,8 +36,11 @@ import static com.piusvelte.sonet.Sonet.FACEBOOK_PERMISSIONS;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
-import static com.piusvelte.sonet.Sonet.MYSPACE_KEY;
-import static com.piusvelte.sonet.Sonet.MYSPACE_SECRET;
+import static com.piusvelte.sonet.Services.TWITTER_KEY;
+import static com.piusvelte.sonet.Services.TWITTER_SECRET;
+import static com.piusvelte.sonet.Services.FACEBOOK_ID;
+import static com.piusvelte.sonet.Services.MYSPACE_KEY;
+import static com.piusvelte.sonet.Services.MYSPACE_SECRET;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -195,13 +196,12 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 					provider.setOAuth10a(true);
 //					provider.retrieveAccessToken(consumer, verifier);
 					provider.retrieveAccessToken(verifier);
-					SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-					ContentValues values = new ContentValues();
-					values.put(USERNAME, (new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(consumer.getToken(), consumer.getTokenSecret()))).getScreenName());
-					values.put(TOKEN, consumer.getToken());
-					values.put(SECRET, consumer.getTokenSecret());
-					values.put(SERVICE, TWITTER);
-					db.insert(TABLE_ACCOUNTS, TOKEN, values);
+					addAccount((new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(consumer.getToken(), consumer.getTokenSecret()))).getScreenName(),
+							consumer.getToken(),
+							consumer.getTokenSecret(),
+							0,
+							TWITTER,
+							0);
 					listAccounts();
 				} catch (Exception e) {
 					Log.e(TAG, e.getMessage());
@@ -256,11 +256,25 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	private void listAccounts() {
 //		if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
 			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-			Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{_ID, USERNAME, SERVICE}, null, null, null, null, null);
+			Cursor cursor = db.rawQuery("select " + _ID + "," + USERNAME + "," + SERVICE + " from " + TABLE_ACCOUNTS + " where " + WIDGET + "=" + mAppWidgetId, null);
 			startManagingCursor(cursor);
 			setListAdapter(new SimpleCursorAdapter(this, R.layout.accounts_row, cursor, new String[] {USERNAME}, new int[] {R.id.account_username}));
 			db.close();
 //		}
+	}
+	
+	private void addAccount(String username, String token, String secret, int expiry, int service, int timezone) {
+		SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+		ContentValues values = new ContentValues();
+		values.put(USERNAME, username);
+		values.put(TOKEN, token);
+		values.put(SECRET, secret);
+		values.put(EXPIRY, expiry);
+		values.put(SERVICE, service);
+		values.put(TIMEZONE, timezone);
+		values.put(WIDGET, mAppWidgetId);
+		db.insert(TABLE_ACCOUNTS, USERNAME, values);
+		db.close();		
 	}
 
 	public void onClick(DialogInterface dialog, int which) {
@@ -274,19 +288,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			public void onComplete(String response) {
 				try {
 					JSONObject json = Util.parseJson(response);
-					SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-					ContentValues values = new ContentValues();
-					values.put(USERNAME, json.getString("name"));
-					values.put(TOKEN, mFacebook.getAccessToken());
-					values.put(EXPIRY, mFacebook.getAccessExpires());
-					values.put(SERVICE, FACEBOOK);
-					values.put(TIMEZONE, json.getString(TIMEZONE));
-					db.insert(TABLE_ACCOUNTS, TOKEN, values);
-					ManageAccounts.this.runOnUiThread(new Runnable() {
-						public void run() {
-							listAccounts();
-						}
-					});
+					addAccount(json.getString("name"), mFacebook.getAccessToken(), "", (int) mFacebook.getAccessExpires(), FACEBOOK, Integer.parseInt(json.getString(TIMEZONE)));
+					listAccounts();
 				} catch (JSONException e) {
 					Log.e(TAG, e.toString());
 				} catch (FacebookError e) {
@@ -353,18 +356,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			result = data.get("data");
 			if (result instanceof Map<?, ?>) {
 				Map<?, ?> userObject = (Map<?, ?>) result;
-				SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-				ContentValues values = new ContentValues();
-				values.put(USERNAME, (String) userObject.get("userName"));
-				values.put(TOKEN, mMSSession.getToken());
-				values.put(SECRET, mMSSession.getTokenSecret());
-				values.put(SERVICE, MYSPACE);
-				db.insert(TABLE_ACCOUNTS, TOKEN, values);
-				ManageAccounts.this.runOnUiThread(new Runnable() {
-					public void run() {
-						listAccounts();
-					}
-				});
+				addAccount((String) userObject.get("userName"), mMSSession.getToken(), mMSSession.getTokenSecret(), 0, MYSPACE, 0);
+				listAccounts();
 			}                       
 		}
 	}

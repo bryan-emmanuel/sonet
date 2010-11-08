@@ -29,4 +29,19 @@ public class SonetWidget_4x2 extends AppWidgetProvider {
 	public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
 		context.startService(new Intent(context, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds));
 	}
+	
+	@Override
+	public void onReceive(Context context, Intent intent) {
+		final String action = intent.getAction();
+		if (AppWidgetManager.ACTION_APPWIDGET_DELETED.equals(action)) {
+			final int appWidgetId = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+			if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) onDeleted(context, new int[]{appWidgetId});
+			else super.onReceive(context, intent);
+		}
+	}
+	
+	@Override
+	public final void onDeleted(Context context, int[] appWidgetIds) {
+		super.onDeleted(context, appWidgetIds);
+	}
 }

@@ -18,9 +18,10 @@ public class UI extends Activity implements OnClickListener {
 		if (i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
         setResult(Activity.RESULT_OK, (new Intent()).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 		setContentView(R.layout.main);
-		((Button) findViewById(R.id.button_accounts)).setOnClickListener(this);
-		((Button) findViewById(R.id.button_settings)).setOnClickListener(this);
-		((Button) findViewById(R.id.button_close)).setOnClickListener(this);
+		if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+			((Button) findViewById(R.id.button_accounts)).setOnClickListener(this);
+			((Button) findViewById(R.id.button_settings)).setOnClickListener(this);			
+		}
 	}
 
 	public void onClick(View v) {
@@ -29,12 +30,7 @@ public class UI extends Activity implements OnClickListener {
 			startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 			break;
 		case R.id.button_settings:
-			startActivity(new Intent(this, Settings.class));
-			break;
-		case R.id.button_close:
-			// update the widget
-			startService(new Intent(this, SonetService.class));
-			finish();
+			startActivity(new Intent(this, Settings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 			break;
 		}
 	}

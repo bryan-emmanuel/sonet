@@ -19,6 +19,8 @@
  */
 package com.piusvelte.sonet;
 
+import android.appwidget.AppWidgetManager;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
@@ -34,11 +36,14 @@ public class Settings extends PreferenceActivity {
 	private Preference mBodyText;
 	private Preference mFriendText;
 	private Preference mCreatedText;
+	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		Intent i = getIntent();
+		if (i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
 		getPreferenceManager().setSharedPreferencesName(getString(R.string.key_preferences));
 		addPreferencesFromResource(R.xml.preferences);
 		PreferenceScreen prefSet = getPreferenceScreen();
