@@ -19,10 +19,32 @@
  */
 package com.piusvelte.sonet;
 
+import static com.piusvelte.sonet.SonetDatabaseHelper._ID;
+import static com.piusvelte.sonet.SonetDatabaseHelper.USERNAME;
+import static com.piusvelte.sonet.SonetDatabaseHelper.SECRET;
+import static com.piusvelte.sonet.SonetDatabaseHelper.SERVICE;
+import static com.piusvelte.sonet.SonetDatabaseHelper.TOKEN;
+import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
+import static com.piusvelte.sonet.SonetDatabaseHelper.WIDGET;
+import static com.piusvelte.sonet.SonetDatabaseHelper.EXPIRY;
+import static com.piusvelte.sonet.SonetDatabaseHelper.TIMEZONE;
+import static com.piusvelte.sonet.SonetDatabaseHelper.BUTTONS_BG_COLOR;
+import static com.piusvelte.sonet.SonetDatabaseHelper.BUTTONS_COLOR;
+import static com.piusvelte.sonet.SonetDatabaseHelper.HASBUTTONS;
+import static com.piusvelte.sonet.SonetDatabaseHelper.INTERVAL;
+import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGE_BG_COLOR;
+import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGE_COLOR;
+import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_WIDGETS;
+import static com.piusvelte.sonet.SonetDatabaseHelper.TIME24HR;
+import static com.piusvelte.sonet.SonetDatabaseHelper.FRIEND_COLOR;
+import static com.piusvelte.sonet.SonetDatabaseHelper.TIME_COLOR;
+
 import android.appwidget.AppWidgetManager;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -37,6 +59,7 @@ public class Settings extends PreferenceActivity {
 	private Preference mFriendText;
 	private Preference mCreatedText;
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
+	private SonetDatabaseHelper mSonetDatabaseHelper;
 
 
 	@Override
@@ -44,6 +67,7 @@ public class Settings extends PreferenceActivity {
 		super.onCreate(savedInstanceState);
 		Intent i = getIntent();
 		if (i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
+		SonetDatabaseHelper mSonetDatabaseHelper = new SonetDatabaseHelper(this);
 		getPreferenceManager().setSharedPreferencesName(getString(R.string.key_preferences));
 		addPreferencesFromResource(R.xml.preferences);
 		PreferenceScreen prefSet = getPreferenceScreen();
@@ -86,9 +110,14 @@ public class Settings extends PreferenceActivity {
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-			Editor spe = mSharedPreferences.edit();
-			spe.putString(getResources().getString(R.string.key_head_background), Integer.toString(color));
-			spe.commit();
+//			Editor spe = mSharedPreferences.edit();
+//			spe.putString(getResources().getString(R.string.key_head_background), Integer.toString(color));
+//			spe.commit();
+			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+			ContentValues values = new ContentValues();
+			values.put(BUTTONS_BG_COLOR, color);
+			db.update(TABLE_WIDGETS, values, WIDGET + "=" + mAppWidgetId, null);
+			db.close();
 		}
 
 		public void colorUpdate(int color) {
@@ -102,9 +131,14 @@ public class Settings extends PreferenceActivity {
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-			Editor spe = mSharedPreferences.edit();
-			spe.putString(getResources().getString(R.string.key_head_text), Integer.toString(color));
-			spe.commit();
+//			Editor spe = mSharedPreferences.edit();
+//			spe.putString(getResources().getString(R.string.key_head_text), Integer.toString(color));
+//			spe.commit();
+			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+			ContentValues values = new ContentValues();
+			values.put(BUTTONS_COLOR, color);
+			db.update(TABLE_WIDGETS, values, WIDGET + "=" + mAppWidgetId, null);
+			db.close();
 		}
 
 		public void colorUpdate(int color) {
@@ -118,9 +152,14 @@ public class Settings extends PreferenceActivity {
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-			Editor spe = mSharedPreferences.edit();
-			spe.putString(getResources().getString(R.string.key_body_background), Integer.toString(color));
-			spe.commit();
+//			Editor spe = mSharedPreferences.edit();
+//			spe.putString(getResources().getString(R.string.key_body_background), Integer.toString(color));
+//			spe.commit();
+			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+			ContentValues values = new ContentValues();
+			values.put(MESSAGE_BG_COLOR, color);
+			db.update(TABLE_WIDGETS, values, WIDGET + "=" + mAppWidgetId, null);
+			db.close();
 		}
 
 		public void colorUpdate(int color) {
@@ -134,9 +173,14 @@ public class Settings extends PreferenceActivity {
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-			Editor spe = mSharedPreferences.edit();
-			spe.putString(getResources().getString(R.string.key_body_text), Integer.toString(color));
-			spe.commit();
+//			Editor spe = mSharedPreferences.edit();
+//			spe.putString(getResources().getString(R.string.key_body_text), Integer.toString(color));
+//			spe.commit();
+			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+			ContentValues values = new ContentValues();
+			values.put(MESSAGE_COLOR, color);
+			db.update(TABLE_WIDGETS, values, WIDGET + "=" + mAppWidgetId, null);
+			db.close();
 		}
 
 		public void colorUpdate(int color) {
@@ -150,9 +194,14 @@ public class Settings extends PreferenceActivity {
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-			Editor spe = mSharedPreferences.edit();
-			spe.putString(getResources().getString(R.string.key_friend_text), Integer.toString(color));
-			spe.commit();
+//			Editor spe = mSharedPreferences.edit();
+//			spe.putString(getResources().getString(R.string.key_friend_text), Integer.toString(color));
+//			spe.commit();
+			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+			ContentValues values = new ContentValues();
+			values.put(FRIEND_COLOR, color);
+			db.update(TABLE_WIDGETS, values, WIDGET + "=" + mAppWidgetId, null);
+			db.close();
 		}
 
 		public void colorUpdate(int color) {
@@ -166,9 +215,14 @@ public class Settings extends PreferenceActivity {
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-			Editor spe = mSharedPreferences.edit();
-			spe.putString(getResources().getString(R.string.key_created_text), Integer.toString(color));
-			spe.commit();
+//			Editor spe = mSharedPreferences.edit();
+//			spe.putString(getResources().getString(R.string.key_created_text), Integer.toString(color));
+//			spe.commit();
+			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+			ContentValues values = new ContentValues();
+			values.put(TIME_COLOR, color);
+			db.update(TABLE_WIDGETS, values, WIDGET + "=" + mAppWidgetId, null);
+			db.close();
 		}
 
 		public void colorUpdate(int color) {

@@ -54,7 +54,7 @@
 				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
 			</intent-filter>
 			<intent-filter>
-				<action android:name="com.piusvelte.Intent.REFRESH" />
+				<action android:name="com.piusvelte.sonet.Sonet.REFRESH" />
 			</intent-filter>
 			<meta-data android:name="android.appwidget.provider"
 				android:resource="@xml/widget_4x2" />
@@ -64,7 +64,7 @@
 				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
 			</intent-filter>
 			<intent-filter>
-				<action android:name="com.piusvelte.Intent.REFRESH" />
+				<action android:name="com.piusvelte.sonet.Sonet.REFRESH" />
 			</intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_4x3" />
         </receiver>
@@ -73,7 +73,7 @@
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
 			<intent-filter>
-				<action android:name="com.piusvelte.Intent.REFRESH" />
+				<action android:name="com.piusvelte.sonet.Sonet.REFRESH" />
 			</intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_4x4" />
         </receiver>

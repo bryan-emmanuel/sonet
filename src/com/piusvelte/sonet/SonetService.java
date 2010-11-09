@@ -365,6 +365,7 @@ public class SonetService extends Service {
 			((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC, System.currentTimeMillis() + settings.getInt(settings.getColumnIndex(INTERVAL)), PendingIntent.getService(this, 0, new Intent(this, SonetService.class), 0));
 		}
 		db.close();
+		sonetDatabaseHelper.close();
 	}
 
 	private RemoteViews addButtons(RemoteViews views, int widgetId, int textColor, int bgColor) {

@@ -19,10 +19,16 @@
  */
 package com.piusvelte.sonet;
 
+import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
+import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
+import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_WIDGETS;
+import static com.piusvelte.sonet.SonetDatabaseHelper.WIDGET;
+
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 
 public class SonetWidget_4x2 extends AppWidgetProvider {
 	@Override
@@ -33,7 +39,8 @@ public class SonetWidget_4x2 extends AppWidgetProvider {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		final String action = intent.getAction();
-		if (AppWidgetManager.ACTION_APPWIDGET_DELETED.equals(action)) {
+		if (action.equals(ACTION_REFRESH)) context.startService(new Intent(context, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID) ? intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID) : AppWidgetManager.INVALID_APPWIDGET_ID));		
+		else if (AppWidgetManager.ACTION_APPWIDGET_DELETED.equals(action)) {
 			final int appWidgetId = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 			if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) onDeleted(context, new int[]{appWidgetId});
 			else super.onReceive(context, intent);
@@ -43,5 +50,13 @@ public class SonetWidget_4x2 extends AppWidgetProvider {
 	@Override
 	public final void onDeleted(Context context, int[] appWidgetIds) {
 		super.onDeleted(context, appWidgetIds);
+		SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(context);
+		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
+		for (int i = 0; i < appWidgetIds.length; i++) {
+			db.delete(TABLE_WIDGETS, WIDGET + "=" + appWidgetIds[i], null);
+			db.delete(TABLE_ACCOUNTS, WIDGET + "=" + appWidgetIds[i], null);
+		}
+		db.close();
+		sonetDatabaseHelper.close();
 	}
 }

@@ -38,6 +38,7 @@ public final class R {
         public static final int created4=0x7f070025;
         public static final int created5=0x7f07002a;
         public static final int created6=0x7f07002f;
+        public static final int friend=0x7f070002;
         public static final int head=0x7f070009;
         public static final int head_background=0x7f070008;
         public static final int head_spacer=0x7f070006;
@@ -55,7 +56,6 @@ public final class R {
         public static final int message4=0x7f070026;
         public static final int message5=0x7f07002b;
         public static final int message6=0x7f070030;
-        public static final int password=0x7f070003;
         public static final int profile0=0x7f07000f;
         public static final int profile1=0x7f070014;
         public static final int profile2=0x7f070019;
@@ -70,12 +70,12 @@ public final class R {
         public static final int screenname4=0x7f070024;
         public static final int screenname5=0x7f070029;
         public static final int screenname6=0x7f07002e;
-        public static final int username=0x7f070002;
+        public static final int status=0x7f070003;
     }
     public static final class layout {
         public static final int accounts=0x7f030000;
         public static final int accounts_row=0x7f030001;
-        public static final int authentication=0x7f030002;
+        public static final int friend_status=0x7f030002;
         public static final int main=0x7f030003;
         public static final int widget=0x7f030004;
         public static final int widget_nobuttons=0x7f030005;
