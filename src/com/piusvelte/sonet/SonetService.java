@@ -37,7 +37,7 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGE_COLOR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_WIDGETS;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TIME24HR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.FRIEND_COLOR;
-import static com.piusvelte.sonet.SonetDatabaseHelper.TIME_COLOR;
+import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED_COLOR;
 import static com.piusvelte.sonet.Sonet.TAG;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
@@ -327,7 +327,7 @@ public class SonetService extends Service {
 			// Push update for this widget to the home screen
 			int body_text = settings.getInt(settings.getColumnIndex(MESSAGE_COLOR)),
 			friend_text = settings.getInt(settings.getColumnIndex(FRIEND_COLOR)),
-			created_text = settings.getInt(settings.getColumnIndex(TIME_COLOR));
+			created_text = settings.getInt(settings.getColumnIndex(CREATED_COLOR));
 			// set messages background
 			Bitmap bd_bitmap = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
 			Canvas bd_canvas = new Canvas(bd_bitmap);

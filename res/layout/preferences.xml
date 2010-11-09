@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ * Sonet - Android Social Networking Widget
+ * Copyright (C) 2009 Bryan Emmanuel
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *  
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  
+ *  Bryan Emmanuel piusvelte@gmail.com
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="fill_parent"
+	android:orientation="vertical">
+<!--  <PreferenceCategory android:title="@string/category_update" />-->
+  <Button android:id="@+id/interval" android:text="@string/interval" />
+<!--  <PreferenceCategory android:title="@string/category_buttons" />-->
+  <CheckBox android:id="@+id/hasbuttons" android:text="@string/hasbuttons" />
+  <Button android:id="@+id/buttons_bg_color" android:text="@string/buttons_bg_color" />
+  <Button android:id="@+id/buttons_color" android:text="@string/buttons_color" />
+<!--  <PreferenceCategory android:title="@string/category_messages" />-->
+  <Button android:id="@+id/message_bg_color" android:text="@string/message_bg_color" />
+  <Button android:id="@+id/message_color" android:text="@string/message_color" />
+  <Button android:id="@+id/friend_color" android:text="@string/friend_color" />
+  <Button android:id="@+id/created_color" android:text="@string/created_color" />
+<!--  <PreferenceCategory android:title="@string/category_time" />-->
+  <CheckBox android:id="@+id/time24hr" android:text="@string/time24hr" />
+</LinearLayout>

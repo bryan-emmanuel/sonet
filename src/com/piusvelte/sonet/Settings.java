@@ -19,15 +19,7 @@
  */
 package com.piusvelte.sonet;
 
-import static com.piusvelte.sonet.SonetDatabaseHelper._ID;
-import static com.piusvelte.sonet.SonetDatabaseHelper.USERNAME;
-import static com.piusvelte.sonet.SonetDatabaseHelper.SECRET;
-import static com.piusvelte.sonet.SonetDatabaseHelper.SERVICE;
-import static com.piusvelte.sonet.SonetDatabaseHelper.TOKEN;
-import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
 import static com.piusvelte.sonet.SonetDatabaseHelper.WIDGET;
-import static com.piusvelte.sonet.SonetDatabaseHelper.EXPIRY;
-import static com.piusvelte.sonet.SonetDatabaseHelper.TIMEZONE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.BUTTONS_BG_COLOR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.BUTTONS_COLOR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.HASBUTTONS;
@@ -37,196 +29,233 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGE_COLOR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_WIDGETS;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TIME24HR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.FRIEND_COLOR;
-import static com.piusvelte.sonet.SonetDatabaseHelper.TIME_COLOR;
+import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED_COLOR;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.appwidget.AppWidgetManager;
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.preference.Preference;
-import android.preference.PreferenceActivity;
-import android.preference.PreferenceScreen;
+import android.view.View;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 
-public class Settings extends PreferenceActivity {
-	private SharedPreferences mSharedPreferences;
-	private Preference mHeadBackground;
-	private Preference mHeadText;
-	private Preference mBodyBackground;
-	private Preference mBodyText;
-	private Preference mFriendText;
-	private Preference mCreatedText;
+public class Settings extends Activity implements View.OnClickListener, DialogInterface.OnClickListener {
+	private Button mInterval;
+	private CheckBox mHasButtons;
+	private Button mButtons_bg_color;
+	private Button mButtons_color;
+	private Button mMessage_bg_color;
+	private Button mMessage_color;
+	private Button mFriend_color;
+	private Button mCreated_color;
+	private CheckBox mTime24hr;
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private SonetDatabaseHelper mSonetDatabaseHelper;
-
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		setContentView(R.layout.main);
 		Intent i = getIntent();
 		if (i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
-		SonetDatabaseHelper mSonetDatabaseHelper = new SonetDatabaseHelper(this);
-		getPreferenceManager().setSharedPreferencesName(getString(R.string.key_preferences));
-		addPreferencesFromResource(R.xml.preferences);
-		PreferenceScreen prefSet = getPreferenceScreen();
-		mHeadBackground = prefSet.findPreference(getString(R.string.key_head_background));
-		mHeadText = prefSet.findPreference(getString(R.string.key_head_text));
-		mBodyBackground = prefSet.findPreference(getString(R.string.key_body_background));
-		mBodyText = prefSet.findPreference(getString(R.string.key_body_text));
-		mFriendText = prefSet.findPreference(getString(R.string.key_friend_text));
-		mCreatedText = prefSet.findPreference(getString(R.string.key_created_text));
-		mSharedPreferences = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
-	}
-
-	public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen, Preference preference) {
-		if (preference == mHeadBackground) {
-			ColorPickerDialog cp = new ColorPickerDialog(this, mHeadBackgroundColorListener, readHeadBackgroundColor());
-			cp.show();
-		} else if (preference == mHeadText) {
-			ColorPickerDialog cp = new ColorPickerDialog(this, mHeadTextColorListener, readHeadTextColor());
-			cp.show();
-		} else if (preference == mBodyBackground) {
-			ColorPickerDialog cp = new ColorPickerDialog(this, mBodyBackgroundColorListener, readBodyBackgroundColor());
-			cp.show();
-		} else if (preference == mBodyText) {
-			ColorPickerDialog cp = new ColorPickerDialog(this, mBodyTextColorListener, readBodyTextColor());
-			cp.show();
-		} else if (preference == mFriendText) {
-			ColorPickerDialog cp = new ColorPickerDialog(this, mFriendTextColorListener, readFriendTextColor());
-			cp.show();
-		} else if (preference == mCreatedText) {
-			ColorPickerDialog cp = new ColorPickerDialog(this, mCreatedTextColorListener, readCreatedTextColor());
-			cp.show();
+		mSonetDatabaseHelper = new SonetDatabaseHelper(this);
+		mInterval = (Button) findViewById(R.id.interval);
+		mHasButtons = (CheckBox) findViewById(R.id.hasbuttons);
+		mButtons_bg_color = (Button) findViewById(R.id.buttons_bg_color);
+		mButtons_color = (Button) findViewById(R.id.buttons_color);
+		mMessage_bg_color = (Button) findViewById(R.id.message_bg_color);
+		mMessage_color = (Button) findViewById(R.id.message_color);
+		mFriend_color = (Button) findViewById(R.id.friend_color);
+		mCreated_color = (Button) findViewById(R.id.created_color);
+		mTime24hr = (CheckBox) findViewById(R.id.time24hr);
+		SQLiteDatabase db = mSonetDatabaseHelper.getReadableDatabase();
+		Cursor c = db.rawQuery("select " + HASBUTTONS + "," + TIME24HR + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + mAppWidgetId, null);
+		if (c.getCount() > 0) {
+			mHasButtons.setChecked(c.getInt(c.getColumnIndex(HASBUTTONS)) == 0 ? false : true);
+			mTime24hr.setChecked(c.getInt(c.getColumnIndex(TIME24HR)) == 0 ? false : true);
 		}
-		return true;
+		c.close();
+		db.close();
+		mInterval.setOnClickListener(this);
+		mHasButtons.setOnCheckedChangeListener(mHasButtonsListener);
+		mButtons_bg_color.setOnClickListener(this);
+		mButtons_color.setOnClickListener(this);
+		mMessage_bg_color.setOnClickListener(this);
+		mMessage_color.setOnClickListener(this);
+		mFriend_color.setOnClickListener(this);
+		mCreated_color.setOnClickListener(this);
+		mTime24hr.setOnCheckedChangeListener(mTime24hrListener);
 	}
 
-	private int readHeadBackgroundColor() {
-		return Integer.parseInt(mSharedPreferences.getString(getString(R.string.key_head_background), getString(R.string.default_head_background)));
+	private void updateDatabase(ContentValues values) {
+		SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+		db.update(TABLE_WIDGETS, values, WIDGET + "=" + mAppWidgetId, null);
+		db.close();		
 	}
+	
+	private int getValue(String column, int value) {
+		int color;
+		SQLiteDatabase db = mSonetDatabaseHelper.getReadableDatabase();
+		Cursor c = db.rawQuery("select " + column + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + mAppWidgetId, null);
+		if (c.getCount() > 0) color = c.getInt(c.getColumnIndex(column));
+		else color = Integer.parseInt(getString(value));
+		c.close();
+		db.close();
+		return color;		
+	}
+	
 	ColorPickerDialog.OnColorChangedListener mHeadBackgroundColorListener =
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-//			Editor spe = mSharedPreferences.edit();
-//			spe.putString(getResources().getString(R.string.key_head_background), Integer.toString(color));
-//			spe.commit();
-			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+			//			Editor spe = mSharedPreferences.edit();
+			//			spe.putString(getResources().getString(R.string.key_head_background), Integer.toString(color));
+			//			spe.commit();
 			ContentValues values = new ContentValues();
 			values.put(BUTTONS_BG_COLOR, color);
-			db.update(TABLE_WIDGETS, values, WIDGET + "=" + mAppWidgetId, null);
-			db.close();
+			updateDatabase(values);
 		}
 
-		public void colorUpdate(int color) {
-		}
+		public void colorUpdate(int color) {}
 	};
 
-	private int readHeadTextColor() {
-		return Integer.parseInt(mSharedPreferences.getString(getString(R.string.key_head_text), getString(R.string.default_head_text)));
-	}
 	ColorPickerDialog.OnColorChangedListener mHeadTextColorListener =
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-//			Editor spe = mSharedPreferences.edit();
-//			spe.putString(getResources().getString(R.string.key_head_text), Integer.toString(color));
-//			spe.commit();
-			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+			//			Editor spe = mSharedPreferences.edit();
+			//			spe.putString(getResources().getString(R.string.key_head_text), Integer.toString(color));
+			//			spe.commit();
 			ContentValues values = new ContentValues();
 			values.put(BUTTONS_COLOR, color);
-			db.update(TABLE_WIDGETS, values, WIDGET + "=" + mAppWidgetId, null);
-			db.close();
+			updateDatabase(values);
 		}
 
-		public void colorUpdate(int color) {
-		}
+		public void colorUpdate(int color) {}
 	};
 
-	private int readBodyBackgroundColor() {
-		return Integer.parseInt(mSharedPreferences.getString(getString(R.string.key_body_background), getString(R.string.default_body_background)));
-	}
 	ColorPickerDialog.OnColorChangedListener mBodyBackgroundColorListener =
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-//			Editor spe = mSharedPreferences.edit();
-//			spe.putString(getResources().getString(R.string.key_body_background), Integer.toString(color));
-//			spe.commit();
-			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+			//			Editor spe = mSharedPreferences.edit();
+			//			spe.putString(getResources().getString(R.string.key_body_background), Integer.toString(color));
+			//			spe.commit();
 			ContentValues values = new ContentValues();
 			values.put(MESSAGE_BG_COLOR, color);
-			db.update(TABLE_WIDGETS, values, WIDGET + "=" + mAppWidgetId, null);
-			db.close();
+			updateDatabase(values);
 		}
 
-		public void colorUpdate(int color) {
-		}
+		public void colorUpdate(int color) {}
 	};
 
-	private int readBodyTextColor() {
-		return Integer.parseInt(mSharedPreferences.getString(getString(R.string.key_body_text), getString(R.string.default_body_text)));
-	}
 	ColorPickerDialog.OnColorChangedListener mBodyTextColorListener =
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-//			Editor spe = mSharedPreferences.edit();
-//			spe.putString(getResources().getString(R.string.key_body_text), Integer.toString(color));
-//			spe.commit();
-			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+			//			Editor spe = mSharedPreferences.edit();
+			//			spe.putString(getResources().getString(R.string.key_body_text), Integer.toString(color));
+			//			spe.commit();
 			ContentValues values = new ContentValues();
 			values.put(MESSAGE_COLOR, color);
-			db.update(TABLE_WIDGETS, values, WIDGET + "=" + mAppWidgetId, null);
-			db.close();
+			updateDatabase(values);
 		}
 
-		public void colorUpdate(int color) {
-		}
+		public void colorUpdate(int color) {}
 	};
 
-	private int readFriendTextColor() {
-		return Integer.parseInt(mSharedPreferences.getString(getString(R.string.key_friend_text), getString(R.string.default_friend_text)));
-	}
 	ColorPickerDialog.OnColorChangedListener mFriendTextColorListener =
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-//			Editor spe = mSharedPreferences.edit();
-//			spe.putString(getResources().getString(R.string.key_friend_text), Integer.toString(color));
-//			spe.commit();
-			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+			//			Editor spe = mSharedPreferences.edit();
+			//			spe.putString(getResources().getString(R.string.key_friend_text), Integer.toString(color));
+			//			spe.commit();
 			ContentValues values = new ContentValues();
 			values.put(FRIEND_COLOR, color);
-			db.update(TABLE_WIDGETS, values, WIDGET + "=" + mAppWidgetId, null);
-			db.close();
+			updateDatabase(values);
 		}
 
-		public void colorUpdate(int color) {
-		}
+		public void colorUpdate(int color) {}
 	};
 
-	private int readCreatedTextColor() {
-		return Integer.parseInt(mSharedPreferences.getString(getString(R.string.key_created_text), getString(R.string.default_created_text)));
-	}
 	ColorPickerDialog.OnColorChangedListener mCreatedTextColorListener =
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-//			Editor spe = mSharedPreferences.edit();
-//			spe.putString(getResources().getString(R.string.key_created_text), Integer.toString(color));
-//			spe.commit();
-			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+			//			Editor spe = mSharedPreferences.edit();
+			//			spe.putString(getResources().getString(R.string.key_created_text), Integer.toString(color));
+			//			spe.commit();
 			ContentValues values = new ContentValues();
-			values.put(TIME_COLOR, color);
-			db.update(TABLE_WIDGETS, values, WIDGET + "=" + mAppWidgetId, null);
-			db.close();
+			values.put(CREATED_COLOR, color);
+			updateDatabase(values);
 		}
 
-		public void colorUpdate(int color) {
+		public void colorUpdate(int color) {}
+	};
+
+	CompoundButton.OnCheckedChangeListener mHasButtonsListener =
+		new CompoundButton.OnCheckedChangeListener() {
+		@Override
+		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+			ContentValues values = new ContentValues();
+			values.put(HASBUTTONS, isChecked ? 1 : 0);
+			updateDatabase(values);
 		}
 	};
 
+	CompoundButton.OnCheckedChangeListener mTime24hrListener =
+		new CompoundButton.OnCheckedChangeListener() {
+		@Override
+		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+			ContentValues values = new ContentValues();
+			values.put(TIME24HR, isChecked ? 1 : 0);
+			updateDatabase(values);
+		}
+	};
+
+	@Override
+	public void onClick(View v) {
+		if (v == mInterval) {
+			String[] services = getResources().getStringArray(R.array.interval_entries);
+			CharSequence[] items = new CharSequence[services.length];
+			for (int i = 0; i < services.length; i++) items[i] = services[i];
+			(new AlertDialog.Builder(this))
+			.setItems(items, this)
+			.setCancelable(true)
+			.show();			
+		} else if (v == mButtons_bg_color) {
+			ColorPickerDialog cp = new ColorPickerDialog(this, mHeadBackgroundColorListener, getValue(BUTTONS_BG_COLOR, R.string.default_buttons_bg_color));
+			cp.show();
+		} else if (v == mButtons_color) {
+			ColorPickerDialog cp = new ColorPickerDialog(this, mHeadTextColorListener, getValue(BUTTONS_COLOR, R.string.default_buttons_color));
+			cp.show();
+		} else if (v == mMessage_bg_color) {
+			ColorPickerDialog cp = new ColorPickerDialog(this, mBodyBackgroundColorListener, getValue(MESSAGE_BG_COLOR, R.string.default_message_bg_color));
+			cp.show();
+		} else if (v == mMessage_color) {
+			ColorPickerDialog cp = new ColorPickerDialog(this, mBodyTextColorListener, getValue(MESSAGE_COLOR, R.string.default_message_color));
+			cp.show();
+		} else if (v == mFriend_color) {
+			ColorPickerDialog cp = new ColorPickerDialog(this, mFriendTextColorListener, getValue(FRIEND_COLOR, R.string.default_friend_color));
+			cp.show();
+		} else if (v == mCreated_color) {
+			ColorPickerDialog cp = new ColorPickerDialog(this, mCreatedTextColorListener, getValue(CREATED_COLOR, R.string.default_created_color));
+			cp.show();
+		}
+	}
+
+	@Override
+	public void onClick(DialogInterface dialog, int which) {
+		ContentValues values = new ContentValues();
+		values.put(INTERVAL, Integer.parseInt(getResources().getStringArray(R.array.interval_values)[which]));
+		updateDatabase(values);
+		dialog.cancel();
+	}
 }

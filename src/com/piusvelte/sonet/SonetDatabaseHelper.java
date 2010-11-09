@@ -25,7 +25,7 @@ public class SonetDatabaseHelper extends SQLiteOpenHelper {
 	public static final String MESSAGE_COLOR = "message_color";
 	public static final String TIME24HR = "time24hr";
 	public static final String FRIEND_COLOR = "friend_color";
-	public static final String TIME_COLOR = "time_color";
+	public static final String CREATED_COLOR = "created_color";
 	
 	public SonetDatabaseHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -50,7 +50,7 @@ public class SonetDatabaseHelper extends SQLiteOpenHelper {
 				+ BUTTONS_BG_COLOR + " integer, "
 				+ BUTTONS_COLOR + " integer, "
 				+ FRIEND_COLOR + " integer, "
-				+ TIME_COLOR + " integer, "
+				+ CREATED_COLOR + " integer, "
 				+ MESSAGE_BG_COLOR + " integer, "
 				+ MESSAGE_COLOR + " integer, "
 				+ TIME24HR + " integer);");
@@ -114,7 +114,7 @@ public class SonetDatabaseHelper extends SQLiteOpenHelper {
 					+ BUTTONS_BG_COLOR + " integer, "
 					+ BUTTONS_COLOR + " integer, "
 					+ FRIEND_COLOR + " integer, "
-					+ TIME_COLOR + " integer, "
+					+ CREATED_COLOR + " integer, "
 					+ MESSAGE_BG_COLOR + " integer, "
 					+ MESSAGE_COLOR + " integer, "
 					+ TIME24HR + " integer);");
