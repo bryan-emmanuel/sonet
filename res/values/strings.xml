@@ -71,4 +71,6 @@
     <string name="key_time_12_24">time1224</string>
     <string name="time24hr">Use 24-hour format</string>
     <string name="category_time">Time</string>
+	<string name="about">Sonet is a widget application. Please add and configure widgets from the home screen.</string>
+    <string name="donate">Donate</string>
 </resources>
