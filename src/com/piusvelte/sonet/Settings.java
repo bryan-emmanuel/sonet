@@ -24,8 +24,8 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.BUTTONS_BG_COLOR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.BUTTONS_COLOR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.HASBUTTONS;
 import static com.piusvelte.sonet.SonetDatabaseHelper.INTERVAL;
-import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGE_BG_COLOR;
-import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGE_COLOR;
+import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGES_BG_COLOR;
+import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGES_COLOR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_WIDGETS;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TIME24HR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.FRIEND_COLOR;
@@ -50,8 +50,8 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 	private CheckBox mHasButtons;
 	private Button mButtons_bg_color;
 	private Button mButtons_color;
-	private Button mMessage_bg_color;
-	private Button mMessage_color;
+	private Button mMessages_bg_color;
+	private Button mMessages_color;
 	private Button mFriend_color;
 	private Button mCreated_color;
 	private CheckBox mTime24hr;
@@ -69,8 +69,8 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 		mHasButtons = (CheckBox) findViewById(R.id.hasbuttons);
 		mButtons_bg_color = (Button) findViewById(R.id.buttons_bg_color);
 		mButtons_color = (Button) findViewById(R.id.buttons_color);
-		mMessage_bg_color = (Button) findViewById(R.id.message_bg_color);
-		mMessage_color = (Button) findViewById(R.id.message_color);
+		mMessages_bg_color = (Button) findViewById(R.id.messages_bg_color);
+		mMessages_color = (Button) findViewById(R.id.messages_color);
 		mFriend_color = (Button) findViewById(R.id.friend_color);
 		mCreated_color = (Button) findViewById(R.id.created_color);
 		mTime24hr = (CheckBox) findViewById(R.id.time24hr);
@@ -86,8 +86,8 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 		mHasButtons.setOnCheckedChangeListener(mHasButtonsListener);
 		mButtons_bg_color.setOnClickListener(this);
 		mButtons_color.setOnClickListener(this);
-		mMessage_bg_color.setOnClickListener(this);
-		mMessage_color.setOnClickListener(this);
+		mMessages_bg_color.setOnClickListener(this);
+		mMessages_color.setOnClickListener(this);
 		mFriend_color.setOnClickListener(this);
 		mCreated_color.setOnClickListener(this);
 		mTime24hr.setOnCheckedChangeListener(mTime24hrListener);
@@ -148,7 +148,7 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 			//			spe.putString(getResources().getString(R.string.key_body_background), Integer.toString(color));
 			//			spe.commit();
 			ContentValues values = new ContentValues();
-			values.put(MESSAGE_BG_COLOR, color);
+			values.put(MESSAGES_BG_COLOR, color);
 			updateDatabase(values);
 		}
 
@@ -163,7 +163,7 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 			//			spe.putString(getResources().getString(R.string.key_body_text), Integer.toString(color));
 			//			spe.commit();
 			ContentValues values = new ContentValues();
-			values.put(MESSAGE_COLOR, color);
+			values.put(MESSAGES_COLOR, color);
 			updateDatabase(values);
 		}
 
@@ -236,11 +236,11 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 		} else if (v == mButtons_color) {
 			ColorPickerDialog cp = new ColorPickerDialog(this, mHeadTextColorListener, getValue(BUTTONS_COLOR, R.string.default_buttons_color));
 			cp.show();
-		} else if (v == mMessage_bg_color) {
-			ColorPickerDialog cp = new ColorPickerDialog(this, mBodyBackgroundColorListener, getValue(MESSAGE_BG_COLOR, R.string.default_message_bg_color));
+		} else if (v == mMessages_bg_color) {
+			ColorPickerDialog cp = new ColorPickerDialog(this, mBodyBackgroundColorListener, getValue(MESSAGES_BG_COLOR, R.string.default_message_bg_color));
 			cp.show();
-		} else if (v == mMessage_color) {
-			ColorPickerDialog cp = new ColorPickerDialog(this, mBodyTextColorListener, getValue(MESSAGE_COLOR, R.string.default_message_color));
+		} else if (v == mMessages_color) {
+			ColorPickerDialog cp = new ColorPickerDialog(this, mBodyTextColorListener, getValue(MESSAGES_COLOR, R.string.default_message_color));
 			cp.show();
 		} else if (v == mFriend_color) {
 			ColorPickerDialog cp = new ColorPickerDialog(this, mFriendTextColorListener, getValue(FRIEND_COLOR, R.string.default_friend_color));

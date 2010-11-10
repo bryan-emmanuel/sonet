@@ -188,13 +188,13 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 					spe.commit();
 					// this will populate token and token_secret in consumer
 					String verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
-//					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
+					//					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
 					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET, SignatureMethod.HMAC_SHA1);
 					consumer.setTokenWithSecret(request_token, request_secret);
-//					OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
+					//					OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
 					OAuthProvider provider = new DefaultOAuthProvider(consumer, TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
 					provider.setOAuth10a(true);
-//					provider.retrieveAccessToken(consumer, verifier);
+					//					provider.retrieveAccessToken(consumer, verifier);
 					provider.retrieveAccessToken(verifier);
 					addAccount((new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(consumer.getToken(), consumer.getTokenSecret()))).getScreenName(),
 							consumer.getToken(),
@@ -215,12 +215,12 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		switch (service) {
 		case TWITTER:
 			try {
-//				CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
+				//				CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
 				CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET, SignatureMethod.HMAC_SHA1);
-//				OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
+				//				OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
 				OAuthProvider provider = new DefaultOAuthProvider(consumer, TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
 				provider.setOAuth10a(true);
-//				String authUrl = provider.retrieveRequestToken(consumer, TWITTER_CALLBACK.toString());
+				//				String authUrl = provider.retrieveRequestToken(consumer, TWITTER_CALLBACK.toString());
 				String authUrl = provider.retrieveRequestToken(TWITTER_CALLBACK.toString());
 				/*
 				 * need to save the requestToken and secret
@@ -254,16 +254,15 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	}
 
 	private void listAccounts() {
-//		if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-			Cursor cursor = db.rawQuery("select " + _ID + "," + USERNAME + "," + SERVICE + " from " + TABLE_ACCOUNTS + " where " + WIDGET + "=" + mAppWidgetId, null);
-			startManagingCursor(cursor);
-			setListAdapter(new SimpleCursorAdapter(this, R.layout.accounts_row, cursor, new String[] {USERNAME}, new int[] {R.id.account_username}));
-			db.close();
-//		}
+		SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+		Cursor cursor = db.rawQuery("select " + _ID + "," + USERNAME + "," + SERVICE + " from " + TABLE_ACCOUNTS + " where " + WIDGET + "=" + mAppWidgetId, null);
+		startManagingCursor(cursor);
+		setListAdapter(new SimpleCursorAdapter(this, R.layout.accounts_row, cursor, new String[] {USERNAME}, new int[] {R.id.account_username}));
+		db.close();
 	}
-	
+
 	private void addAccount(String username, String token, String secret, int expiry, int service, int timezone) {
+		Log.v(TAG,"addAcount("+username+","+token+","+secret+","+expiry+","+service+","+timezone+")");
 		SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
 		ContentValues values = new ContentValues();
 		values.put(USERNAME, username);
@@ -274,7 +273,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		values.put(TIMEZONE, timezone);
 		values.put(WIDGET, mAppWidgetId);
 		db.insert(TABLE_ACCOUNTS, USERNAME, values);
-		db.close();		
+		db.close();
+		listAccounts();
 	}
 
 	public void onClick(DialogInterface dialog, int which) {
@@ -288,8 +288,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			public void onComplete(String response) {
 				try {
 					JSONObject json = Util.parseJson(response);
+					Log.v(TAG, "FB:onComplete");
 					addAccount(json.getString("name"), mFacebook.getAccessToken(), "", (int) mFacebook.getAccessExpires(), FACEBOOK, Integer.parseInt(json.getString(TIMEZONE)));
-					listAccounts();
 				} catch (JSONException e) {
 					Log.e(TAG, e.toString());
 				} catch (FacebookError e) {
@@ -356,8 +356,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			result = data.get("data");
 			if (result instanceof Map<?, ?>) {
 				Map<?, ?> userObject = (Map<?, ?>) result;
+				Log.v(TAG, "MS:requestDidLoad");
 				addAccount((String) userObject.get("userName"), mMSSession.getToken(), mMSSession.getTokenSecret(), 0, MYSPACE, 0);
-				listAccounts();
 			}                       
 		}
 	}

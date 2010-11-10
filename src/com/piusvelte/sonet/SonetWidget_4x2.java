@@ -44,7 +44,7 @@ public class SonetWidget_4x2 extends AppWidgetProvider {
 			final int appWidgetId = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 			if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) onDeleted(context, new int[]{appWidgetId});
 			else super.onReceive(context, intent);
-		}
+		} else super.onReceive(context, intent);
 	}
 	
 	@Override

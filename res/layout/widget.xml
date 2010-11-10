@@ -24,21 +24,21 @@
 		android:layout_height="wrap_content" android:text="@string/head_spacer"
 		android:layout_alignParentTop="true" android:layout_alignParentLeft="true"
 		android:padding="4dip" />
-	<ImageView android:id="@+id/body_background"
+	<ImageView android:id="@+id/messages_bg"
 		android:layout_width="fill_parent" android:layout_height="fill_parent"
 		android:layout_alignParentRight="true"
 		android:layout_alignParentBottom="true"
 		android:layout_alignParentLeft="true" android:layout_below="@id/head_spacer"
 		android:scaleType="fitXY" />
-	<ImageView android:id="@+id/head_background"
+	<ImageView android:id="@+id/buttons_bg"
 		android:layout_width="fill_parent" android:layout_height="fill_parent"
-		android:layout_above="@id/body_background"
+		android:layout_above="@id/messages_bg"
 		android:scaleType="fitXY"
 		android:layout_alignParentTop="true" android:layout_alignParentRight="true"
 		android:layout_alignParentLeft="true" />
-	<RelativeLayout android:id="@+id/head"
+	<RelativeLayout android:id="@+id/buttons"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
-		android:layout_alignParentTop="true" android:layout_above="@id/body_background">
+		android:layout_alignParentTop="true" android:layout_above="@id/messages_bg">
 		<TextView android:id="@+id/button_post" android:layout_width="wrap_content"
 			android:layout_height="wrap_content" android:text="@string/button_post"
 			android:layout_alignParentTop="true" android:layout_alignParentLeft="true"
@@ -54,8 +54,8 @@
 			android:layout_alignParentRight="true" android:clickable="true"
 			android:padding="4dip" />
 	</RelativeLayout>
-	<LinearLayout android:id="@+id/body" android:layout_width="fill_parent"
-		android:layout_height="fill_parent" android:layout_below="@id/head"
+	<LinearLayout android:id="@+id/messages" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:layout_below="@id/buttons"
 		android:orientation="vertical">
 		<RelativeLayout android:id="@+id/item0"
 			android:orientation="horizontal" android:layout_width="fill_parent"

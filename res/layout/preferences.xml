@@ -28,8 +28,8 @@
   <Button android:id="@+id/buttons_bg_color" android:text="@string/buttons_bg_color" />
   <Button android:id="@+id/buttons_color" android:text="@string/buttons_color" />
 <!--  <PreferenceCategory android:title="@string/category_messages" />-->
-  <Button android:id="@+id/message_bg_color" android:text="@string/message_bg_color" />
-  <Button android:id="@+id/message_color" android:text="@string/message_color" />
+  <Button android:id="@+id/messages_bg_color" android:text="@string/message_bg_color" />
+  <Button android:id="@+id/messages_color" android:text="@string/message_color" />
   <Button android:id="@+id/friend_color" android:text="@string/friend_color" />
   <Button android:id="@+id/created_color" android:text="@string/created_color" />
 <!--  <PreferenceCategory android:title="@string/category_time" />-->

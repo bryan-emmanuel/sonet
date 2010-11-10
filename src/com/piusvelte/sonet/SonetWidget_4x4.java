@@ -19,12 +19,6 @@
  */
 package com.piusvelte.sonet;
 
-//import static com.piusvelte.sonet.UI.TAG;
-
-//import winterwell.jtwitter.Twitter;
-
-//import com.piusvelte.sonet.FeedHelper.ApiException;
-
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_WIDGETS;
