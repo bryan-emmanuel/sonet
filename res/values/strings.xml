@@ -40,7 +40,7 @@
 	<string name="default_message_color">-1</string>
     <string name="key_preferences">sonet</string>
     <string name="category_update">Update</string>
-    <string name="interval">Interval</string>
+    <string name="interval">Refresh Interval</string>
     <string name="key_interval">interval</string>
     <string name="buttons_bg_color">Buttons Background Color</string>
     <string name="key_head_background">headBackground</string>
@@ -50,8 +50,6 @@
     <string name="key_body_background">bodyBackground</string>
     <string name="message_color">Messages Text Color</string>
     <string name="key_body_text">bodyText</string>
-    <string name="username">username</string>
-    <string name="password">password</string>
     <string name="key_requesttoken">requesttoken</string>
     <string name="key_requestsecret">requestsecret</string>
     <string name="head_spacer">.</string>

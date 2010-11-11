@@ -22,6 +22,7 @@ package com.piusvelte.sonet;
 import android.app.Activity;
 import android.appwidget.AppWidgetManager;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -34,13 +35,14 @@ public class UI extends Activity implements OnClickListener {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		Intent i = getIntent();
-		if (i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
+		if ((i != null) && i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
         setResult(Activity.RESULT_OK, (new Intent()).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 		setContentView(R.layout.main);
 		if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
 			((Button) findViewById(R.id.button_accounts)).setOnClickListener(this);
 			((Button) findViewById(R.id.button_settings)).setOnClickListener(this);			
 		}
+		((Button) findViewById(R.id.donate)).setOnClickListener(this);
 	}
 
 	public void onClick(View v) {
@@ -50,6 +52,9 @@ public class UI extends Activity implements OnClickListener {
 			break;
 		case R.id.button_settings:
 			startActivity(new Intent(this, Settings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
+			break;
+		case R.id.donate:
+			startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("http://www.piusvelte.com?p=donate-sonet")));
 			break;
 		}
 	}

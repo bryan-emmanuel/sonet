@@ -70,6 +70,7 @@ import oauth.signpost.signature.SignatureMethod;
 import twitter4j.TwitterFactory;
 import twitter4j.http.AccessToken;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.appwidget.AppWidgetManager;
@@ -112,7 +113,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		Intent i = getIntent();
-		if (i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
+		if ((i != null) && i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
+        setResult(Activity.RESULT_OK, (new Intent()).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 		setContentView(R.layout.accounts);
 		registerForContextMenu(getListView());
 		((Button) findViewById(R.id.button_add_account)).setOnClickListener(this);
@@ -168,6 +170,12 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		super.onResume();
 		listAccounts();
 	}
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		startService((new Intent(this, SonetService.class)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));		
+	}
 
 	@Override
 	protected void onNewIntent(Intent intent) {
@@ -196,12 +204,17 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 					provider.setOAuth10a(true);
 					//					provider.retrieveAccessToken(consumer, verifier);
 					provider.retrieveAccessToken(verifier);
-					addAccount((new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(consumer.getToken(), consumer.getTokenSecret()))).getScreenName(),
-							consumer.getToken(),
-							consumer.getTokenSecret(),
-							0,
-							TWITTER,
-							0);
+					ContentValues values = new ContentValues();
+					values.put(USERNAME, (new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(consumer.getToken(), consumer.getTokenSecret()))).getScreenName());
+					values.put(TOKEN, consumer.getToken());
+					values.put(SECRET, consumer.getTokenSecret());
+					values.put(EXPIRY, 0);
+					values.put(SERVICE, TWITTER);
+					values.put(TIMEZONE, 0);
+					values.put(WIDGET, mAppWidgetId);
+                    SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+					db.insert(TABLE_ACCOUNTS, USERNAME, values);
+					db.close();
 					listAccounts();
 				} catch (Exception e) {
 					Log.e(TAG, e.getMessage());
@@ -261,22 +274,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		db.close();
 	}
 
-	private void addAccount(String username, String token, String secret, int expiry, int service, int timezone) {
-		Log.v(TAG,"addAcount("+username+","+token+","+secret+","+expiry+","+service+","+timezone+")");
-		SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-		ContentValues values = new ContentValues();
-		values.put(USERNAME, username);
-		values.put(TOKEN, token);
-		values.put(SECRET, secret);
-		values.put(EXPIRY, expiry);
-		values.put(SERVICE, service);
-		values.put(TIMEZONE, timezone);
-		values.put(WIDGET, mAppWidgetId);
-		db.insert(TABLE_ACCOUNTS, USERNAME, values);
-		db.close();
-		listAccounts();
-	}
-
 	public void onClick(DialogInterface dialog, int which) {
 		getAuth(which);
 		dialog.cancel();
@@ -288,8 +285,22 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			public void onComplete(String response) {
 				try {
 					JSONObject json = Util.parseJson(response);
-					Log.v(TAG, "FB:onComplete");
-					addAccount(json.getString("name"), mFacebook.getAccessToken(), "", (int) mFacebook.getAccessExpires(), FACEBOOK, Integer.parseInt(json.getString(TIMEZONE)));
+                    ContentValues values = new ContentValues();
+                    values.put(USERNAME, json.getString("name"));
+                    values.put(TOKEN, mFacebook.getAccessToken());
+            		values.put(SECRET, 0);
+                    values.put(EXPIRY, mFacebook.getAccessExpires());
+                    values.put(SERVICE, FACEBOOK);
+                    values.put(TIMEZONE, json.getString(TIMEZONE));
+            		values.put(WIDGET, mAppWidgetId);
+                    SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+                    db.insert(TABLE_ACCOUNTS, _ID, values);
+                    db.close();
+                    ManageAccounts.this.runOnUiThread(new Runnable() {
+                            public void run() {
+                                    listAccounts();
+                            }
+                    });
 				} catch (JSONException e) {
 					Log.e(TAG, e.toString());
 				} catch (FacebookError e) {
@@ -356,8 +367,21 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 			result = data.get("data");
 			if (result instanceof Map<?, ?>) {
 				Map<?, ?> userObject = (Map<?, ?>) result;
-				Log.v(TAG, "MS:requestDidLoad");
-				addAccount((String) userObject.get("userName"), mMSSession.getToken(), mMSSession.getTokenSecret(), 0, MYSPACE, 0);
+                ContentValues values = new ContentValues();
+                values.put(USERNAME, (String) userObject.get("userName"));
+                values.put(TOKEN, mMSSession.getToken());
+                values.put(SECRET, mMSSession.getTokenSecret());
+                values.put(SERVICE, MYSPACE);
+                values.put(TIMEZONE, 0);
+        		values.put(WIDGET, mAppWidgetId);
+                SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+                db.insert(TABLE_ACCOUNTS, _ID, values);
+                db.close();
+                ManageAccounts.this.runOnUiThread(new Runnable() {
+                        public void run() {
+                                listAccounts();
+                        }
+                });
 			}                       
 		}
 	}

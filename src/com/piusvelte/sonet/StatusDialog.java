@@ -48,10 +48,10 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		Intent intent = getIntent();
-		if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
-			mAppWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
-			mService = intent.getIntExtra(SERVICE, 0);
-			mLink = intent.getStringExtra(MESSAGE);
+		if (intent != null) {
+			if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, AppWidgetManager.INVALID_APPWIDGET_ID);
+			if (intent.hasExtra(SERVICE)) mService = intent.getIntExtra(SERVICE, 0);
+			if (intent.hasExtra(MESSAGE)) mLink = intent.getStringExtra(MESSAGE);
 		}
 		Resources r = getResources();
 		CharSequence[] items = {r.getString(R.string.reply), "Post to " + r.getStringArray(R.array.service_entries)[mService], r.getString(R.string.settings), r.getString(R.string.button_refresh)};
@@ -90,7 +90,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 		}
 		dialog.cancel();
 	}
-	
+
 	@Override
 	public void onCancel(DialogInterface dialog) {
 		finish();

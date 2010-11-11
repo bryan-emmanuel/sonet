@@ -19,6 +19,7 @@
  */
 package com.piusvelte.sonet;
 
+import static com.piusvelte.sonet.SonetDatabaseHelper._ID;
 import static com.piusvelte.sonet.SonetDatabaseHelper.WIDGET;
 import static com.piusvelte.sonet.SonetDatabaseHelper.BUTTONS_BG_COLOR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.BUTTONS_COLOR;
@@ -61,9 +62,10 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.main);
+		setContentView(R.layout.preferences);
 		Intent i = getIntent();
 		if (i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
+        setResult(Activity.RESULT_OK, (new Intent()).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 		mSonetDatabaseHelper = new SonetDatabaseHelper(this);
 		mInterval = (Button) findViewById(R.id.interval);
 		mHasButtons = (CheckBox) findViewById(R.id.hasbuttons);
@@ -75,11 +77,12 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 		mCreated_color = (Button) findViewById(R.id.created_color);
 		mTime24hr = (CheckBox) findViewById(R.id.time24hr);
 		SQLiteDatabase db = mSonetDatabaseHelper.getReadableDatabase();
-		Cursor c = db.rawQuery("select " + HASBUTTONS + "," + TIME24HR + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + mAppWidgetId, null);
+		Cursor c = db.rawQuery("select " + _ID + "," + HASBUTTONS + "," + TIME24HR + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + mAppWidgetId, null);
 		if (c.getCount() > 0) {
-			mHasButtons.setChecked(c.getInt(c.getColumnIndex(HASBUTTONS)) == 0 ? false : true);
-			mTime24hr.setChecked(c.getInt(c.getColumnIndex(TIME24HR)) == 0 ? false : true);
-		}
+			c.moveToFirst();
+			mHasButtons.setChecked(c.getInt(c.getColumnIndex(HASBUTTONS)) == 1);
+			mTime24hr.setChecked(c.getInt(c.getColumnIndex(TIME24HR)) == 1);
+		} else mHasButtons.setChecked(true);
 		c.close();
 		db.close();
 		mInterval.setOnClickListener(this);
@@ -92,6 +95,12 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 		mCreated_color.setOnClickListener(this);
 		mTime24hr.setOnCheckedChangeListener(mTime24hrListener);
 	}
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		startService((new Intent(this, SonetService.class)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));		
+	}
 
 	private void updateDatabase(ContentValues values) {
 		SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
@@ -99,15 +108,18 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 		db.close();		
 	}
 	
-	private int getValue(String column, int value) {
-		int color;
+	private int getValue(String column, int default_value) {
+		int value;
 		SQLiteDatabase db = mSonetDatabaseHelper.getReadableDatabase();
-		Cursor c = db.rawQuery("select " + column + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + mAppWidgetId, null);
-		if (c.getCount() > 0) color = c.getInt(c.getColumnIndex(column));
-		else color = Integer.parseInt(getString(value));
+		Cursor c = db.rawQuery("select " + _ID + "," + column + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + mAppWidgetId, null);
+		if (c.getCount() > 0) {
+			c.moveToFirst();
+			value = c.getInt(c.getColumnIndex(column));
+		}
+		else value = Integer.parseInt(getString(default_value));
 		c.close();
 		db.close();
-		return color;		
+		return value;		
 	}
 	
 	ColorPickerDialog.OnColorChangedListener mHeadBackgroundColorListener =
@@ -223,13 +235,19 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 	@Override
 	public void onClick(View v) {
 		if (v == mInterval) {
-			String[] services = getResources().getStringArray(R.array.interval_entries);
-			CharSequence[] items = new CharSequence[services.length];
-			for (int i = 0; i < services.length; i++) items[i] = services[i];
+			int index = 0,
+			value = getValue(INTERVAL, R.string.default_interval);
+			String[] values = getResources().getStringArray(R.array.interval_values);
+			for (int i = 0; i < values.length; i++) {
+				if (Integer.parseInt(values[i]) == value) {
+					index = i;
+					break;
+				}
+			}
 			(new AlertDialog.Builder(this))
-			.setItems(items, this)
+			.setSingleChoiceItems(R.array.interval_entries, index, this)
 			.setCancelable(true)
-			.show();			
+			.show();
 		} else if (v == mButtons_bg_color) {
 			ColorPickerDialog cp = new ColorPickerDialog(this, mHeadBackgroundColorListener, getValue(BUTTONS_BG_COLOR, R.string.default_buttons_bg_color));
 			cp.show();
