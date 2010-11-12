@@ -71,4 +71,6 @@
     <string name="category_time">Time</string>
 	<string name="about">Sonet is a widget application. Please add and configure widgets from the home screen.</string>
     <string name="donate">Donate</string>
+    <string name="widgets">Active Widgets</string>
+    <string name="remove">Remove Widget</string>
 </resources>

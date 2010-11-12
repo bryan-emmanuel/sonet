@@ -22,6 +22,8 @@ package com.piusvelte.sonet;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
+import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
+import static com.piusvelte.sonet.Sonet.TAG;
 import static com.piusvelte.sonet.SonetDatabaseHelper.SERVICE;
 
 import android.app.Activity;
@@ -33,6 +35,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 
 public class StatusDialog extends Activity implements DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
@@ -48,10 +51,12 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		Intent intent = getIntent();
+		Log.v(TAG,"StatusDialog");
 		if (intent != null) {
 			if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, AppWidgetManager.INVALID_APPWIDGET_ID);
 			if (intent.hasExtra(SERVICE)) mService = intent.getIntExtra(SERVICE, 0);
 			if (intent.hasExtra(MESSAGE)) mLink = intent.getStringExtra(MESSAGE);
+			Log.v(TAG,"intent:"+mAppWidgetId);
 		}
 		Resources r = getResources();
 		CharSequence[] items = {r.getString(R.string.reply), "Post to " + r.getStringArray(R.array.service_entries)[mService], r.getString(R.string.settings), r.getString(R.string.button_refresh)};
@@ -85,7 +90,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 			startActivity((new Intent(this, UI.class)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 			break;
 		case REFRESH:
-			startService((new Intent(this, SonetService.class)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
+			startService((new Intent(this, SonetService.class)).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
 			break;
 		}
 		dialog.cancel();

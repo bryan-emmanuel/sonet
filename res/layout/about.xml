@@ -21,10 +21,12 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="fill_parent" android:layout_height="fill_parent"
 	android:orientation="vertical">
+	<TextView android:id="@+id/about" android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:text="@string/about"
+		android:layout_alignParentTop="true" />
+<!--	<Button android:id="@+id/widgets" android:layout_width="fill_parent"-->
+<!--		android:layout_height="wrap_content" android:text="@string/widgets" android:layout_below="@id/about" />-->
 	<Button android:id="@+id/donate" android:layout_width="fill_parent"
 		android:layout_height="wrap_content" android:text="@string/donate"
 		android:layout_alignParentBottom="true" />
-	<TextView android:layout_width="fill_parent"
-		android:layout_height="wrap_content" android:text="@string/about"
-		android:layout_alignParentTop="true" android:layout_above="@id/donate" />
 </RelativeLayout>

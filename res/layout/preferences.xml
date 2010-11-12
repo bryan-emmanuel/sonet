@@ -21,17 +21,29 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="fill_parent" android:layout_height="fill_parent"
 	android:orientation="vertical">
-<!--  <PreferenceCategory android:title="@string/category_update" />-->
-  <Button android:id="@+id/interval" android:text="@string/interval" android:layout_width="fill_parent" android:layout_height="wrap_content" />
-<!--  <PreferenceCategory android:title="@string/category_buttons" />-->
-  <CheckBox android:id="@+id/hasbuttons" android:text="@string/hasbuttons" android:layout_width="fill_parent" android:layout_height="wrap_content" />
-  <Button android:id="@+id/buttons_bg_color" android:text="@string/buttons_bg_color" android:layout_width="fill_parent" android:layout_height="wrap_content" />
-  <Button android:id="@+id/buttons_color" android:text="@string/buttons_color" android:layout_width="fill_parent" android:layout_height="wrap_content" />
-<!--  <PreferenceCategory android:title="@string/category_messages" />-->
-  <Button android:id="@+id/messages_bg_color" android:text="@string/message_bg_color" android:layout_width="fill_parent" android:layout_height="wrap_content" />
-  <Button android:id="@+id/messages_color" android:text="@string/message_color" android:layout_width="fill_parent" android:layout_height="wrap_content" />
-  <Button android:id="@+id/friend_color" android:text="@string/friend_color" android:layout_width="fill_parent" android:layout_height="wrap_content" />
-  <Button android:id="@+id/created_color" android:text="@string/created_color" android:layout_width="fill_parent" android:layout_height="wrap_content" />
-<!--  <PreferenceCategory android:title="@string/category_time" />-->
-  <CheckBox android:id="@+id/time24hr" android:text="@string/time24hr" android:layout_width="fill_parent" android:layout_height="wrap_content" />
+	<ScrollView android:layout_above="@id/donate"
+		android:layout_width="fill_parent" android:layout_height="wrap_content">
+		<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+			android:layout_width="fill_parent" android:layout_height="fill_parent"
+			android:orientation="vertical">
+			<Button android:id="@+id/interval" android:text="@string/interval"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<CheckBox android:id="@+id/hasbuttons" android:text="@string/hasbuttons"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/buttons_bg_color" android:text="@string/buttons_bg_color"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/buttons_color" android:text="@string/buttons_color"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/messages_bg_color" android:text="@string/message_bg_color"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/messages_color" android:text="@string/message_color"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/friend_color" android:text="@string/friend_color"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/created_color" android:text="@string/created_color"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<CheckBox android:id="@+id/time24hr" android:text="@string/time24hr"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+		</LinearLayout>
+	</ScrollView>
 </LinearLayout>

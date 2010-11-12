@@ -21,13 +21,24 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="fill_parent" android:layout_height="fill_parent"
 	android:orientation="vertical">
-	<Button android:id="@+id/button_accounts" android:text="@string/accounts"
-		android:layout_width="fill_parent" android:layout_height="wrap_content"
-		android:layout_alignParentTop="true" />
-	<Button android:id="@+id/button_settings" android:text="@string/settings"
-		android:layout_width="fill_parent" android:layout_height="wrap_content"
-		android:layout_below="@id/button_accounts" />
 	<Button android:id="@+id/donate" android:layout_width="fill_parent"
 		android:layout_height="wrap_content" android:text="@string/donate"
 		android:layout_alignParentBottom="true" />
+	<ScrollView android:layout_above="@id/donate"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:layout_alignParentTop="true">
+		<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+			android:layout_width="fill_parent" android:layout_height="fill_parent"
+			android:orientation="vertical">
+			<Button android:id="@+id/button_accounts" android:text="@string/accounts"
+				android:layout_width="fill_parent" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" />
+			<Button android:id="@+id/button_settings" android:text="@string/settings"
+				android:layout_width="fill_parent" android:layout_height="wrap_content"
+				android:layout_below="@id/button_accounts" />
+<!--			<Button android:id="@+id/button_remove" android:text="@string/remove"-->
+<!--				android:layout_width="fill_parent" android:layout_height="wrap_content"-->
+<!--				android:layout_below="@id/button_settings" />-->
+		</LinearLayout>
+	</ScrollView>
 </RelativeLayout>

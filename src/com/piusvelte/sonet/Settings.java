@@ -126,9 +126,6 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-			//			Editor spe = mSharedPreferences.edit();
-			//			spe.putString(getResources().getString(R.string.key_head_background), Integer.toString(color));
-			//			spe.commit();
 			ContentValues values = new ContentValues();
 			values.put(BUTTONS_BG_COLOR, color);
 			updateDatabase(values);
@@ -141,9 +138,6 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-			//			Editor spe = mSharedPreferences.edit();
-			//			spe.putString(getResources().getString(R.string.key_head_text), Integer.toString(color));
-			//			spe.commit();
 			ContentValues values = new ContentValues();
 			values.put(BUTTONS_COLOR, color);
 			updateDatabase(values);
@@ -156,9 +150,6 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-			//			Editor spe = mSharedPreferences.edit();
-			//			spe.putString(getResources().getString(R.string.key_body_background), Integer.toString(color));
-			//			spe.commit();
 			ContentValues values = new ContentValues();
 			values.put(MESSAGES_BG_COLOR, color);
 			updateDatabase(values);
@@ -171,9 +162,6 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-			//			Editor spe = mSharedPreferences.edit();
-			//			spe.putString(getResources().getString(R.string.key_body_text), Integer.toString(color));
-			//			spe.commit();
 			ContentValues values = new ContentValues();
 			values.put(MESSAGES_COLOR, color);
 			updateDatabase(values);
@@ -186,9 +174,6 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-			//			Editor spe = mSharedPreferences.edit();
-			//			spe.putString(getResources().getString(R.string.key_friend_text), Integer.toString(color));
-			//			spe.commit();
 			ContentValues values = new ContentValues();
 			values.put(FRIEND_COLOR, color);
 			updateDatabase(values);
@@ -201,9 +186,6 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-			//			Editor spe = mSharedPreferences.edit();
-			//			spe.putString(getResources().getString(R.string.key_created_text), Integer.toString(color));
-			//			spe.commit();
 			ContentValues values = new ContentValues();
 			values.put(CREATED_COLOR, color);
 			updateDatabase(values);

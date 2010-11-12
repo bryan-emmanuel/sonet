@@ -19,11 +19,16 @@
  */
 package com.piusvelte.sonet;
 
+//import static com.piusvelte.sonet.Sonet.ACTION_REMOVE;
+import static com.piusvelte.sonet.Sonet.TAG;
+
 import android.app.Activity;
 import android.appwidget.AppWidgetManager;
+//import android.appwidget.AppWidgetProviderInfo;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -38,14 +43,18 @@ public class UI extends Activity implements OnClickListener {
 		if ((i != null) && i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
         setResult(Activity.RESULT_OK, (new Intent()).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 		setContentView(R.layout.main);
+		Log.v(TAG,"UI:"+mAppWidgetId);
 		if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+			Log.v(TAG,"is valid");
 			((Button) findViewById(R.id.button_accounts)).setOnClickListener(this);
-			((Button) findViewById(R.id.button_settings)).setOnClickListener(this);			
+			((Button) findViewById(R.id.button_settings)).setOnClickListener(this);
+//			((Button) findViewById(R.id.button_remove)).setOnClickListener(this);
 		}
 		((Button) findViewById(R.id.donate)).setOnClickListener(this);
 	}
 
 	public void onClick(View v) {
+		Log.v(TAG,"UI onClick");
 		switch (v.getId()) {
 		case R.id.button_accounts:
 			startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
@@ -53,6 +62,13 @@ public class UI extends Activity implements OnClickListener {
 		case R.id.button_settings:
 			startActivity(new Intent(this, Settings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 			break;
+//		case R.id.button_remove:
+//			AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
+//			AppWidgetProviderInfo info = appWidgetManager.getAppWidgetInfo(mAppWidgetId);
+//			String providerName = info.provider.getClassName();
+//			sendBroadcast((new Intent(this, providerName == SonetWidget_4x2.class.getName() ? SonetWidget_4x2.class : providerName == SonetWidget_4x3.class.getName() ? SonetWidget_4x3.class : SonetWidget_4x4.class)).setAction(ACTION_REMOVE).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
+//			finish();
+//			break;
 		case R.id.donate:
 			startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("http://www.piusvelte.com?p=donate-sonet")));
 			break;

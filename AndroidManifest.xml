@@ -19,8 +19,8 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.piusvelte.sonet" android:versionCode="58"
-	android:versionName="0.5.8" android:installLocation="auto">
+	package="com.piusvelte.sonet" android:versionCode="59"
+	android:versionName="0.5.9" android:installLocation="auto">
 	<application android:icon="@drawable/icon" android:label="@string/app_name">
 		<activity android:name=".About" android:label="@string/app_name">
 			<intent-filter>
@@ -49,6 +49,7 @@
 		</activity>
 		<activity android:name=".Settings" />
 		<activity android:name=".PostDialog" android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+		<activity android:name=".StatusDialog" android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 		<activity android:name="com.myspace.sdk.MSLoginActivity" />
 		<!-- Broadcast Receiver that will process AppWidget updates -->
 		<receiver android:name=".SonetWidget_4x2" android:label="@string/sonet_4x2">
@@ -58,8 +59,10 @@
 			<intent-filter>
 				<action android:name="com.piusvelte.sonet.Sonet.REFRESH" />
 			</intent-filter>
-			<meta-data android:name="android.appwidget.provider"
-				android:resource="@xml/widget_4x2" />
+<!--			<intent-filter>-->
+<!--				<action android:name="com.piusvelte.sonet.Sonet.REMOVE" />-->
+<!--			</intent-filter>-->
+			<meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_4x2" />
 		</receiver>
 		<receiver android:name=".SonetWidget_4x3" android:label="@string/sonet_4x3">
 			<intent-filter>
@@ -68,6 +71,9 @@
 			<intent-filter>
 				<action android:name="com.piusvelte.sonet.Sonet.REFRESH" />
 			</intent-filter>
+<!--			<intent-filter>-->
+<!--				<action android:name="com.piusvelte.sonet.Sonet.REMOVE" />-->
+<!--			</intent-filter>-->
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_4x3" />
         </receiver>
         <receiver android:name=".SonetWidget_4x4" android:label="@string/sonet_4x4">
@@ -77,6 +83,9 @@
 			<intent-filter>
 				<action android:name="com.piusvelte.sonet.Sonet.REFRESH" />
 			</intent-filter>
+<!--			<intent-filter>-->
+<!--				<action android:name="com.piusvelte.sonet.Sonet.REMOVE" />-->
+<!--			</intent-filter>-->
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_4x4" />
         </receiver>
         <service android:name=".SonetService" />
