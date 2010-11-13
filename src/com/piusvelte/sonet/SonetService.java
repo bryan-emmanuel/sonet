@@ -120,17 +120,14 @@ public class SonetService extends Service implements Runnable {
 	@Override
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
-		Log.v(TAG,"service:onStart");
 		if (intent != null) {
 			if (intent.hasExtra(ACTION_REFRESH)) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, new Intent(this, SonetService.class).setAction(ACTION_REFRESH), 0));
 			if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
 			else {
-				Log.v(TAG,"update all");
 				AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
 				SonetService.updateWidgets(arrayCat(arrayCat(appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x2.class)), appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x3.class))), appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x4.class))));
 			}
 		} else {
-			Log.v(TAG,"update all");
 			AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
 			SonetService.updateWidgets(arrayCat(arrayCat(appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x2.class)), appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x3.class))), appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x4.class))));
 		}
@@ -183,7 +180,7 @@ public class SonetService extends Service implements Runnable {
 			Log.e(TAG,e.toString());
 		}
 		cal.setTime(created);
-		if (timezone > 0) cal.add(Calendar.HOUR, timezone);
+		cal.add(Calendar.HOUR, timezone);
 		return cal.getTime();		
 	}
 
@@ -379,7 +376,6 @@ public class SonetService extends Service implements Runnable {
 				AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
 				while (updatesQueued()) {
 					int appWidgetId = getNextUpdate();
-					Log.v(TAG,"update:"+appWidgetId);
 					SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
 					SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
 					Boolean hasbuttons,
@@ -454,7 +450,6 @@ public class SonetService extends Service implements Runnable {
 					map_message = {R.id.message0, R.id.message1, R.id.message2, R.id.message3, R.id.message4, R.id.message5, R.id.message6},
 					map_screenname = {R.id.screenname0, R.id.screenname1, R.id.screenname2, R.id.screenname3, R.id.screenname4, R.id.screenname5, R.id.screenname6},
 					map_created = {R.id.created0, R.id.created1, R.id.created2, R.id.created3, R.id.created4, R.id.created5, R.id.created6};
-					ComponentName browser = new ComponentName("com.android.browser", "com.android.browser.BrowserActivity");
 					int count_status = 0, max_status = map_item.length;
 					RemoteViews views = new RemoteViews(getPackageName(), hasbuttons ? R.layout.widget : R.layout.widget_nobuttons);
 					if (hasbuttons) {
@@ -463,19 +458,19 @@ public class SonetService extends Service implements Runnable {
 						buttons_bg_canvas.drawColor(buttons_bg_color);
 						views.setImageViewBitmap(R.id.buttons_bg, buttons_bg);
 						views.setTextColor(R.id.head_spacer, buttons_bg_color);
-						views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, (new Intent(this, PostDialog.class)), 0));
+						views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, new Intent(this, PostDialog.class).setAction(MESSAGE), 0));
 						views.setTextColor(R.id.button_post, buttons_color);
-						views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, (new Intent(this, UI.class)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId), 0));
+						views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, new Intent(this, UI.class).setAction(WIDGET).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId), 0));
 						views.setTextColor(R.id.button_post, buttons_color);
-						views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(this, 0, (new Intent(this, SonetService.class)).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{appWidgetId}), 0));
+						views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{appWidgetId}), 0));
 						views.setTextColor(R.id.button_post, buttons_color);
 					}
 					views.setImageViewBitmap(R.id.messages_bg, messages_bg);
 					for  (StatusItem item : statuses) {
 						if (count_status < max_status) {
 							// if no buttons, use StatusDialog.java with options for Config and Refresh
-							if (hasbuttons) views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, (new Intent(Intent.ACTION_VIEW, Uri.parse(item.link))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(browser), 0));
-							else views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, (new Intent(this, StatusDialog.class)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId).putExtra(SERVICE, item.service).putExtra(MESSAGE, item.link), 0));
+							if (hasbuttons) views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(Intent.ACTION_VIEW, Uri.parse(item.link)), 0));
+							else views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(this, StatusDialog.class).setAction(appWidgetId+"`"+item.service+"`"+item.link), 0));
 							views.setTextViewText(map_message[count_status], item.message);
 							views.setTextColor(map_message[count_status], messages_color);
 							views.setTextViewText(map_screenname[count_status], item.friend);

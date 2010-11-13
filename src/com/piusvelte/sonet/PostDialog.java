@@ -25,7 +25,6 @@ import static com.piusvelte.sonet.Sonet.MYSPACE;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -50,13 +49,13 @@ public class PostDialog extends Activity implements DialogInterface.OnClickListe
 	public void onClick(DialogInterface dialog, int which) {
 		switch (which) {
 		case TWITTER:
-			startActivity((new Intent(Intent.ACTION_VIEW, Uri.parse("http://twitter.com"))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(new ComponentName("com.android.browser", "com.android.browser.BrowserActivity")));
+			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://twitter.com")));
 			break;
 		case FACEBOOK:
-			startActivity((new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.facebook.com"))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(new ComponentName("com.android.browser", "com.android.browser.BrowserActivity")));
+			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.facebook.com")));
 			break;
 		case MYSPACE:
-			startActivity((new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.myspace.com"))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(new ComponentName("com.android.browser", "com.android.browser.BrowserActivity")));
+			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.myspace.com")));
 			break;
 		}
 		dialog.cancel();

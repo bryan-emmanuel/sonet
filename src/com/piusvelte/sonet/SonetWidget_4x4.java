@@ -41,15 +41,14 @@ public class SonetWidget_4x4 extends AppWidgetProvider {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		final String action = intent.getAction();
-		Log.v(TAG,"4x2:action:"+action);
+		Log.v(TAG,"4x4:action:"+action);
 		if (action.equals(ACTION_REFRESH)) {
 			int[] appWidgetIds;
-			if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
-				appWidgetIds = new int[]{intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)};
-			} else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) appWidgetIds = intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS);
+			if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) appWidgetIds = new int[]{intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)};
+			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) appWidgetIds = intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS);
 			else appWidgetIds = new int[]{AppWidgetManager.INVALID_APPWIDGET_ID};
 			Log.v(TAG,"4x2:startService:"+appWidgetIds[0]);
-			context.startService((new Intent(context, SonetService.class)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds));
+			context.startService(new Intent(context, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds));
 		} else if (AppWidgetManager.ACTION_APPWIDGET_DELETED.equals(action)) {
 			final int appWidgetId = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 			if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) onDeleted(context, new int[]{appWidgetId});

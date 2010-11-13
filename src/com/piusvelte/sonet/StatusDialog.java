@@ -23,19 +23,15 @@ import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
-import static com.piusvelte.sonet.Sonet.TAG;
-import static com.piusvelte.sonet.SonetDatabaseHelper.SERVICE;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.appwidget.AppWidgetManager;
-import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 
 public class StatusDialog extends Activity implements DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
@@ -51,12 +47,13 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		Intent intent = getIntent();
-		Log.v(TAG,"StatusDialog");
 		if (intent != null) {
-			if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, AppWidgetManager.INVALID_APPWIDGET_ID);
-			if (intent.hasExtra(SERVICE)) mService = intent.getIntExtra(SERVICE, 0);
-			if (intent.hasExtra(MESSAGE)) mLink = intent.getStringExtra(MESSAGE);
-			Log.v(TAG,"intent:"+mAppWidgetId);
+			String action = intent.getAction();
+			int first = action.indexOf("`");
+			mAppWidgetId = Integer.parseInt(action.substring(0, first));
+			int second = action.indexOf("`", first + 1);
+			mService = Integer.parseInt(action.substring(first + 1, second));
+			mLink = action.substring(second + 1);
 		}
 		Resources r = getResources();
 		CharSequence[] items = {r.getString(R.string.reply), "Post to " + r.getStringArray(R.array.service_entries)[mService], r.getString(R.string.settings), r.getString(R.string.button_refresh)};
@@ -71,26 +68,26 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 	public void onClick(DialogInterface dialog, int which) {
 		switch (which) {
 		case LINK:
-			startActivity((new Intent(Intent.ACTION_VIEW, Uri.parse(mLink))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(new ComponentName("com.android.browser", "com.android.browser.BrowserActivity")));
+			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(mLink)));
 			break;
 		case POST:
 			switch (mService) {
 			case TWITTER:
-				startActivity((new Intent(Intent.ACTION_VIEW, Uri.parse("http://twitter.com"))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(new ComponentName("com.android.browser", "com.android.browser.BrowserActivity")));
+				startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://twitter.com")));
 				break;
 			case FACEBOOK:
-				startActivity((new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.facebook.com"))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(new ComponentName("com.android.browser", "com.android.browser.BrowserActivity")));
+				startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.facebook.com")));
 				break;
 			case MYSPACE:
-				startActivity((new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.myspace.com"))).addCategory(Intent.CATEGORY_BROWSABLE).setComponent(new ComponentName("com.android.browser", "com.android.browser.BrowserActivity")));
+				startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.myspace.com")));
 				break;
 			}
 			break;
 		case SETTINGS:
-			startActivity((new Intent(this, UI.class)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
+			startActivity(new Intent(this, UI.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 			break;
 		case REFRESH:
-			startService((new Intent(this, SonetService.class)).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
+			startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
 			break;
 		}
 		dialog.cancel();

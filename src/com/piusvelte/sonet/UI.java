@@ -20,7 +20,7 @@
 package com.piusvelte.sonet;
 
 //import static com.piusvelte.sonet.Sonet.ACTION_REMOVE;
-import static com.piusvelte.sonet.Sonet.TAG;
+import static com.piusvelte.sonet.Sonet.DONATE;
 
 import android.app.Activity;
 import android.appwidget.AppWidgetManager;
@@ -28,7 +28,6 @@ import android.appwidget.AppWidgetManager;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -41,11 +40,9 @@ public class UI extends Activity implements OnClickListener {
 		super.onCreate(savedInstanceState);
 		Intent i = getIntent();
 		if ((i != null) && i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
-        setResult(Activity.RESULT_OK, (new Intent()).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
+        setResult(Activity.RESULT_OK, new Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 		setContentView(R.layout.main);
-		Log.v(TAG,"UI:"+mAppWidgetId);
 		if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-			Log.v(TAG,"is valid");
 			((Button) findViewById(R.id.button_accounts)).setOnClickListener(this);
 			((Button) findViewById(R.id.button_settings)).setOnClickListener(this);
 //			((Button) findViewById(R.id.button_remove)).setOnClickListener(this);
@@ -54,7 +51,6 @@ public class UI extends Activity implements OnClickListener {
 	}
 
 	public void onClick(View v) {
-		Log.v(TAG,"UI onClick");
 		switch (v.getId()) {
 		case R.id.button_accounts:
 			startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
@@ -70,7 +66,7 @@ public class UI extends Activity implements OnClickListener {
 //			finish();
 //			break;
 		case R.id.donate:
-			startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("http://www.piusvelte.com?p=donate-sonet")));
+			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(DONATE)));
 			break;
 		}
 	}

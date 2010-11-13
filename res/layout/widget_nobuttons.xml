@@ -40,7 +40,7 @@
 			android:layout_width="fill_parent" android:layout_height="wrap_content"
 			android:layout_alignParentTop="true" android:layout_alignParentRight="true" />
 			<TextView android:layout_below="@id/screenname0" android:id="@+id/message0" android:layout_toRightOf="@id/profile0"
-			android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			android:layout_width="fill_parent" android:layout_height="wrap_content" android:text="@string/loading" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item1"
 			android:orientation="horizontal" android:layout_width="fill_parent"
