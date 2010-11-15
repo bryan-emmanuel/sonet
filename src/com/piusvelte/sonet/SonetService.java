@@ -132,7 +132,7 @@ public class SonetService extends Service implements Runnable {
 			SonetService.updateWidgets(arrayCat(arrayCat(appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x2.class)), appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x3.class))), appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x4.class))));
 		}
 		synchronized (sLock) {
-			if (sThread == null) (sThread = new Thread(this)).start();
+			if ((sThread == null) || !sThread.isAlive()) (sThread = new Thread(this)).start();
 		}
 	}
 
@@ -490,7 +490,6 @@ public class SonetService extends Service implements Runnable {
 					appWidgetManager.updateAppWidget(appWidgetId, views);
 					((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC, System.currentTimeMillis() + interval, PendingIntent.getService(this, 0, (new Intent(this, SonetService.class)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId), 0));
 				}
-				stopSelf();
 			} else {
 				// if there's no connection, listen for one
 				mReceiver = new BroadcastReceiver() {
@@ -499,7 +498,7 @@ public class SonetService extends Service implements Runnable {
 						if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
 							if (((NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO)).isConnected()) {
 								synchronized (sLock) {
-									if (sThread == null) (sThread = new Thread((Runnable) context)).start();
+									if ((sThread == null) || !sThread.isAlive()) (sThread = new Thread((Runnable) context)).start();
 								}								
 							}
 						}
@@ -509,6 +508,7 @@ public class SonetService extends Service implements Runnable {
 				f.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
 				registerReceiver(mReceiver, f);	
 			}
+			stopSelf();
 		}
 	}
 
