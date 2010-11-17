@@ -19,13 +19,15 @@
  */
 package com.piusvelte.sonet;
 
-//import static com.piusvelte.sonet.Sonet.ACTION_REMOVE;
 import static com.piusvelte.sonet.Sonet.DONATE;
+//import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
+//import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_WIDGETS;
+//import static com.piusvelte.sonet.SonetDatabaseHelper.WIDGET;
 
 import android.app.Activity;
 import android.appwidget.AppWidgetManager;
-//import android.appwidget.AppWidgetProviderInfo;
 import android.content.Intent;
+//import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -40,7 +42,7 @@ public class UI extends Activity implements OnClickListener {
 		super.onCreate(savedInstanceState);
 		Intent i = getIntent();
 		if ((i != null) && i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
-        setResult(Activity.RESULT_OK, new Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
+		setResult(Activity.RESULT_OK, new Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 		setContentView(R.layout.main);
 		if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
 			((Button) findViewById(R.id.button_accounts)).setOnClickListener(this);
@@ -59,10 +61,12 @@ public class UI extends Activity implements OnClickListener {
 			startActivity(new Intent(this, Settings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 			break;
 //		case R.id.button_remove:
-//			AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
-//			AppWidgetProviderInfo info = appWidgetManager.getAppWidgetInfo(mAppWidgetId);
-//			String providerName = info.provider.getClassName();
-//			sendBroadcast((new Intent(this, providerName == SonetWidget_4x2.class.getName() ? SonetWidget_4x2.class : providerName == SonetWidget_4x3.class.getName() ? SonetWidget_4x3.class : SonetWidget_4x4.class)).setAction(ACTION_REMOVE).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
+//			SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
+//			SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
+//			db.delete(TABLE_WIDGETS, WIDGET + "=" + mAppWidgetId, null);
+//			db.delete(TABLE_ACCOUNTS, WIDGET + "=" + mAppWidgetId, null);
+//			db.close();
+//			sonetDatabaseHelper.close();
 //			finish();
 //			break;
 		case R.id.donate:

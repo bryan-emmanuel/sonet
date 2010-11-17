@@ -121,7 +121,7 @@ public class SonetService extends Service implements Runnable {
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
 		if (intent != null) {
-			if (intent.hasExtra(ACTION_REFRESH)) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, new Intent(this, SonetService.class).setAction(ACTION_REFRESH), 0));
+			if (intent.getAction() == ACTION_REFRESH) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, new Intent(this, SonetService.class).setAction(ACTION_REFRESH), 0));
 			if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
 			else {
 				AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
@@ -332,7 +332,7 @@ public class SonetService extends Service implements Runnable {
 					for (int e = 0; e < entries.length(); e++) {
 						JSONObject entry = entries.getJSONObject(e);
 						JSONObject authorObj = entry.getJSONObject(author);
-						status_items.add(new StatusItem(parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", 0),
+						status_items.add(new StatusItem(parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", accounts.getInt(itimezone)),
 								entry.getJSONObject(source).getString(url),
 								authorObj.getString(displayName),
 								new URL(authorObj.getString(thumbnailUrl)),

@@ -38,7 +38,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 	private static final int LINK = 0;
 	private static final int POST = 1;
 	private static final int SETTINGS = 2;
-	private static final int REFRESH = 4;
+	private static final int REFRESH = 3;
 	private int mService = 0;
 	private String mLink = "";
 	public static final String MESSAGE = "message";

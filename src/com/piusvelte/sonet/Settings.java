@@ -19,6 +19,7 @@
  */
 package com.piusvelte.sonet;
 
+import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.SonetDatabaseHelper._ID;
 import static com.piusvelte.sonet.SonetDatabaseHelper.WIDGET;
 import static com.piusvelte.sonet.SonetDatabaseHelper.BUTTONS_BG_COLOR;
@@ -99,7 +100,7 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 	@Override
 	protected void onPause() {
 		super.onPause();
-		startService((new Intent(this, SonetService.class)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));		
+		startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
 	}
 
 	private void updateDatabase(ContentValues values) {

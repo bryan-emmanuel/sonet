@@ -29,6 +29,7 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
 import static com.piusvelte.sonet.SonetDatabaseHelper.EXPIRY;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TIMEZONE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.WIDGET;
+import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_ACCESS;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_REQUEST;
@@ -96,7 +97,7 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class ManageAccounts extends ListActivity implements OnClickListener, android.content.DialogInterface.OnClickListener, DialogListener, IMSSessionCallback {
+public class ManageAccounts extends ListActivity implements OnClickListener, DialogInterface.OnClickListener, DialogListener, IMSSessionCallback {
 	private static final int DELETE_ID = Menu.FIRST;
 	private SonetDatabaseHelper mSonetDatabaseHelper;
 	private Facebook mFacebook;
@@ -156,10 +157,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		case R.id.button_add_account:
 			// add a new account
 			String[] services = getResources().getStringArray(R.array.service_entries);
-			CharSequence[] items = new CharSequence[services.length];
-			for (int i = 0; i < services.length; i++) items[i] = services[i];
 			(new AlertDialog.Builder(this))
-			.setItems(items, this)
+			.setItems(services, this)
 			.show();
 			break;
 		}
@@ -174,7 +173,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	@Override
 	protected void onPause() {
 		super.onPause();
-		startService((new Intent(this, SonetService.class)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));		
+		startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
 	}
 
 	@Override
@@ -279,6 +278,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 		dialog.cancel();
 	}
 
+	// facebook
 	public void onComplete(Bundle values) {
 		mAsyncRunner.request("me", new RequestListener() {
 			@Override
@@ -353,7 +353,27 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
 	@Override
 	public void sessionDidLogout(MSSession session) {
 	}
+	
+	private void setTimezone(final int id) {
+		// index set to GMT
+		(new AlertDialog.Builder(this))
+		.setTitle(R.string.timezone)
+		.setSingleChoiceItems(R.array.timezone_entries, 12, new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				ContentValues values = new ContentValues();
+				values.put(TIMEZONE, Integer.parseInt(getResources().getStringArray(R.array.timezone_values)[which]));
+                SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+                db.update(TABLE_ACCOUNTS, values, _ID + "=" + id, null);
+                db.close();
+                listAccounts();
+                dialog.cancel();
+			}
+		})
+		.show();		
+	}
 
+	// MySpace
 	private class MSRequestCallback extends MSRequest.MSRequestCallback {
 
 		@Override
@@ -375,11 +395,11 @@ public class ManageAccounts extends ListActivity implements OnClickListener, and
                 values.put(TIMEZONE, 0);
         		values.put(WIDGET, mAppWidgetId);
                 SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-                db.insert(TABLE_ACCOUNTS, _ID, values);
+                final int id = (int) db.insert(TABLE_ACCOUNTS, _ID, values);
                 db.close();
                 ManageAccounts.this.runOnUiThread(new Runnable() {
                         public void run() {
-                                listAccounts();
+                        	setTimezone(id);
                         }
                 });
 			}                       
