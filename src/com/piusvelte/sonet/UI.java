@@ -20,14 +20,10 @@
 package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.DONATE;
-//import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
-//import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_WIDGETS;
-//import static com.piusvelte.sonet.SonetDatabaseHelper.WIDGET;
 
 import android.app.Activity;
 import android.appwidget.AppWidgetManager;
 import android.content.Intent;
-//import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -47,7 +43,6 @@ public class UI extends Activity implements OnClickListener {
 		if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
 			((Button) findViewById(R.id.button_accounts)).setOnClickListener(this);
 			((Button) findViewById(R.id.button_settings)).setOnClickListener(this);
-//			((Button) findViewById(R.id.button_remove)).setOnClickListener(this);
 		}
 		((Button) findViewById(R.id.donate)).setOnClickListener(this);
 	}
@@ -60,15 +55,6 @@ public class UI extends Activity implements OnClickListener {
 		case R.id.button_settings:
 			startActivity(new Intent(this, Settings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 			break;
-//		case R.id.button_remove:
-//			SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
-//			SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
-//			db.delete(TABLE_WIDGETS, WIDGET + "=" + mAppWidgetId, null);
-//			db.delete(TABLE_ACCOUNTS, WIDGET + "=" + mAppWidgetId, null);
-//			db.close();
-//			sonetDatabaseHelper.close();
-//			finish();
-//			break;
 		case R.id.donate:
 			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(DONATE)));
 			break;

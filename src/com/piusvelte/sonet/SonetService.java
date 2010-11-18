@@ -190,7 +190,6 @@ public class SonetService extends Service implements Runnable {
 		private String friend;
 		private URL profile;
 		private String message;
-//		private String displayCreated;
 		private int service;
 		StatusItem(Date created, String link, String friend, URL profile, String message, int service) {
 			this.created = created;
@@ -198,11 +197,6 @@ public class SonetService extends Service implements Runnable {
 			this.friend = friend;
 			this.profile = profile;
 			this.message = message;
-//			this.displayCreated = ((now.getTime() - this.created.getTime()) < 86400000 ?
-//					(use24hr ?
-//							String.format("%d:%02d", this.created.getHours(), this.created.getMinutes())
-//							: String.format("%d:%02d%s", this.created.getHours() < 13 ? this.created.getHours() : this.created.getHours() - 12, this.created.getMinutes(), getString(this.created.getHours() < 13 ? R.string.am : R.string.pm)))
-//							: String.format("%s %d", getResources().getStringArray(R.array.months)[this.created.getMonth()], this.created.getDate()));
 			this.service = service;
 		}
 
@@ -459,7 +453,7 @@ public class SonetService extends Service implements Runnable {
 						views.setTextColor(R.id.button_post, buttons_color);
 					}
 					views.setImageViewBitmap(R.id.messages_bg, messages_bg);
-					Date now = new Date();
+					long now = new Date().getTime();
 					for  (StatusItem item : statuses) {
 						if (count_status < max_status) {
 							// if no buttons, use StatusDialog.java with options for Config and Refresh
@@ -469,7 +463,7 @@ public class SonetService extends Service implements Runnable {
 							views.setTextColor(map_message[count_status], messages_color);
 							views.setTextViewText(map_screenname[count_status], item.friend);
 							views.setTextColor(map_screenname[count_status], friend_color);
-							views.setTextViewText(map_created[count_status], ((now.getTime() - item.created.getTime()) < 86400000 ?
+							views.setTextViewText(map_created[count_status], ((now - item.created.getTime()) < 86400000 ?
 									(time24hr ?
 											String.format("%d:%02d", item.created.getHours(), item.created.getMinutes())
 											: String.format("%d:%02d%s", item.created.getHours() < 13 ? item.created.getHours() : item.created.getHours() - 12, item.created.getMinutes(), getString(item.created.getHours() < 13 ? R.string.am : R.string.pm)))

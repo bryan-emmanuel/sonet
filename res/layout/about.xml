@@ -32,12 +32,15 @@
 			android:orientation="vertical">
 			<TextView android:id="@+id/about" android:layout_width="fill_parent"
 				android:layout_height="wrap_content" android:text="@string/about"
-				android:layout_alignParentTop="true" />
+				android:layout_alignParentTop="true" android:padding="8dip" android:textSize="16dip" />
 			<Button android:id="@+id/widgets" android:layout_width="fill_parent"
 				android:layout_height="wrap_content" android:text="@string/widgets"
 				android:layout_below="@id/about" />
 			<Button android:id="@+id/refreshall" android:layout_width="fill_parent"
 				android:layout_height="wrap_content" android:text="@string/refreshall"
+				android:layout_below="@id/widgets" />
+			<Button android:id="@+id/button_remove" android:text="@string/remove"
+				android:layout_width="fill_parent" android:layout_height="wrap_content"
 				android:layout_below="@id/widgets" />
 		</LinearLayout>
 	</ScrollView>
