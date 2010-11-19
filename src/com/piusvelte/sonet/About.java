@@ -30,7 +30,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
-//import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -52,29 +51,17 @@ public class About extends Activity implements View.OnClickListener, DialogInter
 		((Button) findViewById(R.id.donate)).setOnClickListener(this);
 		((Button) findViewById(R.id.button_remove)).setOnClickListener(this);
 	}
-
-//	public int[] arrayCat(int[] a, int[] b) {
-//		int[] c;
-//		for (int i : b) {
-//			c = new int[a.length];
-//			for (int n = 0; n < c.length; n++) c[n] = a[n];
-//			a = new int[c.length + 1];
-//			for (int n = 0; n < c.length; n++) a[n] = c[n];
-//			a[c.length] = i;
-//		}
-//		return a;
-//	}
 	
 	@Override
 	public void onClick(View v) {
 		switch (v.getId()) {
 		case R.id.widgets:
 			AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
-//			mAppWidgetIds = arrayCat(arrayCat(appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x2.class)), appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x3.class))), appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x4.class)));
 			SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
 			SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
 			mAppWidgetIds = getAppWidgetIds(db);
 			db.close();
+			sonetDatabaseHelper.close();
 			String[] widgets = new String[mAppWidgetIds.length];
 			for (int i = 0; i < mAppWidgetIds.length; i++) {
 				AppWidgetProviderInfo info = appWidgetManager.getAppWidgetInfo(mAppWidgetIds[i]);

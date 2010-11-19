@@ -93,7 +93,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -123,29 +122,33 @@ public class SonetService extends Service implements Runnable {
 		if (intent != null) {
 			if (intent.getAction() == ACTION_REFRESH) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, new Intent(this, SonetService.class).setAction(ACTION_REFRESH), 0));
 			if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
-			else {
-				AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
-				SonetService.updateWidgets(arrayCat(arrayCat(appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x2.class)), appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x3.class))), appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x4.class))));
-			}
-		} else {
-			AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
-			SonetService.updateWidgets(arrayCat(arrayCat(appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x2.class)), appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x3.class))), appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x4.class))));
-		}
+			else SonetService.updateWidgets(getAppWidgetIds());
+		} else  SonetService.updateWidgets(getAppWidgetIds());
 		synchronized (sLock) {
 			if ((sThread == null) || !sThread.isAlive()) (sThread = new Thread(this)).start();
 		}
 	}
-
-	public int[] arrayCat(int[] a, int[] b) {
-		int[] c;
-		for (int i : b) {
-			c = new int[a.length];
-			for (int n = 0; n < c.length; n++) c[n] = a[n];
-			a = new int[c.length + 1];
-			for (int n = 0; n < c.length; n++) a[n] = c[n];
-			a[c.length] = i;
-		}
-		return a;
+	
+	private int[] getAppWidgetIds() {
+		int[] appWidgetIds = null;
+		SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
+		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
+		Cursor accounts = db.rawQuery("select " + _ID + "," + WIDGET + " from " + TABLE_ACCOUNTS, null);
+		if (accounts.getCount() > 0) {
+			accounts.moveToFirst();
+			appWidgetIds = new int[accounts.getCount()];
+			int iwidget = accounts.getColumnIndex(WIDGET),
+			counter = 0;
+			while (!accounts.isAfterLast()) {
+				appWidgetIds[counter] = accounts.getInt(iwidget);
+				counter++;
+				accounts.moveToNext();
+			}
+		} else appWidgetIds = new int[0];
+		accounts.close();
+		db.close();
+		sonetDatabaseHelper.close();
+		return appWidgetIds;
 	}
 
 	@Override
