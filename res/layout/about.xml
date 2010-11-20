@@ -39,9 +39,6 @@
 			<Button android:id="@+id/refreshall" android:layout_width="fill_parent"
 				android:layout_height="wrap_content" android:text="@string/refreshall"
 				android:layout_below="@id/widgets" />
-			<Button android:id="@+id/button_remove" android:text="@string/remove"
-				android:layout_width="fill_parent" android:layout_height="wrap_content"
-				android:layout_below="@id/widgets" />
 		</LinearLayout>
 	</ScrollView>
 </RelativeLayout>

@@ -72,7 +72,6 @@
 	<string name="about">Sonet is a widget application. Please add and configure widgets from the home screen.</string>
     <string name="donate">Donate</string>
     <string name="widgets">Configure Widgets</string>
-    <string name="remove">Remove Old Widget Ids</string>
 	<string name="refreshall">Refresh All</string>
 	<string name="timezone">Select Timezone</string>
 </resources>

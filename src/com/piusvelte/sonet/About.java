@@ -49,7 +49,6 @@ public class About extends Activity implements View.OnClickListener, DialogInter
 		((Button) findViewById(R.id.widgets)).setOnClickListener(this);
 		((Button) findViewById(R.id.refreshall)).setOnClickListener(this);
 		((Button) findViewById(R.id.donate)).setOnClickListener(this);
-		((Button) findViewById(R.id.button_remove)).setOnClickListener(this);
 	}
 	
 	@Override
@@ -59,7 +58,28 @@ public class About extends Activity implements View.OnClickListener, DialogInter
 			AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
 			SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
 			SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
-			mAppWidgetIds = getAppWidgetIds(db);
+			db.delete(TABLE_WIDGETS, WIDGET + "=\"\"", null);
+			db.delete(TABLE_ACCOUNTS, WIDGET + "=\"\"", null);
+			Cursor accounts = db.rawQuery("select " + _ID + "," + WIDGET + " from " + TABLE_ACCOUNTS, null);
+			if (accounts.getCount() > 0) {
+				accounts.moveToFirst();
+				mAppWidgetIds = new int[accounts.getCount()];
+				int iwidget = accounts.getColumnIndex(WIDGET),
+				counter = 0;
+				while (!accounts.isAfterLast()) {
+					mAppWidgetIds[counter] = accounts.getInt(iwidget);
+					counter++;
+					accounts.moveToNext();
+				}
+			} else mAppWidgetIds = new int[0];
+			// delete records without accounts
+			String delete_widgets = "";
+			for (int appWidgetId : mAppWidgetIds) {
+				if (delete_widgets.length() > 0) delete_widgets += " and ";
+				delete_widgets += WIDGET + "!=" + Integer.toString(appWidgetId);
+			}
+			if (delete_widgets.length() > 0) db.delete(TABLE_WIDGETS, delete_widgets, null);
+			accounts.close();
 			db.close();
 			sonetDatabaseHelper.close();
 			String[] widgets = new String[mAppWidgetIds.length];
@@ -76,47 +96,10 @@ public class About extends Activity implements View.OnClickListener, DialogInter
 		case R.id.refreshall:
 			startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH));
 			break;
-		case R.id.button_remove:
-			cleanDb();
-			break;
 		case R.id.donate:
 			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(DONATE)));
 			break;
 		}
-	}
-	
-	private void cleanDb() {
-		SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
-		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
-		db.delete(TABLE_WIDGETS, WIDGET + "=\"\"", null);
-		db.delete(TABLE_ACCOUNTS, WIDGET + "=\"\"", null);
-		int[] appWidgetIds = getAppWidgetIds(db);
-		String delete_widgets = "";
-		for (int appWidgetId : appWidgetIds) {
-			if (delete_widgets.length() > 0) delete_widgets += " and ";
-			delete_widgets += WIDGET + "!=" + Integer.toString(appWidgetId);
-		}
-		if (delete_widgets.length() > 0) db.delete(TABLE_WIDGETS, delete_widgets, null);
-		db.close();
-		sonetDatabaseHelper.close();		
-	}
-	
-	private int[] getAppWidgetIds(SQLiteDatabase db) {
-		int[] appWidgetIds = null;
-		Cursor accounts = db.rawQuery("select " + _ID + "," + WIDGET + " from " + TABLE_ACCOUNTS, null);
-		if (accounts.getCount() > 0) {
-			accounts.moveToFirst();
-			appWidgetIds = new int[accounts.getCount()];
-			int iwidget = accounts.getColumnIndex(WIDGET),
-			counter = 0;
-			while (!accounts.isAfterLast()) {
-				appWidgetIds[counter] = accounts.getInt(iwidget);
-				counter++;
-				accounts.moveToNext();
-			}
-		} else appWidgetIds = new int[0];
-		accounts.close();
-		return appWidgetIds;
 	}
 	
 	@Override
