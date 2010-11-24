@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class SonetDatabaseHelper extends SQLiteOpenHelper {
 	private static final String DATABASE_NAME = "sonet.db";
-	private static final int DATABASE_VERSION = 4;
+	private static final int DATABASE_VERSION = 5;
 	public static final String TABLE_ACCOUNTS = "accounts";
 	public static final String _ID = "_id";
 	public static final String USERNAME = "username";
@@ -26,6 +26,13 @@ public class SonetDatabaseHelper extends SQLiteOpenHelper {
 	public static final String TIME24HR = "time24hr";
 	public static final String FRIEND_COLOR = "friend_color";
 	public static final String CREATED_COLOR = "created_color";
+	public static final String TABLE_STATUSES = "statuses";
+	public static final String CREATED = "created";
+	public static final String LINK = "link";
+	public static final String FRIEND = "friend";
+	public static final String PROFILE = "profile";
+	public static final String MESSAGE = "message";
+	public static final String CREATEDTEXT = "createdText";
 	
 	public SonetDatabaseHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -54,6 +61,14 @@ public class SonetDatabaseHelper extends SQLiteOpenHelper {
 				+ MESSAGES_BG_COLOR + " integer, "
 				+ MESSAGES_COLOR + " integer, "
 				+ TIME24HR + " integer);");
+		db.execSQL("create table if not exists " + TABLE_STATUSES
+				+ " (" + _ID + " integer primary key autoincrement, "
+				+ CREATED + " integer, "
+				+ LINK + " text, "
+				+ FRIEND + " text, "
+				+ PROFILE + " text, "
+				+ MESSAGE + " text, "
+				+ CREATEDTEXT + " text);");
 	}
 
 	@Override
@@ -118,6 +133,17 @@ public class SonetDatabaseHelper extends SQLiteOpenHelper {
 					+ MESSAGES_BG_COLOR + " integer, "
 					+ MESSAGES_COLOR + " integer, "
 					+ TIME24HR + " integer);");
+		}
+		if (oldVersion < 5) {
+			// cache for statuses
+			db.execSQL("create table if not exists " + TABLE_STATUSES
+					+ " (" + _ID + " integer primary key autoincrement, "
+					+ CREATED + " integer, "
+					+ LINK + " text, "
+					+ FRIEND + " text, "
+					+ PROFILE + " text, "
+					+ MESSAGE + " text, "
+					+ CREATEDTEXT + " text);");
 		}
 	}
 

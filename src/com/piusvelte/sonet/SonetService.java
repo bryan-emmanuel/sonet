@@ -38,6 +38,13 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_WIDGETS;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TIME24HR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.FRIEND_COLOR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED_COLOR;
+import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_STATUSES;
+import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED;
+import static com.piusvelte.sonet.SonetDatabaseHelper.CREATEDTEXT;
+import static com.piusvelte.sonet.SonetDatabaseHelper.FRIEND;
+import static com.piusvelte.sonet.SonetDatabaseHelper.PROFILE;
+import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGE;
+import static com.piusvelte.sonet.SonetDatabaseHelper.LINK;
 import static com.piusvelte.sonet.Sonet.TAG;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
@@ -47,7 +54,6 @@ import static com.piusvelte.sonet.Services.TWITTER_KEY;
 import static com.piusvelte.sonet.Services.TWITTER_SECRET;
 import static com.piusvelte.sonet.Services.MYSPACE_KEY;
 import static com.piusvelte.sonet.Services.MYSPACE_SECRET;
-import static com.piusvelte.sonet.StatusDialog.MESSAGE;
 
 import java.io.IOException;
 import java.net.URL;
@@ -82,7 +88,6 @@ import com.facebook.android.Facebook;
 import com.facebook.android.FacebookError;
 import com.facebook.android.Util;
 
-import twitter4j.Paging;
 import twitter4j.Status;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
@@ -194,13 +199,15 @@ public class SonetService extends Service implements Runnable {
 		private URL profile;
 		private String message;
 		private int service;
-		StatusItem(Date created, String link, String friend, URL profile, String message, int service) {
+		private String createdText;
+		StatusItem(Date created, String link, String friend, URL profile, String message, int service, String createdText) {
 			this.created = created;
 			this.link = link;
 			this.friend = friend;
 			this.profile = profile;
 			this.message = message;
 			this.service = service;
+			this.createdText = createdText;
 		}
 
 		public int compareTo(StatusItem si) {
@@ -221,8 +228,16 @@ public class SonetService extends Service implements Runnable {
 			else return sAppWidgetIds.poll();
 		}
 	}
+	
+	private String getCreatedText(long now, Date created, boolean time24hr) {
+		return now - created.getTime() < 86400000 ?
+				(time24hr ?
+						String.format("%d:%02d", created.getHours(), created.getMinutes())
+						: String.format("%d:%02d%s", created.getHours() < 13 ? created.getHours() : created.getHours() - 12, created.getMinutes(), getString(created.getHours() < 13 ? R.string.am : R.string.pm)))
+						: String.format("%s %d", getResources().getStringArray(R.array.months)[created.getMonth()], created.getDate());
+	}
 
-	private List<StatusItem> getStatuses(Cursor accounts) {
+	private List<StatusItem> getStatuses(Cursor accounts, boolean time24hr) {
 		List<StatusItem> status_items = new ArrayList<StatusItem>();
 		accounts.moveToFirst();
 		int iservice = accounts.getColumnIndex(SERVICE),
@@ -233,21 +248,24 @@ public class SonetService extends Service implements Runnable {
 		String name = "name",
 		id = "id",
 		status = "status";
+		long now = new Date().getTime();
 		while (!accounts.isAfterLast()) {
 			int service = accounts.getInt(iservice);
 			switch (service) {
 			case TWITTER:
 				String status_url = "http://twitter.com/%s/status/%s";
 				try {
-					List<Status> statuses = (new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(accounts.getString(itoken), accounts.getString(isecret)))).getFriendsTimeline(new Paging(1, 7));
+					List<Status> statuses = (new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(accounts.getString(itoken), accounts.getString(isecret)))).getFriendsTimeline();
 					for (Status s : statuses) {
 						String screenname = s.getUser().getScreenName();
-						status_items.add(new StatusItem(s.getCreatedAt(),
+						Date created = s.getCreatedAt();
+						status_items.add(new StatusItem(created,
 								String.format(status_url, screenname, Long.toString(s.getId())),
 								screenname,
 								s.getUser().getProfileImageURL(),
 								s.getText(),
-								service));
+								service,
+								getCreatedText(now, created, time24hr)));
 					}
 				} catch (TwitterException te) {
 					Log.e(TAG, te.toString());
@@ -286,13 +304,15 @@ public class SonetService extends Service implements Runnable {
 							}
 							JSONObject f = o.getJSONObject(from);
 							if (f.has(name) && f.has(id)) {
+								Date created = parseDate(o.getString(created_time), "yyyy-MM-dd'T'HH:mm:ss'+0000'", accounts.getInt(itimezone));
 								status_items.add(new StatusItem(
-										parseDate(o.getString(created_time), "yyyy-MM-dd'T'HH:mm:ss'+0000'", accounts.getInt(itimezone)),
+										created,
 										l,
 										f.getString(name),
 										new URL(String.format(profile, f.getString(id))),
 										o.getString(message),
-										service));
+										service,
+										getCreatedText(now, created, time24hr)));
 							}
 						}
 					}
@@ -324,12 +344,14 @@ public class SonetService extends Service implements Runnable {
 					for (int e = 0; e < entries.length(); e++) {
 						JSONObject entry = entries.getJSONObject(e);
 						JSONObject authorObj = entry.getJSONObject(author);
-						status_items.add(new StatusItem(parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", accounts.getInt(itimezone)),
+						Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", accounts.getInt(itimezone));
+						status_items.add(new StatusItem(created,
 								entry.getJSONObject(source).getString(url),
 								authorObj.getString(displayName),
 								new URL(authorObj.getString(thumbnailUrl)),
 								entry.getString(status),
-								service));
+								service,
+								getCreatedText(now, created, time24hr)));
 					}
 				} catch (ClientProtocolException e) {
 					Log.e(TAG, e.toString());
@@ -423,11 +445,11 @@ public class SonetService extends Service implements Runnable {
 				if (accounts.getCount() == 0) {
 					// migrate old accounts
 					Cursor c = db.rawQuery("select " + _ID + "," + USERNAME + "," + TOKEN + "," + SECRET + "," + SERVICE + "," + EXPIRY + "," + TIMEZONE + " from " + TABLE_ACCOUNTS + " where " + WIDGET + "=\"\"", null);
-					if (c.getCount() > 0) statuses = getStatuses(c);
+					if (c.getCount() > 0) statuses = getStatuses(c, time24hr);
 					else statuses = new ArrayList<StatusItem>();
 					c.close();
 					db.delete(TABLE_ACCOUNTS, _ID + "=\"\"", null);
-				} else statuses = getStatuses(accounts);
+				} else statuses = getStatuses(accounts, time24hr);
 				accounts.close();
 				// Push update for this widget to the home screen
 				// set messages background
@@ -455,7 +477,8 @@ public class SonetService extends Service implements Runnable {
 					views.setTextColor(R.id.button_post, buttons_color);
 				}
 				views.setImageViewBitmap(R.id.messages_bg, messages_bg);
-				long now = new Date().getTime();
+				// clear the cache
+				db.execSQL("delete from " + TABLE_STATUSES + ";");
 				for  (StatusItem item : statuses) {
 					if (count_status < max_status) {
 						// if no buttons, use StatusDialog.java with options for Config and Refresh
@@ -465,11 +488,7 @@ public class SonetService extends Service implements Runnable {
 						views.setTextColor(map_message[count_status], messages_color);
 						views.setTextViewText(map_screenname[count_status], item.friend);
 						views.setTextColor(map_screenname[count_status], friend_color);
-						views.setTextViewText(map_created[count_status], ((now - item.created.getTime()) < 86400000 ?
-								(time24hr ?
-										String.format("%d:%02d", item.created.getHours(), item.created.getMinutes())
-										: String.format("%d:%02d%s", item.created.getHours() < 13 ? item.created.getHours() : item.created.getHours() - 12, item.created.getMinutes(), getString(item.created.getHours() < 13 ? R.string.am : R.string.pm)))
-										: String.format("%s %d", getResources().getStringArray(R.array.months)[item.created.getMonth()], item.created.getDate())));
+						views.setTextViewText(map_created[count_status], item.createdText);
 						views.setTextColor(map_created[count_status], created_color);
 						try {
 							views.setImageViewBitmap(map_profile[count_status], BitmapFactory.decodeStream(item.profile.openConnection().getInputStream()));
@@ -477,7 +496,16 @@ public class SonetService extends Service implements Runnable {
 							Log.e(TAG,e.getMessage());
 						}										
 						count_status++;
-					} else break;
+					}
+					ContentValues values = new ContentValues();
+					values.put(CREATED, item.created.getTime());
+					values.put(LINK, item.link);
+					values.put(FRIEND, item.friend);
+					values.put(PROFILE, item.profile.toString());
+					values.put(MESSAGE, item.message);
+					values.put(SERVICE, item.service);
+					values.put(CREATEDTEXT, item.createdText);
+					db.insert(TABLE_STATUSES, _ID, values);
 				}
 				db.close();
 				sonetDatabaseHelper.close();

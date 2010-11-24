@@ -41,7 +41,6 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 	private static final int REFRESH = 3;
 	private int mService = 0;
 	private String mLink = "";
-	public static final String MESSAGE = "message";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
