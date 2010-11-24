@@ -11,7 +11,4 @@ public class Sonet {
     public static final String[] FACEBOOK_PERMISSIONS = new String[] {"offline_access"};
     public static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
     public static final String DONATE = "http://www.piusvelte.com?p=donate-sonet";
-	
-	public Sonet() {}
-
 }

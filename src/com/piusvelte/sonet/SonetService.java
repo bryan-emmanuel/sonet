@@ -55,6 +55,7 @@ import static com.piusvelte.sonet.Services.TWITTER_SECRET;
 import static com.piusvelte.sonet.Services.MYSPACE_KEY;
 import static com.piusvelte.sonet.Services.MYSPACE_SECRET;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.text.ParseException;
@@ -124,6 +125,7 @@ public class SonetService extends Service implements Runnable {
 	@Override
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
+		Log.v(TAG,"onStart");
 		if (intent != null) {
 			if (intent.getAction() == ACTION_REFRESH) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, new Intent(this, SonetService.class).setAction(ACTION_REFRESH), 0));
 			if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
@@ -193,14 +195,14 @@ public class SonetService extends Service implements Runnable {
 	}
 
 	private class StatusItem implements Comparable<StatusItem> {
-		private Date created;
+		private long created;
 		private String link;
 		private String friend;
-		private URL profile;
+		private byte[] profile;
 		private String message;
 		private int service;
 		private String createdText;
-		StatusItem(Date created, String link, String friend, URL profile, String message, int service, String createdText) {
+		StatusItem(long created, String link, String friend, byte[] profile, String message, int service, String createdText) {
 			this.created = created;
 			this.link = link;
 			this.friend = friend;
@@ -212,7 +214,7 @@ public class SonetService extends Service implements Runnable {
 
 		public int compareTo(StatusItem si) {
 			// sort descending
-			return ((Long)si.created.getTime()).compareTo(created.getTime());
+			return ((Long)si.created).compareTo(created);
 		}
 	}
 
@@ -228,13 +230,26 @@ public class SonetService extends Service implements Runnable {
 			else return sAppWidgetIds.poll();
 		}
 	}
-	
+
 	private String getCreatedText(long now, Date created, boolean time24hr) {
 		return now - created.getTime() < 86400000 ?
 				(time24hr ?
 						String.format("%d:%02d", created.getHours(), created.getMinutes())
 						: String.format("%d:%02d%s", created.getHours() < 13 ? created.getHours() : created.getHours() - 12, created.getMinutes(), getString(created.getHours() < 13 ? R.string.am : R.string.pm)))
 						: String.format("%s %d", getResources().getStringArray(R.array.months)[created.getMonth()], created.getDate());
+	}
+
+	private byte[] getProfile(String url) {
+		ByteArrayOutputStream blob = new ByteArrayOutputStream();
+		Bitmap profile = null;
+		// get profile
+		try {
+			profile = BitmapFactory.decodeStream(new URL(url).openConnection().getInputStream());
+		} catch (IOException e) {
+			Log.e(TAG,e.getMessage());
+		}
+		if (profile != null) profile.compress(Bitmap.CompressFormat.PNG, 100, blob);
+		return blob.toByteArray();
 	}
 
 	private List<StatusItem> getStatuses(Cursor accounts, boolean time24hr) {
@@ -251,6 +266,7 @@ public class SonetService extends Service implements Runnable {
 		long now = new Date().getTime();
 		while (!accounts.isAfterLast()) {
 			int service = accounts.getInt(iservice);
+			Log.v(TAG,"service: "+service);
 			switch (service) {
 			case TWITTER:
 				String status_url = "http://twitter.com/%s/status/%s";
@@ -259,10 +275,10 @@ public class SonetService extends Service implements Runnable {
 					for (Status s : statuses) {
 						String screenname = s.getUser().getScreenName();
 						Date created = s.getCreatedAt();
-						status_items.add(new StatusItem(created,
+						status_items.add(new StatusItem(created.getTime(),
 								String.format(status_url, screenname, Long.toString(s.getId())),
 								screenname,
-								s.getUser().getProfileImageURL(),
+								getProfile(s.getUser().getProfileImageURL().toString()),
 								s.getText(),
 								service,
 								getCreatedText(now, created, time24hr)));
@@ -306,10 +322,10 @@ public class SonetService extends Service implements Runnable {
 							if (f.has(name) && f.has(id)) {
 								Date created = parseDate(o.getString(created_time), "yyyy-MM-dd'T'HH:mm:ss'+0000'", accounts.getInt(itimezone));
 								status_items.add(new StatusItem(
-										created,
+										created.getTime(),
 										l,
 										f.getString(name),
-										new URL(String.format(profile, f.getString(id))),
+										getProfile(String.format(profile, f.getString(id))),
 										o.getString(message),
 										service,
 										getCreatedText(now, created, time24hr)));
@@ -345,10 +361,10 @@ public class SonetService extends Service implements Runnable {
 						JSONObject entry = entries.getJSONObject(e);
 						JSONObject authorObj = entry.getJSONObject(author);
 						Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", accounts.getInt(itimezone));
-						status_items.add(new StatusItem(created,
+						status_items.add(new StatusItem(created.getTime(),
 								entry.getJSONObject(source).getString(url),
 								authorObj.getString(displayName),
-								new URL(authorObj.getString(thumbnailUrl)),
+								getProfile(authorObj.getString(thumbnailUrl)),
 								entry.getString(status),
 								service,
 								getCreatedText(now, created, time24hr)));
@@ -379,64 +395,62 @@ public class SonetService extends Service implements Runnable {
 	@Override
 	public void run() {
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-		if ((cm.getActiveNetworkInfo() != null) && cm.getActiveNetworkInfo().isConnected()) {
-			if (mReceiver != null) {
-				unregisterReceiver(mReceiver);
-				mReceiver = null;
+		SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
+		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
+		boolean hasConnection = (cm.getActiveNetworkInfo() != null) && cm.getActiveNetworkInfo().isConnected();
+		AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
+		while (updatesQueued()) {
+			int appWidgetId = getNextUpdate();
+			Log.v(TAG,"appWidgetId: "+appWidgetId);
+			Boolean hasbuttons,
+			time24hr;
+			int interval,
+			buttons_bg_color,
+			buttons_color,
+			messages_bg_color,
+			messages_color,
+			friend_color,
+			created_color;
+			Cursor settings = db.rawQuery("select " + _ID + "," + INTERVAL + "," + HASBUTTONS + ","	+ BUTTONS_BG_COLOR + "," + BUTTONS_COLOR + "," + MESSAGES_BG_COLOR + "," + MESSAGES_COLOR + "," + FRIEND_COLOR + "," + CREATED_COLOR + "," + TIME24HR + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
+			if (settings.getCount() > 0) {
+				settings.moveToFirst();
+				interval = settings.getInt(settings.getColumnIndex(INTERVAL));
+				hasbuttons = settings.getInt(settings.getColumnIndex(HASBUTTONS)) == 1;
+				buttons_bg_color = settings.getInt(settings.getColumnIndex(BUTTONS_BG_COLOR));
+				buttons_color = settings.getInt(settings.getColumnIndex(BUTTONS_COLOR));
+				messages_bg_color = settings.getInt(settings.getColumnIndex(MESSAGES_BG_COLOR));
+				messages_color = settings.getInt(settings.getColumnIndex(MESSAGES_COLOR));
+				friend_color = settings.getInt(settings.getColumnIndex(FRIEND_COLOR));
+				created_color = settings.getInt(settings.getColumnIndex(CREATED_COLOR));
+				time24hr = settings.getInt(settings.getColumnIndex(TIME24HR)) == 1;
+			} else {
+				// upgrade, moving settings from sharedpreferences to db
+				SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
+				interval = Integer.parseInt((String) sp.getString(getString(R.string.key_interval), getString(R.string.default_interval)));
+				hasbuttons = sp.getBoolean(getString(R.string.key_display_buttons), true);
+				buttons_bg_color =Integer.parseInt(sp.getString(getString(R.string.key_head_background), getString(R.string.default_buttons_bg_color)));
+				buttons_color = Integer.parseInt(sp.getString(getString(R.string.key_head_text), getString(R.string.default_buttons_color)));
+				messages_bg_color = Integer.parseInt(sp.getString(getString(R.string.key_body_background), getString(R.string.default_message_bg_color)));
+				messages_color = Integer.parseInt(sp.getString(getString(R.string.key_body_text), getString(R.string.default_message_color)));
+				friend_color = Integer.parseInt(sp.getString(getString(R.string.key_friend_text), getString(R.string.default_friend_color)));
+				created_color = Integer.parseInt(sp.getString(getString(R.string.key_created_text), getString(R.string.default_created_color)));
+				time24hr = sp.getBoolean(getString(R.string.key_time_12_24), false);
+				ContentValues values = new ContentValues();
+				values.put(INTERVAL, interval);
+				values.put(HASBUTTONS, hasbuttons);
+				values.put(BUTTONS_BG_COLOR, buttons_bg_color);
+				values.put(BUTTONS_COLOR, buttons_color);
+				values.put(MESSAGES_BG_COLOR, messages_bg_color);
+				values.put(MESSAGES_COLOR, messages_color);
+				values.put(FRIEND_COLOR, friend_color);
+				values.put(CREATED_COLOR, created_color);
+				values.put(TIME24HR, time24hr);
+				values.put(WIDGET, appWidgetId);
+				db.insert(TABLE_WIDGETS, _ID, values);
 			}
-			AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
-			while (updatesQueued()) {
-				int appWidgetId = getNextUpdate();
-				SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
-				SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
-				Boolean hasbuttons,
-				time24hr;
-				int interval,
-				buttons_bg_color,
-				buttons_color,
-				messages_bg_color,
-				messages_color,
-				friend_color,
-				created_color;
-				Cursor settings = db.rawQuery("select " + _ID + "," + INTERVAL + "," + HASBUTTONS + ","	+ BUTTONS_BG_COLOR + "," + BUTTONS_COLOR + "," + MESSAGES_BG_COLOR + "," + MESSAGES_COLOR + "," + FRIEND_COLOR + "," + CREATED_COLOR + "," + TIME24HR + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
-				if (settings.getCount() > 0) {
-					settings.moveToFirst();
-					interval = settings.getInt(settings.getColumnIndex(INTERVAL));
-					hasbuttons = settings.getInt(settings.getColumnIndex(HASBUTTONS)) == 1;
-					buttons_bg_color = settings.getInt(settings.getColumnIndex(BUTTONS_BG_COLOR));
-					buttons_color = settings.getInt(settings.getColumnIndex(BUTTONS_COLOR));
-					messages_bg_color = settings.getInt(settings.getColumnIndex(MESSAGES_BG_COLOR));
-					messages_color = settings.getInt(settings.getColumnIndex(MESSAGES_COLOR));
-					friend_color = settings.getInt(settings.getColumnIndex(FRIEND_COLOR));
-					created_color = settings.getInt(settings.getColumnIndex(CREATED_COLOR));
-					time24hr = settings.getInt(settings.getColumnIndex(TIME24HR)) == 1;
-				} else {
-					// upgrade, moving settings from sharedpreferences to db
-					SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
-					interval = Integer.parseInt((String) sp.getString(getString(R.string.key_interval), getString(R.string.default_interval)));
-					hasbuttons = sp.getBoolean(getString(R.string.key_display_buttons), true);
-					buttons_bg_color =Integer.parseInt(sp.getString(getString(R.string.key_head_background), getString(R.string.default_buttons_bg_color)));
-					buttons_color = Integer.parseInt(sp.getString(getString(R.string.key_head_text), getString(R.string.default_buttons_color)));
-					messages_bg_color = Integer.parseInt(sp.getString(getString(R.string.key_body_background), getString(R.string.default_message_bg_color)));
-					messages_color = Integer.parseInt(sp.getString(getString(R.string.key_body_text), getString(R.string.default_message_color)));
-					friend_color = Integer.parseInt(sp.getString(getString(R.string.key_friend_text), getString(R.string.default_friend_color)));
-					created_color = Integer.parseInt(sp.getString(getString(R.string.key_created_text), getString(R.string.default_created_color)));
-					time24hr = sp.getBoolean(getString(R.string.key_time_12_24), false);
-					ContentValues values = new ContentValues();
-					values.put(INTERVAL, interval);
-					values.put(HASBUTTONS, hasbuttons);
-					values.put(BUTTONS_BG_COLOR, buttons_bg_color);
-					values.put(BUTTONS_COLOR, buttons_color);
-					values.put(MESSAGES_BG_COLOR, messages_bg_color);
-					values.put(MESSAGES_COLOR, messages_color);
-					values.put(FRIEND_COLOR, friend_color);
-					values.put(CREATED_COLOR, created_color);
-					values.put(TIME24HR, time24hr);
-					values.put(WIDGET, appWidgetId);
-					db.insert(TABLE_WIDGETS, _ID, values);
-				}
-				settings.close();
-				List<StatusItem> statuses;
+			settings.close();
+			List<StatusItem> statuses;
+			if (hasConnection) {
 				// query accounts
 				/* get statuses for all accounts
 				 * then sort them by datetime, descending
@@ -451,66 +465,99 @@ public class SonetService extends Service implements Runnable {
 					db.delete(TABLE_ACCOUNTS, _ID + "=\"\"", null);
 				} else statuses = getStatuses(accounts, time24hr);
 				accounts.close();
-				// Push update for this widget to the home screen
-				// set messages background
-				Bitmap messages_bg = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-				Canvas messages_bg_canvas = new Canvas(messages_bg);
-				messages_bg_canvas.drawColor(messages_bg_color);
-				int[] map_item = {R.id.item0, R.id.item1, R.id.item2, R.id.item3, R.id.item4, R.id.item5, R.id.item6},
-				map_profile = {R.id.profile0, R.id.profile1, R.id.profile2, R.id.profile3, R.id.profile4, R.id.profile5, R.id.profile6},
-				map_message = {R.id.message0, R.id.message1, R.id.message2, R.id.message3, R.id.message4, R.id.message5, R.id.message6},
-				map_screenname = {R.id.screenname0, R.id.screenname1, R.id.screenname2, R.id.screenname3, R.id.screenname4, R.id.screenname5, R.id.screenname6},
-				map_created = {R.id.created0, R.id.created1, R.id.created2, R.id.created3, R.id.created4, R.id.created5, R.id.created6};
-				int count_status = 0, max_status = map_item.length;
-				RemoteViews views = new RemoteViews(getPackageName(), hasbuttons ? R.layout.widget : R.layout.widget_nobuttons);
-				if (hasbuttons) {
-					Bitmap buttons_bg = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-					Canvas buttons_bg_canvas = new Canvas(buttons_bg);
-					buttons_bg_canvas.drawColor(buttons_bg_color);
-					views.setImageViewBitmap(R.id.buttons_bg, buttons_bg);
-					views.setTextColor(R.id.head_spacer, buttons_bg_color);
-					views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, new Intent(this, PostDialog.class).setAction(MESSAGE), 0));
-					views.setTextColor(R.id.button_post, buttons_color);
-					views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, new Intent(this, UI.class).setAction(WIDGET).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId), 0));
-					views.setTextColor(R.id.button_post, buttons_color);
-					views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{appWidgetId}), 0));
-					views.setTextColor(R.id.button_post, buttons_color);
-				}
-				views.setImageViewBitmap(R.id.messages_bg, messages_bg);
-				// clear the cache
-				db.execSQL("delete from " + TABLE_STATUSES + ";");
-				for  (StatusItem item : statuses) {
-					if (count_status < max_status) {
-						// if no buttons, use StatusDialog.java with options for Config and Refresh
-						if (hasbuttons) views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(Intent.ACTION_VIEW, Uri.parse(item.link)), 0));
-						else views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(this, StatusDialog.class).setAction(appWidgetId+"`"+item.service+"`"+item.link), 0));
-						views.setTextViewText(map_message[count_status], item.message);
-						views.setTextColor(map_message[count_status], messages_color);
-						views.setTextViewText(map_screenname[count_status], item.friend);
-						views.setTextColor(map_screenname[count_status], friend_color);
-						views.setTextViewText(map_created[count_status], item.createdText);
-						views.setTextColor(map_created[count_status], created_color);
-						try {
-							views.setImageViewBitmap(map_profile[count_status], BitmapFactory.decodeStream(item.profile.openConnection().getInputStream()));
-						} catch (IOException e) {
-							Log.e(TAG,e.getMessage());
-						}										
-						count_status++;
+			} else {
+				// load statuses from cache
+				statuses = new ArrayList<StatusItem>();
+				Cursor cached = db.rawQuery("select " + _ID + "," + CREATED + "," + LINK + "," + FRIEND + "," + PROFILE + "," + MESSAGE + "," + SERVICE + "," + CREATEDTEXT + " from " + TABLE_STATUSES + " where " + WIDGET + "=" + appWidgetId + " order by " + CREATED + " desc", null);
+				if (cached.getCount() > 0) {
+					cached.moveToFirst();
+					int created = cached.getColumnIndex(CREATED),
+					link = cached.getColumnIndex(LINK),
+					profile = cached.getColumnIndex(PROFILE),
+					friend = cached.getColumnIndex(FRIEND),
+					message = cached.getColumnIndex(MESSAGE),
+					service = cached.getColumnIndex(SERVICE),
+					createdText = cached.getColumnIndex(CREATEDTEXT);
+					while (!cached.isAfterLast()) {
+						statuses.add(new StatusItem(cached.getLong(created),
+								cached.getString(link),
+								cached.getString(friend),
+								cached.getBlob(profile),
+								cached.getString(message),
+								cached.getInt(service),
+								cached.getString(createdText)));
+						cached.moveToNext();
 					}
+				} else {
+					// alert user: no connection, no cache
+					statuses.add(new StatusItem(0, null, null, null, "no connection", 0, null));
+				}
+			}
+			// Push update for this widget to the home screen
+			// set messages background
+			Bitmap messages_bg = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+			Canvas messages_bg_canvas = new Canvas(messages_bg);
+			messages_bg_canvas.drawColor(messages_bg_color);
+			int[] map_item = {R.id.item0, R.id.item1, R.id.item2, R.id.item3, R.id.item4, R.id.item5, R.id.item6},
+			map_profile = {R.id.profile0, R.id.profile1, R.id.profile2, R.id.profile3, R.id.profile4, R.id.profile5, R.id.profile6},
+			map_message = {R.id.message0, R.id.message1, R.id.message2, R.id.message3, R.id.message4, R.id.message5, R.id.message6},
+			map_screenname = {R.id.screenname0, R.id.screenname1, R.id.screenname2, R.id.screenname3, R.id.screenname4, R.id.screenname5, R.id.screenname6},
+			map_created = {R.id.created0, R.id.created1, R.id.created2, R.id.created3, R.id.created4, R.id.created5, R.id.created6};
+			int count_status = 0, max_status = map_item.length;
+			RemoteViews views = new RemoteViews(getPackageName(), hasbuttons ? R.layout.widget : R.layout.widget_nobuttons);
+			if (hasbuttons) {
+				Bitmap buttons_bg = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+				Canvas buttons_bg_canvas = new Canvas(buttons_bg);
+				buttons_bg_canvas.drawColor(buttons_bg_color);
+				views.setImageViewBitmap(R.id.buttons_bg, buttons_bg);
+				views.setTextColor(R.id.head_spacer, buttons_bg_color);
+				views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, new Intent(this, PostDialog.class).setAction(MESSAGE), 0));
+				views.setTextColor(R.id.button_post, buttons_color);
+				views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, new Intent(this, UI.class).setAction(WIDGET).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId), 0));
+				views.setTextColor(R.id.button_post, buttons_color);
+				views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{appWidgetId}), 0));
+				views.setTextColor(R.id.button_post, buttons_color);
+			}
+			views.setImageViewBitmap(R.id.messages_bg, messages_bg);
+			// clear the cache
+			if (hasConnection) db.execSQL("delete from " + TABLE_STATUSES + ";");
+			for  (StatusItem item : statuses) {
+				if (count_status < max_status) {
+					// if no buttons, use StatusDialog.java with options for Config and Refresh
+					if (hasbuttons) views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(Intent.ACTION_VIEW, Uri.parse(item.link)), 0));
+					else views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(this, StatusDialog.class).setAction(appWidgetId+"`"+item.service+"`"+item.link), 0));
+					views.setTextViewText(map_message[count_status], item.message);
+					views.setTextColor(map_message[count_status], messages_color);
+					views.setTextViewText(map_screenname[count_status], item.friend);
+					views.setTextColor(map_screenname[count_status], friend_color);
+					views.setTextViewText(map_created[count_status], item.createdText);
+					views.setTextColor(map_created[count_status], created_color);
+					views.setImageViewBitmap(map_profile[count_status], BitmapFactory.decodeByteArray(item.profile, 0, item.profile.length));
+					count_status++;
+				}
+				if (hasConnection) {
+					// update the cache
 					ContentValues values = new ContentValues();
-					values.put(CREATED, item.created.getTime());
+					values.put(CREATED, item.created);
 					values.put(LINK, item.link);
 					values.put(FRIEND, item.friend);
-					values.put(PROFILE, item.profile.toString());
+					values.put(PROFILE, item.profile);
 					values.put(MESSAGE, item.message);
 					values.put(SERVICE, item.service);
 					values.put(CREATEDTEXT, item.createdText);
+					values.put(WIDGET, appWidgetId);
 					db.insert(TABLE_STATUSES, _ID, values);
 				}
-				db.close();
-				sonetDatabaseHelper.close();
-				appWidgetManager.updateAppWidget(appWidgetId, views);
-				((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC, System.currentTimeMillis() + interval, PendingIntent.getService(this, 0, (new Intent(this, SonetService.class)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId), 0));
+			}
+			appWidgetManager.updateAppWidget(appWidgetId, views);
+			((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC, System.currentTimeMillis() + interval, PendingIntent.getService(this, 0, (new Intent(this, SonetService.class)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId), 0));
+		}
+		db.close();
+		sonetDatabaseHelper.close();
+		if (hasConnection) {
+			if (mReceiver != null) {
+				unregisterReceiver(mReceiver);
+				mReceiver = null;
 			}
 		} else if (mReceiver == null) {
 			// if there's no connection, listen for one
@@ -532,5 +579,4 @@ public class SonetService extends Service implements Runnable {
 		}
 		stopSelf();
 	}
-
 }

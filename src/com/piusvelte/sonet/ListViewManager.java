@@ -61,7 +61,7 @@ public class ListViewManager {
             // Put adapter info
             replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_LAYOUT_ID, R.layout.widget_listview);
             replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_ID, R.layout.widget_item);
-            putProvider(replaceDummy, SonetProvider.CONTENT_URI_MESSAGES.buildUpon().appendEncodedPath(Integer.toString(appWidgetId)).toString());
+            putProvider(replaceDummy, SonetProvider.CONTENT_URI.buildUpon().appendEncodedPath(Integer.toString(appWidgetId)).toString());
             putMapping(replaceDummy);
 
             // Launcher can set onClickListener for each children of an item. Without
@@ -106,40 +106,39 @@ public class ListViewManager {
             if (intent == null)
                     return;
 
-            final int NB_ITEMS_TO_FILL = 4;
+            final int layout_items = 4;
 
-            int[] cursorIndices = new int[NB_ITEMS_TO_FILL];
-            int[] viewTypes = new int[NB_ITEMS_TO_FILL];
-            int[] layoutIds = new int[NB_ITEMS_TO_FILL];
-            boolean[] clickable = new boolean[NB_ITEMS_TO_FILL];
-
+            int[] cursorIndices = new int[layout_items];
+            int[] viewTypes = new int[layout_items];
+            int[] layoutIds = new int[layout_items];
+            boolean[] clickable = new boolean[layout_items];
             int iItem = 0;
             
-            cursorIndices[iItem] = SonetProvider.DataProviderColumns.profile.ordinal();
-            viewTypes[iItem] = LauncherIntent.Extra.Scroll.Types.IMAGEURI;
+            cursorIndices[iItem] = SonetProvider.SonetProviderColumns.profile.ordinal();
+            viewTypes[iItem] = LauncherIntent.Extra.Scroll.Types.IMAGEBLOB;
             layoutIds[iItem] = R.id.profile;
-            clickable[iItem] = true;
+            clickable[iItem] = false;
 
             iItem++;
             
-            cursorIndices[iItem] = SonetProvider.DataProviderColumns.friend.ordinal();
+            cursorIndices[iItem] = SonetProvider.SonetProviderColumns.friend.ordinal();
             viewTypes[iItem] = LauncherIntent.Extra.Scroll.Types.TEXTVIEW;
             layoutIds[iItem] = R.id.screenname;
-            clickable[iItem] = true;
+            clickable[iItem] = false;
             
             iItem++;
             
-            cursorIndices[iItem] = SonetProvider.DataProviderColumns.created.ordinal();
+            cursorIndices[iItem] = SonetProvider.SonetProviderColumns.createdtext.ordinal();
             viewTypes[iItem] = LauncherIntent.Extra.Scroll.Types.TEXTVIEW;
             layoutIds[iItem] = R.id.created;
-            clickable[iItem] = true;
+            clickable[iItem] = false;
             
             iItem++;
             
-            cursorIndices[iItem] = SonetProvider.DataProviderColumns.message.ordinal();
+            cursorIndices[iItem] = SonetProvider.SonetProviderColumns.message.ordinal();
             viewTypes[iItem] = LauncherIntent.Extra.Scroll.Types.TEXTVIEW;
             layoutIds[iItem] = R.id.message;
-            clickable[iItem] = true;       
+            clickable[iItem] = false;       
 
             intent.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_VIEW_IDS, layoutIds);
             intent.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_VIEW_TYPES, viewTypes);
