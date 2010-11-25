@@ -391,7 +391,7 @@ public class SonetService extends Service implements Runnable {
 		Collections.sort(status_items);
 		return status_items;
 	}
-
+	
 	@Override
 	public void run() {
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
@@ -399,8 +399,10 @@ public class SonetService extends Service implements Runnable {
 		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
 		boolean hasConnection = (cm.getActiveNetworkInfo() != null) && cm.getActiveNetworkInfo().isConnected();
 		AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
+		AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 		while (updatesQueued()) {
 			int appWidgetId = getNextUpdate();
+			alarmManager.cancel(PendingIntent.getService(this, 0, (new Intent(this, SonetService.class)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId), 0));
 			Log.v(TAG,"appWidgetId: "+appWidgetId);
 			Boolean hasbuttons,
 			time24hr;
@@ -550,7 +552,8 @@ public class SonetService extends Service implements Runnable {
 				}
 			}
 			appWidgetManager.updateAppWidget(appWidgetId, views);
-			((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC, System.currentTimeMillis() + interval, PendingIntent.getService(this, 0, (new Intent(this, SonetService.class)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId), 0));
+			SonetProvider.notifyDatabaseModification(this, appWidgetId);
+			if (interval > 0) alarmManager.set(AlarmManager.RTC, System.currentTimeMillis() + interval, PendingIntent.getService(this, 0, (new Intent(this, SonetService.class)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId), 0));
 		}
 		db.close();
 		sonetDatabaseHelper.close();

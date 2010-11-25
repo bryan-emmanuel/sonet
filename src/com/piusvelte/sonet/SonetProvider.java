@@ -33,6 +33,7 @@ import static com.piusvelte.sonet.Sonet.TAG;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -47,7 +48,7 @@ public class SonetProvider extends ContentProvider {
 	private static final UriMatcher sUriMatcher;
 
 	private static final int STATUSES = 0;
-
+	
 	private SonetDatabaseHelper mSonetDatabaseHelper;
 
 	public static final String[] PROJECTION_APPWIDGETS = new String[] {
@@ -63,7 +64,7 @@ public class SonetProvider extends ContentProvider {
 
 	static {
 		sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-		sUriMatcher.addURI(AUTHORITY, TABLE_STATUSES, STATUSES);
+		sUriMatcher.addURI(AUTHORITY, TABLE_STATUSES + "/*", STATUSES);
 	}
 
 	public enum SonetProviderColumns {
@@ -106,5 +107,12 @@ public class SonetProvider extends ContentProvider {
 			String[] selectionArgs) {
 		return 0;
 	}
+
+
+    public static void notifyDatabaseModification(Context context, int appWidgetId) {
+            Uri widgetUri = CONTENT_URI.buildUpon().appendEncodedPath(Integer.toString(appWidgetId)).build();
+            Log.d(TAG, "notifyDatabaseModification -> UPDATE widgetUri : " + widgetUri);
+            context.getContentResolver().notifyChange(widgetUri, null);
+    }
 
 }

@@ -39,8 +39,7 @@ public class ListViewManager {
             Log.d(TAG, "onAppWidgetReady");
 
             // try new method
-            int appWidgetId = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID,
-                            AppWidgetManager.INVALID_APPWIDGET_ID);
+            int appWidgetId = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 
             if (appWidgetId < 0) {
                     Log.d(TAG, "Cannot get app widget id from ready intent");
