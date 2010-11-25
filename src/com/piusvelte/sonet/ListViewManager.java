@@ -19,10 +19,30 @@
  */
 package com.piusvelte.sonet;
 
+import static com.piusvelte.sonet.SonetDatabaseHelper.BUTTONS_BG_COLOR;
+import static com.piusvelte.sonet.SonetDatabaseHelper.BUTTONS_COLOR;
+import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED_COLOR;
+import static com.piusvelte.sonet.SonetDatabaseHelper.FRIEND_COLOR;
+import static com.piusvelte.sonet.SonetDatabaseHelper.HASBUTTONS;
+import static com.piusvelte.sonet.SonetDatabaseHelper.INTERVAL;
+import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGES_BG_COLOR;
+import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGES_COLOR;
+import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_WIDGETS;
+import static com.piusvelte.sonet.SonetDatabaseHelper.TIME24HR;
+import static com.piusvelte.sonet.SonetDatabaseHelper.WIDGET;
+import static com.piusvelte.sonet.SonetDatabaseHelper._ID;
 import mobi.intuitit.android.content.LauncherIntent;
+import mobi.intuitit.android.widget.BoundRemoteViews;
+import mobi.intuitit.android.widget.SimpleRemoteViews;
+import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.util.Log;
 
 public class ListViewManager {
@@ -45,8 +65,45 @@ public class ListViewManager {
                     Log.d(TAG, "Cannot get app widget id from ready intent");
                     return;
             }
+            
+            String appWidgetUri = SonetProvider.CONTENT_URI.buildUpon().appendEncodedPath(Integer.toString(appWidgetId)).toString();
+            
+            // pull settings to style the list
+			Boolean hasbuttons;
+			int	messages_color,
+			friend_color,
+			created_color;
+			SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(context);
+			SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
+			Cursor settings = db.rawQuery("select " + _ID + "," + HASBUTTONS + "," + MESSAGES_COLOR + "," + FRIEND_COLOR + "," + CREATED_COLOR + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
+			if (settings.getCount() > 0) {
+				settings.moveToFirst();
+				hasbuttons = settings.getInt(settings.getColumnIndex(HASBUTTONS)) == 1;
+				messages_color = settings.getInt(settings.getColumnIndex(MESSAGES_COLOR));
+				friend_color = settings.getInt(settings.getColumnIndex(FRIEND_COLOR));
+				created_color = settings.getInt(settings.getColumnIndex(CREATED_COLOR));
+			} else {
+				// this shouldn't occur, as the service should migrate the preferences to the db before this method is called
+				SharedPreferences sp = (SharedPreferences) context.getSharedPreferences(context.getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
+				hasbuttons = sp.getBoolean(context.getString(R.string.key_display_buttons), true);
+				messages_color = Integer.parseInt(sp.getString(context.getString(R.string.key_body_text), context.getString(R.string.default_message_color)));
+				friend_color = Integer.parseInt(sp.getString(context.getString(R.string.key_friend_text), context.getString(R.string.default_friend_color)));
+				created_color = Integer.parseInt(sp.getString(context.getString(R.string.key_created_text), context.getString(R.string.default_created_color)));
+			}
+			settings.close();
+			db.close();
+			sonetDatabaseHelper.close();
 
             Intent replaceDummy = new Intent(LauncherIntent.Action.ACTION_SCROLL_WIDGET_START);
+            SimpleRemoteViews gridViews = new SimpleRemoteViews(R.layout.widget_listview);
+            replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_REMOTEVIEWS, gridViews);
+            BoundRemoteViews itemViews = new BoundRemoteViews(R.layout.widget_item);
+            itemViews.setBoundBitmap(R.id.profile, "setImageBitmap", SonetProvider.SonetProviderColumns.profile.ordinal(), 0);
+            itemViews.setBoundCharSequence(R.id.friend, "setText", SonetProvider.SonetProviderColumns.friend.ordinal(), 0);
+            itemViews.setBoundCharSequence(R.id.created, "setText", SonetProvider.SonetProviderColumns.createdtext.ordinal(), 0);
+            itemViews.setBoundCharSequence(R.id.message, "setText", SonetProvider.SonetProviderColumns.message.ordinal(), 0);
+
+            itemViews.SetBoundOnClickIntent(R.id.item, PendingIntent.getBroadcast(context, 0, new Intent(context, context.getClass()).setAction(LauncherIntent.Action.ACTION_VIEW_CLICK).setData(Uri.parse(appWidgetUri)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId), 0), LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, DataProvider.DataProviderColumns.contacturi.ordinal());
 
             // Put widget info
             replaceDummy.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
@@ -60,8 +117,8 @@ public class ListViewManager {
             // Put adapter info
             replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_LAYOUT_ID, R.layout.widget_listview);
             replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_ID, R.layout.widget_item);
-            putProvider(replaceDummy, SonetProvider.CONTENT_URI.buildUpon().appendEncodedPath(Integer.toString(appWidgetId)).toString());
-            putMapping(replaceDummy);
+            putProvider(replaceDummy, appWidgetUri);
+//            putMapping(replaceDummy);
 
             // Launcher can set onClickListener for each children of an item. Without
             // explictly put this
@@ -101,48 +158,48 @@ public class ListViewManager {
     /**
      * Put mapping info as extras in intent
      */
-    public static void putMapping(Intent intent) {
-            if (intent == null)
-                    return;
-
-            final int layout_items = 4;
-
-            int[] cursorIndices = new int[layout_items];
-            int[] viewTypes = new int[layout_items];
-            int[] layoutIds = new int[layout_items];
-            boolean[] clickable = new boolean[layout_items];
-            int iItem = 0;
-            
-            cursorIndices[iItem] = SonetProvider.SonetProviderColumns.profile.ordinal();
-            viewTypes[iItem] = LauncherIntent.Extra.Scroll.Types.IMAGEBLOB;
-            layoutIds[iItem] = R.id.profile;
-            clickable[iItem] = false;
-
-            iItem++;
-            
-            cursorIndices[iItem] = SonetProvider.SonetProviderColumns.friend.ordinal();
-            viewTypes[iItem] = LauncherIntent.Extra.Scroll.Types.TEXTVIEW;
-            layoutIds[iItem] = R.id.screenname;
-            clickable[iItem] = false;
-            
-            iItem++;
-            
-            cursorIndices[iItem] = SonetProvider.SonetProviderColumns.createdtext.ordinal();
-            viewTypes[iItem] = LauncherIntent.Extra.Scroll.Types.TEXTVIEW;
-            layoutIds[iItem] = R.id.created;
-            clickable[iItem] = false;
-            
-            iItem++;
-            
-            cursorIndices[iItem] = SonetProvider.SonetProviderColumns.message.ordinal();
-            viewTypes[iItem] = LauncherIntent.Extra.Scroll.Types.TEXTVIEW;
-            layoutIds[iItem] = R.id.message;
-            clickable[iItem] = false;       
-
-            intent.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_VIEW_IDS, layoutIds);
-            intent.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_VIEW_TYPES, viewTypes);
-            intent.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_VIEW_CLICKABLE, clickable);
-            intent.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_CURSOR_INDICES, cursorIndices);
-
-    }
+//    public static void putMapping(Intent intent) {
+//            if (intent == null)
+//                    return;
+//
+//            final int layout_items = 4;
+//
+//            int[] cursorIndices = new int[layout_items];
+//            int[] viewTypes = new int[layout_items];
+//            int[] layoutIds = new int[layout_items];
+//            boolean[] clickable = new boolean[layout_items];
+//            int iItem = 0;
+//            
+//            cursorIndices[iItem] = SonetProvider.SonetProviderColumns.profile.ordinal();
+//            viewTypes[iItem] = LauncherIntent.Extra.Scroll.Types.IMAGEBLOB;
+//            layoutIds[iItem] = R.id.profile;
+//            clickable[iItem] = false;
+//
+//            iItem++;
+//            
+//            cursorIndices[iItem] = SonetProvider.SonetProviderColumns.friend.ordinal();
+//            viewTypes[iItem] = LauncherIntent.Extra.Scroll.Types.TEXTVIEW;
+//            layoutIds[iItem] = R.id.screenname;
+//            clickable[iItem] = false;
+//            
+//            iItem++;
+//            
+//            cursorIndices[iItem] = SonetProvider.SonetProviderColumns.createdtext.ordinal();
+//            viewTypes[iItem] = LauncherIntent.Extra.Scroll.Types.TEXTVIEW;
+//            layoutIds[iItem] = R.id.created;
+//            clickable[iItem] = false;
+//            
+//            iItem++;
+//            
+//            cursorIndices[iItem] = SonetProvider.SonetProviderColumns.message.ordinal();
+//            viewTypes[iItem] = LauncherIntent.Extra.Scroll.Types.TEXTVIEW;
+//            layoutIds[iItem] = R.id.message;
+//            clickable[iItem] = false;       
+//
+//            intent.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_VIEW_IDS, layoutIds);
+//            intent.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_VIEW_TYPES, viewTypes);
+//            intent.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_VIEW_CLICKABLE, clickable);
+//            intent.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_CURSOR_INDICES, cursorIndices);
+//
+//    }
 }
