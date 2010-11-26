@@ -492,7 +492,7 @@ public class SonetService extends Service implements Runnable {
 					}
 				} else {
 					// alert user: no connection, no cache
-					statuses.add(new StatusItem(0, null, null, null, "no connection", 0, null));
+					statuses.add(new StatusItem(0, "", "", new byte[]{}, "no connection", 0, ""));
 				}
 			}
 			// Push update for this widget to the home screen
@@ -551,8 +551,12 @@ public class SonetService extends Service implements Runnable {
 					db.insert(TABLE_STATUSES, _ID, values);
 				}
 			}
+			if (appWidgetManager == null) Log.v(TAG,"appWidgetManager is null");
+			else Log.v(TAG,"updateAppWidget");
 			appWidgetManager.updateAppWidget(appWidgetId, views);
+			Log.v(TAG,"notifyDatabaseModification");
 			SonetProvider.notifyDatabaseModification(this, appWidgetId);
+			Log.v(TAG,"set alarm");
 			if (interval > 0) alarmManager.set(AlarmManager.RTC, System.currentTimeMillis() + interval, PendingIntent.getService(this, 0, (new Intent(this, SonetService.class)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId), 0));
 		}
 		db.close();

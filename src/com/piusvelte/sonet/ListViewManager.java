@@ -19,16 +19,11 @@
  */
 package com.piusvelte.sonet;
 
-import static com.piusvelte.sonet.SonetDatabaseHelper.BUTTONS_BG_COLOR;
-import static com.piusvelte.sonet.SonetDatabaseHelper.BUTTONS_COLOR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED_COLOR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.FRIEND_COLOR;
-import static com.piusvelte.sonet.SonetDatabaseHelper.HASBUTTONS;
-import static com.piusvelte.sonet.SonetDatabaseHelper.INTERVAL;
-import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGES_BG_COLOR;
+//import static com.piusvelte.sonet.SonetDatabaseHelper.HASBUTTONS;
 import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGES_COLOR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_WIDGETS;
-import static com.piusvelte.sonet.SonetDatabaseHelper.TIME24HR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.WIDGET;
 import static com.piusvelte.sonet.SonetDatabaseHelper._ID;
 import mobi.intuitit.android.content.LauncherIntent;
@@ -36,7 +31,6 @@ import mobi.intuitit.android.widget.BoundRemoteViews;
 import mobi.intuitit.android.widget.SimpleRemoteViews;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -67,25 +61,30 @@ public class ListViewManager {
             }
             
             String appWidgetUri = SonetProvider.CONTENT_URI.buildUpon().appendEncodedPath(Integer.toString(appWidgetId)).toString();
+            Intent replaceDummy = new Intent(LauncherIntent.Action.ACTION_SCROLL_WIDGET_START);
+            // Put widget info
+            replaceDummy.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+            replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_PROVIDER_ALLOW_REQUERY, true);
+            replaceDummy.putExtra(LauncherIntent.Extra.EXTRA_VIEW_ID, R.id.messages);
             
             // pull settings to style the list
-			Boolean hasbuttons;
+//			Boolean hasbuttons;
 			int	messages_color,
 			friend_color,
 			created_color;
 			SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(context);
 			SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
-			Cursor settings = db.rawQuery("select " + _ID + "," + HASBUTTONS + "," + MESSAGES_COLOR + "," + FRIEND_COLOR + "," + CREATED_COLOR + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
+			Cursor settings = db.rawQuery("select " + _ID /*+ "," + HASBUTTONS*/ + "," + MESSAGES_COLOR + "," + FRIEND_COLOR + "," + CREATED_COLOR + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
 			if (settings.getCount() > 0) {
 				settings.moveToFirst();
-				hasbuttons = settings.getInt(settings.getColumnIndex(HASBUTTONS)) == 1;
+//				hasbuttons = settings.getInt(settings.getColumnIndex(HASBUTTONS)) == 1;
 				messages_color = settings.getInt(settings.getColumnIndex(MESSAGES_COLOR));
 				friend_color = settings.getInt(settings.getColumnIndex(FRIEND_COLOR));
 				created_color = settings.getInt(settings.getColumnIndex(CREATED_COLOR));
 			} else {
 				// this shouldn't occur, as the service should migrate the preferences to the db before this method is called
 				SharedPreferences sp = (SharedPreferences) context.getSharedPreferences(context.getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
-				hasbuttons = sp.getBoolean(context.getString(R.string.key_display_buttons), true);
+//				hasbuttons = sp.getBoolean(context.getString(R.string.key_display_buttons), true);
 				messages_color = Integer.parseInt(sp.getString(context.getString(R.string.key_body_text), context.getString(R.string.default_message_color)));
 				friend_color = Integer.parseInt(sp.getString(context.getString(R.string.key_friend_text), context.getString(R.string.default_friend_color)));
 				created_color = Integer.parseInt(sp.getString(context.getString(R.string.key_created_text), context.getString(R.string.default_created_color)));
@@ -94,29 +93,27 @@ public class ListViewManager {
 			db.close();
 			sonetDatabaseHelper.close();
 
-            Intent replaceDummy = new Intent(LauncherIntent.Action.ACTION_SCROLL_WIDGET_START);
-            SimpleRemoteViews gridViews = new SimpleRemoteViews(R.layout.widget_listview);
-            replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_REMOTEVIEWS, gridViews);
+//            replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_LAYOUT_ID, R.layout.widget_listview);
+//            replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_ID, R.layout.widget_item);
+			
+            SimpleRemoteViews listView = new SimpleRemoteViews(R.layout.widget_listview);
+            replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_REMOTEVIEWS, listView);
+            
+            replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_REMOTEVIEWS, listView);
+            
             BoundRemoteViews itemViews = new BoundRemoteViews(R.layout.widget_item);
             itemViews.setBoundBitmap(R.id.profile, "setImageBitmap", SonetProvider.SonetProviderColumns.profile.ordinal(), 0);
             itemViews.setBoundCharSequence(R.id.friend, "setText", SonetProvider.SonetProviderColumns.friend.ordinal(), 0);
+            itemViews.setTextColor(R.id.friend, friend_color);
             itemViews.setBoundCharSequence(R.id.created, "setText", SonetProvider.SonetProviderColumns.createdtext.ordinal(), 0);
+            itemViews.setTextColor(R.id.created, created_color);
             itemViews.setBoundCharSequence(R.id.message, "setText", SonetProvider.SonetProviderColumns.message.ordinal(), 0);
+            itemViews.setTextColor(R.id.message, messages_color);
 
-            itemViews.SetBoundOnClickIntent(R.id.item, PendingIntent.getBroadcast(context, 0, new Intent(context, context.getClass()).setAction(LauncherIntent.Action.ACTION_VIEW_CLICK).setData(Uri.parse(appWidgetUri)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId), 0), LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, DataProvider.DataProviderColumns.contacturi.ordinal());
+            itemViews.SetBoundOnClickIntent(R.id.item, PendingIntent.getBroadcast(context, 0, new Intent(context, context.getClass()).setAction(LauncherIntent.Action.ACTION_VIEW_CLICK).setData(Uri.parse(appWidgetUri)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId), 0), LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.SonetProviderColumns.link.ordinal());
 
-            // Put widget info
-            replaceDummy.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-            replaceDummy.putExtra(LauncherIntent.Extra.EXTRA_VIEW_ID, R.id.messages);
+            replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_REMOTEVIEWS, itemViews);
 
-            replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_PROVIDER_ALLOW_REQUERY, true);
-
-            // Give a layout resource to be inflated. If this is not given, Home++
-            // will create one
-
-            // Put adapter info
-            replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_LAYOUT_ID, R.layout.widget_listview);
-            replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_ID, R.layout.widget_item);
             putProvider(replaceDummy, appWidgetUri);
 //            putMapping(replaceDummy);
 
