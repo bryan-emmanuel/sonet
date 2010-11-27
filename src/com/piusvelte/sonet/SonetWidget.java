@@ -55,8 +55,7 @@ public class SonetWidget extends AppWidgetProvider {
 			if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) onDeleted(context, new int[]{appWidgetId});
 			else super.onReceive(context, intent);
 		} else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_READY)) {
-			// Receive ready signal
-			ListViewManager.onAppWidgetReady(context, intent);
+            if (intent.getExtras().getInt(LauncherIntent.Extra.EXTRA_API_VERSION, 1) >= 2) ListViewManager.onAppWidgetReady(context, intent);
 		} else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_FINISH)) {
 			Log.v(TAG, "ACTION_FINISH");
 

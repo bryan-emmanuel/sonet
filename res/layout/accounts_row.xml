@@ -23,5 +23,5 @@
 	android:layout_height="wrap_content">
 	<TextView android:id="@+id/account_username"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
-		android:padding="16dip" android:textSize="24dip" />
+		android:padding="12dip" android:textSize="16dip" />
 </RelativeLayout>

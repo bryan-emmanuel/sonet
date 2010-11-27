@@ -36,8 +36,14 @@ public class UI extends Activity implements OnClickListener {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		Intent i = getIntent();
-		if ((i != null) && i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
+		Intent intent = getIntent();
+		if (intent != null) {
+			if (!intent.getAction().equals(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE)) mAppWidgetId = Integer.parseInt(intent.getAction());
+			else {
+			     Bundle extras = intent.getExtras();
+			     if (extras != null) mAppWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+			}
+		}
 		setResult(Activity.RESULT_OK, new Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 		setContentView(R.layout.main);
 		if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
