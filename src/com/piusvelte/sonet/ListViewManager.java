@@ -19,17 +19,20 @@
  */
 package com.piusvelte.sonet;
 
+import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED;
 import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED_COLOR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.FRIEND_COLOR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGES_COLOR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_WIDGETS;
 import static com.piusvelte.sonet.SonetDatabaseHelper.WIDGET;
 import static com.piusvelte.sonet.SonetDatabaseHelper._ID;
+import static com.piusvelte.sonet.SonetDatabaseHelper.SCROLLABLE;
 import mobi.intuitit.android.content.LauncherIntent;
 import mobi.intuitit.android.widget.BoundRemoteViews;
 import mobi.intuitit.android.widget.SimpleRemoteViews;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -48,11 +51,9 @@ public class ListViewManager {
 		if (intent == null)
 			return;
 
-		Log.d(TAG, "onAppWidgetReady");
-
-		// try new method
+		Log.v(TAG, "onAppWidgetReady");
 		int appWidgetId = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
-
+		
 		if (appWidgetId < 0) {
 			Log.d(TAG, "Cannot get app widget id from ready intent");
 			return;
@@ -80,12 +81,16 @@ public class ListViewManager {
 		// pull settings to style the list
 		SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(context);
 		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
-		Cursor settings = db.rawQuery("select " + _ID /*+ "," + HASBUTTONS*/ + "," + MESSAGES_COLOR + "," + FRIEND_COLOR + "," + CREATED_COLOR + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
+		Cursor settings = db.rawQuery("select " + _ID + "," + MESSAGES_COLOR + "," + FRIEND_COLOR + "," + CREATED_COLOR + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
 		if (settings.getCount() > 0) {
 			settings.moveToFirst();
 			itemViews.setTextColor(R.id.friend, settings.getInt(settings.getColumnIndex(FRIEND_COLOR)));
 			itemViews.setTextColor(R.id.created, settings.getInt(settings.getColumnIndex(CREATED_COLOR)));
 			itemViews.setTextColor(R.id.message, settings.getInt(settings.getColumnIndex(MESSAGES_COLOR)));
+			// prevent SonetService from replacing the view with the non-scrolling layout
+			ContentValues values = new ContentValues();
+			values.put(SCROLLABLE, 1);
+			db.update(TABLE_WIDGETS, values, WIDGET + "=" + appWidgetId, null);
 		}
 		settings.close();
 		db.close();
@@ -104,6 +109,7 @@ public class ListViewManager {
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_CHILDREN_CLICKABLE, true);
 
 		// Send it out
+		Log.v(TAG,"sendBroadcast");
 		context.sendBroadcast(replaceDummy);
 	}
 
@@ -116,8 +122,8 @@ public class ListViewManager {
 		if (intent == null)
 			return;
 
-		String whereClause = null;
-		String orderBy = null;
+		String whereClause = WIDGET + "=" + Uri.parse(widgetUri).getLastPathSegment();
+		String orderBy = CREATED + " desc";
 		String[] selectionArgs = null;
 
 		// Put the data uri in as a string. Do not use setData, Home++ does not

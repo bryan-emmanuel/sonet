@@ -52,6 +52,7 @@ public class SonetDatabaseHelper extends SQLiteOpenHelper {
 	public static final String PROFILE = "profile";
 	public static final String MESSAGE = "message";
 	public static final String CREATEDTEXT = "createdText";
+	public static final String SCROLLABLE = "scrollable";
 	
 	public SonetDatabaseHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -79,7 +80,8 @@ public class SonetDatabaseHelper extends SQLiteOpenHelper {
 				+ CREATED_COLOR + " integer, "
 				+ MESSAGES_BG_COLOR + " integer, "
 				+ MESSAGES_COLOR + " integer, "
-				+ TIME24HR + " integer);");
+				+ TIME24HR + " integer, "
+				+ SCROLLABLE + " integer);");
 		db.execSQL("create table if not exists " + TABLE_STATUSES
 				+ " (" + _ID + " integer primary key autoincrement, "
 				+ CREATED + " integer, "
@@ -167,6 +169,37 @@ public class SonetDatabaseHelper extends SQLiteOpenHelper {
 					+ SERVICE + " integer, "
 					+ CREATEDTEXT + " text, "
 					+ WIDGET + " integer);");
+			// column for scrollable
+			db.execSQL("drop table if exists " + TABLE_WIDGETS + "_bkp;");
+			db.execSQL("create temp table " + TABLE_WIDGETS + "_bkp as select * from " + TABLE_WIDGETS + ";");
+			db.execSQL("drop table if exists " + TABLE_WIDGETS + ";");
+			db.execSQL("create table if not exists " + TABLE_WIDGETS
+					+ " (" + _ID + " integer primary key autoincrement, "
+					+ WIDGET + " integer, "
+					+ INTERVAL + " integer, "
+					+ HASBUTTONS + " integer, "
+					+ BUTTONS_BG_COLOR + " integer, "
+					+ BUTTONS_COLOR + " integer, "
+					+ FRIEND_COLOR + " integer, "
+					+ CREATED_COLOR + " integer, "
+					+ MESSAGES_BG_COLOR + " integer, "
+					+ MESSAGES_COLOR + " integer, "
+					+ TIME24HR + " integer, "
+					+ SCROLLABLE + " integer);");
+			db.execSQL("insert into " + TABLE_WIDGETS
+					+ " select "
+					+ _ID + ","
+					+ WIDGET + ","
+					+ INTERVAL + ","
+					+ HASBUTTONS + ","
+					+ BUTTONS_BG_COLOR + ","
+					+ BUTTONS_COLOR + ","
+					+ FRIEND_COLOR + ","
+					+ CREATED_COLOR + ","
+					+ MESSAGES_BG_COLOR + ","
+					+ MESSAGES_COLOR + ","
+					+ TIME24HR + ",0 from " + TABLE_WIDGETS + "_bkp;");
+			db.execSQL("drop table if exists " + TABLE_WIDGETS + "_bkp;");
 		}
 	}
 

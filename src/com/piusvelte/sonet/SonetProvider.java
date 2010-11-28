@@ -20,15 +20,6 @@
 package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_STATUSES;
-import static com.piusvelte.sonet.SonetDatabaseHelper._ID;
-import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED;
-import static com.piusvelte.sonet.SonetDatabaseHelper.CREATEDTEXT;
-import static com.piusvelte.sonet.SonetDatabaseHelper.FRIEND;
-import static com.piusvelte.sonet.SonetDatabaseHelper.PROFILE;
-import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGE;
-import static com.piusvelte.sonet.SonetDatabaseHelper.LINK;
-import static com.piusvelte.sonet.SonetDatabaseHelper.SERVICE;
-import static com.piusvelte.sonet.SonetDatabaseHelper.WIDGET;
 import static com.piusvelte.sonet.Sonet.TAG;
 
 import android.content.ContentProvider;
@@ -48,7 +39,7 @@ public class SonetProvider extends ContentProvider {
 	private static final UriMatcher sUriMatcher;
 
 	private static final int STATUSES = 0;
-	
+
 	private SonetDatabaseHelper mSonetDatabaseHelper;
 
 	public static final String[] PROJECTION_APPWIDGETS = new String[] {
@@ -93,26 +84,31 @@ public class SonetProvider extends ContentProvider {
 	}
 
 	@Override
-	public Cursor query(Uri uri, String[] projection, String selection,
-			String[] selectionArgs, String sortOrder) {
-		Log.v(TAG,"query widget: "+uri.getLastPathSegment());
+	public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String orderBy) {
 		SQLiteDatabase db = mSonetDatabaseHelper.getReadableDatabase();
-		Cursor c = db.rawQuery("select " + _ID + "," + CREATED + "," + LINK + "," + FRIEND + "," + PROFILE + "," + MESSAGE + "," + SERVICE + "," + CREATEDTEXT + "," + WIDGET + " from " + TABLE_STATUSES + " where " + WIDGET + "=" + uri.getLastPathSegment() + " order by " + CREATED + " desc", null);
+		Cursor c = null;
+		int match = sUriMatcher.match(uri);
+		switch (match) {
+		case STATUSES:
+			Log.v(TAG,"query widget: "+uri.getLastPathSegment());
+			c = db.query(TABLE_STATUSES, projection, selection, selectionArgs, null, null, orderBy);
+			break;
+		default:
+			throw new IllegalArgumentException("Unknown URI " + uri);
+		}
 		c.setNotificationUri(getContext().getContentResolver(), uri);
 		return c;
 	}
 
 	@Override
-	public int update(Uri uri, ContentValues values, String selection,
-			String[] selectionArgs) {
+	public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
 		return 0;
 	}
 
-
-    public static void notifyDatabaseModification(Context context, int appWidgetId) {
-            Uri widgetUri = CONTENT_URI.buildUpon().appendEncodedPath(Integer.toString(appWidgetId)).build();
-            Log.d(TAG, "notifyDatabaseModification -> UPDATE widgetUri : " + widgetUri);
-            context.getContentResolver().notifyChange(widgetUri, null);
-    }
+	public static void notifyDatabaseModification(Context context, int appWidgetId) {
+		Uri widgetUri = CONTENT_URI.buildUpon().appendEncodedPath(Integer.toString(appWidgetId)).build();
+		Log.v(TAG, "notifyDatabaseModification -> UPDATE widgetUri : " + widgetUri);
+		context.getContentResolver().notifyChange(widgetUri, null);
+	}
 
 }
