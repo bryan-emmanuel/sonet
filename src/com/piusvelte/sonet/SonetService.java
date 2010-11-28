@@ -535,7 +535,32 @@ public class SonetService extends Service implements Runnable {
 					}
 				} else statuses.add(new StatusItem(0, null, null, null, "no connection", 0, null)); // alert user: no connection, no cache
 			}
-			if (!scrollable) {
+			if (hasConnection) {
+				Log.v(TAG,"updating cache");
+				// clear the cache
+				db.execSQL("delete from " + TABLE_STATUSES + ";");
+				// update the cache
+				for  (StatusItem item : statuses) {
+					ContentValues values = new ContentValues();
+					values.put(CREATED, item.created);
+					values.put(LINK, item.link);
+					values.put(FRIEND, item.friend);
+					values.put(PROFILE, item.profile);
+					values.put(MESSAGE, item.message);
+					values.put(SERVICE, item.service);
+					values.put(CREATEDTEXT, item.createdText);
+					values.put(WIDGET, appWidgetId);
+					db.insert(TABLE_STATUSES, _ID, values);
+				}
+			}
+			// PROBLEM, race condition: when finished configuring, the service starts.
+			// meanwhile, the launcher broadcasts READY and the listview is created. it's at this point that the widget is marked scrollable
+			// this run finishes after the listview is created, but is not flagged as scrollable and replaces the listview with the regular widget
+			if (scrollable) {
+				Log.v(TAG,"notify scrollable");
+				SonetProvider.notifyDatabaseModification(this, appWidgetId);
+			} else {
+				Log.v(TAG, "is not scrollable, push update");
 				// Push update for this widget to the home screen
 				// set messages background
 				Bitmap messages_bg = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
@@ -582,24 +607,6 @@ public class SonetService extends Service implements Runnable {
 				Log.v(TAG,"updateAppWidget");
 				appWidgetManager.updateAppWidget(appWidgetId, views);
 			}
-			if (hasConnection) {
-				// clear the cache
-				db.execSQL("delete from " + TABLE_STATUSES + ";");
-				// update the cache
-				for  (StatusItem item : statuses) {
-					ContentValues values = new ContentValues();
-					values.put(CREATED, item.created);
-					values.put(LINK, item.link);
-					values.put(FRIEND, item.friend);
-					values.put(PROFILE, item.profile);
-					values.put(MESSAGE, item.message);
-					values.put(SERVICE, item.service);
-					values.put(CREATEDTEXT, item.createdText);
-					values.put(WIDGET, appWidgetId);
-					db.insert(TABLE_STATUSES, _ID, values);
-				}
-			}
-			//				SonetProvider.notifyDatabaseModification(this, appWidgetId);
 			if (hasAccount && (interval > 0)) alarmManager.set(AlarmManager.RTC, System.currentTimeMillis() + interval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
 		}
 		db.close();
