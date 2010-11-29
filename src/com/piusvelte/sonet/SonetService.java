@@ -528,7 +528,7 @@ public class SonetService extends Service implements Runnable {
 					}
 				} else statuses.add(new StatusItem(0, null, null, null, "no connection", 0, null)); // alert user: no connection, no cache
 			}
-			if (hasConnection) db.execSQL("delete from " + TABLE_STATUSES + ";"); // clear the cache
+			if (hasConnection) db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null); // clear the cache
 			// race condition when finished configuring, the service starts.
 			// meanwhile, the launcher broadcasts READY and the listview is created. it's at this point that the widget is marked scrollable
 			// this run finishes after the listview is created, but is not flagged as scrollable and replaces the listview with the regular widget
