@@ -20,16 +20,13 @@
 package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_STATUSES;
-import static com.piusvelte.sonet.Sonet.TAG;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
-import android.util.Log;
 
 public class SonetProvider extends ContentProvider {
 
@@ -90,7 +87,6 @@ public class SonetProvider extends ContentProvider {
 		int match = sUriMatcher.match(uri);
 		switch (match) {
 		case STATUSES:
-			Log.v(TAG,"query widget: "+uri.getLastPathSegment());
 			c = db.query(TABLE_STATUSES, projection, selection, selectionArgs, null, null, orderBy);
 			break;
 		default:
@@ -103,12 +99,6 @@ public class SonetProvider extends ContentProvider {
 	@Override
 	public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
 		return 0;
-	}
-
-	public static void notifyDatabaseModification(Context context, int appWidgetId) {
-		Uri widgetUri = CONTENT_URI.buildUpon().appendEncodedPath(Integer.toString(appWidgetId)).build();
-		Log.v(TAG, "notifyDatabaseModification -> UPDATE widgetUri : " + widgetUri);
-		context.getContentResolver().notifyChange(widgetUri, null);
 	}
 
 }

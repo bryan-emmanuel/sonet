@@ -34,6 +34,7 @@ import mobi.intuitit.android.content.LauncherIntent;
 import mobi.intuitit.android.widget.BoundRemoteViews;
 import mobi.intuitit.android.widget.SimpleRemoteViews;
 
+import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
@@ -69,7 +70,6 @@ public class SonetWidget extends AppWidgetProvider {
 		} else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_READY)) {
             if (intent.getExtras().getInt(LauncherIntent.Extra.EXTRA_API_VERSION, 1) >= 2) onAppWidgetReady(context, intent);
 		} else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_FINISH)) {
-			Log.v(TAG, "ACTION_FINISH");
 		} else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_ITEM_CLICK)) {
 			// onItemClickListener
 			onItemClick(context, intent);
@@ -87,23 +87,25 @@ public class SonetWidget extends AppWidgetProvider {
 		super.onDeleted(context, appWidgetIds);
 		SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(context);
 		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
-		for (int i = 0; i < appWidgetIds.length; i++) {
-			db.delete(TABLE_WIDGETS, WIDGET + "=" + appWidgetIds[i], null);
-			db.delete(TABLE_ACCOUNTS, WIDGET + "=" + appWidgetIds[i], null);
+		AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+		for (int appWidgetId : appWidgetIds) {
+			alarmManager.cancel(PendingIntent.getService(context, 0, new Intent(context, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
+			db.delete(TABLE_WIDGETS, WIDGET + "=" + appWidgetId, null);
+			db.delete(TABLE_ACCOUNTS, WIDGET + "=" + appWidgetId, null);
 		}
 		db.close();
 		sonetDatabaseHelper.close();
 	}
 	
 	public void onAppWidgetReady(Context context, Intent intent) {
-
-		Log.v(TAG, "onAppWidgetReady");
 		int appWidgetId = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 		
-		if (appWidgetId < 0) {
-			Log.d(TAG, "Cannot get app widget id from ready intent");
-			return;
-		}
+		if (appWidgetId < 0) return;
+		
+		SonetWidget.buildScrollable(context, appWidgetId);
+	}
+	
+	public static void buildScrollable(Context context, int appWidgetId) {
 
 		String appWidgetUri = SonetProvider.CONTENT_URI.buildUpon().appendEncodedPath(Integer.toString(appWidgetId)).toString();
 		Intent replaceDummy = new Intent(LauncherIntent.Action.ACTION_SCROLL_WIDGET_START);
@@ -111,9 +113,6 @@ public class SonetWidget extends AppWidgetProvider {
 		replaceDummy.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_PROVIDER_ALLOW_REQUERY, true);
 		replaceDummy.putExtra(LauncherIntent.Extra.EXTRA_VIEW_ID, R.id.messages);
-
-		//          replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_LAYOUT_ID, R.layout.widget_listview);
-		//          replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_ID, R.layout.widget_item);
 
 		SimpleRemoteViews listView = new SimpleRemoteViews(R.layout.widget_listview);
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_REMOTEVIEWS, listView);
@@ -137,22 +136,24 @@ public class SonetWidget extends AppWidgetProvider {
 			ContentValues values = new ContentValues();
 			values.put(SCROLLABLE, 1);
 			db.update(TABLE_WIDGETS, values, WIDGET + "=" + appWidgetId, null);
-			Log.v(TAG,"flagged scrollable");
 		}
 		settings.close();
 		db.close();
 		sonetDatabaseHelper.close();
 
-		itemViews.SetBoundOnClickIntent(R.id.item, PendingIntent.getBroadcast(context, 0, new Intent(context, context.getClass()).setAction(LauncherIntent.Action.ACTION_VIEW_CLICK).setData(Uri.parse(appWidgetUri)).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId), 0), LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.SonetProviderColumns.link.ordinal());
+		Intent i= new Intent(context, SonetWidget.class)
+		.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
+		.setData(Uri.parse(appWidgetUri))
+		.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+		PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
+		itemViews.SetBoundOnClickIntent(R.id.profile, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.SonetProviderColumns.link.ordinal());
+		itemViews.SetBoundOnClickIntent(R.id.friend, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.SonetProviderColumns.link.ordinal());
+		itemViews.SetBoundOnClickIntent(R.id.created, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.SonetProviderColumns.link.ordinal());
+		itemViews.SetBoundOnClickIntent(R.id.message, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.SonetProviderColumns.link.ordinal());
 
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_REMOTEVIEWS, itemViews);
 
 		putProvider(replaceDummy, appWidgetUri);
-		//            putMapping(replaceDummy);
-
-		// Launcher can set onClickListener for each children of an item. Without
-		// explictly put this
-		// extra, it will just set onItemClickListener by default
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_CHILDREN_CLICKABLE, true);
 
 		// Send it out
