@@ -146,6 +146,7 @@ public class SonetWidget extends AppWidgetProvider {
 		.setData(Uri.parse(appWidgetUri))
 		.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
 		PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
+		itemViews.SetBoundOnClickIntent(R.id.item, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.SonetProviderColumns.link.ordinal());
 		itemViews.SetBoundOnClickIntent(R.id.profile, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.SonetProviderColumns.link.ordinal());
 		itemViews.SetBoundOnClickIntent(R.id.friend, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.SonetProviderColumns.link.ordinal());
 		itemViews.SetBoundOnClickIntent(R.id.created, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.SonetProviderColumns.link.ordinal());
@@ -156,8 +157,6 @@ public class SonetWidget extends AppWidgetProvider {
 		putProvider(replaceDummy, appWidgetUri);
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_CHILDREN_CLICKABLE, true);
 
-		// Send it out
-		Log.v(TAG,"sendBroadcast");
 		context.sendBroadcast(replaceDummy);
 	}
 

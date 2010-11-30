@@ -538,6 +538,7 @@ public class SonetService extends Service implements Runnable {
 				settings.moveToFirst();
 				scrollable = settings.getInt(settings.getColumnIndex(SCROLLABLE)) == 1;
 			}
+			settings.close();
 			// Push update for this widget to the home screen
 			// set messages background
 			Bitmap messages_bg = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
