@@ -38,7 +38,7 @@ public class UI extends Activity implements OnClickListener {
 		super.onCreate(savedInstanceState);
 		Intent intent = getIntent();
 		if (intent != null) {
-			if (!intent.getAction().equals(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE)) mAppWidgetId = Integer.parseInt(intent.getAction());
+			if ((intent.getAction() == null) || !intent.getAction().equals(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE)) mAppWidgetId = Integer.parseInt(intent.getAction());
 			else {
 			     Bundle extras = intent.getExtras();
 			     if (extras != null) mAppWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);

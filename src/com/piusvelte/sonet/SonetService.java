@@ -46,11 +46,11 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.PROFILE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.LINK;
 import static com.piusvelte.sonet.SonetDatabaseHelper.SCROLLABLE;
-import static com.piusvelte.sonet.Sonet.TAG;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
+import static com.piusvelte.sonet.Sonet.ACTION_BUILD_SCROLL;
 import static com.piusvelte.sonet.Services.TWITTER_KEY;
 import static com.piusvelte.sonet.Services.TWITTER_SECRET;
 import static com.piusvelte.sonet.Services.MYSPACE_KEY;
@@ -120,6 +120,7 @@ import android.util.Log;
 import android.widget.RemoteViews;
 
 public class SonetService extends Service implements Runnable {
+	private static final String TAG = "SonetService";
 	private BroadcastReceiver mReceiver = null;
 	private Thread sThread;
 
@@ -497,7 +498,7 @@ public class SonetService extends Service implements Runnable {
 						hasAccount = false;
 						// alert user: no accounts setup
 						statuses = new ArrayList<StatusItem>();
-						statuses.add(new StatusItem(0, null, null, null, "no accounts configured", 0, null));
+						statuses.add(new StatusItem(0, null, null, null, getString(R.string.loading), 0, null));
 					}
 					c.close();
 					db.delete(TABLE_ACCOUNTS, _ID + "=\"\"", null);
@@ -596,7 +597,7 @@ public class SonetService extends Service implements Runnable {
 				}
 			}
 			appWidgetManager.updateAppWidget(appWidgetId, views);
-			if (scrollable) SonetWidget.buildScrollable(this, appWidgetId); // replace with scrollable widget
+			if (scrollable) sendBroadcast(new Intent(this, SonetWidget.class).setAction(ACTION_BUILD_SCROLL).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)); // replace with scrollable widget
 			if (hasAccount && (interval > 0)) alarmManager.set(AlarmManager.RTC, System.currentTimeMillis() + interval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
 		}
 		db.close();

@@ -20,7 +20,6 @@
 package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
-import static com.piusvelte.sonet.Sonet.TAG;
 import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED;
 import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED_COLOR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.FRIEND_COLOR;
@@ -30,6 +29,10 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_WIDGETS;
 import static com.piusvelte.sonet.SonetDatabaseHelper.WIDGET;
 import static com.piusvelte.sonet.SonetDatabaseHelper._ID;
+import static com.piusvelte.sonet.SonetDatabaseHelper.HASBUTTONS;
+import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_STATUSES;
+import static com.piusvelte.sonet.SonetDatabaseHelper.LINK;
+import static com.piusvelte.sonet.SonetDatabaseHelper.SERVICE;
 import mobi.intuitit.android.content.LauncherIntent;
 import mobi.intuitit.android.widget.BoundRemoteViews;
 import mobi.intuitit.android.widget.SimpleRemoteViews;
@@ -48,6 +51,8 @@ import android.text.TextUtils;
 import android.util.Log;
 
 public class SonetWidget extends AppWidgetProvider {
+	private static final String TAG = "SonetWidget";
+
 	@Override
 	public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
 		context.startService(new Intent(context, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds));
@@ -56,7 +61,6 @@ public class SonetWidget extends AppWidgetProvider {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		final String action = intent.getAction();
-		Log.v(TAG,"onReceive: "+action);
 		if (action.equals(ACTION_REFRESH)) {
 			int[] appWidgetIds;
 			if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) appWidgetIds = new int[]{intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)};
@@ -68,11 +72,9 @@ public class SonetWidget extends AppWidgetProvider {
 			if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) onDeleted(context, new int[]{appWidgetId});
 			else super.onReceive(context, intent);
 		} else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_READY)) {
-            if (intent.getExtras().getInt(LauncherIntent.Extra.EXTRA_API_VERSION, 1) >= 2) onAppWidgetReady(context, intent);
-		} else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_FINISH)) {
-		} else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_ITEM_CLICK)) {
-			// onItemClickListener
-			onItemClick(context, intent);
+			if (intent.getExtras().getInt(LauncherIntent.Extra.EXTRA_API_VERSION, 1) >= 2) onAppWidgetReady(context, intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
+		} else if (Sonet.ACTION_BUILD_SCROLL.equals(action)) onAppWidgetReady(context, intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
+		else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_FINISH)) {
 		} else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_VIEW_CLICK)) {
 			// onClickListener
 			onClick(context, intent);
@@ -96,16 +98,8 @@ public class SonetWidget extends AppWidgetProvider {
 		db.close();
 		sonetDatabaseHelper.close();
 	}
-	
-	public void onAppWidgetReady(Context context, Intent intent) {
-		int appWidgetId = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
-		
-		if (appWidgetId < 0) return;
-		
-		SonetWidget.buildScrollable(context, appWidgetId);
-	}
-	
-	public static void buildScrollable(Context context, int appWidgetId) {
+
+	public void onAppWidgetReady(Context context, int appWidgetId) {
 
 		String appWidgetUri = SonetProvider.CONTENT_URI.buildUpon().appendEncodedPath(Integer.toString(appWidgetId)).toString();
 		Intent replaceDummy = new Intent(LauncherIntent.Action.ACTION_SCROLL_WIDGET_START);
@@ -141,21 +135,17 @@ public class SonetWidget extends AppWidgetProvider {
 		db.close();
 		sonetDatabaseHelper.close();
 
-		Intent i= new Intent(context, SonetWidget.class)
+		Intent i= new Intent(context, this.getClass())
 		.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
 		.setData(Uri.parse(appWidgetUri))
 		.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
 		PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
-		itemViews.SetBoundOnClickIntent(R.id.item, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.SonetProviderColumns.link.ordinal());
-		itemViews.SetBoundOnClickIntent(R.id.profile, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.SonetProviderColumns.link.ordinal());
-		itemViews.SetBoundOnClickIntent(R.id.friend, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.SonetProviderColumns.link.ordinal());
-		itemViews.SetBoundOnClickIntent(R.id.created, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.SonetProviderColumns.link.ordinal());
-		itemViews.SetBoundOnClickIntent(R.id.message, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.SonetProviderColumns.link.ordinal());
+		itemViews.SetBoundOnClickIntent(R.id.item, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.SonetProviderColumns._id.ordinal());
 
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_REMOTEVIEWS, itemViews);
+		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_CHILDREN_CLICKABLE, true);
 
 		putProvider(replaceDummy, appWidgetUri);
-		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_CHILDREN_CLICKABLE, true);
 
 		context.sendBroadcast(replaceDummy);
 	}
@@ -171,7 +161,6 @@ public class SonetWidget extends AppWidgetProvider {
 		// Put the data uri in as a string. Do not use setData, Home++ does not
 		// have a filter for that
 		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_URI, widgetUri);
-		Log.d(TAG, "widgetUri pushed to Launcher : " + widgetUri);
 
 		// Other arguments for managed query
 		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_PROJECTION, SonetProvider.PROJECTION_APPWIDGETS);
@@ -180,30 +169,33 @@ public class SonetWidget extends AppWidgetProvider {
 		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SORT_ORDER, orderBy);
 	}
 
-    /**
-     * On click of a child view in an item
-     */
-    private void onClick(Context context, Intent intent) {
-            int itemPosition = intent.getIntExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, -1);
-            int viewId = intent.getIntExtra(LauncherIntent.Extra.EXTRA_VIEW_ID, -1);
+	private void onClick(Context context, Intent intent) {
 
-            int appWidgetId = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID,
-                            AppWidgetManager.INVALID_APPWIDGET_ID);
+		String rowId = intent.getStringExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS);
+		int appWidgetId = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 
-            Log.d(TAG, "appWidgetId = " + appWidgetId + " / itemPosition = " + itemPosition + " / viewId = " + viewId);
+		int service = -1;
+		String link = null;
+		Boolean hasbuttons = false;
+		SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(context);
+		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
+		Cursor settings = db.rawQuery("select " + _ID + "," + HASBUTTONS + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
+		if (settings.getCount() > 0) {
+			settings.moveToFirst();
+			hasbuttons = settings.getInt(settings.getColumnIndex(HASBUTTONS)) == 1;
+		}
+		settings.close();
+		Cursor item = db.rawQuery("select " + _ID + "," + SERVICE + "," + LINK + " from " + TABLE_STATUSES + " where " + _ID + "=" + rowId, null);
+		if (item.getCount() > 0) {
+			item.moveToFirst();
+			service = item.getInt(item.getColumnIndex(SERVICE));
+			link = item.getString(item.getColumnIndex(LINK));
+		}
+		item.close();
+		db.close();
+		sonetDatabaseHelper.close();
+		if (link != null) context.startActivity(hasbuttons ? new Intent(Intent.ACTION_VIEW, Uri.parse(link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) : new Intent(context, StatusDialog.class).setAction(appWidgetId+"`"+service+"`"+link).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 
-    }
+	}
 
-    /**
-     * On click of an item
-     */
-    private void onItemClick(Context context, Intent intent) {
-            int itemPosition = intent.getIntExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, -1);
-            int viewId = intent.getIntExtra(LauncherIntent.Extra.EXTRA_VIEW_ID, -1);
-
-            int appWidgetId = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID,
-                            AppWidgetManager.INVALID_APPWIDGET_ID);
-
-            Log.d(TAG, "appWidgetId = " + appWidgetId + " / itemPosition = " + itemPosition + " / viewId = " + viewId);
-    }
 }

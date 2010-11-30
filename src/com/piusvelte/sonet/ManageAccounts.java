@@ -19,7 +19,6 @@
  */
 package com.piusvelte.sonet;
 
-import static com.piusvelte.sonet.Sonet.TAG;
 import static com.piusvelte.sonet.SonetDatabaseHelper._ID;
 import static com.piusvelte.sonet.SonetDatabaseHelper.USERNAME;
 import static com.piusvelte.sonet.SonetDatabaseHelper.SECRET;
@@ -98,6 +97,7 @@ import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class ManageAccounts extends ListActivity implements OnClickListener, DialogInterface.OnClickListener, DialogListener, IMSSessionCallback {
+	private static final String TAG = "ManageAccounts";
 	private static final int DELETE_ID = Menu.FIRST;
 	private SonetDatabaseHelper mSonetDatabaseHelper;
 	private Facebook mFacebook;

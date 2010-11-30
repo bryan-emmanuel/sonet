@@ -19,8 +19,8 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.piusvelte.sonet" android:versionCode="78"
-	android:versionName="0.7.8" android:installLocation="auto">
+	package="com.piusvelte.sonet" android:versionCode="79"
+	android:versionName="0.7.9" android:installLocation="auto">
 	<application android:icon="@drawable/icon" android:label="@string/app_name">
 		<activity android:name=".About" android:label="@string/app_name">
 			<intent-filter>
@@ -56,9 +56,6 @@
 			<intent-filter>
 				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
 			</intent-filter>
-			<intent-filter>
-				<action android:name="com.piusvelte.sonet.Sonet.REFRESH" />
-			</intent-filter>
 			<meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_4x2" />
             <meta-data android:name="LauncherMetadata.Requirements.APIVersion" android:value="2" />
             <meta-data android:name="LauncherMetadata.Requirements.Scrollable" android:value="true" />
@@ -66,9 +63,6 @@
 		<receiver android:name=".SonetWidget_4x3" android:label="@string/sonet_4x3">
 			<intent-filter>
 				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-			</intent-filter>
-			<intent-filter>
-				<action android:name="com.piusvelte.sonet.Sonet.REFRESH" />
 			</intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_4x3" />
             <meta-data android:name="LauncherMetadata.Requirements.APIVersion" android:value="2" />
@@ -78,12 +72,17 @@
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
-			<intent-filter>
-				<action android:name="com.piusvelte.sonet.Sonet.REFRESH" />
-			</intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_4x4" />
             <meta-data android:name="LauncherMetadata.Requirements.APIVersion" android:value="2" />
             <meta-data android:name="LauncherMetadata.Requirements.Scrollable" android:value="true" />
+        </receiver>
+        <receiver android:name=".SonetWidget">
+			<intent-filter>
+				<action android:name="com.piusvelte.sonet.Sonet.REFRESH" />
+			</intent-filter>
+			<intent-filter>
+				<action android:name="com.piusvelte.sonet.Sonet.BUILD_SCROLL" />
+			</intent-filter>
         </receiver>
         <service android:name=".SonetService" />
         <provider

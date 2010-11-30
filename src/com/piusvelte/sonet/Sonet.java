@@ -1,7 +1,6 @@
 package com.piusvelte.sonet;
 
 public class Sonet {
-	public static final String TAG = "Sonet";
 	public static final int TWITTER = 0;
 	public static final int FACEBOOK = 1;
 	public static final int MYSPACE = 2;
@@ -11,4 +10,5 @@ public class Sonet {
     public static final String[] FACEBOOK_PERMISSIONS = new String[] {"offline_access"};
     public static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
     public static final String DONATE = "http://www.piusvelte.com?p=donate-sonet";
+    public static final String ACTION_BUILD_SCROLL = "com.piusvelte.sonet.Sonet.BUILD_SCROLL";
 }
