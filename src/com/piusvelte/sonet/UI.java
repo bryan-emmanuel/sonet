@@ -50,6 +50,15 @@ public class UI extends Activity implements OnClickListener {
 		((Button) findViewById(R.id.donate)).setOnClickListener(this);
 	}
 
+	@Override
+	protected void onNewIntent(Intent intent) {
+		super.onNewIntent(intent);
+		if (intent != null) {
+			Bundle extras = intent.getExtras();
+			if (extras != null) mAppWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+		}
+	}
+
 	public void onClick(View v) {
 		switch (v.getId()) {
 		case R.id.button_accounts:
