@@ -85,7 +85,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
-import android.view.KeyEvent;
+//import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -120,6 +120,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		setContentView(R.layout.accounts);
 		registerForContextMenu(getListView());
 		((Button) findViewById(R.id.button_add_account)).setOnClickListener(this);
+		Log.v(TAG,"onCreate"+mAppWidgetId);
 		mSonetDatabaseHelper = new SonetDatabaseHelper(this);
 	}
 
@@ -180,6 +181,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
+		Log.v(TAG,"onNewIntent"+mAppWidgetId);
 		Uri uri = intent.getData();
 		if (uri != null) {
 			if (TWITTER_CALLBACK.getScheme().equals(uri.getScheme())) {
@@ -247,7 +249,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 				spe.putString(getString(R.string.key_requesttoken), request_token);
 				spe.putString(getString(R.string.key_requestsecret), request_secret);
 				spe.commit();
-				startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)));
+				startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)).setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
 			} catch (Exception e) {
 				Log.e(TAG, e.getMessage());
 				Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
@@ -409,18 +411,18 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		}
 	}
 
-	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event)  {
-		if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.ECLAIR
-				&& keyCode == KeyEvent.KEYCODE_BACK
-				&& event.getRepeatCount() == 0) onBackPressed();
-		return super.onKeyDown(keyCode, event);
-	}
-
-	@Override
-	public void onBackPressed() {
-		// make sure user is sent back to UI.java instead of reopening the browser for twitter
-		startActivity(new Intent(this, UI.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
-		return;
-	}
+//	@Override
+//	public boolean onKeyDown(int keyCode, KeyEvent event)  {
+//		if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.ECLAIR
+//				&& keyCode == KeyEvent.KEYCODE_BACK
+//				&& event.getRepeatCount() == 0) onBackPressed();
+//		return super.onKeyDown(keyCode, event);
+//	}
+//
+//	@Override
+//	public void onBackPressed() {
+//		// make sure user is sent back to UI.java instead of reopening the browser for twitter
+//		startActivity(new Intent(this, UI.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
+//		return;
+//	}
 }

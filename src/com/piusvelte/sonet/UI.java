@@ -26,6 +26,7 @@ import android.appwidget.AppWidgetManager;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -48,11 +49,13 @@ public class UI extends Activity implements OnClickListener {
 			((Button) findViewById(R.id.button_settings)).setOnClickListener(this);
 		}
 		((Button) findViewById(R.id.donate)).setOnClickListener(this);
+		Log.v("UI","onCreate"+mAppWidgetId);
 	}
 
 	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
+		Log.v("UI","onNewIntent"+mAppWidgetId);
 		if (intent != null) {
 			Bundle extras = intent.getExtras();
 			if (extras != null) mAppWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
