@@ -420,7 +420,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	@Override
 	public void onBackPressed() {
 		// make sure user is sent back to UI.java instead of reopening the browser for twitter
-		startActivity(new Intent(this, UI.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
+		startActivity(new Intent(this, UI.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 		return;
 	}
 }
