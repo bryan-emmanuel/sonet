@@ -32,6 +32,10 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_WIDGETS;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TIME24HR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.FRIEND_COLOR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED_COLOR;
+import static com.piusvelte.sonet.SonetDatabaseHelper.BUTTONS_TEXTSIZE;
+import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGES_TEXTSIZE;
+import static com.piusvelte.sonet.SonetDatabaseHelper.FRIEND_TEXTSIZE;
+import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED_TEXTSIZE;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -47,15 +51,19 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 
-public class Settings extends Activity implements View.OnClickListener, DialogInterface.OnClickListener {
+public class Settings extends Activity implements View.OnClickListener {
 	private Button mInterval;
 	private CheckBox mHasButtons;
 	private Button mButtons_bg_color;
 	private Button mButtons_color;
+	private Button mButtons_textsize;
 	private Button mMessages_bg_color;
 	private Button mMessages_color;
+	private Button mMessages_textsize;
 	private Button mFriend_color;
+	private Button mFriend_textsize;
 	private Button mCreated_color;
+	private Button mCreated_textsize;
 	private CheckBox mTime24hr;
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private SonetDatabaseHelper mSonetDatabaseHelper;
@@ -72,10 +80,14 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 		mHasButtons = (CheckBox) findViewById(R.id.hasbuttons);
 		mButtons_bg_color = (Button) findViewById(R.id.buttons_bg_color);
 		mButtons_color = (Button) findViewById(R.id.buttons_color);
+		mButtons_textsize = (Button) findViewById(R.id.buttons_textsize);
 		mMessages_bg_color = (Button) findViewById(R.id.messages_bg_color);
 		mMessages_color = (Button) findViewById(R.id.messages_color);
+		mMessages_textsize = (Button) findViewById(R.id.messages_textsize);
 		mFriend_color = (Button) findViewById(R.id.friend_color);
+		mFriend_textsize = (Button) findViewById(R.id.friend_textsize);
 		mCreated_color = (Button) findViewById(R.id.created_color);
+		mCreated_textsize = (Button) findViewById(R.id.created_textsize);
 		mTime24hr = (CheckBox) findViewById(R.id.time24hr);
 		SQLiteDatabase db = mSonetDatabaseHelper.getReadableDatabase();
 		Cursor c = db.rawQuery("select " + _ID + "," + HASBUTTONS + "," + TIME24HR + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + mAppWidgetId, null);
@@ -90,10 +102,14 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 		mHasButtons.setOnCheckedChangeListener(mHasButtonsListener);
 		mButtons_bg_color.setOnClickListener(this);
 		mButtons_color.setOnClickListener(this);
+		mButtons_textsize.setOnClickListener(this);
 		mMessages_bg_color.setOnClickListener(this);
 		mMessages_color.setOnClickListener(this);
+		mMessages_textsize.setOnClickListener(this);
 		mFriend_color.setOnClickListener(this);
+		mFriend_textsize.setOnClickListener(this);
 		mCreated_color.setOnClickListener(this);
+		mCreated_textsize.setOnClickListener(this);
 		mTime24hr.setOnCheckedChangeListener(mTime24hrListener);
 	}
 	
@@ -228,7 +244,15 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 				}
 			}
 			(new AlertDialog.Builder(this))
-			.setSingleChoiceItems(R.array.interval_entries, index, this)
+			.setSingleChoiceItems(R.array.interval_entries, index, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					ContentValues values = new ContentValues();
+					values.put(INTERVAL, Integer.parseInt(getResources().getStringArray(R.array.interval_values)[which]));
+					updateDatabase(values);
+					dialog.cancel();
+				}
+			})
 			.setCancelable(true)
 			.show();
 		} else if (v == mButtons_bg_color) {
@@ -237,26 +261,106 @@ public class Settings extends Activity implements View.OnClickListener, DialogIn
 		} else if (v == mButtons_color) {
 			ColorPickerDialog cp = new ColorPickerDialog(this, mHeadTextColorListener, getValue(BUTTONS_COLOR, R.string.default_buttons_color));
 			cp.show();
+		} else if (v == mButtons_textsize) {
+			int index = 0,
+			value = getValue(BUTTONS_TEXTSIZE, R.string.default_buttons_textsize);
+			String[] values = getResources().getStringArray(R.array.textsize_values);
+			for (int i = 0; i < values.length; i++) {
+				if (Integer.parseInt(values[i]) == value) {
+					index = i;
+					break;
+				}
+			}
+			(new AlertDialog.Builder(this))
+			.setSingleChoiceItems(R.array.textsize_entries, index, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					ContentValues values = new ContentValues();
+					values.put(BUTTONS_TEXTSIZE, Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]));
+					updateDatabase(values);
+					dialog.cancel();
+				}
+			})
+			.setCancelable(true)
+			.show();
 		} else if (v == mMessages_bg_color) {
 			ColorPickerDialog cp = new ColorPickerDialog(this, mBodyBackgroundColorListener, getValue(MESSAGES_BG_COLOR, R.string.default_message_bg_color));
 			cp.show();
 		} else if (v == mMessages_color) {
 			ColorPickerDialog cp = new ColorPickerDialog(this, mBodyTextColorListener, getValue(MESSAGES_COLOR, R.string.default_message_color));
 			cp.show();
+		} else if (v == mMessages_textsize) {
+			int index = 0,
+			value = getValue(MESSAGES_TEXTSIZE, R.string.default_messages_textsize);
+			String[] values = getResources().getStringArray(R.array.textsize_values);
+			for (int i = 0; i < values.length; i++) {
+				if (Integer.parseInt(values[i]) == value) {
+					index = i;
+					break;
+				}
+			}
+			(new AlertDialog.Builder(this))
+			.setSingleChoiceItems(R.array.textsize_entries, index, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					ContentValues values = new ContentValues();
+					values.put(MESSAGES_TEXTSIZE, Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]));
+					updateDatabase(values);
+					dialog.cancel();
+				}
+			})
+			.setCancelable(true)
+			.show();			
 		} else if (v == mFriend_color) {
 			ColorPickerDialog cp = new ColorPickerDialog(this, mFriendTextColorListener, getValue(FRIEND_COLOR, R.string.default_friend_color));
 			cp.show();
+		} else if (v == mFriend_textsize) {
+			int index = 0,
+			value = getValue(FRIEND_TEXTSIZE, R.string.default_buttons_textsize);
+			String[] values = getResources().getStringArray(R.array.textsize_values);
+			for (int i = 0; i < values.length; i++) {
+				if (Integer.parseInt(values[i]) == value) {
+					index = i;
+					break;
+				}
+			}
+			(new AlertDialog.Builder(this))
+			.setSingleChoiceItems(R.array.textsize_entries, index, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					ContentValues values = new ContentValues();
+					values.put(FRIEND_TEXTSIZE, Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]));
+					updateDatabase(values);
+					dialog.cancel();
+				}
+			})
+			.setCancelable(true)
+			.show();			
 		} else if (v == mCreated_color) {
 			ColorPickerDialog cp = new ColorPickerDialog(this, mCreatedTextColorListener, getValue(CREATED_COLOR, R.string.default_created_color));
 			cp.show();
+		} else if (v == mCreated_textsize) {
+			int index = 0,
+			value = getValue(CREATED_TEXTSIZE, R.string.default_buttons_textsize);
+			String[] values = getResources().getStringArray(R.array.textsize_values);
+			for (int i = 0; i < values.length; i++) {
+				if (Integer.parseInt(values[i]) == value) {
+					index = i;
+					break;
+				}
+			}
+			(new AlertDialog.Builder(this))
+			.setSingleChoiceItems(R.array.textsize_entries, index, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					ContentValues values = new ContentValues();
+					values.put(CREATED_TEXTSIZE, Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]));
+					updateDatabase(values);
+					dialog.cancel();
+				}
+			})
+			.setCancelable(true)
+			.show();			
 		}
-	}
-
-	@Override
-	public void onClick(DialogInterface dialog, int which) {
-		ContentValues values = new ContentValues();
-		values.put(INTERVAL, Integer.parseInt(getResources().getStringArray(R.array.interval_values)[which]));
-		updateDatabase(values);
-		dialog.cancel();
 	}
 }

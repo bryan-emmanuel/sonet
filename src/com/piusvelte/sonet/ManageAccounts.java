@@ -70,7 +70,7 @@ import oauth.signpost.signature.SignatureMethod;
 import twitter4j.TwitterFactory;
 import twitter4j.http.AccessToken;
 
-import android.app.Activity;
+//import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.appwidget.AppWidgetManager;
@@ -116,11 +116,10 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		super.onCreate(savedInstanceState);
 		Intent i = getIntent();
 		if ((i != null) && i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
-		setResult(Activity.RESULT_OK, (new Intent()).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
+//		setResult(Activity.RESULT_OK, (new Intent()).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 		setContentView(R.layout.accounts);
 		registerForContextMenu(getListView());
 		((Button) findViewById(R.id.button_add_account)).setOnClickListener(this);
-		Log.v(TAG,"onCreate"+mAppWidgetId);
 		mSonetDatabaseHelper = new SonetDatabaseHelper(this);
 	}
 
@@ -181,7 +180,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
-		Log.v(TAG,"onNewIntent"+mAppWidgetId);
 		Uri uri = intent.getData();
 		if (uri != null) {
 			if (TWITTER_CALLBACK.getScheme().equals(uri.getScheme())) {
@@ -267,7 +265,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			startActivity(new Intent(this, MSLoginActivity.class));
 			break;
 		}
-
 	}
 
 	private void listAccounts() {

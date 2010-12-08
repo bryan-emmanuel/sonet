@@ -44,18 +44,17 @@ public class UI extends Activity implements OnClickListener {
 		}
 		setResult(Activity.RESULT_OK, new Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 		setContentView(R.layout.main);
+		Log.v("UI","id:"+mAppWidgetId);
 		if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
 			((Button) findViewById(R.id.button_accounts)).setOnClickListener(this);
 			((Button) findViewById(R.id.button_settings)).setOnClickListener(this);
 		}
 		((Button) findViewById(R.id.donate)).setOnClickListener(this);
-		Log.v("UI","onCreate"+mAppWidgetId);
 	}
 
 	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
-		Log.v("UI","onNewIntent"+mAppWidgetId);
 		if (intent != null) {
 			Bundle extras = intent.getExtras();
 			if (extras != null) mAppWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);

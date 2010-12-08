@@ -33,6 +33,9 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.HASBUTTONS;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_STATUSES;
 import static com.piusvelte.sonet.SonetDatabaseHelper.LINK;
 import static com.piusvelte.sonet.SonetDatabaseHelper.SERVICE;
+import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGES_TEXTSIZE;
+import static com.piusvelte.sonet.SonetDatabaseHelper.FRIEND_TEXTSIZE;
+import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED_TEXTSIZE;
 import mobi.intuitit.android.content.LauncherIntent;
 import mobi.intuitit.android.widget.BoundRemoteViews;
 import mobi.intuitit.android.widget.SimpleRemoteViews;
@@ -120,12 +123,15 @@ public class SonetWidget extends AppWidgetProvider {
 		// pull settings to style the list
 		SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(context);
 		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
-		Cursor settings = db.rawQuery("select " + _ID + "," + MESSAGES_COLOR + "," + FRIEND_COLOR + "," + CREATED_COLOR + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
+		Cursor settings = db.rawQuery("select " + _ID + "," + MESSAGES_COLOR + "," + FRIEND_COLOR + "," + CREATED_COLOR + "," + FRIEND_TEXTSIZE + "," + CREATED_TEXTSIZE + "," + MESSAGES_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
 		if (settings.getCount() > 0) {
 			settings.moveToFirst();
 			itemViews.setTextColor(R.id.friend, settings.getInt(settings.getColumnIndex(FRIEND_COLOR)));
+			itemViews.setFloat(R.id.friend, "setTextSize", settings.getInt(settings.getColumnIndex(FRIEND_TEXTSIZE)));
 			itemViews.setTextColor(R.id.created, settings.getInt(settings.getColumnIndex(CREATED_COLOR)));
+			itemViews.setFloat(R.id.created, "setTextSize", settings.getInt(settings.getColumnIndex(CREATED_TEXTSIZE)));
 			itemViews.setTextColor(R.id.message, settings.getInt(settings.getColumnIndex(MESSAGES_COLOR)));
+			itemViews.setFloat(R.id.message, "setTextSize", settings.getInt(settings.getColumnIndex(MESSAGES_TEXTSIZE)));
 			// prevent SonetService from replacing the view with the non-scrolling layout
 			ContentValues values = new ContentValues();
 			values.put(SCROLLABLE, 1);

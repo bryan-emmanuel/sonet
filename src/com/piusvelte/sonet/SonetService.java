@@ -46,6 +46,10 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.PROFILE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.LINK;
 import static com.piusvelte.sonet.SonetDatabaseHelper.SCROLLABLE;
+import static com.piusvelte.sonet.SonetDatabaseHelper.BUTTONS_TEXTSIZE;
+import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGES_TEXTSIZE;
+import static com.piusvelte.sonet.SonetDatabaseHelper.FRIEND_TEXTSIZE;
+import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED_TEXTSIZE;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
@@ -109,8 +113,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Bitmap.Config;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -128,7 +130,10 @@ public class SonetService extends Service implements Runnable {
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
 		if (intent != null) {
-			if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH))) SonetService.updateWidgets(new int[]{Integer.parseInt(intent.getAction())});
+			if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH))) {
+				Log.v(TAG,"action:"+intent.getAction());
+				SonetService.updateWidgets(new int[]{Integer.parseInt(intent.getAction())});
+			}
 			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
 			else SonetService.updateWidgets(getAppWidgetIds());
 		} else  SonetService.updateWidgets(getAppWidgetIds());
@@ -403,6 +408,7 @@ public class SonetService extends Service implements Runnable {
 
 	@Override
 	public void run() {
+		Log.v(TAG,"run");
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 		SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
 		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
@@ -418,12 +424,31 @@ public class SonetService extends Service implements Runnable {
 		messages_bg_color,
 		messages_color,
 		friend_color,
-		created_color;
+		created_color,
+		buttons_textsize,
+		messages_textsize,
+		friend_textsize,
+		created_textsize;
 		SharedPreferences sp = null;
 		while (updatesQueued()) {
 			int appWidgetId = getNextUpdate();
 			alarmManager.cancel(PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
-			Cursor settings = db.rawQuery("select " + _ID + "," + INTERVAL + "," + HASBUTTONS + ","	+ BUTTONS_BG_COLOR + "," + BUTTONS_COLOR + "," + MESSAGES_BG_COLOR + "," + MESSAGES_COLOR + "," + FRIEND_COLOR + "," + CREATED_COLOR + "," + TIME24HR + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
+			Cursor settings = db.rawQuery("select "
+					+ _ID + ","
+					+ INTERVAL + ","
+					+ HASBUTTONS + ","
+					+ BUTTONS_BG_COLOR + ","
+					+ BUTTONS_COLOR + ","
+					+ MESSAGES_BG_COLOR + ","
+					+ MESSAGES_COLOR + ","
+					+ FRIEND_COLOR + ","
+					+ CREATED_COLOR + ","
+					+ TIME24HR + ","
+					+ BUTTONS_TEXTSIZE + ","
+					+ MESSAGES_TEXTSIZE + ","
+					+ FRIEND_TEXTSIZE + ","
+					+ CREATED_TEXTSIZE
+					+ " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
 			if (settings.getCount() > 0) {
 				settings.moveToFirst();
 				interval = settings.getInt(settings.getColumnIndex(INTERVAL));
@@ -435,6 +460,10 @@ public class SonetService extends Service implements Runnable {
 				friend_color = settings.getInt(settings.getColumnIndex(FRIEND_COLOR));
 				created_color = settings.getInt(settings.getColumnIndex(CREATED_COLOR));
 				time24hr = settings.getInt(settings.getColumnIndex(TIME24HR)) == 1;
+				buttons_textsize = settings.getInt(settings.getColumnIndex(BUTTONS_TEXTSIZE));
+				messages_textsize = settings.getInt(settings.getColumnIndex(MESSAGES_TEXTSIZE));
+				friend_textsize = settings.getInt(settings.getColumnIndex(FRIEND_TEXTSIZE));
+				created_textsize = settings.getInt(settings.getColumnIndex(CREATED_TEXTSIZE));
 			} else {
 				// upgrade, moving settings from sharedpreferences to db
 				if (sp == null) sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
@@ -447,6 +476,10 @@ public class SonetService extends Service implements Runnable {
 				friend_color = Integer.parseInt(sp.getString(getString(R.string.key_friend_text), getString(R.string.default_friend_color)));
 				created_color = Integer.parseInt(sp.getString(getString(R.string.key_created_text), getString(R.string.default_created_color)));
 				time24hr = sp.getBoolean(getString(R.string.key_time_12_24), false);
+				buttons_textsize = Integer.parseInt(sp.getString(getString(R.string.key_buttons_textsize), getString(R.string.default_buttons_textsize)));
+				messages_textsize = Integer.parseInt(sp.getString(getString(R.string.key_messages_textsize), getString(R.string.default_messages_textsize)));
+				friend_textsize = Integer.parseInt(sp.getString(getString(R.string.key_friend_textsize), getString(R.string.default_friend_textsize)));
+				created_textsize = Integer.parseInt(sp.getString(getString(R.string.key_created_textsize), getString(R.string.default_created_textsize)));
 				ContentValues values = new ContentValues();
 				values.put(INTERVAL, interval);
 				values.put(HASBUTTONS, hasbuttons);
@@ -457,6 +490,10 @@ public class SonetService extends Service implements Runnable {
 				values.put(FRIEND_COLOR, friend_color);
 				values.put(CREATED_COLOR, created_color);
 				values.put(TIME24HR, time24hr);
+				values.put(BUTTONS_TEXTSIZE, buttons_textsize);
+				values.put(MESSAGES_TEXTSIZE, messages_textsize);
+				values.put(FRIEND_TEXTSIZE, friend_textsize);
+				values.put(CREATED_TEXTSIZE, created_textsize);
 				values.put(WIDGET, appWidgetId);
 				db.insert(TABLE_WIDGETS, _ID, values);
 			}
@@ -542,9 +579,6 @@ public class SonetService extends Service implements Runnable {
 			settings.close();
 			// Push update for this widget to the home screen
 			// set messages background
-			Bitmap messages_bg = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-			Canvas messages_bg_canvas = new Canvas(messages_bg);
-			messages_bg_canvas.drawColor(messages_bg_color);
 			int[] map_item = {R.id.item0, R.id.item1, R.id.item2, R.id.item3, R.id.item4, R.id.item5, R.id.item6},
 			map_profile = {R.id.profile0, R.id.profile1, R.id.profile2, R.id.profile3, R.id.profile4, R.id.profile5, R.id.profile6},
 			map_message = {R.id.message0, R.id.message1, R.id.message2, R.id.message3, R.id.message4, R.id.message5, R.id.message6},
@@ -552,32 +586,35 @@ public class SonetService extends Service implements Runnable {
 			map_created = {R.id.created0, R.id.created1, R.id.created2, R.id.created3, R.id.created4, R.id.created5, R.id.created6};
 			RemoteViews views = new RemoteViews(getPackageName(), hasbuttons ? R.layout.widget : R.layout.widget_nobuttons);
 			if (hasbuttons) {
-				Bitmap buttons_bg = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-				Canvas buttons_bg_canvas = new Canvas(buttons_bg);
-				buttons_bg_canvas.drawColor(buttons_bg_color);
-				views.setImageViewBitmap(R.id.buttons_bg, buttons_bg);
+				views.setInt(R.id.buttons_bg, "setBackgroundColor", buttons_bg_color);
 				views.setTextColor(R.id.head_spacer, buttons_bg_color);
 				views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, new Intent(this, PostDialog.class), 0));
 				views.setTextColor(R.id.button_post, buttons_color);
+				views.setFloat(R.id.button_post, "setTextSize", buttons_textsize);
 				views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, new Intent(this, UI.class).setAction(Integer.toString(appWidgetId)), 0));
-				views.setTextColor(R.id.button_post, buttons_color);
+				views.setTextColor(R.id.button_configure, buttons_color);
+				views.setFloat(R.id.button_configure, "setTextSize", buttons_textsize);
 				views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
-				views.setTextColor(R.id.button_post, buttons_color);
+				views.setTextColor(R.id.button_refresh, buttons_color);
+				views.setFloat(R.id.button_refresh, "setTextSize", buttons_textsize);
 			}
-			views.setImageViewBitmap(R.id.messages_bg, messages_bg);
+			views.setInt(R.id.messages_bg, "setBackgroundColor", messages_bg_color);
 			int count_status = 0;
 			for  (StatusItem item : statuses) {
 				if (!scrollable && (count_status < map_item.length)) {
 					views.setTextViewText(map_message[count_status], item.message);
 					views.setTextColor(map_message[count_status], messages_color);
+					views.setFloat(map_message[count_status], "setTextSize", messages_textsize);
 					if (item.friend != null) {
 						// if no buttons, use StatusDialog.java with options for Config and Refresh
 						if (hasbuttons) views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(Intent.ACTION_VIEW, Uri.parse(item.link)), 0));
 						else views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(this, StatusDialog.class).setAction(appWidgetId+"`"+item.service+"`"+item.link), 0));
 						views.setTextViewText(map_screenname[count_status], item.friend);
 						views.setTextColor(map_screenname[count_status], friend_color);
+						views.setFloat(map_screenname[count_status], "setTextSize", friend_textsize);
 						views.setTextViewText(map_created[count_status], item.createdText);
 						views.setTextColor(map_created[count_status], created_color);
+						views.setFloat(map_created[count_status], "setTextSize", created_textsize);
 						views.setImageViewBitmap(map_profile[count_status], BitmapFactory.decodeByteArray(item.profile, 0, item.profile.length));						
 					}
 					count_status++;
@@ -596,6 +633,7 @@ public class SonetService extends Service implements Runnable {
 					db.insert(TABLE_STATUSES, _ID, values);
 				}
 			}
+			Log.v(TAG,"updateAppWidget");
 			appWidgetManager.updateAppWidget(appWidgetId, views);
 			if (scrollable) sendBroadcast(new Intent(this, SonetWidget.class).setAction(ACTION_BUILD_SCROLL).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)); // replace with scrollable widget
 			if (hasAccount && (interval > 0)) alarmManager.set(AlarmManager.RTC, System.currentTimeMillis() + interval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));

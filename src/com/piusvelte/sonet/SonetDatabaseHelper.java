@@ -25,7 +25,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class SonetDatabaseHelper extends SQLiteOpenHelper {
 	private static final String DATABASE_NAME = "sonet.db";
-	private static final int DATABASE_VERSION = 5;
+	private static final int DATABASE_VERSION = 6;
 	public static final String TABLE_ACCOUNTS = "accounts";
 	public static final String _ID = "_id";
 	public static final String USERNAME = "username";
@@ -53,6 +53,10 @@ public class SonetDatabaseHelper extends SQLiteOpenHelper {
 	public static final String MESSAGE = "message";
 	public static final String CREATEDTEXT = "createdText";
 	public static final String SCROLLABLE = "scrollable";
+	public static final String BUTTONS_TEXTSIZE = "buttons_textsize";
+	public static final String MESSAGES_TEXTSIZE = "messages_textsize";
+	public static final String FRIEND_TEXTSIZE = "friend_textsize";
+	public static final String CREATED_TEXTSIZE = "created_textsize";
 	
 	public SonetDatabaseHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -81,7 +85,11 @@ public class SonetDatabaseHelper extends SQLiteOpenHelper {
 				+ MESSAGES_BG_COLOR + " integer, "
 				+ MESSAGES_COLOR + " integer, "
 				+ TIME24HR + " integer, "
-				+ SCROLLABLE + " integer);");
+				+ SCROLLABLE + " integer, "
+				+ BUTTONS_TEXTSIZE + " integer, "
+				+ MESSAGES_TEXTSIZE + " integer, "
+				+ FRIEND_TEXTSIZE + " integer, "
+				+ CREATED_TEXTSIZE + " integer);");
 		db.execSQL("create table if not exists " + TABLE_STATUSES
 				+ " (" + _ID + " integer primary key autoincrement, "
 				+ CREATED + " integer, "
@@ -199,6 +207,61 @@ public class SonetDatabaseHelper extends SQLiteOpenHelper {
 					+ MESSAGES_BG_COLOR + ","
 					+ MESSAGES_COLOR + ","
 					+ TIME24HR + ",0 from " + TABLE_WIDGETS + "_bkp;");
+			db.execSQL("drop table if exists " + TABLE_WIDGETS + "_bkp;");
+		}
+		if (oldVersion < 6) {
+			// add columns for textsize
+			db.execSQL("drop table if exists " + TABLE_WIDGETS + "_bkp;");
+			db.execSQL("create temp table " + TABLE_WIDGETS + "_bkp as select * from " + TABLE_WIDGETS + ";");
+			db.execSQL("drop table if exists " + TABLE_WIDGETS + ";");
+			db.execSQL("create table if not exists " + TABLE_WIDGETS
+					+ " (" + _ID + " integer primary key autoincrement, "
+					+ WIDGET + " integer, "
+					+ INTERVAL + " integer, "
+					+ HASBUTTONS + " integer, "
+					+ BUTTONS_BG_COLOR + " integer, "
+					+ BUTTONS_COLOR + " integer, "
+					+ FRIEND_COLOR + " integer, "
+					+ CREATED_COLOR + " integer, "
+					+ MESSAGES_BG_COLOR + " integer, "
+					+ MESSAGES_COLOR + " integer, "
+					+ TIME24HR + " integer, "
+					+ SCROLLABLE + " integer, "
+					+ BUTTONS_TEXTSIZE + " integer, "
+					+ MESSAGES_TEXTSIZE + " integer, "
+					+ FRIEND_TEXTSIZE + " integer, "
+					+ CREATED_TEXTSIZE + " integer);");
+			db.execSQL("create table if not exists " + TABLE_WIDGETS
+					+ " (" + _ID + " integer primary key autoincrement, "
+					+ WIDGET + " integer, "
+					+ INTERVAL + " integer, "
+					+ HASBUTTONS + " integer, "
+					+ BUTTONS_BG_COLOR + " integer, "
+					+ BUTTONS_COLOR + " integer, "
+					+ FRIEND_COLOR + " integer, "
+					+ CREATED_COLOR + " integer, "
+					+ MESSAGES_BG_COLOR + " integer, "
+					+ MESSAGES_COLOR + " integer, "
+					+ TIME24HR + " integer, "
+					+ SCROLLABLE + " integer, "
+					+ BUTTONS_TEXTSIZE + " integer, "
+					+ MESSAGES_TEXTSIZE + " integer, "
+					+ FRIEND_TEXTSIZE + " integer, "
+					+ CREATED_TEXTSIZE + " integer);");
+			db.execSQL("insert into " + TABLE_WIDGETS
+					+ " select "
+					+ _ID + ","
+					+ WIDGET + ","
+					+ INTERVAL + ","
+					+ HASBUTTONS + ","
+					+ BUTTONS_BG_COLOR + ","
+					+ BUTTONS_COLOR + ","
+					+ FRIEND_COLOR + ","
+					+ CREATED_COLOR + ","
+					+ MESSAGES_BG_COLOR + ","
+					+ MESSAGES_COLOR + ","
+					+ TIME24HR + ","
+					+ SCROLLABLE + ",12,12,12,12 from " + TABLE_WIDGETS + "_bkp;");
 			db.execSQL("drop table if exists " + TABLE_WIDGETS + "_bkp;");
 		}
 	}

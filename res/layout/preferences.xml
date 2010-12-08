@@ -34,13 +34,21 @@
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<Button android:id="@+id/buttons_color" android:text="@string/buttons_color"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/buttons_textsize" android:text="@string/buttons_textsize"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<Button android:id="@+id/messages_bg_color" android:text="@string/message_bg_color"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<Button android:id="@+id/messages_color" android:text="@string/message_color"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/messages_textsize" android:text="@string/messages_textsize"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<Button android:id="@+id/friend_color" android:text="@string/friend_color"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/friend_textsize" android:text="@string/friend_textsize"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<Button android:id="@+id/created_color" android:text="@string/created_color"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/created_textsize" android:text="@string/created_textsize"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<CheckBox android:id="@+id/time24hr" android:text="@string/time24hr"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
