@@ -23,7 +23,7 @@
     <string name="sonet_4x2">Sonet 4x2</string>
     <string name="sonet_4x3">Sonet 4x3</string>
     <string name="sonet_4x4">Sonet 4x4</string>
-    <string name="user_agent">"%s/%s (Linux; Android)"</string>
+    <string name="user_agent" formatted="false">"%s/%s (Linux; Android)"</string>
     <string name="loading">Loading...</string>
     <string name="no_connection">No connection</string>
     <string name="settings">Settings</string>
