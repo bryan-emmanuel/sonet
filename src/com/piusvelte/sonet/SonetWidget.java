@@ -97,6 +97,7 @@ public class SonetWidget extends AppWidgetProvider {
 			alarmManager.cancel(PendingIntent.getService(context, 0, new Intent(context, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
 			db.delete(TABLE_WIDGETS, WIDGET + "=" + appWidgetId, null);
 			db.delete(TABLE_ACCOUNTS, WIDGET + "=" + appWidgetId, null);
+			db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null);
 		}
 		db.close();
 		sonetDatabaseHelper.close();

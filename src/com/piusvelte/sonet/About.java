@@ -22,6 +22,7 @@ package com.piusvelte.sonet;
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.DONATE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
+import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_STATUSES;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_WIDGETS;
 import static com.piusvelte.sonet.SonetDatabaseHelper.WIDGET;
 import static com.piusvelte.sonet.SonetDatabaseHelper._ID;
@@ -30,6 +31,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
+import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -50,12 +52,16 @@ public class About extends Activity implements View.OnClickListener, DialogInter
 		((Button) findViewById(R.id.refreshall)).setOnClickListener(this);
 		((Button) findViewById(R.id.donate)).setOnClickListener(this);
 	}
-	
+
 	@Override
 	public void onClick(View v) {
 		switch (v.getId()) {
 		case R.id.widgets:
+			int[] appWidgetIds = new int[0];
+			// validate appwidgetids from appwidgetmanager
 			AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
+			int[] appWidgetManagerAppWidgetIds = arrayCat(arrayCat(appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x2.class)), appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x3.class))), appWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x4.class)));
+			int[] removeAppWidgets = new int[0];
 			SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
 			SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
 			db.delete(TABLE_WIDGETS, WIDGET + "=\"\"", null);
@@ -63,23 +69,24 @@ public class About extends Activity implements View.OnClickListener, DialogInter
 			Cursor accounts = db.rawQuery("select " + _ID + "," + WIDGET + " from " + TABLE_ACCOUNTS, null);
 			if (accounts.getCount() > 0) {
 				accounts.moveToFirst();
-				mAppWidgetIds = new int[accounts.getCount()];
 				int iwidget = accounts.getColumnIndex(WIDGET),
-				counter = 0;
+				appWidgetId;
 				while (!accounts.isAfterLast()) {
-					mAppWidgetIds[counter] = accounts.getInt(iwidget);
-					counter++;
+					appWidgetId = accounts.getInt(iwidget);
+					if (arrayContains(appWidgetManagerAppWidgetIds, appWidgetId)) appWidgetIds = arrayPush(appWidgetIds, appWidgetId);
+					else removeAppWidgets = arrayPush(removeAppWidgets, appWidgetId);
 					accounts.moveToNext();
 				}
-			} else mAppWidgetIds = new int[0];
-			// delete records without accounts
-			String delete_widgets = "";
-			for (int appWidgetId : mAppWidgetIds) {
-				if (delete_widgets.length() > 0) delete_widgets += " and ";
-				delete_widgets += WIDGET + "!=" + Integer.toString(appWidgetId);
 			}
-			if (delete_widgets.length() > 0) db.delete(TABLE_WIDGETS, delete_widgets, null);
 			accounts.close();
+			if (removeAppWidgets.length > 0) {
+				// remove phantom widgets
+				for (int appWidgetId : removeAppWidgets) {
+					db.delete(TABLE_WIDGETS, WIDGET + "=" + appWidgetId, null);
+					db.delete(TABLE_ACCOUNTS, WIDGET + "=" + appWidgetId, null);
+					db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null);
+				}
+			}
 			db.close();
 			sonetDatabaseHelper.close();
 			String[] widgets = new String[mAppWidgetIds.length];
@@ -101,7 +108,39 @@ public class About extends Activity implements View.OnClickListener, DialogInter
 			break;
 		}
 	}
-	
+
+	private int[] arrayCat(int[] a, int[] b) {
+		int[] c;
+		for (int i = 0; i < b.length; i++) {
+			c = new int[a.length];
+			for (int n = 0; n < c.length; n++) c[n] = a[n];
+			a = new int[c.length + 1];
+			for (int n = 0; n < c.length; n++) a[n] = c[n];
+			a[c.length] = b[i];
+		}
+		return a;
+	}
+
+	private int[] arrayPush(int[] a, int b) {
+		int[] c = new int[a.length];
+		for (int i = 0; i < a.length; i++) c[i] = a[i];
+		a = new int[c.length + 1];
+		for (int i = 0; i < c.length; i++) a[i] = c[i];
+		a[a.length - 1] = b;
+		return a;
+	}
+
+	private boolean arrayContains(int[] a, int b) {
+		boolean contains = false;
+		for (int c : a) {
+			if (c == b) {
+				contains = true;
+				break;
+			}
+		}
+		return contains;
+	}
+
 	@Override
 	public void onClick(DialogInterface dialog, int which) {
 		startActivity(new Intent(this, UI.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[which]));

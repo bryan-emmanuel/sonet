@@ -104,6 +104,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -132,9 +133,9 @@ public class SonetService extends Service implements Runnable {
 		if (intent != null) {
 			if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH))) {
 				Log.v(TAG,"action:"+intent.getAction());
-				SonetService.updateWidgets(new int[]{Integer.parseInt(intent.getAction())});
+				SonetService.updateWidgets(validateWidgetUpdate(new int[] {Integer.parseInt(intent.getAction())}));
 			}
-			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
+			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(validateWidgetUpdate(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)));
 			else SonetService.updateWidgets(getAppWidgetIds());
 		} else  SonetService.updateWidgets(getAppWidgetIds());
 		synchronized (sLock) {
@@ -142,26 +143,95 @@ public class SonetService extends Service implements Runnable {
 		}
 	}
 
+	private int[] arrayCat(int[] a, int[] b) {
+		int[] c;
+		for (int i = 0; i < b.length; i++) {
+			c = new int[a.length];
+			for (int n = 0; n < c.length; n++) c[n] = a[n];
+			a = new int[c.length + 1];
+			for (int n = 0; n < c.length; n++) a[n] = c[n];
+			a[c.length] = b[i];
+		}
+		return a;
+	}
+
+	private int[] arrayPush(int[] a, int b) {
+		int[] c = new int[a.length];
+		for (int i = 0; i < a.length; i++) c[i] = a[i];
+		a = new int[c.length + 1];
+		for (int i = 0; i < c.length; i++) a[i] = c[i];
+		a[a.length - 1] = b;
+		return a;
+	}
+
+	private boolean arrayContains(int[] a, int b) {
+		boolean contains = false;
+		for (int c : a) {
+			if (c == b) {
+				contains = true;
+				break;
+			}
+		}
+		return contains;
+	}
+
 	private int[] getAppWidgetIds() {
-		int[] appWidgetIds = null;
+		int[] appWidgetIds = new int[0];
+		// validate appwidgetids from appwidgetmanager
+		AppWidgetManager manager = AppWidgetManager.getInstance(this);
+		int[] appWidgetManagerAppWidgetIds = arrayCat(arrayCat(manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x2.class)), manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x3.class))), manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x4.class)));
+		int[] removeAppWidgets = new int[0];
 		SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
 		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
 		Cursor accounts = db.rawQuery("select " + _ID + "," + WIDGET + " from " + TABLE_ACCOUNTS, null);
 		if (accounts.getCount() > 0) {
 			accounts.moveToFirst();
-			appWidgetIds = new int[accounts.getCount()];
 			int iwidget = accounts.getColumnIndex(WIDGET),
-			counter = 0;
+			appWidgetId;
 			while (!accounts.isAfterLast()) {
-				appWidgetIds[counter] = accounts.getInt(iwidget);
-				counter++;
+				appWidgetId = accounts.getInt(iwidget);
+				if (arrayContains(appWidgetManagerAppWidgetIds, appWidgetId)) appWidgetIds = arrayPush(appWidgetIds, appWidgetId);
+				else removeAppWidgets = arrayPush(removeAppWidgets, appWidgetId);
 				accounts.moveToNext();
 			}
-		} else appWidgetIds = new int[0];
+		}
 		accounts.close();
+		if (removeAppWidgets.length > 0) {
+			// remove phantom widgets
+			for (int appWidgetId : removeAppWidgets) {
+				db.delete(TABLE_WIDGETS, WIDGET + "=" + appWidgetId, null);
+				db.delete(TABLE_ACCOUNTS, WIDGET + "=" + appWidgetId, null);
+				db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null);
+			}
+		}
 		db.close();
 		sonetDatabaseHelper.close();
 		return appWidgetIds;
+	}
+	
+	private int[] validateWidgetUpdate(int[] appWidgetIds) {
+		// validate appwidgetids from appwidgetmanager
+		AppWidgetManager manager = AppWidgetManager.getInstance(this);
+		int[] appWidgetManagerAppWidgetIds = arrayCat(arrayCat(manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x2.class)), manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x3.class))), manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x4.class)));
+		int[] validAppWidgets = new int[0];
+		int[] removeAppWidgets = new int[0];
+		for (int appWidgetId : appWidgetIds) {
+			if (arrayContains(appWidgetManagerAppWidgetIds, appWidgetId)) validAppWidgets = arrayPush(validAppWidgets, appWidgetId);
+			else removeAppWidgets = arrayPush(removeAppWidgets, appWidgetId);
+		}
+		if (removeAppWidgets.length > 0) {
+			// remove phantom widgets
+			SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
+			SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
+			for (int appWidgetId : removeAppWidgets) {
+				db.delete(TABLE_WIDGETS, WIDGET + "=" + appWidgetId, null);
+				db.delete(TABLE_ACCOUNTS, WIDGET + "=" + appWidgetId, null);
+				db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null);
+			}
+			db.close();
+			sonetDatabaseHelper.close();
+		}
+		return validAppWidgets;
 	}
 
 	@Override
