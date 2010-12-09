@@ -116,11 +116,12 @@ public class SonetWidget extends AppWidgetProvider {
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_REMOTEVIEWS, listView);
 
 		BoundRemoteViews itemViews = new BoundRemoteViews(R.layout.widget_item);
+
 		itemViews.setBoundBitmap(R.id.profile, "setImageBitmap", SonetProvider.SonetProviderColumns.profile.ordinal(), 0);
 		itemViews.setBoundCharSequence(R.id.friend, "setText", SonetProvider.SonetProviderColumns.friend.ordinal(), 0);
 		itemViews.setBoundCharSequence(R.id.created, "setText", SonetProvider.SonetProviderColumns.createdtext.ordinal(), 0);
 		itemViews.setBoundCharSequence(R.id.message, "setText", SonetProvider.SonetProviderColumns.message.ordinal(), 0);
-
+		
 		// pull settings to style the list
 		SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(context);
 		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
@@ -128,10 +129,10 @@ public class SonetWidget extends AppWidgetProvider {
 		if (settings.getCount() > 0) {
 			settings.moveToFirst();
 			itemViews.setTextColor(R.id.friend, settings.getInt(settings.getColumnIndex(FRIEND_COLOR)));
-			itemViews.setFloat(R.id.friend, "setTextSize", settings.getInt(settings.getColumnIndex(FRIEND_TEXTSIZE)));
 			itemViews.setTextColor(R.id.created, settings.getInt(settings.getColumnIndex(CREATED_COLOR)));
-			itemViews.setFloat(R.id.created, "setTextSize", settings.getInt(settings.getColumnIndex(CREATED_TEXTSIZE)));
 			itemViews.setTextColor(R.id.message, settings.getInt(settings.getColumnIndex(MESSAGES_COLOR)));
+			itemViews.setFloat(R.id.friend, "setTextSize", settings.getInt(settings.getColumnIndex(FRIEND_TEXTSIZE)));
+			itemViews.setFloat(R.id.created, "setTextSize", settings.getInt(settings.getColumnIndex(CREATED_TEXTSIZE)));
 			itemViews.setFloat(R.id.message, "setTextSize", settings.getInt(settings.getColumnIndex(MESSAGES_TEXTSIZE)));
 			// prevent SonetService from replacing the view with the non-scrolling layout
 			ContentValues values = new ContentValues();

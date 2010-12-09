@@ -261,7 +261,7 @@ public class SonetDatabaseHelper extends SQLiteOpenHelper {
 					+ MESSAGES_BG_COLOR + ","
 					+ MESSAGES_COLOR + ","
 					+ TIME24HR + ","
-					+ SCROLLABLE + ",12,12,12,12 from " + TABLE_WIDGETS + "_bkp;");
+					+ SCROLLABLE + ",14,14,14,14 from " + TABLE_WIDGETS + "_bkp;");
 			db.execSQL("drop table if exists " + TABLE_WIDGETS + "_bkp;");
 		}
 	}

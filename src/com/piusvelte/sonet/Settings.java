@@ -67,6 +67,7 @@ public class Settings extends Activity implements View.OnClickListener {
 	private CheckBox mTime24hr;
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private SonetDatabaseHelper mSonetDatabaseHelper;
+	private boolean mUpdateWidget = false;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -74,7 +75,6 @@ public class Settings extends Activity implements View.OnClickListener {
 		setContentView(R.layout.preferences);
 		Intent i = getIntent();
 		if (i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
-        setResult(Activity.RESULT_OK, (new Intent()).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 		mSonetDatabaseHelper = new SonetDatabaseHelper(this);
 		mInterval = (Button) findViewById(R.id.interval);
 		mHasButtons = (CheckBox) findViewById(R.id.hasbuttons);
@@ -112,17 +112,18 @@ public class Settings extends Activity implements View.OnClickListener {
 		mCreated_textsize.setOnClickListener(this);
 		mTime24hr.setOnCheckedChangeListener(mTime24hrListener);
 	}
-	
+
 	@Override
 	protected void onPause() {
 		super.onPause();
-		startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
+		if (mUpdateWidget) startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
 	}
 
 	private void updateDatabase(ContentValues values) {
 		SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
 		db.update(TABLE_WIDGETS, values, WIDGET + "=" + mAppWidgetId, null);
-		db.close();		
+		db.close();
+		mUpdateWidget = true;
 	}
 	
 	private int getValue(String column, int default_value) {

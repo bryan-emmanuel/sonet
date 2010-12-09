@@ -107,6 +107,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	private String request_token,
 	request_secret;
 	private MSSession mMSSession;
+	private boolean mUpdateWidget = false;
 
 	private static Uri TWITTER_CALLBACK = Uri.parse("sonet://twitter");
 	private static String MYSPACE_CALLBACK = "sonet://myspace";
@@ -116,7 +117,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		super.onCreate(savedInstanceState);
 		Intent i = getIntent();
 		if ((i != null) && i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
-//		setResult(Activity.RESULT_OK, (new Intent()).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 		setContentView(R.layout.accounts);
 		registerForContextMenu(getListView());
 		((Button) findViewById(R.id.button_add_account)).setOnClickListener(this);
@@ -148,6 +148,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
 			db.delete(TABLE_ACCOUNTS, _ID + "=" + (int) ((AdapterContextMenuInfo) item.getMenuInfo()).id, null);
 			db.close();
+			mUpdateWidget = true;
 			listAccounts();
 		}
 		return super.onContextItemSelected(item);
@@ -174,7 +175,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	@Override
 	protected void onPause() {
 		super.onPause();
-		startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
+		if (mUpdateWidget) startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
 	}
 
 	@Override
@@ -216,6 +217,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 					SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
 					db.insert(TABLE_ACCOUNTS, USERNAME, values);
 					db.close();
+					mUpdateWidget = true;
 					listAccounts();
 				} catch (Exception e) {
 					Log.e(TAG, e.getMessage());
@@ -300,6 +302,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 					db.close();
 					ManageAccounts.this.runOnUiThread(new Runnable() {
 						public void run() {
+							mUpdateWidget = true;
 							listAccounts();
 						}
 					});
@@ -368,6 +371,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 				SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
 				db.update(TABLE_ACCOUNTS, values, _ID + "=" + id, null);
 				db.close();
+				mUpdateWidget = true;
 				listAccounts();
 				dialog.cancel();
 			}

@@ -104,7 +104,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -113,7 +112,9 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -131,11 +132,8 @@ public class SonetService extends Service implements Runnable {
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
 		if (intent != null) {
-			if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH))) {
-				Log.v(TAG,"action:"+intent.getAction());
-				SonetService.updateWidgets(validateWidgetUpdate(new int[] {Integer.parseInt(intent.getAction())}));
-			}
-			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(validateWidgetUpdate(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)));
+			if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH))) SonetService.updateWidgets(new int[] {Integer.parseInt(intent.getAction())});
+			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
 			else SonetService.updateWidgets(getAppWidgetIds());
 		} else  SonetService.updateWidgets(getAppWidgetIds());
 		synchronized (sLock) {
@@ -143,95 +141,26 @@ public class SonetService extends Service implements Runnable {
 		}
 	}
 
-	private int[] arrayCat(int[] a, int[] b) {
-		int[] c;
-		for (int i = 0; i < b.length; i++) {
-			c = new int[a.length];
-			for (int n = 0; n < c.length; n++) c[n] = a[n];
-			a = new int[c.length + 1];
-			for (int n = 0; n < c.length; n++) a[n] = c[n];
-			a[c.length] = b[i];
-		}
-		return a;
-	}
-
-	private int[] arrayPush(int[] a, int b) {
-		int[] c = new int[a.length];
-		for (int i = 0; i < a.length; i++) c[i] = a[i];
-		a = new int[c.length + 1];
-		for (int i = 0; i < c.length; i++) a[i] = c[i];
-		a[a.length - 1] = b;
-		return a;
-	}
-
-	private boolean arrayContains(int[] a, int b) {
-		boolean contains = false;
-		for (int c : a) {
-			if (c == b) {
-				contains = true;
-				break;
-			}
-		}
-		return contains;
-	}
-
 	private int[] getAppWidgetIds() {
 		int[] appWidgetIds = new int[0];
-		// validate appwidgetids from appwidgetmanager
-		AppWidgetManager manager = AppWidgetManager.getInstance(this);
-		int[] appWidgetManagerAppWidgetIds = arrayCat(arrayCat(manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x2.class)), manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x3.class))), manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x4.class)));
-		int[] removeAppWidgets = new int[0];
 		SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
 		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
 		Cursor accounts = db.rawQuery("select " + _ID + "," + WIDGET + " from " + TABLE_ACCOUNTS, null);
 		if (accounts.getCount() > 0) {
 			accounts.moveToFirst();
+			appWidgetIds = new int[accounts.getCount()];
 			int iwidget = accounts.getColumnIndex(WIDGET),
-			appWidgetId;
+			counter = 0;
 			while (!accounts.isAfterLast()) {
-				appWidgetId = accounts.getInt(iwidget);
-				if (arrayContains(appWidgetManagerAppWidgetIds, appWidgetId)) appWidgetIds = arrayPush(appWidgetIds, appWidgetId);
-				else removeAppWidgets = arrayPush(removeAppWidgets, appWidgetId);
+				appWidgetIds[counter] = accounts.getInt(iwidget);
+				counter++;
 				accounts.moveToNext();
 			}
-		}
+		} else appWidgetIds = new int[0];
 		accounts.close();
-		if (removeAppWidgets.length > 0) {
-			// remove phantom widgets
-			for (int appWidgetId : removeAppWidgets) {
-				db.delete(TABLE_WIDGETS, WIDGET + "=" + appWidgetId, null);
-				db.delete(TABLE_ACCOUNTS, WIDGET + "=" + appWidgetId, null);
-				db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null);
-			}
-		}
 		db.close();
 		sonetDatabaseHelper.close();
 		return appWidgetIds;
-	}
-	
-	private int[] validateWidgetUpdate(int[] appWidgetIds) {
-		// validate appwidgetids from appwidgetmanager
-		AppWidgetManager manager = AppWidgetManager.getInstance(this);
-		int[] appWidgetManagerAppWidgetIds = arrayCat(arrayCat(manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x2.class)), manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x3.class))), manager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x4.class)));
-		int[] validAppWidgets = new int[0];
-		int[] removeAppWidgets = new int[0];
-		for (int appWidgetId : appWidgetIds) {
-			if (arrayContains(appWidgetManagerAppWidgetIds, appWidgetId)) validAppWidgets = arrayPush(validAppWidgets, appWidgetId);
-			else removeAppWidgets = arrayPush(removeAppWidgets, appWidgetId);
-		}
-		if (removeAppWidgets.length > 0) {
-			// remove phantom widgets
-			SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
-			SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
-			for (int appWidgetId : removeAppWidgets) {
-				db.delete(TABLE_WIDGETS, WIDGET + "=" + appWidgetId, null);
-				db.delete(TABLE_ACCOUNTS, WIDGET + "=" + appWidgetId, null);
-				db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null);
-			}
-			db.close();
-			sonetDatabaseHelper.close();
-		}
-		return validAppWidgets;
 	}
 
 	@Override
@@ -478,7 +407,6 @@ public class SonetService extends Service implements Runnable {
 
 	@Override
 	public void run() {
-		Log.v(TAG,"run");
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 		SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
 		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
@@ -649,6 +577,9 @@ public class SonetService extends Service implements Runnable {
 			settings.close();
 			// Push update for this widget to the home screen
 			// set messages background
+			Bitmap messages_bg = Bitmap.createBitmap(1, 1, Config.ARGB_8888);		
+			Canvas messages_bg_canvas = new Canvas(messages_bg);		
+			messages_bg_canvas.drawColor(messages_bg_color);
 			int[] map_item = {R.id.item0, R.id.item1, R.id.item2, R.id.item3, R.id.item4, R.id.item5, R.id.item6},
 			map_profile = {R.id.profile0, R.id.profile1, R.id.profile2, R.id.profile3, R.id.profile4, R.id.profile5, R.id.profile6},
 			map_message = {R.id.message0, R.id.message1, R.id.message2, R.id.message3, R.id.message4, R.id.message5, R.id.message6},
@@ -656,7 +587,10 @@ public class SonetService extends Service implements Runnable {
 			map_created = {R.id.created0, R.id.created1, R.id.created2, R.id.created3, R.id.created4, R.id.created5, R.id.created6};
 			RemoteViews views = new RemoteViews(getPackageName(), hasbuttons ? R.layout.widget : R.layout.widget_nobuttons);
 			if (hasbuttons) {
-				views.setInt(R.id.buttons_bg, "setBackgroundColor", buttons_bg_color);
+				Bitmap buttons_bg = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+				Canvas buttons_bg_canvas = new Canvas(buttons_bg);
+				buttons_bg_canvas.drawColor(buttons_bg_color);
+				views.setImageViewBitmap(R.id.buttons_bg, buttons_bg);
 				views.setTextColor(R.id.head_spacer, buttons_bg_color);
 				views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, new Intent(this, PostDialog.class), 0));
 				views.setTextColor(R.id.button_post, buttons_color);
@@ -668,7 +602,7 @@ public class SonetService extends Service implements Runnable {
 				views.setTextColor(R.id.button_refresh, buttons_color);
 				views.setFloat(R.id.button_refresh, "setTextSize", buttons_textsize);
 			}
-			views.setInt(R.id.messages_bg, "setBackgroundColor", messages_bg_color);
+			views.setImageViewBitmap(R.id.messages_bg, messages_bg);
 			int count_status = 0;
 			for  (StatusItem item : statuses) {
 				if (!scrollable && (count_status < map_item.length)) {
@@ -703,7 +637,6 @@ public class SonetService extends Service implements Runnable {
 					db.insert(TABLE_STATUSES, _ID, values);
 				}
 			}
-			Log.v(TAG,"updateAppWidget");
 			appWidgetManager.updateAppWidget(appWidgetId, views);
 			if (scrollable) sendBroadcast(new Intent(this, SonetWidget.class).setAction(ACTION_BUILD_SCROLL).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)); // replace with scrollable widget
 			if (hasAccount && (interval > 0)) alarmManager.set(AlarmManager.RTC, System.currentTimeMillis() + interval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));

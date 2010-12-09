@@ -57,10 +57,10 @@
     <string name="key_messages_textsize">messagesTextSize</string>
     <string name="key_friend_textsize">nameTextSize</string>
     <string name="key_created_textsize">timeTextSize</string>
-    <string name="default_buttons_textsize">12</string>
-    <string name="default_messages_textsize">12</string>
-    <string name="default_friend_textsize">12</string>
-    <string name="default_created_textsize">12</string>
+    <string name="default_buttons_textsize">14</string>
+    <string name="default_messages_textsize">14</string>
+    <string name="default_friend_textsize">14</string>
+    <string name="default_created_textsize">14</string>
     <string name="key_body_text">bodyText</string>
     <string name="key_requesttoken">requesttoken</string>
     <string name="key_requestsecret">requestsecret</string>
@@ -86,4 +86,5 @@
     <string name="widgets">Configure Widgets</string>
 	<string name="refreshall">Refresh All</string>
 	<string name="timezone">Select Timezone</string>
+	<string name="nowidgets">No Sonet widgets have been created.</string>
 </resources>

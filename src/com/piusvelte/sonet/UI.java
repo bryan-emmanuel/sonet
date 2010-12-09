@@ -19,6 +19,7 @@
  */
 package com.piusvelte.sonet;
 
+import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.DONATE;
 
 import android.app.Activity;
@@ -26,7 +27,6 @@ import android.appwidget.AppWidgetManager;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -40,11 +40,15 @@ public class UI extends Activity implements OnClickListener {
 		Intent intent = getIntent();
 		if (intent != null) {
 			Bundle extras = intent.getExtras();
-			if (extras != null) mAppWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+			if (extras != null) {
+				mAppWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+				// return result to launcher
+				setResult(RESULT_OK, intent);
+			}
+			// if called from widget, the id is set in the action, as pendingintents must have a unique action
+			else if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH))) mAppWidgetId = Integer.parseInt(intent.getAction());
 		}
-		setResult(Activity.RESULT_OK, new Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 		setContentView(R.layout.main);
-		Log.v("UI","id:"+mAppWidgetId);
 		if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
 			((Button) findViewById(R.id.button_accounts)).setOnClickListener(this);
 			((Button) findViewById(R.id.button_settings)).setOnClickListener(this);
@@ -60,7 +64,7 @@ public class UI extends Activity implements OnClickListener {
 			if (extras != null) mAppWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 		}
 	}
-
+	
 	public void onClick(View v) {
 		switch (v.getId()) {
 		case R.id.button_accounts:
