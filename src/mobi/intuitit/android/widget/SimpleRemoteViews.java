@@ -28,6 +28,7 @@ import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -462,7 +463,7 @@ public class SimpleRemoteViews implements Parcelable {
 
        @SuppressWarnings("unchecked")
        @Override
-       public void apply(View root) {
+       public void apply(View root) throws ActionException {
            final View view = root.findViewById(viewId);
            if (view == null) {
                throw new ActionException("can't find view: 0x" + Integer.toHexString(viewId));
@@ -903,6 +904,8 @@ public class SimpleRemoteViews implements Parcelable {
 	               a.apply(v);
 	           }
 	       }
+	   } catch (ActionException e) {
+		   Log.e("SImpleRemoteViews", "ActionException: "+e);
 	   } catch (OutOfMemoryError e) {
            System.gc();
 	   }
