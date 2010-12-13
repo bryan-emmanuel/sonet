@@ -54,6 +54,7 @@ import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
+import static com.piusvelte.sonet.Sonet.ACTION_SETTINGS_UPDATE;
 import static com.piusvelte.sonet.Sonet.ACTION_BUILD_SCROLL;
 import static com.piusvelte.sonet.Services.TWITTER_KEY;
 import static com.piusvelte.sonet.Services.TWITTER_SECRET;
@@ -119,6 +120,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.RemoteViews;
@@ -133,6 +135,7 @@ public class SonetService extends Service implements Runnable {
 		super.onStart(intent, startId);
 		if (intent != null) {
 			if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH))) SonetService.updateWidgets(new int[] {Integer.parseInt(intent.getAction())});
+			else if (intent.getAction().equals(ACTION_SETTINGS_UPDATE)) SonetService.updateSettings(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
 			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
 			else SonetService.updateWidgets(getAppWidgetIds());
 		} else  SonetService.updateWidgets(getAppWidgetIds());
@@ -180,10 +183,48 @@ public class SonetService extends Service implements Runnable {
 
 	private static Object sLock = new Object();
 	private static Queue<Integer> sAppWidgetIds = new LinkedList<Integer>();
+	private static Queue<Integer> sSettingsUpdates = new LinkedList<Integer>();
 
 	public static void updateWidgets(int[] appWidgetIds) {
 		synchronized (sLock) {
-			for (int appWidgetId : appWidgetIds) sAppWidgetIds.add(appWidgetId);
+			for (int appWidgetId : appWidgetIds){
+				sAppWidgetIds.add(appWidgetId);
+				if (!sSettingsUpdates.contains(appWidgetIds)) sSettingsUpdates.remove(appWidgetId);
+			}
+		}
+	}
+	
+	public static void updateSettings(int[] appWidgetIds) {
+		synchronized (sLock) {
+			for (int appWidgetId : appWidgetIds) {
+				if (!sAppWidgetIds.contains(appWidgetIds)) sSettingsUpdates.add(appWidgetId);
+			}
+		}
+	}
+
+	private static boolean updatesQueued() {
+		synchronized (sLock) {
+			return !sAppWidgetIds.isEmpty();
+		}
+	}
+	
+	private static boolean settingsUpdatesQueued() {
+		synchronized (sLock) {
+			return !sSettingsUpdates.isEmpty();
+		}
+	}
+
+	private static int getNextUpdate() {
+		synchronized (sLock) {
+			if (sAppWidgetIds.peek() == null) return AppWidgetManager.INVALID_APPWIDGET_ID;
+			else return sAppWidgetIds.poll();
+		}
+	}
+
+	private static int getNextSettingsUpdate() {
+		synchronized (sLock) {
+			if (sSettingsUpdates.peek() == null) return AppWidgetManager.INVALID_APPWIDGET_ID;
+			else return sSettingsUpdates.poll();
 		}
 	}
 
@@ -229,19 +270,6 @@ public class SonetService extends Service implements Runnable {
 		public int compareTo(StatusItem si) {
 			// sort descending
 			return ((Long)si.created).compareTo(created);
-		}
-	}
-
-	private static boolean updatesQueued() {
-		synchronized (sLock) {
-			return !sAppWidgetIds.isEmpty();
-		}
-	}
-
-	private static int getNextUpdate() {
-		synchronized (sLock) {
-			if (sAppWidgetIds.peek() == null) return AppWidgetManager.INVALID_APPWIDGET_ID;
-			else return sAppWidgetIds.poll();
 		}
 	}
 
@@ -313,7 +341,10 @@ public class SonetService extends Service implements Runnable {
 				facebook.setAccessToken(accounts.getString(itoken));
 				facebook.setAccessExpires((long)accounts.getInt(iexpiry));
 				try {
-					JSONObject jobj = Util.parseJson(facebook.request("me/home"));
+					// limit the returned fields
+					Bundle parameters = new Bundle();
+					parameters.putString("fields", "actions,link,type,from,message,created_time");
+					JSONObject jobj = Util.parseJson(facebook.request("me/home", parameters));
 					JSONArray jarr = jobj.getJSONArray("data");
 					for (int d = 0; d < jarr.length(); d++) {
 						JSONObject o = jarr.getJSONObject(d);
@@ -415,7 +446,8 @@ public class SonetService extends Service implements Runnable {
 		AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 		Boolean hasbuttons,
 		time24hr,
-		hasAccount = true;
+		hasAccount = true,
+		getUpdates = true;
 		int interval,
 		buttons_bg_color,
 		buttons_color,
@@ -428,8 +460,13 @@ public class SonetService extends Service implements Runnable {
 		friend_textsize,
 		created_textsize;
 		SharedPreferences sp = null;
-		while (updatesQueued()) {
-			int appWidgetId = getNextUpdate();
+		while (updatesQueued() || settingsUpdatesQueued()) {
+			int appWidgetId;
+			if (updatesQueued()) appWidgetId = getNextUpdate();
+			else {
+				appWidgetId = getNextSettingsUpdate();
+				getUpdates = false;
+			}
 			alarmManager.cancel(PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
 			Cursor settings = db.rawQuery("select "
 					+ _ID + ","
@@ -497,7 +534,7 @@ public class SonetService extends Service implements Runnable {
 			}
 			settings.close();
 			List<StatusItem> statuses;
-			if (hasConnection) {
+			if (getUpdates && hasConnection) {
 				// query accounts
 				/* get statuses for all accounts
 				 * then sort them by datetime, descending
@@ -564,7 +601,7 @@ public class SonetService extends Service implements Runnable {
 					}
 				} else statuses.add(new StatusItem(0, null, null, null, "no connection", 0, null)); // alert user: no connection, no cache
 			}
-			if (hasConnection) db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null); // clear the cache
+			if (getUpdates && hasConnection) db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null); // clear the cache
 			// race condition when finished configuring, the service starts.
 			// meanwhile, the launcher broadcasts READY and the listview is created. it's at this point that the widget is marked scrollable
 			// this run finishes after the listview is created, but is not flagged as scrollable and replaces the listview with the regular widget
@@ -577,8 +614,8 @@ public class SonetService extends Service implements Runnable {
 			settings.close();
 			// Push update for this widget to the home screen
 			// set messages background
-			Bitmap messages_bg = Bitmap.createBitmap(1, 1, Config.ARGB_8888);		
-			Canvas messages_bg_canvas = new Canvas(messages_bg);		
+			Bitmap messages_bg = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+			Canvas messages_bg_canvas = new Canvas(messages_bg);
 			messages_bg_canvas.drawColor(messages_bg_color);
 			int[] map_item = {R.id.item0, R.id.item1, R.id.item2, R.id.item3, R.id.item4, R.id.item5, R.id.item6},
 			map_profile = {R.id.profile0, R.id.profile1, R.id.profile2, R.id.profile3, R.id.profile4, R.id.profile5, R.id.profile6},
@@ -623,7 +660,7 @@ public class SonetService extends Service implements Runnable {
 					}
 					count_status++;
 				}
-				if (hasConnection) {
+				if (getUpdates && hasConnection) {
 					// update the cache
 					ContentValues values = new ContentValues();
 					values.put(CREATED, item.created);
