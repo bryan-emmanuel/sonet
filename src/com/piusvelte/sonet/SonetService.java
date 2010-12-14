@@ -135,7 +135,7 @@ public class SonetService extends Service implements Runnable {
 		super.onStart(intent, startId);
 		if (intent != null) {
 			if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH))) SonetService.updateWidgets(new int[] {Integer.parseInt(intent.getAction())});
-			else if (intent.getAction().equals(ACTION_SETTINGS_UPDATE)) SonetService.updateSettings(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
+			else if ((intent.getAction() != null) && intent.getAction().equals(ACTION_SETTINGS_UPDATE)) SonetService.updateSettings(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
 			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
 			else SonetService.updateWidgets(getAppWidgetIds());
 		} else  SonetService.updateWidgets(getAppWidgetIds());
