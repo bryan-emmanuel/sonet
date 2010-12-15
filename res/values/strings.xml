@@ -26,6 +26,8 @@
     <string name="user_agent" formatted="false">"%s/%s (Linux; Android)"</string>
     <string name="loading">Loading...</string>
     <string name="no_connection">No connection</string>
+    <string name="no_accounts">No accounts setup</string>
+    <string name="no_updates">No updates</string>
     <string name="settings">Settings</string>
     <string name="accounts">Accounts</string>
     <string name="button_post">Post</string>
