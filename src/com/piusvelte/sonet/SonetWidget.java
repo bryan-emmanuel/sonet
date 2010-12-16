@@ -24,8 +24,6 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED;
 import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED_COLOR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.FRIEND_COLOR;
 import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGES_COLOR;
-import static com.piusvelte.sonet.SonetDatabaseHelper.SCROLLABLE;
-import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_WIDGETS;
 import static com.piusvelte.sonet.SonetDatabaseHelper.WIDGET;
 import static com.piusvelte.sonet.SonetDatabaseHelper._ID;
@@ -36,15 +34,15 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.SERVICE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGES_TEXTSIZE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.FRIEND_TEXTSIZE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED_TEXTSIZE;
+import static com.piusvelte.sonet.Sonet.ACTION_MAKE_SCROLLABLE;
+import static com.piusvelte.sonet.Sonet.ACTION_DELETE;
 import mobi.intuitit.android.content.LauncherIntent;
 import mobi.intuitit.android.widget.BoundRemoteViews;
 import mobi.intuitit.android.widget.SimpleRemoteViews;
 
-import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -90,17 +88,7 @@ public class SonetWidget extends AppWidgetProvider {
 	@Override
 	public final void onDeleted(Context context, int[] appWidgetIds) {
 		super.onDeleted(context, appWidgetIds);
-		SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(context);
-		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
-		AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-		for (int appWidgetId : appWidgetIds) {
-			alarmManager.cancel(PendingIntent.getService(context, 0, new Intent(context, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
-			db.delete(TABLE_WIDGETS, WIDGET + "=" + appWidgetId, null);
-			db.delete(TABLE_ACCOUNTS, WIDGET + "=" + appWidgetId, null);
-			db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null);
-		}
-		db.close();
-		sonetDatabaseHelper.close();
+		context.startService(new Intent(context, SonetService.class).setAction(ACTION_DELETE).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds));
 	}
 
 	public void onAppWidgetReady(Context context, int appWidgetId) {
@@ -135,9 +123,7 @@ public class SonetWidget extends AppWidgetProvider {
 			itemViews.setFloat(R.id.created, "setTextSize", settings.getInt(settings.getColumnIndex(CREATED_TEXTSIZE)));
 			itemViews.setFloat(R.id.message, "setTextSize", settings.getInt(settings.getColumnIndex(MESSAGES_TEXTSIZE)));
 			// prevent SonetService from replacing the view with the non-scrolling layout
-			ContentValues values = new ContentValues();
-			values.put(SCROLLABLE, 1);
-			db.update(TABLE_WIDGETS, values, WIDGET + "=" + appWidgetId, null);
+			context.startService(new Intent(context, SonetService.class).setAction(ACTION_MAKE_SCROLLABLE).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId));
 		}
 		settings.close();
 		db.close();
