@@ -20,6 +20,7 @@
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="fill_parent" android:layout_height="fill_parent">
+	<LinearLayout android:id="@+id/null_widgetnobuttons" android:layout_width="wrap_content" android:layout_height="wrap_content" android:visibility="gone"></LinearLayout>
 	<ImageView android:id="@+id/messages_bg"
 		android:layout_width="fill_parent" android:layout_height="fill_parent"
 		android:layout_alignParentTop="true" android:layout_alignParentRight="true"
