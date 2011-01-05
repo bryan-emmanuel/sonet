@@ -494,16 +494,19 @@ public class SonetService extends Service implements Runnable {
 								from = "from",
 								type = "type",
 								profile = "http://graph.facebook.com/%s/picture",
-								message = "message";
+								message = "message",
+								data = "data",
+								to = "to",
+								fburl = "http://www.facebook.com";
 								Facebook facebook = new Facebook();
 								facebook.setAccessToken(accounts.getString(itoken));
 								facebook.setAccessExpires((long)accounts.getInt(iexpiry));
 								try {
 									// limit the returned fields
 									Bundle parameters = new Bundle();
-									parameters.putString("fields", "actions,link,type,from,message,created_time");
+									parameters.putString("fields", "actions,link,type,from,message,created_time,to");
 									JSONObject jobj = Util.parseJson(facebook.request("me/home", parameters));
-									JSONArray jarr = jobj.getJSONArray("data");
+									JSONArray jarr = jobj.getJSONArray(data);
 									// if there are updates, clear the cache
 									if (jarr.length() > 0) db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId + " and " + SERVICE + "=" + service, null);
 									for (int d = 0; d < jarr.length(); d++) {
@@ -511,7 +514,7 @@ public class SonetService extends Service implements Runnable {
 										// only parse status types, not photo, video or link
 										if (o.has(type) && o.getString(type).equals(status) && o.has(from) && o.has(message)) {
 											// parse the link
-											String l = "http://www.facebook.com";
+											String l = fburl;
 											if (o.has(actions)) {											
 												JSONArray action = o.getJSONArray(actions);
 												for (int a = 0; a < action.length(); a++) {
@@ -524,11 +527,20 @@ public class SonetService extends Service implements Runnable {
 											}
 											JSONObject f = o.getJSONObject(from);
 											if (f.has(name) && f.has(id)) {
+												String friend = f.getString(name);
+												if (o.has(to)) {
+													// handle wall messages from one friend to another
+													JSONObject t = o.getJSONObject(to);
+													if (t.has(data)) {
+														JSONObject n = t.getJSONArray(data).getJSONObject(0);
+														if (n.has(name)) friend += " > " + n.getString(name);
+													}												
+												}
 												Date created = parseDate(o.getString(created_time), "yyyy-MM-dd'T'HH:mm:ss'+0000'", accounts.getInt(itimezone));
 												db.insert(TABLE_STATUSES, _ID, statusItem(
 														created.getTime(),
 														l,
-														f.getString(name),
+														friend,
 														getProfile(String.format(profile, f.getString(id))),
 														o.getString(message),
 														service,
