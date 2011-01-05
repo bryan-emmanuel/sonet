@@ -121,17 +121,78 @@ import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.util.Log;
 import android.widget.RemoteViews;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class SonetService extends Service implements Runnable {
 	private static final String TAG = "SonetService";
 	private BroadcastReceiver mReceiver;
 	private Thread sThread;
+	SonetDatabaseHelper mSonetDatabaseHelper;
+	private SQLiteDatabase mDb;
+	private ISonetUI mSonetUI;	
+	private final ISonetService.Stub mSonetService = new ISonetService.Stub() {
+		@Override
+		public void setCallback(IBinder mSonetUIBinder) throws RemoteException {
+			if (mSonetUIBinder != null) mSonetUI = ISonetUI.Stub.asInterface(mSonetUIBinder);
+		}
+
+		@Override
+		public void setIntSetting(int appWidgetId, String column, int value)
+				throws RemoteException {
+			ContentValues values = new ContentValues();
+			values.put(column, value);
+			mDb.update(TABLE_WIDGETS, values, WIDGET + "=" + appWidgetId, null);			
+		}
+
+		@Override
+		public void getSettings(int appWidgetId) throws RemoteException {
+			Cursor c = mDb.rawQuery("select "
+					+ _ID + ","
+					+ INTERVAL + ","
+					+ BUTTONS_BG_COLOR + ","
+					+ BUTTONS_COLOR + ","
+					+ BUTTONS_TEXTSIZE + ","
+					+ MESSAGES_BG_COLOR + ","
+					+ MESSAGES_COLOR + ","
+					+ MESSAGES_TEXTSIZE + ","
+					+ FRIEND_COLOR + ","
+					+ FRIEND_TEXTSIZE + ","
+					+ CREATED_COLOR + ","
+					+ CREATED_TEXTSIZE + ","
+					+ HASBUTTONS + ","
+					+ TIME24HR + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
+			if (c.getCount() > 0) {
+				c.moveToFirst();
+				if (mSonetUI != null) mSonetUI.setDefaultSettings(c.getInt(c.getColumnIndex(INTERVAL)),
+						c.getInt(c.getColumnIndex(BUTTONS_BG_COLOR)),
+						c.getInt(c.getColumnIndex(BUTTONS_COLOR)),
+						c.getInt(c.getColumnIndex(BUTTONS_TEXTSIZE)),
+						c.getInt(c.getColumnIndex(MESSAGES_BG_COLOR)),
+						c.getInt(c.getColumnIndex(MESSAGES_COLOR)),
+						c.getInt(c.getColumnIndex(MESSAGES_TEXTSIZE)),
+						c.getInt(c.getColumnIndex(FRIEND_COLOR)),
+						c.getInt(c.getColumnIndex(FRIEND_TEXTSIZE)),
+						c.getInt(c.getColumnIndex(CREATED_COLOR)),
+						c.getInt(c.getColumnIndex(CREATED_TEXTSIZE)),
+						c.getInt(c.getColumnIndex(HASBUTTONS)) == 1, c.getInt(c.getColumnIndex(TIME24HR)) == 1);
+			}
+			c.close();
+		}
+
+		@Override
+		public void deleteAccount(int account) throws RemoteException {
+			mDb.delete(TABLE_ACCOUNTS, _ID + "=" + account, null);
+		}
+	};
 
 	@Override
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
+		mSonetDatabaseHelper = new SonetDatabaseHelper(this);
+		mDb = mSonetDatabaseHelper.getWritableDatabase();
 		if (intent != null) {
 			if (intent.getAction() != null) {
 				if (intent.getAction().equals(ACTION_MAKE_SCROLLABLE)) {
@@ -181,6 +242,8 @@ public class SonetService extends Service implements Runnable {
 
 	@Override
 	public void onDestroy() {
+		mDb.close();
+		mSonetDatabaseHelper.close();
 		if (mReceiver != null) {
 			unregisterReceiver(mReceiver);
 			mReceiver = null;
@@ -257,8 +320,7 @@ public class SonetService extends Service implements Runnable {
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		// We don't need to bind to this service
-		return null;
+		return mSonetService;
 	}
 
 	private Date parseDate(String date, String format, int timezone) {
@@ -313,8 +375,6 @@ public class SonetService extends Service implements Runnable {
 	@Override
 	public void run() {
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-		SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
-		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
 		boolean hasConnection = (cm.getActiveNetworkInfo() != null) && cm.getActiveNetworkInfo().isConnected();
 		AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
 		AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
@@ -339,18 +399,18 @@ public class SonetService extends Service implements Runnable {
 			if (deletesQueued()) {
 				appWidgetId = getNextDelete();
 				((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
-				db.delete(TABLE_WIDGETS, WIDGET + "=" + appWidgetId, null);
-				db.delete(TABLE_ACCOUNTS, WIDGET + "=" + appWidgetId, null);
-				db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null);
+				mDb.delete(TABLE_WIDGETS, WIDGET + "=" + appWidgetId, null);
+				mDb.delete(TABLE_ACCOUNTS, WIDGET + "=" + appWidgetId, null);
+				mDb.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null);
 			} else if (scrollUpdatesQueued()) {
 				appWidgetId = getNextScrollUpdate();
                 ContentValues values = new ContentValues();
                 values.put(SCROLLABLE, 1);
-                db.update(TABLE_WIDGETS, values, WIDGET + "=" + appWidgetId, null);
+                mDb.update(TABLE_WIDGETS, values, WIDGET + "=" + appWidgetId, null);
 			} else {
 				appWidgetId = getNextUpdate();
 				alarmManager.cancel(PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
-				Cursor settings = db.rawQuery("select "
+				Cursor settings = mDb.rawQuery("select "
 						+ _ID + ","
 						+ INTERVAL + ","
 						+ HASBUTTONS + ","
@@ -412,7 +472,7 @@ public class SonetService extends Service implements Runnable {
 					values.put(FRIEND_TEXTSIZE, friend_textsize);
 					values.put(CREATED_TEXTSIZE, created_textsize);
 					values.put(WIDGET, appWidgetId);
-					db.insert(TABLE_WIDGETS, _ID, values);
+					mDb.insert(TABLE_WIDGETS, _ID, values);
 				}
 				settings.close();
 				if (hasConnection) {
@@ -420,11 +480,11 @@ public class SonetService extends Service implements Runnable {
 					/* get statuses for all accounts
 					 * then sort them by datetime, descending
 					 */
-					Cursor accounts = db.rawQuery("select " + _ID + "," + USERNAME + "," + TOKEN + "," + SECRET + "," + SERVICE + "," + EXPIRY + "," + TIMEZONE + " from " + TABLE_ACCOUNTS + " where " + WIDGET + "=" + appWidgetId, null);
+					Cursor accounts = mDb.rawQuery("select " + _ID + "," + USERNAME + "," + TOKEN + "," + SECRET + "," + SERVICE + "," + EXPIRY + "," + TIMEZONE + " from " + TABLE_ACCOUNTS + " where " + WIDGET + "=" + appWidgetId, null);
 					if (accounts.getCount() == 0) {
 						// check for old accounts without appwidgetid
 						accounts.close();
-						accounts = db.rawQuery("select " + _ID + "," + USERNAME + "," + TOKEN + "," + SECRET + "," + SERVICE + "," + EXPIRY + "," + TIMEZONE + " from " + TABLE_ACCOUNTS + " where " + WIDGET + "=\"\"", null);
+						accounts = mDb.rawQuery("select " + _ID + "," + USERNAME + "," + TOKEN + "," + SECRET + "," + SERVICE + "," + EXPIRY + "," + TIMEZONE + " from " + TABLE_ACCOUNTS + " where " + WIDGET + "=\"\"", null);
 						if (accounts.getCount() > 0) {
 							// upgrade the accounts, adding the appwidgetid
 							accounts.moveToFirst();
@@ -443,11 +503,11 @@ public class SonetService extends Service implements Runnable {
 								values.put(EXPIRY, accounts.getInt(expiry));
 								values.put(TIMEZONE, accounts.getInt(timezone));
 								values.put(WIDGET, appWidgetId);
-								db.insert(TABLE_ACCOUNTS, _ID, values);
+								mDb.insert(TABLE_ACCOUNTS, _ID, values);
 								accounts.moveToNext();
 							}
 						} else hasAccount = false;
-						db.delete(TABLE_ACCOUNTS, _ID + "=\"\"", null);
+						mDb.delete(TABLE_ACCOUNTS, _ID + "=\"\"", null);
 					}
 					if (accounts.getCount() > 0) {
 						// load the updates
@@ -469,11 +529,11 @@ public class SonetService extends Service implements Runnable {
 								try {
 									List<Status> statuses = (new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(accounts.getString(itoken), accounts.getString(isecret)))).getFriendsTimeline();
 									// if there are updates, clear the cache
-									if (!statuses.isEmpty()) db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId + " and " + SERVICE + "=" + service, null);
+									if (!statuses.isEmpty()) mDb.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId + " and " + SERVICE + "=" + service, null);
 									for (Status s : statuses) {
 										String screenname = s.getUser().getScreenName();
 										Date created = s.getCreatedAt();
-										db.insert(TABLE_STATUSES, _ID, statusItem(created.getTime(),
+										mDb.insert(TABLE_STATUSES, _ID, statusItem(created.getTime(),
 												String.format(status_url, screenname, Long.toString(s.getId())),
 												screenname,
 												getProfile(s.getUser().getProfileImageURL().toString()),
@@ -508,7 +568,7 @@ public class SonetService extends Service implements Runnable {
 									JSONObject jobj = Util.parseJson(facebook.request("me/home", parameters));
 									JSONArray jarr = jobj.getJSONArray(data);
 									// if there are updates, clear the cache
-									if (jarr.length() > 0) db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId + " and " + SERVICE + "=" + service, null);
+									if (jarr.length() > 0) mDb.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId + " and " + SERVICE + "=" + service, null);
 									for (int d = 0; d < jarr.length(); d++) {
 										JSONObject o = jarr.getJSONObject(d);
 										// only parse status types, not photo, video or link
@@ -537,7 +597,7 @@ public class SonetService extends Service implements Runnable {
 													}												
 												}
 												Date created = parseDate(o.getString(created_time), "yyyy-MM-dd'T'HH:mm:ss'+0000'", accounts.getInt(itimezone));
-												db.insert(TABLE_STATUSES, _ID, statusItem(
+												mDb.insert(TABLE_STATUSES, _ID, statusItem(
 														created.getTime(),
 														l,
 														friend,
@@ -575,12 +635,12 @@ public class SonetService extends Service implements Runnable {
 									JSONObject jobj = new JSONObject(client.execute(request, responseHandler));
 									JSONArray entries = jobj.getJSONArray("entry");
 									// if there are updates, clear the cache
-									if (entries.length() > 0) db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId + " and " + SERVICE + "=" + service, null);
+									if (entries.length() > 0) mDb.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId + " and " + SERVICE + "=" + service, null);
 									for (int e = 0; e < entries.length(); e++) {
 										JSONObject entry = entries.getJSONObject(e);
 										JSONObject authorObj = entry.getJSONObject(author);
 										Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", accounts.getInt(itimezone));
-										db.insert(TABLE_STATUSES, _ID, statusItem(created.getTime(),
+										mDb.insert(TABLE_STATUSES, _ID, statusItem(created.getTime(),
 												entry.getJSONObject(source).getString(url),
 												authorObj.getString(displayName),
 												getProfile(authorObj.getString(thumbnailUrl)),
@@ -607,14 +667,14 @@ public class SonetService extends Service implements Runnable {
 							}
 							accounts.moveToNext();
 						}
-					} else db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null); // no accounts, clear cache
+					} else mDb.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null); // no accounts, clear cache
 					accounts.close();
 				}
 				// race condition when finished configuring, the service starts.
 				// meanwhile, the launcher broadcasts READY and the listview is created. it's at this point that the widget is marked scrollable
 				// this run finishes after the listview is created, but is not flagged as scrollable and replaces the listview with the regular widget
 				boolean scrollable = false;
-				settings = db.rawQuery("select " + _ID + "," + SCROLLABLE + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
+				settings = mDb.rawQuery("select " + _ID + "," + SCROLLABLE + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
 				if (settings.getCount() > 0) {
 					settings.moveToFirst();
 					scrollable = settings.getInt(settings.getColumnIndex(SCROLLABLE)) == 1;
@@ -649,7 +709,7 @@ public class SonetService extends Service implements Runnable {
 				}
 				views.setImageViewBitmap(R.id.messages_bg, messages_bg);
 				if (!scrollable) {
-					Cursor statuses = db.rawQuery("select " + _ID + "," + LINK + "," + FRIEND + "," + PROFILE + "," + MESSAGE + "," + SERVICE + "," + CREATEDTEXT + " from " + TABLE_STATUSES + " where " + WIDGET + "=" + appWidgetId + " order by " + CREATED + " desc", null);
+					Cursor statuses = mDb.rawQuery("select " + _ID + "," + LINK + "," + FRIEND + "," + PROFILE + "," + MESSAGE + "," + SERVICE + "," + CREATEDTEXT + " from " + TABLE_STATUSES + " where " + WIDGET + "=" + appWidgetId + " order by " + CREATED + " desc", null);
 					if (statuses.getCount() > 0) {
 						int count_status = 0;
 						statuses.moveToFirst();
@@ -691,8 +751,6 @@ public class SonetService extends Service implements Runnable {
 				if (hasAccount && (interval > 0)) alarmManager.set(AlarmManager.RTC, System.currentTimeMillis() + interval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
 			}
 		}
-		db.close();
-		sonetDatabaseHelper.close();
 		if (hasConnection) {
 			if (mReceiver != null) {
 				unregisterReceiver(mReceiver);

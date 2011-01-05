@@ -74,15 +74,19 @@ import twitter4j.http.AccessToken;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.os.RemoteException;
 import android.util.Log;
 import android.view.ContextMenu;
 //import android.view.KeyEvent;
@@ -97,7 +101,7 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class ManageAccounts extends ListActivity implements OnClickListener, DialogInterface.OnClickListener, DialogListener, IMSSessionCallback {
+public class ManageAccounts extends ListActivity implements OnClickListener, DialogInterface.OnClickListener, DialogListener, IMSSessionCallback, ServiceConnection {
 	private static final String TAG = "ManageAccounts";
 	private static final int DELETE_ID = Menu.FIRST;
 	private SonetDatabaseHelper mSonetDatabaseHelper;
@@ -111,6 +115,27 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 
 	private static Uri TWITTER_CALLBACK = Uri.parse("sonet://twitter");
 	private static String MYSPACE_CALLBACK = "sonet://myspace";
+	
+
+	private ISonetService mSonetService;
+	private ISonetUI.Stub mSonetUI = new ISonetUI.Stub() {
+
+		@Override
+		public void setDefaultSettings(int interval_value,
+				int buttons_bg_color_value, int buttons_color_value,
+				int buttons_textsize_value, int messages_bg_color_value,
+				int messages_color_value, int messages_textsize_value,
+				int friend_color_value, int friend_textsize_value,
+				int created_color_value, int created_textsize_value,
+				boolean hasButtons, boolean time24hr) throws RemoteException {
+		}
+
+		@Override
+		public void listAccounts(boolean updateWidget) throws RemoteException {
+			mUpdateWidget = updateWidget;
+			ManageAccounts.this.listAccounts();
+		}
+	};
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -144,13 +169,13 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
-		if (item.getItemId() == DELETE_ID) {
-			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-			db.delete(TABLE_ACCOUNTS, _ID + "=" + (int) ((AdapterContextMenuInfo) item.getMenuInfo()).id, null);
-			db.close();
-			mUpdateWidget = true;
-			listAccounts();
-		}
+		if ((item.getItemId() == DELETE_ID) && (mSonetService != null))
+			try {
+				mSonetService.deleteAccount((int) ((AdapterContextMenuInfo) item.getMenuInfo()).id);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		return super.onContextItemSelected(item);
 	}
 
@@ -169,12 +194,13 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	@Override
 	protected void onResume() {
 		super.onResume();
-		listAccounts();
+		bindService(new Intent(this, SonetService.class), this, BIND_AUTO_CREATE);
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
+		unbindService(this);
 		if (mUpdateWidget) startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
 	}
 
@@ -410,6 +436,21 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 				});
 			}                       
 		}
+	}
+
+	@Override
+	public void onServiceConnected(ComponentName name, IBinder service) {
+		mSonetService = ISonetService.Stub.asInterface((IBinder) service);
+		if (mSonetUI != null) {
+			try {
+				mSonetService.setCallback(mSonetUI.asBinder());
+			} catch (RemoteException e) {}
+		}
+	}
+
+	@Override
+	public void onServiceDisconnected(ComponentName name) {
+		mSonetService = null;
 	}
 
 //	@Override
