@@ -34,6 +34,7 @@ import static com.piusvelte.sonet.SonetDatabaseHelper.SERVICE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGES_TEXTSIZE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.FRIEND_TEXTSIZE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED_TEXTSIZE;
+import static com.piusvelte.sonet.SonetDatabaseHelper.SCROLLABLE;
 import static com.piusvelte.sonet.Sonet.ACTION_MAKE_SCROLLABLE;
 import static com.piusvelte.sonet.Sonet.ACTION_DELETE;
 import mobi.intuitit.android.content.LauncherIntent;
@@ -112,8 +113,8 @@ public class SonetWidget extends AppWidgetProvider {
 		
 		// pull settings to style the list
 		SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(context);
-		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
-		Cursor settings = db.rawQuery("select " + _ID + "," + MESSAGES_COLOR + "," + FRIEND_COLOR + "," + CREATED_COLOR + "," + FRIEND_TEXTSIZE + "," + CREATED_TEXTSIZE + "," + MESSAGES_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
+		SQLiteDatabase db = sonetDatabaseHelper.getReadableDatabase();
+		Cursor settings = db.rawQuery("select " + _ID + "," + MESSAGES_COLOR + "," + FRIEND_COLOR + "," + CREATED_COLOR + "," + FRIEND_TEXTSIZE + "," + CREATED_TEXTSIZE + "," + MESSAGES_TEXTSIZE + "," + SCROLLABLE + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
 		if (settings.getCount() > 0) {
 			settings.moveToFirst();
 			itemViews.setTextColor(R.id.friend, settings.getInt(settings.getColumnIndex(FRIEND_COLOR)));
@@ -122,8 +123,10 @@ public class SonetWidget extends AppWidgetProvider {
 			itemViews.setFloat(R.id.friend, "setTextSize", settings.getInt(settings.getColumnIndex(FRIEND_TEXTSIZE)));
 			itemViews.setFloat(R.id.created, "setTextSize", settings.getInt(settings.getColumnIndex(CREATED_TEXTSIZE)));
 			itemViews.setFloat(R.id.message, "setTextSize", settings.getInt(settings.getColumnIndex(MESSAGES_TEXTSIZE)));
-			// prevent SonetService from replacing the view with the non-scrolling layout
-			context.startService(new Intent(context, SonetService.class).setAction(ACTION_MAKE_SCROLLABLE).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId));
+			if (settings.getInt(settings.getColumnIndex(SCROLLABLE)) != 1) {
+				// prevent SonetService from replacing the view with the non-scrolling layout
+				context.startService(new Intent(context, SonetService.class).setAction(ACTION_MAKE_SCROLLABLE).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId));
+			}
 		}
 		settings.close();
 		db.close();

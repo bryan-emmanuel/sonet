@@ -128,8 +128,6 @@ public class SonetService extends Service implements Runnable {
 	private static final String TAG = "SonetService";
 	private BroadcastReceiver mReceiver;
 	private Thread sThread;
-	private SonetDatabaseHelper mSonetDatabaseHelper;
-	private SQLiteDatabase mDb;
 
 	@Override
 	public void onStart(Intent intent, int startId) {
@@ -137,29 +135,9 @@ public class SonetService extends Service implements Runnable {
 		if (intent != null) {
 			if (intent.getAction() != null) {
 				if (intent.getAction().equals(ACTION_MAKE_SCROLLABLE)) {
-					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
-						if (mSonetDatabaseHelper == null) {
-							mSonetDatabaseHelper = new SonetDatabaseHelper(this);
-							mDb = mSonetDatabaseHelper.getWritableDatabase();
-						} else if (mDb == null) mDb = mSonetDatabaseHelper.getWritableDatabase();
-						ContentValues values = new ContentValues();
-						values.put(SCROLLABLE, 1);
-						mDb.update(TABLE_WIDGETS, values, WIDGET + "=" + intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID), null);
-					}
+					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) SonetService.scrollUpdate(intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
 				} else if (intent.getAction().equals(ACTION_DELETE)) {
-					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) {
-						int[] appWidgetIds = intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS);
-						for (int appWidgetId : appWidgetIds) {
-							if (mSonetDatabaseHelper == null) {
-								mSonetDatabaseHelper = new SonetDatabaseHelper(this);
-								mDb = mSonetDatabaseHelper.getWritableDatabase();
-							} else if (mDb == null) mDb = mSonetDatabaseHelper.getWritableDatabase();
-							((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
-							mDb.delete(TABLE_WIDGETS, WIDGET + "=" + appWidgetId, null);
-							mDb.delete(TABLE_ACCOUNTS, WIDGET + "=" + appWidgetId, null);
-							mDb.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null);
-						}
-					}
+					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.delete(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
 				} else if (intent.getAction().equals(ACTION_REFRESH)) {
 					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
 					else SonetService.updateWidgets(getAppWidgetIds());
@@ -232,6 +210,51 @@ public class SonetService extends Service implements Runnable {
 		}
 	}
 
+	private static Object sScrollUpdateLock = new Object();
+	private static Queue<Integer> sScrollUpdates = new LinkedList<Integer>();
+
+	public static void scrollUpdate(int appWidgetId) {
+		synchronized (sScrollUpdateLock) {
+			sScrollUpdates.add(appWidgetId);
+		}
+	}
+
+	private static boolean scrollUpdatesQueued() {
+		synchronized (sScrollUpdateLock) {
+			return !sScrollUpdates.isEmpty();
+		}
+	}
+
+	private static int getNextScrollUpdate() {
+		synchronized (sScrollUpdateLock) {
+			if (sScrollUpdates.peek() == null) return AppWidgetManager.INVALID_APPWIDGET_ID;
+			else return sScrollUpdates.poll();
+		}
+	}
+
+
+	private static Object sDeleteLock = new Object();
+	private static Queue<Integer> sDeletes = new LinkedList<Integer>();
+
+	public static void delete(int[] appWidgetIds) {
+		synchronized (sDeleteLock) {
+			for (int appWidgetId : appWidgetIds) sDeletes.add(appWidgetId);
+		}
+	}
+
+	private static boolean deletesQueued() {
+		synchronized (sDeleteLock) {
+			return !sDeletes.isEmpty();
+		}
+	}
+
+	private static int getNextDelete() {
+		synchronized (sDeleteLock) {
+			if (sDeletes.peek() == null) return AppWidgetManager.INVALID_APPWIDGET_ID;
+			else return sDeletes.poll();
+		}
+	}
+
 	@Override
 	public IBinder onBind(Intent intent) {
 		// We don't need to bind to this service
@@ -290,10 +313,8 @@ public class SonetService extends Service implements Runnable {
 	@Override
 	public void run() {
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-		if (mSonetDatabaseHelper == null) {
-			mSonetDatabaseHelper = new SonetDatabaseHelper(this);
-			mDb = mSonetDatabaseHelper.getWritableDatabase();
-		} else if (mDb == null) mDb = mSonetDatabaseHelper.getWritableDatabase();
+		SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
+		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
 		boolean hasConnection = (cm.getActiveNetworkInfo() != null) && cm.getActiveNetworkInfo().isConnected();
 		AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
 		AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
@@ -312,335 +333,354 @@ public class SonetService extends Service implements Runnable {
 		friend_textsize,
 		created_textsize;
 		SharedPreferences sp = null;
-		while (updatesQueued()) {
-			int appWidgetId = getNextUpdate();
-			alarmManager.cancel(PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
-			Cursor settings = mDb.rawQuery("select "
-					+ _ID + ","
-					+ INTERVAL + ","
-					+ HASBUTTONS + ","
-					+ BUTTONS_BG_COLOR + ","
-					+ BUTTONS_COLOR + ","
-					+ MESSAGES_BG_COLOR + ","
-					+ MESSAGES_COLOR + ","
-					+ FRIEND_COLOR + ","
-					+ CREATED_COLOR + ","
-					+ TIME24HR + ","
-					+ BUTTONS_TEXTSIZE + ","
-					+ MESSAGES_TEXTSIZE + ","
-					+ FRIEND_TEXTSIZE + ","
-					+ CREATED_TEXTSIZE
-					+ " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
-			if (settings.getCount() > 0) {
-				settings.moveToFirst();
-				interval = settings.getInt(settings.getColumnIndex(INTERVAL));
-				hasbuttons = settings.getInt(settings.getColumnIndex(HASBUTTONS)) == 1;
-				buttons_bg_color = settings.getInt(settings.getColumnIndex(BUTTONS_BG_COLOR));
-				buttons_color = settings.getInt(settings.getColumnIndex(BUTTONS_COLOR));
-				messages_bg_color = settings.getInt(settings.getColumnIndex(MESSAGES_BG_COLOR));
-				messages_color = settings.getInt(settings.getColumnIndex(MESSAGES_COLOR));
-				friend_color = settings.getInt(settings.getColumnIndex(FRIEND_COLOR));
-				created_color = settings.getInt(settings.getColumnIndex(CREATED_COLOR));
-				time24hr = settings.getInt(settings.getColumnIndex(TIME24HR)) == 1;
-				buttons_textsize = settings.getInt(settings.getColumnIndex(BUTTONS_TEXTSIZE));
-				messages_textsize = settings.getInt(settings.getColumnIndex(MESSAGES_TEXTSIZE));
-				friend_textsize = settings.getInt(settings.getColumnIndex(FRIEND_TEXTSIZE));
-				created_textsize = settings.getInt(settings.getColumnIndex(CREATED_TEXTSIZE));
+		while (deletesQueued() || scrollUpdatesQueued() || updatesQueued()) {
+			// first handle deletes, then scroll updates, finally regular updates
+			int appWidgetId;
+			if (deletesQueued()) {
+				appWidgetId = getNextDelete();
+				((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
+				db.delete(TABLE_WIDGETS, WIDGET + "=" + appWidgetId, null);
+				db.delete(TABLE_ACCOUNTS, WIDGET + "=" + appWidgetId, null);
+				db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null);
+			} else if (scrollUpdatesQueued()) {
+				appWidgetId = getNextScrollUpdate();
+                ContentValues values = new ContentValues();
+                values.put(SCROLLABLE, 1);
+                db.update(TABLE_WIDGETS, values, WIDGET + "=" + appWidgetId, null);
 			} else {
-				// upgrade, moving settings from sharedpreferences to db
-				if (sp == null) sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
-				interval = Integer.parseInt((String) sp.getString(getString(R.string.key_interval), getString(R.string.default_interval)));
-				hasbuttons = sp.getBoolean(getString(R.string.key_display_buttons), true);
-				buttons_bg_color =Integer.parseInt(sp.getString(getString(R.string.key_head_background), getString(R.string.default_buttons_bg_color)));
-				buttons_color = Integer.parseInt(sp.getString(getString(R.string.key_head_text), getString(R.string.default_buttons_color)));
-				messages_bg_color = Integer.parseInt(sp.getString(getString(R.string.key_body_background), getString(R.string.default_message_bg_color)));
-				messages_color = Integer.parseInt(sp.getString(getString(R.string.key_body_text), getString(R.string.default_message_color)));
-				friend_color = Integer.parseInt(sp.getString(getString(R.string.key_friend_text), getString(R.string.default_friend_color)));
-				created_color = Integer.parseInt(sp.getString(getString(R.string.key_created_text), getString(R.string.default_created_color)));
-				time24hr = sp.getBoolean(getString(R.string.key_time_12_24), false);
-				buttons_textsize = Integer.parseInt(sp.getString(getString(R.string.key_buttons_textsize), getString(R.string.default_buttons_textsize)));
-				messages_textsize = Integer.parseInt(sp.getString(getString(R.string.key_messages_textsize), getString(R.string.default_messages_textsize)));
-				friend_textsize = Integer.parseInt(sp.getString(getString(R.string.key_friend_textsize), getString(R.string.default_friend_textsize)));
-				created_textsize = Integer.parseInt(sp.getString(getString(R.string.key_created_textsize), getString(R.string.default_created_textsize)));
-				ContentValues values = new ContentValues();
-				values.put(INTERVAL, interval);
-				values.put(HASBUTTONS, hasbuttons);
-				values.put(BUTTONS_BG_COLOR, buttons_bg_color);
-				values.put(BUTTONS_COLOR, buttons_color);
-				values.put(MESSAGES_BG_COLOR, messages_bg_color);
-				values.put(MESSAGES_COLOR, messages_color);
-				values.put(FRIEND_COLOR, friend_color);
-				values.put(CREATED_COLOR, created_color);
-				values.put(TIME24HR, time24hr);
-				values.put(BUTTONS_TEXTSIZE, buttons_textsize);
-				values.put(MESSAGES_TEXTSIZE, messages_textsize);
-				values.put(FRIEND_TEXTSIZE, friend_textsize);
-				values.put(CREATED_TEXTSIZE, created_textsize);
-				values.put(WIDGET, appWidgetId);
-				mDb.insert(TABLE_WIDGETS, _ID, values);
-			}
-			settings.close();
-			if (hasConnection) {
-				// clear the old cache
-				if (hasConnection) mDb.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null);
-				// query accounts
-				/* get statuses for all accounts
-				 * then sort them by datetime, descending
-				 */
-				Cursor accounts = mDb.rawQuery("select " + _ID + "," + USERNAME + "," + TOKEN + "," + SECRET + "," + SERVICE + "," + EXPIRY + "," + TIMEZONE + " from " + TABLE_ACCOUNTS + " where " + WIDGET + "=" + appWidgetId, null);
-				if (accounts.getCount() == 0) {
-					// check for old accounts without appwidgetid
-					accounts.close();
-					accounts = mDb.rawQuery("select " + _ID + "," + USERNAME + "," + TOKEN + "," + SECRET + "," + SERVICE + "," + EXPIRY + "," + TIMEZONE + " from " + TABLE_ACCOUNTS + " where " + WIDGET + "=\"\"", null);
-					if (accounts.getCount() > 0) {
-						// upgrade the accounts, adding the appwidgetid
-						accounts.moveToFirst();
-						int username = accounts.getColumnIndex(USERNAME),
-						token = accounts.getColumnIndex(TOKEN),
-						secret = accounts.getColumnIndex(SECRET),
-						service = accounts.getColumnIndex(SERVICE),
-						expiry = accounts.getColumnIndex(EXPIRY),
-						timezone = accounts.getColumnIndex(TIMEZONE);
-						while (!accounts.isAfterLast()) {
-							ContentValues values = new ContentValues();
-							values.put(USERNAME, accounts.getString(username));
-							values.put(TOKEN, accounts.getString(token));
-							values.put(SECRET, accounts.getString(secret));
-							values.put(SERVICE, accounts.getInt(service));
-							values.put(EXPIRY, accounts.getInt(expiry));
-							values.put(TIMEZONE, accounts.getInt(timezone));
-							values.put(WIDGET, appWidgetId);
-							mDb.insert(TABLE_ACCOUNTS, _ID, values);
-							accounts.moveToNext();
-						}
-					} else hasAccount = false;
-					mDb.delete(TABLE_ACCOUNTS, _ID + "=\"\"", null);
+				appWidgetId = getNextUpdate();
+				alarmManager.cancel(PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
+				Cursor settings = db.rawQuery("select "
+						+ _ID + ","
+						+ INTERVAL + ","
+						+ HASBUTTONS + ","
+						+ BUTTONS_BG_COLOR + ","
+						+ BUTTONS_COLOR + ","
+						+ MESSAGES_BG_COLOR + ","
+						+ MESSAGES_COLOR + ","
+						+ FRIEND_COLOR + ","
+						+ CREATED_COLOR + ","
+						+ TIME24HR + ","
+						+ BUTTONS_TEXTSIZE + ","
+						+ MESSAGES_TEXTSIZE + ","
+						+ FRIEND_TEXTSIZE + ","
+						+ CREATED_TEXTSIZE
+						+ " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
+				if (settings.getCount() > 0) {
+					settings.moveToFirst();
+					interval = settings.getInt(settings.getColumnIndex(INTERVAL));
+					hasbuttons = settings.getInt(settings.getColumnIndex(HASBUTTONS)) == 1;
+					buttons_bg_color = settings.getInt(settings.getColumnIndex(BUTTONS_BG_COLOR));
+					buttons_color = settings.getInt(settings.getColumnIndex(BUTTONS_COLOR));
+					messages_bg_color = settings.getInt(settings.getColumnIndex(MESSAGES_BG_COLOR));
+					messages_color = settings.getInt(settings.getColumnIndex(MESSAGES_COLOR));
+					friend_color = settings.getInt(settings.getColumnIndex(FRIEND_COLOR));
+					created_color = settings.getInt(settings.getColumnIndex(CREATED_COLOR));
+					time24hr = settings.getInt(settings.getColumnIndex(TIME24HR)) == 1;
+					buttons_textsize = settings.getInt(settings.getColumnIndex(BUTTONS_TEXTSIZE));
+					messages_textsize = settings.getInt(settings.getColumnIndex(MESSAGES_TEXTSIZE));
+					friend_textsize = settings.getInt(settings.getColumnIndex(FRIEND_TEXTSIZE));
+					created_textsize = settings.getInt(settings.getColumnIndex(CREATED_TEXTSIZE));
+				} else {
+					// upgrade, moving settings from sharedpreferences to db
+					if (sp == null) sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
+					interval = Integer.parseInt((String) sp.getString(getString(R.string.key_interval), getString(R.string.default_interval)));
+					hasbuttons = sp.getBoolean(getString(R.string.key_display_buttons), true);
+					buttons_bg_color =Integer.parseInt(sp.getString(getString(R.string.key_head_background), getString(R.string.default_buttons_bg_color)));
+					buttons_color = Integer.parseInt(sp.getString(getString(R.string.key_head_text), getString(R.string.default_buttons_color)));
+					messages_bg_color = Integer.parseInt(sp.getString(getString(R.string.key_body_background), getString(R.string.default_message_bg_color)));
+					messages_color = Integer.parseInt(sp.getString(getString(R.string.key_body_text), getString(R.string.default_message_color)));
+					friend_color = Integer.parseInt(sp.getString(getString(R.string.key_friend_text), getString(R.string.default_friend_color)));
+					created_color = Integer.parseInt(sp.getString(getString(R.string.key_created_text), getString(R.string.default_created_color)));
+					time24hr = sp.getBoolean(getString(R.string.key_time_12_24), false);
+					buttons_textsize = Integer.parseInt(sp.getString(getString(R.string.key_buttons_textsize), getString(R.string.default_buttons_textsize)));
+					messages_textsize = Integer.parseInt(sp.getString(getString(R.string.key_messages_textsize), getString(R.string.default_messages_textsize)));
+					friend_textsize = Integer.parseInt(sp.getString(getString(R.string.key_friend_textsize), getString(R.string.default_friend_textsize)));
+					created_textsize = Integer.parseInt(sp.getString(getString(R.string.key_created_textsize), getString(R.string.default_created_textsize)));
+					ContentValues values = new ContentValues();
+					values.put(INTERVAL, interval);
+					values.put(HASBUTTONS, hasbuttons);
+					values.put(BUTTONS_BG_COLOR, buttons_bg_color);
+					values.put(BUTTONS_COLOR, buttons_color);
+					values.put(MESSAGES_BG_COLOR, messages_bg_color);
+					values.put(MESSAGES_COLOR, messages_color);
+					values.put(FRIEND_COLOR, friend_color);
+					values.put(CREATED_COLOR, created_color);
+					values.put(TIME24HR, time24hr);
+					values.put(BUTTONS_TEXTSIZE, buttons_textsize);
+					values.put(MESSAGES_TEXTSIZE, messages_textsize);
+					values.put(FRIEND_TEXTSIZE, friend_textsize);
+					values.put(CREATED_TEXTSIZE, created_textsize);
+					values.put(WIDGET, appWidgetId);
+					db.insert(TABLE_WIDGETS, _ID, values);
 				}
-				if (accounts.getCount() > 0) {
-					// load the updates
-					accounts.moveToFirst();
-					int iservice = accounts.getColumnIndex(SERVICE),
-					itoken = accounts.getColumnIndex(TOKEN),
-					isecret = accounts.getColumnIndex(SECRET),
-					iexpiry = accounts.getColumnIndex(EXPIRY),
-					itimezone = accounts.getColumnIndex(TIMEZONE);
-					String name = "name",
-					id = "id",
-					status = "status";
-					long now = new Date().getTime();
-					while (!accounts.isAfterLast()) {
-						int service = accounts.getInt(iservice);
-						switch (service) {
-						case TWITTER:
-							String status_url = "http://twitter.com/%s/status/%s";
-							try {
-								List<Status> statuses = (new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(accounts.getString(itoken), accounts.getString(isecret)))).getFriendsTimeline();
-								for (Status s : statuses) {
-									String screenname = s.getUser().getScreenName();
-									Date created = s.getCreatedAt();
-									mDb.insert(TABLE_STATUSES, _ID, statusItem(created.getTime(),
-											String.format(status_url, screenname, Long.toString(s.getId())),
-											screenname,
-											getProfile(s.getUser().getProfileImageURL().toString()),
-											s.getText(),
-											service,
-											getCreatedText(now, created, time24hr),
-											appWidgetId));
-								}
-							} catch (TwitterException te) {
-								Log.e(TAG, te.toString());
+				settings.close();
+				if (hasConnection) {
+					// query accounts
+					/* get statuses for all accounts
+					 * then sort them by datetime, descending
+					 */
+					Cursor accounts = db.rawQuery("select " + _ID + "," + USERNAME + "," + TOKEN + "," + SECRET + "," + SERVICE + "," + EXPIRY + "," + TIMEZONE + " from " + TABLE_ACCOUNTS + " where " + WIDGET + "=" + appWidgetId, null);
+					if (accounts.getCount() == 0) {
+						// check for old accounts without appwidgetid
+						accounts.close();
+						accounts = db.rawQuery("select " + _ID + "," + USERNAME + "," + TOKEN + "," + SECRET + "," + SERVICE + "," + EXPIRY + "," + TIMEZONE + " from " + TABLE_ACCOUNTS + " where " + WIDGET + "=\"\"", null);
+						if (accounts.getCount() > 0) {
+							// upgrade the accounts, adding the appwidgetid
+							accounts.moveToFirst();
+							int username = accounts.getColumnIndex(USERNAME),
+							token = accounts.getColumnIndex(TOKEN),
+							secret = accounts.getColumnIndex(SECRET),
+							service = accounts.getColumnIndex(SERVICE),
+							expiry = accounts.getColumnIndex(EXPIRY),
+							timezone = accounts.getColumnIndex(TIMEZONE);
+							while (!accounts.isAfterLast()) {
+								ContentValues values = new ContentValues();
+								values.put(USERNAME, accounts.getString(username));
+								values.put(TOKEN, accounts.getString(token));
+								values.put(SECRET, accounts.getString(secret));
+								values.put(SERVICE, accounts.getInt(service));
+								values.put(EXPIRY, accounts.getInt(expiry));
+								values.put(TIMEZONE, accounts.getInt(timezone));
+								values.put(WIDGET, appWidgetId);
+								db.insert(TABLE_ACCOUNTS, _ID, values);
+								accounts.moveToNext();
 							}
-							break;
-						case FACEBOOK:
-							String created_time = "created_time",
-							actions = "actions",
-							link = "link",
-							comment = "Comment",
-							from = "from",
-							type = "type",
-							profile = "http://graph.facebook.com/%s/picture",
-							message = "message";
-							Facebook facebook = new Facebook();
-							facebook.setAccessToken(accounts.getString(itoken));
-							facebook.setAccessExpires((long)accounts.getInt(iexpiry));
-							try {
-								// limit the returned fields
-								Bundle parameters = new Bundle();
-								parameters.putString("fields", "actions,link,type,from,message,created_time");
-								JSONObject jobj = Util.parseJson(facebook.request("me/home", parameters));
-								JSONArray jarr = jobj.getJSONArray("data");
-								for (int d = 0; d < jarr.length(); d++) {
-									JSONObject o = jarr.getJSONObject(d);
-									// only parse status types, not photo, video or link
-									if (o.has(type) && o.getString(type).equals(status) && o.has(from) && o.has(message)) {
-										// parse the link
-										String l = "http://www.facebook.com";
-										if (o.has(actions)) {											
-											JSONArray action = o.getJSONArray(actions);
-											for (int a = 0; a < action.length(); a++) {
-												JSONObject n = action.getJSONObject(a);
-												if (n.getString(name) == comment) {
-													l = n.getString(link);
-													break;
+						} else hasAccount = false;
+						db.delete(TABLE_ACCOUNTS, _ID + "=\"\"", null);
+					}
+					if (accounts.getCount() > 0) {
+						// load the updates
+						accounts.moveToFirst();
+						int iservice = accounts.getColumnIndex(SERVICE),
+						itoken = accounts.getColumnIndex(TOKEN),
+						isecret = accounts.getColumnIndex(SECRET),
+						iexpiry = accounts.getColumnIndex(EXPIRY),
+						itimezone = accounts.getColumnIndex(TIMEZONE);
+						String name = "name",
+						id = "id",
+						status = "status";
+						long now = new Date().getTime();
+						while (!accounts.isAfterLast()) {
+							int service = accounts.getInt(iservice);
+							switch (service) {
+							case TWITTER:
+								String status_url = "http://twitter.com/%s/status/%s";
+								try {
+									List<Status> statuses = (new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(accounts.getString(itoken), accounts.getString(isecret)))).getFriendsTimeline();
+									// if there are updates, clear the cache
+									if (!statuses.isEmpty()) db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId + " and " + SERVICE + "=" + service, null);
+									for (Status s : statuses) {
+										String screenname = s.getUser().getScreenName();
+										Date created = s.getCreatedAt();
+										db.insert(TABLE_STATUSES, _ID, statusItem(created.getTime(),
+												String.format(status_url, screenname, Long.toString(s.getId())),
+												screenname,
+												getProfile(s.getUser().getProfileImageURL().toString()),
+												s.getText(),
+												service,
+												getCreatedText(now, created, time24hr),
+												appWidgetId));
+									}
+								} catch (TwitterException te) {
+									Log.e(TAG, te.toString());
+								}
+								break;
+							case FACEBOOK:
+								String created_time = "created_time",
+								actions = "actions",
+								link = "link",
+								comment = "Comment",
+								from = "from",
+								type = "type",
+								profile = "http://graph.facebook.com/%s/picture",
+								message = "message";
+								Facebook facebook = new Facebook();
+								facebook.setAccessToken(accounts.getString(itoken));
+								facebook.setAccessExpires((long)accounts.getInt(iexpiry));
+								try {
+									// limit the returned fields
+									Bundle parameters = new Bundle();
+									parameters.putString("fields", "actions,link,type,from,message,created_time");
+									JSONObject jobj = Util.parseJson(facebook.request("me/home", parameters));
+									JSONArray jarr = jobj.getJSONArray("data");
+									// if there are updates, clear the cache
+									if (jarr.length() > 0) db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId + " and " + SERVICE + "=" + service, null);
+									for (int d = 0; d < jarr.length(); d++) {
+										JSONObject o = jarr.getJSONObject(d);
+										// only parse status types, not photo, video or link
+										if (o.has(type) && o.getString(type).equals(status) && o.has(from) && o.has(message)) {
+											// parse the link
+											String l = "http://www.facebook.com";
+											if (o.has(actions)) {											
+												JSONArray action = o.getJSONArray(actions);
+												for (int a = 0; a < action.length(); a++) {
+													JSONObject n = action.getJSONObject(a);
+													if (n.getString(name) == comment) {
+														l = n.getString(link);
+														break;
+													}
 												}
 											}
-										}
-										JSONObject f = o.getJSONObject(from);
-										if (f.has(name) && f.has(id)) {
-											Date created = parseDate(o.getString(created_time), "yyyy-MM-dd'T'HH:mm:ss'+0000'", accounts.getInt(itimezone));
-											mDb.insert(TABLE_STATUSES, _ID, statusItem(
-													created.getTime(),
-													l,
-													f.getString(name),
-													getProfile(String.format(profile, f.getString(id))),
-													o.getString(message),
-													service,
-													getCreatedText(now, created, time24hr),
-													appWidgetId));
+											JSONObject f = o.getJSONObject(from);
+											if (f.has(name) && f.has(id)) {
+												Date created = parseDate(o.getString(created_time), "yyyy-MM-dd'T'HH:mm:ss'+0000'", accounts.getInt(itimezone));
+												db.insert(TABLE_STATUSES, _ID, statusItem(
+														created.getTime(),
+														l,
+														f.getString(name),
+														getProfile(String.format(profile, f.getString(id))),
+														o.getString(message),
+														service,
+														getCreatedText(now, created, time24hr),
+														appWidgetId));
+											}
 										}
 									}
+								} catch (JSONException e) {
+									Log.e(TAG, e.toString());
+								} catch (FacebookError e) {
+									Log.e(TAG, e.toString());
+								} catch (IOException e) {
+									Log.e(TAG, e.toString());
 								}
-							} catch (JSONException e) {
-								Log.e(TAG, e.toString());
-							} catch (FacebookError e) {
-								Log.e(TAG, e.toString());
-							} catch (IOException e) {
-								Log.e(TAG, e.toString());
-							}
-							break;
-						case MYSPACE:
-							//								OAuthConsumer consumer = new DefaultOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET);
-							String displayName = "displayName",
-							moodStatusLastUpdated = "moodStatusLastUpdated",
-							thumbnailUrl = "thumbnailUrl",
-							source = "source",
-							url = "url",
-							author = "author";
-							OAuthConsumer consumer = new CommonsHttpOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET, SignatureMethod.HMAC_SHA1);
-							consumer.setTokenWithSecret(accounts.getString(itoken), accounts.getString(isecret));
-							HttpClient client = new DefaultHttpClient();
-							ResponseHandler <String> responseHandler = new BasicResponseHandler();
-							HttpGet request = new HttpGet("http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
-							try {
-								consumer.sign(request);
-								JSONObject jobj = new JSONObject(client.execute(request, responseHandler));
-								JSONArray entries = jobj.getJSONArray("entry");
-								for (int e = 0; e < entries.length(); e++) {
-									JSONObject entry = entries.getJSONObject(e);
-									JSONObject authorObj = entry.getJSONObject(author);
-									Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", accounts.getInt(itimezone));
-									mDb.insert(TABLE_STATUSES, _ID, statusItem(created.getTime(),
-											entry.getJSONObject(source).getString(url),
-											authorObj.getString(displayName),
-											getProfile(authorObj.getString(thumbnailUrl)),
-											entry.getString(status),
-											service,
-											getCreatedText(now, created, time24hr),
-											appWidgetId));
+								break;
+							case MYSPACE:
+								//								OAuthConsumer consumer = new DefaultOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET);
+								String displayName = "displayName",
+								moodStatusLastUpdated = "moodStatusLastUpdated",
+								thumbnailUrl = "thumbnailUrl",
+								source = "source",
+								url = "url",
+								author = "author";
+								OAuthConsumer consumer = new CommonsHttpOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET, SignatureMethod.HMAC_SHA1);
+								consumer.setTokenWithSecret(accounts.getString(itoken), accounts.getString(isecret));
+								HttpClient client = new DefaultHttpClient();
+								ResponseHandler <String> responseHandler = new BasicResponseHandler();
+								HttpGet request = new HttpGet("http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
+								try {
+									consumer.sign(request);
+									JSONObject jobj = new JSONObject(client.execute(request, responseHandler));
+									JSONArray entries = jobj.getJSONArray("entry");
+									// if there are updates, clear the cache
+									if (entries.length() > 0) db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId + " and " + SERVICE + "=" + service, null);
+									for (int e = 0; e < entries.length(); e++) {
+										JSONObject entry = entries.getJSONObject(e);
+										JSONObject authorObj = entry.getJSONObject(author);
+										Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", accounts.getInt(itimezone));
+										db.insert(TABLE_STATUSES, _ID, statusItem(created.getTime(),
+												entry.getJSONObject(source).getString(url),
+												authorObj.getString(displayName),
+												getProfile(authorObj.getString(thumbnailUrl)),
+												entry.getString(status),
+												service,
+												getCreatedText(now, created, time24hr),
+												appWidgetId));
+									}
+								} catch (ClientProtocolException e) {
+									Log.e(TAG, e.toString());
+								} catch (JSONException e) {
+									Log.e(TAG, e.toString());
+								} catch (IOException e) {
+									Log.e(TAG, e.toString());
+								} catch (OAuthMessageSignerException e) {
+									Log.e(TAG, e.toString());
+								} catch (OAuthExpectationFailedException e) {
+									Log.e(TAG, e.toString());
 								}
-							} catch (ClientProtocolException e) {
-								Log.e(TAG, e.toString());
-							} catch (JSONException e) {
-								Log.e(TAG, e.toString());
-							} catch (IOException e) {
-								Log.e(TAG, e.toString());
-							} catch (OAuthMessageSignerException e) {
-								Log.e(TAG, e.toString());
-							} catch (OAuthExpectationFailedException e) {
-								Log.e(TAG, e.toString());
+								//								} catch (OAuthCommunicationException e) {
+								//									Log.e(TAG, e.toString());
+								//								}
+								break;
 							}
-							//								} catch (OAuthCommunicationException e) {
-							//									Log.e(TAG, e.toString());
-							//								}
-							break;
+							accounts.moveToNext();
 						}
-						accounts.moveToNext();
-					}
+					} else db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null); // no accounts, clear cache
+					accounts.close();
 				}
-				accounts.close();
-			}
-			// race condition when finished configuring, the service starts.
-			// meanwhile, the launcher broadcasts READY and the listview is created. it's at this point that the widget is marked scrollable
-			// this run finishes after the listview is created, but is not flagged as scrollable and replaces the listview with the regular widget
-			boolean scrollable = false;
-			settings = mDb.rawQuery("select " + _ID + "," + SCROLLABLE + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
-			if (settings.getCount() > 0) {
-				settings.moveToFirst();
-				scrollable = settings.getInt(settings.getColumnIndex(SCROLLABLE)) == 1;
-			}
-			settings.close();
-			// Push update for this widget to the home screen
-			// set messages background
-			Bitmap messages_bg = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-			Canvas messages_bg_canvas = new Canvas(messages_bg);
-			messages_bg_canvas.drawColor(messages_bg_color);
-			int[] map_item = {R.id.item0, R.id.item1, R.id.item2, R.id.item3, R.id.item4, R.id.item5, R.id.item6},
-			map_profile = {R.id.profile0, R.id.profile1, R.id.profile2, R.id.profile3, R.id.profile4, R.id.profile5, R.id.profile6},
-			map_message = {R.id.message0, R.id.message1, R.id.message2, R.id.message3, R.id.message4, R.id.message5, R.id.message6},
-			map_screenname = {R.id.friend0, R.id.friend1, R.id.friend2, R.id.friend3, R.id.friend4, R.id.friend5, R.id.friend6},
-			map_created = {R.id.created0, R.id.created1, R.id.created2, R.id.created3, R.id.created4, R.id.created5, R.id.created6};
-			RemoteViews views = new RemoteViews(getPackageName(), hasbuttons ? R.layout.widget : R.layout.widget_nobuttons);
-			if (hasbuttons) {
-				Bitmap buttons_bg = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-				Canvas buttons_bg_canvas = new Canvas(buttons_bg);
-				buttons_bg_canvas.drawColor(buttons_bg_color);
-				views.setImageViewBitmap(R.id.buttons_bg, buttons_bg);
-				views.setTextColor(R.id.head_spacer, buttons_bg_color);
-				views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, new Intent(this, PostDialog.class), 0));
-				views.setTextColor(R.id.button_post, buttons_color);
-				views.setFloat(R.id.button_post, "setTextSize", buttons_textsize);
-				views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, new Intent(this, UI.class).setAction(Integer.toString(appWidgetId)), 0));
-				views.setTextColor(R.id.button_configure, buttons_color);
-				views.setFloat(R.id.button_configure, "setTextSize", buttons_textsize);
-				views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
-				views.setTextColor(R.id.button_refresh, buttons_color);
-				views.setFloat(R.id.button_refresh, "setTextSize", buttons_textsize);
-			}
-			views.setImageViewBitmap(R.id.messages_bg, messages_bg);
-			if (!scrollable) {
-				Cursor statuses = mDb.rawQuery("select " + _ID + "," + LINK + "," + FRIEND + "," + PROFILE + "," + MESSAGE + "," + SERVICE + "," + CREATEDTEXT + " from " + TABLE_STATUSES + " where " + WIDGET + "=" + appWidgetId + " order by " + CREATED + " desc", null);
-				if (statuses.getCount() > 0) {
-					int count_status = 0;
-					statuses.moveToFirst();
-					int ilink = statuses.getColumnIndex(LINK),
-					iprofile = statuses.getColumnIndex(PROFILE),
-					ifriend = statuses.getColumnIndex(FRIEND),
-					imessage = statuses.getColumnIndex(MESSAGE),
-					iservice = statuses.getColumnIndex(SERVICE),
-					icreatedText = statuses.getColumnIndex(CREATEDTEXT);
-					while (!statuses.isAfterLast() && (count_status < map_item.length)) {
-						views.setTextViewText(map_message[count_status], statuses.getString(imessage));
-						views.setTextColor(map_message[count_status], messages_color);
-						views.setFloat(map_message[count_status], "setTextSize", messages_textsize);
-						// if no buttons, use StatusDialog.java with options for Config and Refresh
-						if (hasbuttons) views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(Intent.ACTION_VIEW, Uri.parse(statuses.getString(ilink))), 0));
-						else views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(this, StatusDialog.class).setAction(appWidgetId+"`"+statuses.getInt(iservice)+"`"+statuses.getString(ilink)), 0));
-						views.setTextViewText(map_screenname[count_status], statuses.getString(ifriend));
-						views.setTextColor(map_screenname[count_status], friend_color);
-						views.setFloat(map_screenname[count_status], "setTextSize", friend_textsize);
-						views.setTextViewText(map_created[count_status], statuses.getString(icreatedText));
-						views.setTextColor(map_created[count_status], created_color);
-						views.setFloat(map_created[count_status], "setTextSize", created_textsize);
-						byte[] profile = statuses.getBlob(iprofile);
-						views.setImageViewBitmap(map_profile[count_status], BitmapFactory.decodeByteArray(profile, 0, profile.length));						
-						count_status++;
-						statuses.moveToNext();
-					}
-				} else {
-					// no connect or account
-					views.setTextViewText(map_message[0], getString(hasAccount ? hasConnection ? R.string.no_updates : R.string.no_connection : R.string.no_accounts));
-					views.setTextColor(map_message[0], messages_color);
-					views.setFloat(map_message[0], "setTextSize", messages_textsize);
+				// race condition when finished configuring, the service starts.
+				// meanwhile, the launcher broadcasts READY and the listview is created. it's at this point that the widget is marked scrollable
+				// this run finishes after the listview is created, but is not flagged as scrollable and replaces the listview with the regular widget
+				boolean scrollable = false;
+				settings = db.rawQuery("select " + _ID + "," + SCROLLABLE + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
+				if (settings.getCount() > 0) {
+					settings.moveToFirst();
+					scrollable = settings.getInt(settings.getColumnIndex(SCROLLABLE)) == 1;
 				}
-				statuses.close();
+				settings.close();
+				// Push update for this widget to the home screen
+				// set messages background
+				Bitmap messages_bg = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+				Canvas messages_bg_canvas = new Canvas(messages_bg);
+				messages_bg_canvas.drawColor(messages_bg_color);
+				int[] map_item = {R.id.item0, R.id.item1, R.id.item2, R.id.item3, R.id.item4, R.id.item5, R.id.item6},
+				map_profile = {R.id.profile0, R.id.profile1, R.id.profile2, R.id.profile3, R.id.profile4, R.id.profile5, R.id.profile6},
+				map_message = {R.id.message0, R.id.message1, R.id.message2, R.id.message3, R.id.message4, R.id.message5, R.id.message6},
+				map_screenname = {R.id.friend0, R.id.friend1, R.id.friend2, R.id.friend3, R.id.friend4, R.id.friend5, R.id.friend6},
+				map_created = {R.id.created0, R.id.created1, R.id.created2, R.id.created3, R.id.created4, R.id.created5, R.id.created6};
+				RemoteViews views = new RemoteViews(getPackageName(), hasbuttons ? R.layout.widget : R.layout.widget_nobuttons);
+				if (hasbuttons) {
+					Bitmap buttons_bg = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+					Canvas buttons_bg_canvas = new Canvas(buttons_bg);
+					buttons_bg_canvas.drawColor(buttons_bg_color);
+					views.setImageViewBitmap(R.id.buttons_bg, buttons_bg);
+					views.setTextColor(R.id.head_spacer, buttons_bg_color);
+					views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, new Intent(this, PostDialog.class), 0));
+					views.setTextColor(R.id.button_post, buttons_color);
+					views.setFloat(R.id.button_post, "setTextSize", buttons_textsize);
+					views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, new Intent(this, UI.class).setAction(Integer.toString(appWidgetId)), 0));
+					views.setTextColor(R.id.button_configure, buttons_color);
+					views.setFloat(R.id.button_configure, "setTextSize", buttons_textsize);
+					views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
+					views.setTextColor(R.id.button_refresh, buttons_color);
+					views.setFloat(R.id.button_refresh, "setTextSize", buttons_textsize);
+				}
+				views.setImageViewBitmap(R.id.messages_bg, messages_bg);
+				if (!scrollable) {
+					Cursor statuses = db.rawQuery("select " + _ID + "," + LINK + "," + FRIEND + "," + PROFILE + "," + MESSAGE + "," + SERVICE + "," + CREATEDTEXT + " from " + TABLE_STATUSES + " where " + WIDGET + "=" + appWidgetId + " order by " + CREATED + " desc", null);
+					if (statuses.getCount() > 0) {
+						int count_status = 0;
+						statuses.moveToFirst();
+						int ilink = statuses.getColumnIndex(LINK),
+						iprofile = statuses.getColumnIndex(PROFILE),
+						ifriend = statuses.getColumnIndex(FRIEND),
+						imessage = statuses.getColumnIndex(MESSAGE),
+						iservice = statuses.getColumnIndex(SERVICE),
+						icreatedText = statuses.getColumnIndex(CREATEDTEXT);
+						while (!statuses.isAfterLast() && (count_status < map_item.length)) {
+							views.setTextViewText(map_message[count_status], statuses.getString(imessage));
+							views.setTextColor(map_message[count_status], messages_color);
+							views.setFloat(map_message[count_status], "setTextSize", messages_textsize);
+							// if no buttons, use StatusDialog.java with options for Config and Refresh
+							if (hasbuttons) views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(Intent.ACTION_VIEW, Uri.parse(statuses.getString(ilink))), 0));
+							else views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(this, StatusDialog.class).setAction(appWidgetId+"`"+statuses.getInt(iservice)+"`"+statuses.getString(ilink)), 0));
+							views.setTextViewText(map_screenname[count_status], statuses.getString(ifriend));
+							views.setTextColor(map_screenname[count_status], friend_color);
+							views.setFloat(map_screenname[count_status], "setTextSize", friend_textsize);
+							views.setTextViewText(map_created[count_status], statuses.getString(icreatedText));
+							views.setTextColor(map_created[count_status], created_color);
+							views.setFloat(map_created[count_status], "setTextSize", created_textsize);
+							byte[] profile = statuses.getBlob(iprofile);
+							views.setImageViewBitmap(map_profile[count_status], BitmapFactory.decodeByteArray(profile, 0, profile.length));						
+							count_status++;
+							statuses.moveToNext();
+						}
+					} else {
+						// no connect or account
+						views.setTextViewText(map_message[0], getString(hasAccount ? hasConnection ? R.string.no_updates : R.string.no_connection : R.string.no_accounts));
+						views.setTextColor(map_message[0], messages_color);
+						views.setFloat(map_message[0], "setTextSize", messages_textsize);
+					}
+					statuses.close();
+				}
+				appWidgetManager.updateAppWidget(appWidgetId, views);
+				// replace with scrollable widget
+				if (scrollable) sendBroadcast(new Intent(this, SonetWidget.class).setAction(ACTION_BUILD_SCROLL).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId));
+				if (hasAccount && (interval > 0)) alarmManager.set(AlarmManager.RTC, System.currentTimeMillis() + interval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
 			}
-			appWidgetManager.updateAppWidget(appWidgetId, views);
-			// replace with scrollable widget
-			if (scrollable) sendBroadcast(new Intent(this, SonetWidget.class).setAction(ACTION_BUILD_SCROLL).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId));
-			if (hasAccount && (interval > 0)) alarmManager.set(AlarmManager.RTC, System.currentTimeMillis() + interval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
 		}
-		mDb.close();
-		mSonetDatabaseHelper.close();
+		db.close();
+		sonetDatabaseHelper.close();
 		if (hasConnection) {
 			if (mReceiver != null) {
 				unregisterReceiver(mReceiver);
