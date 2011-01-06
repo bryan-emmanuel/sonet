@@ -21,5 +21,7 @@ package com.piusvelte.sonet;
 
 interface ISonetUI {
 	void setDefaultSettings(int interval_value, int buttons_bg_color_value, int buttons_color_value, int buttons_textsize_value, int messages_bg_color_value, int messages_color_value, int messages_textsize_value, int friend_color_value, int friend_textsize_value, int created_color_value, int created_textsize_value, boolean hasButtons, boolean time24hr);
-	void listAccounts(boolean updateWidget);
+	void listAccounts();
+	void getAuth(int service);
+	void getTimezone(int account);
 }

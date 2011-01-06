@@ -21,11 +21,8 @@ package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.SonetDatabaseHelper._ID;
 import static com.piusvelte.sonet.SonetDatabaseHelper.USERNAME;
-import static com.piusvelte.sonet.SonetDatabaseHelper.SECRET;
 import static com.piusvelte.sonet.SonetDatabaseHelper.SERVICE;
-import static com.piusvelte.sonet.SonetDatabaseHelper.TOKEN;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
-import static com.piusvelte.sonet.SonetDatabaseHelper.EXPIRY;
 import static com.piusvelte.sonet.SonetDatabaseHelper.TIMEZONE;
 import static com.piusvelte.sonet.SonetDatabaseHelper.WIDGET;
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
@@ -76,12 +73,12 @@ import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
-import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.res.Resources.NotFoundException;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
@@ -116,7 +113,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 
 	private static Uri TWITTER_CALLBACK = Uri.parse("sonet://twitter");
 	private static String MYSPACE_CALLBACK = "sonet://myspace";
-	
+
 
 	private ISonetService mSonetService;
 	private ISonetUI.Stub mSonetUI = new ISonetUI.Stub() {
@@ -132,9 +129,47 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		}
 
 		@Override
-		public void listAccounts(boolean updateWidget) throws RemoteException {
-			mUpdateWidget = updateWidget;
-			ManageAccounts.this.listAccounts();
+		public void listAccounts() throws RemoteException {
+			SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
+			Cursor cursor = db.rawQuery("select " + _ID + "," + USERNAME + "," + SERVICE + " from " + TABLE_ACCOUNTS + " where " + WIDGET + "=" + mAppWidgetId, null);
+			setListAdapter(new SimpleCursorAdapter(ManageAccounts.this, R.layout.accounts_row, cursor, new String[] {USERNAME}, new int[] {R.id.account_username}));
+			cursor.close();
+			db.close();
+		}
+
+		@Override
+		public void getAuth(int service) throws RemoteException {
+			if (service != -1) ManageAccounts.this.getAuth(service);
+		}
+
+		@Override
+		public void getTimezone(int account) throws RemoteException {
+			// index set to GMT
+			final int id = account;
+			(new AlertDialog.Builder(ManageAccounts.this))
+			.setTitle(R.string.timezone)
+			.setSingleChoiceItems(R.array.timezone_entries, 12, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					mUpdateWidget = true;
+					if (mSonetService != null) {
+						try {
+							mSonetService.addTimezone(id, Integer.parseInt(getResources().getStringArray(R.array.timezone_values)[which]));
+						} catch (NumberFormatException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (RemoteException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (NotFoundException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					dialog.cancel();
+				}
+			})
+			.show();
 		}
 	};
 
@@ -152,14 +187,14 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	@Override
 	protected void onListItemClick(ListView list, View view, int position, long id) {
 		super.onListItemClick(list, view, position, id);
-		SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-		Cursor cursor = db.query(TABLE_ACCOUNTS, new String[]{SERVICE}, _ID + "=" + id, null, null, null, null);
-		int service = -1;
-		if (cursor.getCount() > 0) {
-			cursor.moveToFirst();
-			service = cursor.getInt(cursor.getColumnIndex(SERVICE));
+		if (mSonetService != null) {
+			try {
+				mSonetService.getAuth((int) id);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-		if (service != -1) getAuth(service);
 	}
 
 	@Override
@@ -170,13 +205,15 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
-		if ((item.getItemId() == DELETE_ID) && (mSonetService != null))
+		if ((item.getItemId() == DELETE_ID) && (mSonetService != null)) {
 			try {
 				mSonetService.deleteAccount((int) ((AdapterContextMenuInfo) item.getMenuInfo()).id);
+				mUpdateWidget = true;
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+		}
 		return super.onContextItemSelected(item);
 	}
 
@@ -233,19 +270,14 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 					provider.setOAuth10a(true);
 					//					provider.retrieveAccessToken(consumer, verifier);
 					provider.retrieveAccessToken(verifier);
-					ContentValues values = new ContentValues();
-					values.put(USERNAME, (new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(consumer.getToken(), consumer.getTokenSecret()))).getScreenName());
-					values.put(TOKEN, consumer.getToken());
-					values.put(SECRET, consumer.getTokenSecret());
-					values.put(EXPIRY, 0);
-					values.put(SERVICE, TWITTER);
-					values.put(TIMEZONE, 0);
-					values.put(WIDGET, mAppWidgetId);
-					SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-					db.insert(TABLE_ACCOUNTS, USERNAME, values);
-					db.close();
 					mUpdateWidget = true;
-					listAccounts();
+					if (mSonetService != null) mSonetService.addAccount((new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(consumer.getToken(), consumer.getTokenSecret()))).getScreenName(),
+							consumer.getToken(),
+							consumer.getTokenSecret(),
+							0,
+							TWITTER,
+							0,
+							mAppWidgetId);
 				} catch (Exception e) {
 					Log.e(TAG, e.getMessage());
 					Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
@@ -296,14 +328,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		}
 	}
 
-	private void listAccounts() {
-		SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-		Cursor cursor = db.rawQuery("select " + _ID + "," + USERNAME + "," + SERVICE + " from " + TABLE_ACCOUNTS + " where " + WIDGET + "=" + mAppWidgetId, null);
-		startManagingCursor(cursor);
-		setListAdapter(new SimpleCursorAdapter(this, R.layout.accounts_row, cursor, new String[] {USERNAME}, new int[] {R.id.account_username}));
-		db.close();
-	}
-
 	public void onClick(DialogInterface dialog, int which) {
 		getAuth(which);
 		dialog.cancel();
@@ -316,21 +340,28 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			public void onComplete(String response) {
 				try {
 					JSONObject json = Util.parseJson(response);
-					ContentValues values = new ContentValues();
-					values.put(USERNAME, json.getString("name"));
-					values.put(TOKEN, mFacebook.getAccessToken());
-					values.put(SECRET, 0);
-					values.put(EXPIRY, mFacebook.getAccessExpires());
-					values.put(SERVICE, FACEBOOK);
-					values.put(TIMEZONE, json.getString(TIMEZONE));
-					values.put(WIDGET, mAppWidgetId);
-					SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-					db.insert(TABLE_ACCOUNTS, _ID, values);
-					db.close();
+					final String username = json.getString("name");
+					final int timezone = Integer.parseInt(json.getString(TIMEZONE));
 					ManageAccounts.this.runOnUiThread(new Runnable() {
 						public void run() {
 							mUpdateWidget = true;
-							listAccounts();
+							if (mSonetService != null) {
+								try {
+									mSonetService.addAccount(username,
+											mFacebook.getAccessToken(),
+											"0",
+											(int) mFacebook.getAccessExpires(),
+											FACEBOOK,
+											timezone,
+											mAppWidgetId);
+								} catch (NumberFormatException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								} catch (RemoteException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							}
 						}
 					});
 				} catch (JSONException e) {
@@ -386,26 +417,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	public void sessionDidLogout(MSSession session) {
 	}
 
-	private void setTimezone(final int id) {
-		// index set to GMT
-		(new AlertDialog.Builder(this))
-		.setTitle(R.string.timezone)
-		.setSingleChoiceItems(R.array.timezone_entries, 12, new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				ContentValues values = new ContentValues();
-				values.put(TIMEZONE, Integer.parseInt(getResources().getStringArray(R.array.timezone_values)[which]));
-				SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-				db.update(TABLE_ACCOUNTS, values, _ID + "=" + id, null);
-				db.close();
-				mUpdateWidget = true;
-				listAccounts();
-				dialog.cancel();
-			}
-		})
-		.show();		
-	}
-
 	// MySpace
 	private class MSRequestCallback extends MSRequest.MSRequestCallback {
 
@@ -420,19 +431,23 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			result = data.get("data");
 			if (result instanceof Map<?, ?>) {
 				Map<?, ?> userObject = (Map<?, ?>) result;
-				ContentValues values = new ContentValues();
-				values.put(USERNAME, (String) userObject.get("userName"));
-				values.put(TOKEN, mMSSession.getToken());
-				values.put(SECRET, mMSSession.getTokenSecret());
-				values.put(SERVICE, MYSPACE);
-				values.put(TIMEZONE, 0);
-				values.put(WIDGET, mAppWidgetId);
-				SQLiteDatabase db = mSonetDatabaseHelper.getWritableDatabase();
-				final int id = (int) db.insert(TABLE_ACCOUNTS, _ID, values);
-				db.close();
+				final String username = userObject.get("userName").toString();
 				ManageAccounts.this.runOnUiThread(new Runnable() {
 					public void run() {
-						setTimezone(id);
+						if (mSonetService != null) {
+							try {
+								mSonetService.addAccount(username,
+										mMSSession.getToken(),
+										mMSSession.getTokenSecret(),
+										0,
+										MYSPACE,
+										0,
+										mAppWidgetId);
+							} catch (RemoteException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
 					}
 				});
 			}                       
@@ -445,6 +460,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		if (mSonetUI != null) {
 			try {
 				mSonetService.setCallback(mSonetUI.asBinder());
+				mSonetService.listAccounts();
 			} catch (RemoteException e) {}
 		}
 	}
@@ -454,18 +470,18 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		mSonetService = null;
 	}
 
-//	@Override
-//	public boolean onKeyDown(int keyCode, KeyEvent event)  {
-//		if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.ECLAIR
-//				&& keyCode == KeyEvent.KEYCODE_BACK
-//				&& event.getRepeatCount() == 0) onBackPressed();
-//		return super.onKeyDown(keyCode, event);
-//	}
-//
-//	@Override
-//	public void onBackPressed() {
-//		// make sure user is sent back to UI.java instead of reopening the browser for twitter
-//		startActivity(new Intent(this, UI.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
-//		return;
-//	}
+	//	@Override
+	//	public boolean onKeyDown(int keyCode, KeyEvent event)  {
+	//		if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.ECLAIR
+	//				&& keyCode == KeyEvent.KEYCODE_BACK
+	//				&& event.getRepeatCount() == 0) onBackPressed();
+	//		return super.onKeyDown(keyCode, event);
+	//	}
+	//
+	//	@Override
+	//	public void onBackPressed() {
+	//		// make sure user is sent back to UI.java instead of reopening the browser for twitter
+	//		startActivity(new Intent(this, UI.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
+	//		return;
+	//	}
 }

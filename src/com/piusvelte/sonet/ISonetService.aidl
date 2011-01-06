@@ -24,4 +24,9 @@ interface ISonetService {
 	void setIntSetting(int appWidgetId, String column, int value);
 	void getSettings(int appWidgetId);
 	void deleteAccount(int account);
+	void addAccount(String username, String token, String secret, int expiry, int service, int timezone, int appWidgetId);
+	void addAccountGetTimezone(String username, String token, String secret, int expiry, int service, int timezone, int appWidgetId);
+	void getAuth(int account);
+	void addTimezone(int account, int timezone);
+	void listAccounts();
 }

@@ -115,7 +115,15 @@ public class Settings extends Activity implements View.OnClickListener, ServiceC
 		}
 
 		@Override
-		public void listAccounts(boolean updateWidget) throws RemoteException {
+		public void listAccounts() throws RemoteException {
+		}
+
+		@Override
+		public void getAuth(int service) throws RemoteException {
+		}
+
+		@Override
+		public void getTimezone(int account) throws RemoteException {
 		}
 	};
 

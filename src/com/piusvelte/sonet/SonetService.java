@@ -132,7 +132,8 @@ public class SonetService extends Service implements Runnable {
 	private Thread sThread;
 	SonetDatabaseHelper mSonetDatabaseHelper;
 	private SQLiteDatabase mDb;
-	private ISonetUI mSonetUI;	
+	private ISonetUI mSonetUI;
+	private boolean mListAccounts = false;
 	private final ISonetService.Stub mSonetService = new ISonetService.Stub() {
 		@Override
 		public void setCallback(IBinder mSonetUIBinder) throws RemoteException {
@@ -141,7 +142,8 @@ public class SonetService extends Service implements Runnable {
 
 		@Override
 		public void setIntSetting(int appWidgetId, String column, int value)
-				throws RemoteException {
+		throws RemoteException {
+			if ((mDb == null) || !mDb.isOpen())	mDb = mSonetDatabaseHelper.getWritableDatabase();
 			ContentValues values = new ContentValues();
 			values.put(column, value);
 			mDb.update(TABLE_WIDGETS, values, WIDGET + "=" + appWidgetId, null);			
@@ -149,6 +151,7 @@ public class SonetService extends Service implements Runnable {
 
 		@Override
 		public void getSettings(int appWidgetId) throws RemoteException {
+			if ((mDb == null) || !mDb.isOpen())	mDb = mSonetDatabaseHelper.getWritableDatabase();
 			Cursor c = mDb.rawQuery("select "
 					+ _ID + ","
 					+ INTERVAL + ","
@@ -184,15 +187,92 @@ public class SonetService extends Service implements Runnable {
 
 		@Override
 		public void deleteAccount(int account) throws RemoteException {
+			if ((mDb == null) || !mDb.isOpen())	mDb = mSonetDatabaseHelper.getWritableDatabase();
 			mDb.delete(TABLE_ACCOUNTS, _ID + "=" + account, null);
+			if (mSonetUI != null) requestDatabase();
+		}
+
+		@Override
+		public void addAccount(String username, String token, String secret,
+				int expiry, int service, int timezone, int appWidgetId)
+		throws RemoteException {
+			if ((mDb == null) || !mDb.isOpen())	mDb = mSonetDatabaseHelper.getWritableDatabase();
+			ContentValues values = new ContentValues();
+			values.put(USERNAME, username);
+			values.put(TOKEN, token);
+			values.put(SECRET, secret);
+			values.put(EXPIRY, expiry);
+			values.put(SERVICE, service);
+			values.put(TIMEZONE, timezone);
+			values.put(WIDGET, appWidgetId);
+			mDb.insert(TABLE_ACCOUNTS, USERNAME, values);
+			if (mSonetUI != null) requestDatabase();
+		}
+
+		@Override
+		public void getAuth(int account) throws RemoteException {
+			int service = -1;
+			if ((mDb == null) || !mDb.isOpen())	mDb = mSonetDatabaseHelper.getWritableDatabase();
+			Cursor cursor = mDb.rawQuery("select " + _ID + "," + SERVICE + " from " + TABLE_ACCOUNTS + " where " + _ID + "=" + account, null);
+			if (cursor.getCount() > 0) {
+				cursor.moveToFirst();
+				service = cursor.getInt(cursor.getColumnIndex(SERVICE));
+			}
+			if (mSonetUI != null) mSonetUI.getAuth(service);
+		}
+
+		@Override
+		public void addAccountGetTimezone(String username, String token,
+				String secret, int expiry, int service, int timezone,
+				int appWidgetId) throws RemoteException {
+			if ((mDb == null) || !mDb.isOpen())	mDb = mSonetDatabaseHelper.getWritableDatabase();
+			ContentValues values = new ContentValues();
+			values.put(USERNAME, username);
+			values.put(TOKEN, token);
+			values.put(SECRET, secret);
+			values.put(EXPIRY, expiry);
+			values.put(SERVICE, service);
+			values.put(TIMEZONE, timezone);
+			values.put(WIDGET, appWidgetId);
+			int account = (int) mDb.insert(TABLE_ACCOUNTS, USERNAME, values);
+			if (mSonetUI != null) mSonetUI.getTimezone(account);
+		}
+
+		@Override
+		public void addTimezone(int account, int timezone)
+				throws RemoteException {
+			if ((mDb == null) || !mDb.isOpen())	mDb = mSonetDatabaseHelper.getWritableDatabase();
+			ContentValues values = new ContentValues();
+			values.put(TIMEZONE, timezone);
+			mDb.update(TABLE_ACCOUNTS, values, _ID + "=" + account, null);
+			if (mSonetUI != null) requestDatabase();
+		}
+
+		@Override
+		public void listAccounts() throws RemoteException {
+			// ui is requesting the database
+			if (mSonetUI != null) requestDatabase();
 		}
 	};
+	
+	private void requestDatabase() {
+		if (deletesQueued() || scrollUpdatesQueued() || updatesQueued()) SonetService.this.mListAccounts = true;
+		else {
+			if ((mDb != null) && mDb.isOpen()) mDb.close();
+			try {
+				mSonetUI.listAccounts();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}	
+		}
+		
+	}
 
 	@Override
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
 		mSonetDatabaseHelper = new SonetDatabaseHelper(this);
-		mDb = mSonetDatabaseHelper.getWritableDatabase();
 		if (intent != null) {
 			if (intent.getAction() != null) {
 				if (intent.getAction().equals(ACTION_MAKE_SCROLLABLE)) {
@@ -242,7 +322,7 @@ public class SonetService extends Service implements Runnable {
 
 	@Override
 	public void onDestroy() {
-		mDb.close();
+		if ((mDb != null) && mDb.isOpen()) mDb.close();
 		mSonetDatabaseHelper.close();
 		if (mReceiver != null) {
 			unregisterReceiver(mReceiver);
@@ -393,6 +473,7 @@ public class SonetService extends Service implements Runnable {
 		friend_textsize,
 		created_textsize;
 		SharedPreferences sp = null;
+		if ((mDb == null) || !mDb.isOpen())	mDb = mSonetDatabaseHelper.getWritableDatabase();
 		while (deletesQueued() || scrollUpdatesQueued() || updatesQueued()) {
 			// first handle deletes, then scroll updates, finally regular updates
 			int appWidgetId;
@@ -404,9 +485,9 @@ public class SonetService extends Service implements Runnable {
 				mDb.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null);
 			} else if (scrollUpdatesQueued()) {
 				appWidgetId = getNextScrollUpdate();
-                ContentValues values = new ContentValues();
-                values.put(SCROLLABLE, 1);
-                mDb.update(TABLE_WIDGETS, values, WIDGET + "=" + appWidgetId, null);
+				ContentValues values = new ContentValues();
+				values.put(SCROLLABLE, 1);
+				mDb.update(TABLE_WIDGETS, values, WIDGET + "=" + appWidgetId, null);
 			} else {
 				appWidgetId = getNextUpdate();
 				alarmManager.cancel(PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
@@ -774,6 +855,15 @@ public class SonetService extends Service implements Runnable {
 			f.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
 			registerReceiver(mReceiver, f);	
 		}
-		stopSelf();
+		// after finishing, free the db to the ui
+		if (mDb != null) mDb.close();
+		if (mListAccounts && (mSonetUI != null)) {
+			try {
+				mSonetUI.listAccounts();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 }
