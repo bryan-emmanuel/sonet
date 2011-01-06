@@ -24,4 +24,6 @@ interface ISonetUI {
 	void listAccounts();
 	void getAuth(int service);
 	void getTimezone(int account);
+	void buildScrollableWidget(int messages_color, int friend_color, int created_color, int friend_textsize, int created_textsize, int messages_textsize);
+	void widgetOnClick(boolean hasbuttons, int service, String link);
 }

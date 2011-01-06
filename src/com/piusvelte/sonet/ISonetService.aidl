@@ -29,4 +29,6 @@ interface ISonetService {
 	void getAuth(int account);
 	void addTimezone(int account, int timezone);
 	void listAccounts();
+	void getWidgetSettings(int appWidgetId);
+	void widgetOnClick(int appWidgetId, int statusId);
 }

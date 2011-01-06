@@ -171,6 +171,19 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			})
 			.show();
 		}
+
+		@Override
+		public void buildScrollableWidget(int messages_color, int friend_color,
+				int created_color, int friend_textsize, int created_textsize,
+				int messages_textsize) throws RemoteException {
+		}
+
+		@Override
+		public void widgetOnClick(boolean hasbuttons, int service, String link)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
 	};
 
 	@Override

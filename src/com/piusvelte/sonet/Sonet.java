@@ -11,6 +11,6 @@ public class Sonet {
     public static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
     public static final String DONATE = "http://www.piusvelte.com?p=donate-sonet";
     public static final String ACTION_BUILD_SCROLL = "com.piusvelte.sonet.Sonet.BUILD_SCROLL";
-    public static final String ACTION_MAKE_SCROLLABLE = "com.piusvelte.sonet.Sonet.MAKE_SCROLLABLE";
     public static final String ACTION_DELETE = "com.piusvelte.sonet.Sonet.DELETE";
+    public static final String EXTRA_ACCOUNTID = "com.piusvelte.sonet.Sonet.ACCOUNTID";
 }

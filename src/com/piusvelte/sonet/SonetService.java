@@ -55,7 +55,6 @@ import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.ACTION_BUILD_SCROLL;
-import static com.piusvelte.sonet.Sonet.ACTION_MAKE_SCROLLABLE;
 import static com.piusvelte.sonet.Sonet.ACTION_DELETE;
 
 import static com.piusvelte.sonet.Tokens.TWITTER_KEY;
@@ -240,7 +239,7 @@ public class SonetService extends Service implements Runnable {
 
 		@Override
 		public void addTimezone(int account, int timezone)
-				throws RemoteException {
+		throws RemoteException {
 			if ((mDb == null) || !mDb.isOpen())	mDb = mSonetDatabaseHelper.getWritableDatabase();
 			ContentValues values = new ContentValues();
 			values.put(TIMEZONE, timezone);
@@ -253,10 +252,54 @@ public class SonetService extends Service implements Runnable {
 			// ui is requesting the database
 			if (mSonetUI != null) requestDatabase();
 		}
+
+		@Override
+		public void getWidgetSettings(int appWidgetId) throws RemoteException {
+			if ((mDb == null) || !mDb.isOpen())	mDb = mSonetDatabaseHelper.getWritableDatabase();
+			Cursor settings = mDb.rawQuery("select " + _ID + "," + MESSAGES_COLOR + "," + FRIEND_COLOR + "," + CREATED_COLOR + "," + FRIEND_TEXTSIZE + "," + CREATED_TEXTSIZE + "," + MESSAGES_TEXTSIZE + "," + SCROLLABLE + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
+			if (settings.getCount() > 0) {
+				settings.moveToFirst();
+				if (settings.getInt(settings.getColumnIndex(SCROLLABLE)) != 1) {
+					ContentValues values = new ContentValues();
+					values.put(SCROLLABLE, 1);
+					mDb.update(TABLE_WIDGETS, values, WIDGET + "=" + appWidgetId, null);
+				}
+				if (mSonetUI != null) mSonetUI.buildScrollableWidget(settings.getInt(settings.getColumnIndex(FRIEND_COLOR)),
+						settings.getInt(settings.getColumnIndex(CREATED_COLOR)),
+						settings.getInt(settings.getColumnIndex(MESSAGES_COLOR)),
+						settings.getInt(settings.getColumnIndex(FRIEND_TEXTSIZE)),
+						settings.getInt(settings.getColumnIndex(CREATED_TEXTSIZE)),
+						settings.getInt(settings.getColumnIndex(MESSAGES_TEXTSIZE)));
+			}
+		}
+
+		@Override
+		public void widgetOnClick(int appWidgetId, int statusId)
+		throws RemoteException {
+			if ((mDb == null) || !mDb.isOpen())	mDb = mSonetDatabaseHelper.getWritableDatabase();
+			if (mSonetUI != null) {
+				boolean hasbuttons = false;
+				int service = -1;
+				String link = null;
+				Cursor settings = mDb.rawQuery("select " + _ID + "," + HASBUTTONS + " from " + TABLE_WIDGETS + " where " + WIDGET + "=" + appWidgetId, null);
+				if (settings.getCount() > 0) {
+					settings.moveToFirst();
+					hasbuttons = settings.getInt(settings.getColumnIndex(HASBUTTONS)) == 1;
+				}
+				settings.close();
+				Cursor item = mDb.rawQuery("select " + _ID + "," + SERVICE + "," + LINK + " from " + TABLE_STATUSES + " where " + _ID + "=" + statusId, null);
+				if (item.getCount() > 0) {
+					item.moveToFirst();
+					service = item.getInt(item.getColumnIndex(SERVICE));
+					link = item.getString(item.getColumnIndex(LINK));
+				}
+				mSonetUI.widgetOnClick(hasbuttons, service, link);
+			}
+		}
 	};
-	
+
 	private void requestDatabase() {
-		if (deletesQueued() || scrollUpdatesQueued() || updatesQueued()) SonetService.this.mListAccounts = true;
+		if (deletesQueued() || updatesQueued()) SonetService.this.mListAccounts = true;
 		else {
 			if ((mDb != null) && mDb.isOpen()) mDb.close();
 			try {
@@ -266,7 +309,7 @@ public class SonetService extends Service implements Runnable {
 				e.printStackTrace();
 			}	
 		}
-		
+
 	}
 
 	@Override
@@ -275,9 +318,7 @@ public class SonetService extends Service implements Runnable {
 		mSonetDatabaseHelper = new SonetDatabaseHelper(this);
 		if (intent != null) {
 			if (intent.getAction() != null) {
-				if (intent.getAction().equals(ACTION_MAKE_SCROLLABLE)) {
-					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) SonetService.scrollUpdate(intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
-				} else if (intent.getAction().equals(ACTION_DELETE)) {
+				if (intent.getAction().equals(ACTION_DELETE)) {
 					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.delete(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
 				} else if (intent.getAction().equals(ACTION_REFRESH)) {
 					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
@@ -352,29 +393,6 @@ public class SonetService extends Service implements Runnable {
 			else return sAppWidgetIds.poll();
 		}
 	}
-
-	private static Object sScrollUpdateLock = new Object();
-	private static Queue<Integer> sScrollUpdates = new LinkedList<Integer>();
-
-	public static void scrollUpdate(int appWidgetId) {
-		synchronized (sScrollUpdateLock) {
-			sScrollUpdates.add(appWidgetId);
-		}
-	}
-
-	private static boolean scrollUpdatesQueued() {
-		synchronized (sScrollUpdateLock) {
-			return !sScrollUpdates.isEmpty();
-		}
-	}
-
-	private static int getNextScrollUpdate() {
-		synchronized (sScrollUpdateLock) {
-			if (sScrollUpdates.peek() == null) return AppWidgetManager.INVALID_APPWIDGET_ID;
-			else return sScrollUpdates.poll();
-		}
-	}
-
 
 	private static Object sDeleteLock = new Object();
 	private static Queue<Integer> sDeletes = new LinkedList<Integer>();
@@ -474,7 +492,7 @@ public class SonetService extends Service implements Runnable {
 		created_textsize;
 		SharedPreferences sp = null;
 		if ((mDb == null) || !mDb.isOpen())	mDb = mSonetDatabaseHelper.getWritableDatabase();
-		while (deletesQueued() || scrollUpdatesQueued() || updatesQueued()) {
+		while (deletesQueued() || updatesQueued()) {
 			// first handle deletes, then scroll updates, finally regular updates
 			int appWidgetId;
 			if (deletesQueued()) {
@@ -483,11 +501,6 @@ public class SonetService extends Service implements Runnable {
 				mDb.delete(TABLE_WIDGETS, WIDGET + "=" + appWidgetId, null);
 				mDb.delete(TABLE_ACCOUNTS, WIDGET + "=" + appWidgetId, null);
 				mDb.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null);
-			} else if (scrollUpdatesQueued()) {
-				appWidgetId = getNextScrollUpdate();
-				ContentValues values = new ContentValues();
-				values.put(SCROLLABLE, 1);
-				mDb.update(TABLE_WIDGETS, values, WIDGET + "=" + appWidgetId, null);
 			} else {
 				appWidgetId = getNextUpdate();
 				alarmManager.cancel(PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
