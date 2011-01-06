@@ -57,10 +57,11 @@ import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.ACTION_BUILD_SCROLL;
 import static com.piusvelte.sonet.Sonet.ACTION_MAKE_SCROLLABLE;
 import static com.piusvelte.sonet.Sonet.ACTION_DELETE;
-import static com.piusvelte.sonet.Services.TWITTER_KEY;
-import static com.piusvelte.sonet.Services.TWITTER_SECRET;
-import static com.piusvelte.sonet.Services.MYSPACE_KEY;
-import static com.piusvelte.sonet.Services.MYSPACE_SECRET;
+
+import static com.piusvelte.sonet.Tokens.TWITTER_KEY;
+import static com.piusvelte.sonet.Tokens.TWITTER_SECRET;
+import static com.piusvelte.sonet.Tokens.MYSPACE_KEY;
+import static com.piusvelte.sonet.Tokens.MYSPACE_SECRET;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -124,7 +125,6 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 import android.widget.RemoteViews;
-import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class SonetService extends Service implements Runnable {
 	private static final String TAG = "SonetService";

@@ -36,11 +36,12 @@ import static com.piusvelte.sonet.Sonet.FACEBOOK_PERMISSIONS;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
-import static com.piusvelte.sonet.Services.TWITTER_KEY;
-import static com.piusvelte.sonet.Services.TWITTER_SECRET;
-import static com.piusvelte.sonet.Services.FACEBOOK_ID;
-import static com.piusvelte.sonet.Services.MYSPACE_KEY;
-import static com.piusvelte.sonet.Services.MYSPACE_SECRET;
+
+import static com.piusvelte.sonet.Tokens.TWITTER_KEY;
+import static com.piusvelte.sonet.Tokens.TWITTER_SECRET;
+import static com.piusvelte.sonet.Tokens.FACEBOOK_ID;
+import static com.piusvelte.sonet.Tokens.MYSPACE_KEY;
+import static com.piusvelte.sonet.Tokens.MYSPACE_SECRET;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
