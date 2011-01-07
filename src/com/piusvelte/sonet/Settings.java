@@ -20,36 +20,23 @@
 package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
-import static com.piusvelte.sonet.SonetDatabaseHelper.BUTTONS_BG_COLOR;
-import static com.piusvelte.sonet.SonetDatabaseHelper.BUTTONS_COLOR;
-import static com.piusvelte.sonet.SonetDatabaseHelper.HASBUTTONS;
-import static com.piusvelte.sonet.SonetDatabaseHelper.INTERVAL;
-import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGES_BG_COLOR;
-import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGES_COLOR;
-import static com.piusvelte.sonet.SonetDatabaseHelper.TIME24HR;
-import static com.piusvelte.sonet.SonetDatabaseHelper.FRIEND_COLOR;
-import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED_COLOR;
-import static com.piusvelte.sonet.SonetDatabaseHelper.BUTTONS_TEXTSIZE;
-import static com.piusvelte.sonet.SonetDatabaseHelper.MESSAGES_TEXTSIZE;
-import static com.piusvelte.sonet.SonetDatabaseHelper.FRIEND_TEXTSIZE;
-import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED_TEXTSIZE;
+
+import com.piusvelte.sonet.Sonet.Widgets;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.appwidget.AppWidgetManager;
-import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.ServiceConnection;
+import android.database.Cursor;
 import android.os.Bundle;
-import android.os.IBinder;
-import android.os.RemoteException;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 
-public class Settings extends Activity implements View.OnClickListener, ServiceConnection {
+public class Settings extends Activity implements View.OnClickListener {
 	private int mInterval_value,
 	mButtons_bg_color_value,
 	mButtons_color_value,
@@ -74,71 +61,8 @@ public class Settings extends Activity implements View.OnClickListener, ServiceC
 	private Button mCreated_color;
 	private Button mCreated_textsize;
 	private CheckBox mTime24hr;
-	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private boolean mUpdateWidget = false;
-	private ISonetService mSonetService;
-	private ISonetUI.Stub mSonetUI = new ISonetUI.Stub() {
-		@Override
-		public void setDefaultSettings(int interval_value,
-				int buttons_bg_color_value, int buttons_color_value,
-				int buttons_textsize_value, int messages_bg_color_value,
-				int messages_color_value, int messages_textsize_value,
-				int friend_color_value, int friend_textsize_value,
-				int created_color_value, int created_textsize_value,
-				boolean hasButtons, boolean time24hr) throws RemoteException {
-			mInterval_value = interval_value;
-			mButtons_bg_color_value = buttons_bg_color_value;
-			mButtons_color_value = buttons_color_value;
-			mButtons_textsize_value = buttons_textsize_value;
-			mMessages_bg_color_value = messages_bg_color_value;
-			mMessages_color_value = messages_color_value;
-			mMessages_textsize_value = messages_textsize_value;
-			mFriend_color_value = friend_color_value;
-			mFriend_textsize_value = friend_textsize_value;
-			mCreated_color_value = created_color_value;
-			mCreated_textsize_value = created_textsize_value;
-			mInterval.setOnClickListener(Settings.this);
-			mButtons_bg_color.setOnClickListener(Settings.this);
-			mButtons_color.setOnClickListener(Settings.this);
-			mButtons_textsize.setOnClickListener(Settings.this);
-			mMessages_bg_color.setOnClickListener(Settings.this);
-			mMessages_color.setOnClickListener(Settings.this);
-			mMessages_textsize.setOnClickListener(Settings.this);
-			mFriend_color.setOnClickListener(Settings.this);
-			mFriend_textsize.setOnClickListener(Settings.this);
-			mCreated_color.setOnClickListener(Settings.this);
-			mCreated_textsize.setOnClickListener(Settings.this);
-			mHasButtons.setChecked(hasButtons);
-			mHasButtons.setOnCheckedChangeListener(mHasButtonsListener);
-			mTime24hr.setChecked(time24hr);
-			mTime24hr.setOnCheckedChangeListener(mTime24hrListener);
-		}
-
-		@Override
-		public void listAccounts() throws RemoteException {
-		}
-
-		@Override
-		public void getAuth(int service) throws RemoteException {
-		}
-
-		@Override
-		public void getTimezone(int account) throws RemoteException {
-		}
-
-		@Override
-		public void buildScrollableWidget(int messages_color, int friend_color,
-				int created_color, int friend_textsize, int created_textsize,
-				int messages_textsize) throws RemoteException {
-		}
-
-		@Override
-		public void widgetOnClick(boolean hasbuttons, int service, String link)
-				throws RemoteException {
-			// TODO Auto-generated method stub
-			
-		}
-	};
+	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -170,7 +94,40 @@ public class Settings extends Activity implements View.OnClickListener, ServiceC
 		mFriend_textsize_value = Integer.parseInt(getString(R.string.friend_textsize));
 		mCreated_color_value = Integer.parseInt(getString(R.string.created_color));
 		mCreated_textsize_value = Integer.parseInt(getString(R.string.created_textsize));
-		bindService(new Intent(this, SonetService.class), this, BIND_AUTO_CREATE);
+		
+		Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR}, Widgets.WIDGET + "=" + mAppWidgetId, null, null);
+
+		if (c.moveToFirst()) {
+			mInterval_value = c.getInt(c.getColumnIndex(Widgets.INTERVAL));
+			mButtons_bg_color_value = c.getInt(c.getColumnIndex(Widgets.BUTTONS_BG_COLOR));
+			mButtons_color_value = c.getInt(c.getColumnIndex(Widgets.BUTTONS_COLOR));
+			mButtons_textsize_value = c.getInt(c.getColumnIndex(Widgets.BUTTONS_TEXTSIZE));
+			mMessages_bg_color_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
+			mMessages_color_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_COLOR));
+			mMessages_textsize_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_TEXTSIZE));
+			mFriend_color_value = c.getInt(c.getColumnIndex(Widgets.FRIEND_COLOR));
+			mFriend_textsize_value = c.getInt(c.getColumnIndex(Widgets.FRIEND_TEXTSIZE));
+			mCreated_color_value = c.getInt(c.getColumnIndex(Widgets.CREATED_COLOR));
+			mCreated_textsize_value = c.getInt(c.getColumnIndex(Widgets.CREATED_TEXTSIZE));
+			mHasButtons.setChecked(c.getInt(c.getColumnIndex(Widgets.HASBUTTONS)) == 1);
+			mTime24hr.setChecked(c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1);
+		}
+		c.close();
+
+		mInterval.setOnClickListener(Settings.this);
+		mButtons_bg_color.setOnClickListener(Settings.this);
+		mButtons_color.setOnClickListener(Settings.this);
+		mButtons_textsize.setOnClickListener(Settings.this);
+		mMessages_bg_color.setOnClickListener(Settings.this);
+		mMessages_color.setOnClickListener(Settings.this);
+		mMessages_textsize.setOnClickListener(Settings.this);
+		mFriend_color.setOnClickListener(Settings.this);
+		mFriend_textsize.setOnClickListener(Settings.this);
+		mCreated_color.setOnClickListener(Settings.this);
+		mCreated_textsize.setOnClickListener(Settings.this);
+		mHasButtons.setOnCheckedChangeListener(mHasButtonsListener);
+		mTime24hr.setOnCheckedChangeListener(mTime24hrListener);
+		
 	}
 
 	@Override
@@ -178,21 +135,11 @@ public class Settings extends Activity implements View.OnClickListener, ServiceC
 		super.onPause();
 		if (mUpdateWidget) startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
 	}
-	
-	@Override
-	protected void onDestroy() {
-		unbindService(this);
-		super.onDestroy();
-	}
 
 	private void updateDatabase(String column, int value) {
-		if (mSonetService != null)
-			try {
-				mSonetService.setIntSetting(mAppWidgetId, column, value);
-			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		ContentValues values = new ContentValues();
+		values.put(column, value);
+		this.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets.WIDGET + "=" + mAppWidgetId, null);
 		mUpdateWidget = true;
 	}
 	
@@ -200,7 +147,7 @@ public class Settings extends Activity implements View.OnClickListener, ServiceC
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-			updateDatabase(BUTTONS_BG_COLOR, color);
+			updateDatabase(Widgets.BUTTONS_BG_COLOR, color);
 		}
 
 		public void colorUpdate(int color) {}
@@ -210,7 +157,7 @@ public class Settings extends Activity implements View.OnClickListener, ServiceC
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-			updateDatabase(BUTTONS_COLOR, color);
+			updateDatabase(Widgets.BUTTONS_COLOR, color);
 		}
 
 		public void colorUpdate(int color) {}
@@ -220,7 +167,7 @@ public class Settings extends Activity implements View.OnClickListener, ServiceC
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-			updateDatabase(MESSAGES_BG_COLOR, color);
+			updateDatabase(Widgets.MESSAGES_BG_COLOR, color);
 		}
 
 		public void colorUpdate(int color) {}
@@ -230,7 +177,7 @@ public class Settings extends Activity implements View.OnClickListener, ServiceC
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-			updateDatabase(MESSAGES_COLOR, color);
+			updateDatabase(Widgets.MESSAGES_COLOR, color);
 		}
 
 		public void colorUpdate(int color) {}
@@ -240,7 +187,7 @@ public class Settings extends Activity implements View.OnClickListener, ServiceC
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-			updateDatabase(FRIEND_COLOR, color);
+			updateDatabase(Widgets.FRIEND_COLOR, color);
 		}
 
 		public void colorUpdate(int color) {}
@@ -250,7 +197,7 @@ public class Settings extends Activity implements View.OnClickListener, ServiceC
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
-			updateDatabase(CREATED_COLOR, color);
+			updateDatabase(Widgets.CREATED_COLOR, color);
 		}
 
 		public void colorUpdate(int color) {}
@@ -260,7 +207,7 @@ public class Settings extends Activity implements View.OnClickListener, ServiceC
 		new CompoundButton.OnCheckedChangeListener() {
 		@Override
 		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-			updateDatabase(HASBUTTONS, isChecked ? 1 : 0);
+			updateDatabase(Widgets.HASBUTTONS, isChecked ? 1 : 0);
 		}
 	};
 
@@ -268,7 +215,7 @@ public class Settings extends Activity implements View.OnClickListener, ServiceC
 		new CompoundButton.OnCheckedChangeListener() {
 		@Override
 		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-			updateDatabase(TIME24HR, isChecked ? 1 : 0);
+			updateDatabase(Widgets.TIME24HR, isChecked ? 1 : 0);
 		}
 	};
 
@@ -288,7 +235,7 @@ public class Settings extends Activity implements View.OnClickListener, ServiceC
 			.setSingleChoiceItems(R.array.interval_entries, index, new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					updateDatabase(INTERVAL, Integer.parseInt(getResources().getStringArray(R.array.interval_values)[which]));
+					updateDatabase(Widgets.INTERVAL, Integer.parseInt(getResources().getStringArray(R.array.interval_values)[which]));
 					dialog.cancel();
 				}
 			})
@@ -313,7 +260,7 @@ public class Settings extends Activity implements View.OnClickListener, ServiceC
 			.setSingleChoiceItems(R.array.textsize_entries, index, new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					updateDatabase(BUTTONS_TEXTSIZE, Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]));
+					updateDatabase(Widgets.BUTTONS_TEXTSIZE, Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]));
 					dialog.cancel();
 				}
 			})
@@ -338,7 +285,7 @@ public class Settings extends Activity implements View.OnClickListener, ServiceC
 			.setSingleChoiceItems(R.array.textsize_entries, index, new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					updateDatabase(MESSAGES_TEXTSIZE, Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]));
+					updateDatabase(Widgets.MESSAGES_TEXTSIZE, Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]));
 					dialog.cancel();
 				}
 			})
@@ -360,7 +307,7 @@ public class Settings extends Activity implements View.OnClickListener, ServiceC
 			.setSingleChoiceItems(R.array.textsize_entries, index, new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					updateDatabase(FRIEND_TEXTSIZE, Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]));
+					updateDatabase(Widgets.FRIEND_TEXTSIZE, Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]));
 					dialog.cancel();
 				}
 			})
@@ -382,27 +329,12 @@ public class Settings extends Activity implements View.OnClickListener, ServiceC
 			.setSingleChoiceItems(R.array.textsize_entries, index, new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					updateDatabase(CREATED_TEXTSIZE, Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]));
+					updateDatabase(Widgets.CREATED_TEXTSIZE, Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]));
 					dialog.cancel();
 				}
 			})
 			.setCancelable(true)
 			.show();			
 		}
-	}
-
-	@Override
-	public void onServiceConnected(ComponentName name, IBinder service) {
-		mSonetService = ISonetService.Stub.asInterface((IBinder) service);
-		if (mSonetUI != null) {
-			try {
-				mSonetService.setCallback(mSonetUI.asBinder());
-			} catch (RemoteException e) {}
-		}
-	}
-
-	@Override
-	public void onServiceDisconnected(ComponentName name) {
-		mSonetService = null;
 	}
 }

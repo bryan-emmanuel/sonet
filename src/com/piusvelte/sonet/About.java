@@ -20,11 +20,10 @@
 package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.DONATE;
-import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_ACCOUNTS;
-import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_STATUSES;
-import static com.piusvelte.sonet.SonetDatabaseHelper.TABLE_WIDGETS;
-import static com.piusvelte.sonet.SonetDatabaseHelper.WIDGET;
-import static com.piusvelte.sonet.SonetDatabaseHelper._ID;
+
+import com.piusvelte.sonet.Sonet.Accounts;
+import com.piusvelte.sonet.Sonet.Statuses;
+import com.piusvelte.sonet.Sonet.Widgets;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -34,7 +33,6 @@ import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -54,14 +52,11 @@ public class About extends Activity implements View.OnClickListener, DialogInter
 		mAppWidgetManager = AppWidgetManager.getInstance(this);
 		int[] appWidgetManagerAppWidgetIds = arrayCat(arrayCat(mAppWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x2.class)), mAppWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x3.class))), mAppWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x4.class)));
 		int[] removeAppWidgets = new int[0];
-		SonetDatabaseHelper sonetDatabaseHelper = new SonetDatabaseHelper(this);
-		SQLiteDatabase db = sonetDatabaseHelper.getWritableDatabase();
-		db.delete(TABLE_WIDGETS, WIDGET + "=\"\"", null);
-		db.delete(TABLE_ACCOUNTS, WIDGET + "=\"\"", null);
-		Cursor accounts = db.rawQuery("select " + _ID + "," + WIDGET + " from " + TABLE_ACCOUNTS, null);
-		if (accounts.getCount() > 0) {
-			accounts.moveToFirst();
-			int iwidget = accounts.getColumnIndex(WIDGET),
+		this.getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=''", null);
+		this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts.WIDGET + "=''", null);
+		Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.WIDGET}, null, null, null);
+		if (accounts.moveToFirst()) {
+			int iwidget = accounts.getColumnIndex(Accounts.WIDGET),
 			appWidgetId;
 			while (!accounts.isAfterLast()) {
 				appWidgetId = accounts.getInt(iwidget);
@@ -74,13 +69,11 @@ public class About extends Activity implements View.OnClickListener, DialogInter
 		if (removeAppWidgets.length > 0) {
 			// remove phantom widgets
 			for (int appWidgetId : removeAppWidgets) {
-				db.delete(TABLE_WIDGETS, WIDGET + "=" + appWidgetId, null);
-				db.delete(TABLE_ACCOUNTS, WIDGET + "=" + appWidgetId, null);
-				db.delete(TABLE_STATUSES, WIDGET + "=" + appWidgetId, null);
+				this.getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=" + appWidgetId, null);
+				this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts.WIDGET + "=" + appWidgetId, null);
+				this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=" + appWidgetId, null);
 			}
 		}
-		db.close();
-		sonetDatabaseHelper.close();
 		((Button) findViewById(R.id.widgets)).setOnClickListener(this);
 		((Button) findViewById(R.id.refreshall)).setOnClickListener(this);
 		((Button) findViewById(R.id.donate)).setOnClickListener(this);

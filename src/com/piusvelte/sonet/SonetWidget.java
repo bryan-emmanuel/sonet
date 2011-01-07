@@ -20,34 +20,29 @@
 package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
-import static com.piusvelte.sonet.SonetDatabaseHelper.CREATED;
-import static com.piusvelte.sonet.SonetDatabaseHelper.WIDGET;
-import static com.piusvelte.sonet.Sonet.ACTION_DELETE;
+
+import com.piusvelte.sonet.Sonet.Accounts;
+import com.piusvelte.sonet.Sonet.Statuses;
+import com.piusvelte.sonet.Sonet.Widgets;
+
 import mobi.intuitit.android.content.LauncherIntent;
 import mobi.intuitit.android.widget.BoundRemoteViews;
 import mobi.intuitit.android.widget.SimpleRemoteViews;
 
+import android.app.AlarmManager;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
-import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
+import android.database.Cursor;
 import android.net.Uri;
-import android.os.IBinder;
-import android.os.RemoteException;
 import android.text.TextUtils;
 import android.util.Log;
 
 public class SonetWidget extends AppWidgetProvider {
 	private static final String TAG = "SonetWidget";
-    private static final String ACTION_MAKE_SCROLLABLE = "com.piusvelte.sonet.Sonet.MAKE_SCROLLABLE";
-    private static final String ACTION_ONCLICK = "com.piusvelte.sonet.Sonet.ONCLICK";
-	private int mAppWidgetId;
-	private Context mContext;
-	private int mStatusId;
 
 	@Override
 	public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
@@ -68,16 +63,10 @@ public class SonetWidget extends AppWidgetProvider {
 			if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) onDeleted(context, new int[]{appWidgetId});
 			else super.onReceive(context, intent);
 		} else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_READY)) {
-			if (intent.getExtras().getInt(LauncherIntent.Extra.EXTRA_API_VERSION, 1) >= 2) {
-				mAppWidgetId = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
-				mContext = context;
-				context.startService(new Intent(context, BuildScrollableWidget.class).setAction(ACTION_MAKE_SCROLLABLE));
-			}
-		} else if (Sonet.ACTION_BUILD_SCROLL.equals(action)) {
-			mAppWidgetId = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
-			mContext = context;
-			context.startService(new Intent(context, BuildScrollableWidget.class).setAction(ACTION_MAKE_SCROLLABLE));
-		}
+			if (intent.getExtras().getInt(LauncherIntent.Extra.EXTRA_API_VERSION, 1) >= 2)
+				appWidgetReady(context, intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
+		} else if (Sonet.ACTION_BUILD_SCROLL.equals(action))
+			appWidgetReady(context, intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
 		else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_FINISH)) {
 		} else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_VIEW_CLICK)) {
 			// onClickListener
@@ -91,163 +80,98 @@ public class SonetWidget extends AppWidgetProvider {
 	@Override
 	public final void onDeleted(Context context, int[] appWidgetIds) {
 		super.onDeleted(context, appWidgetIds);
-		context.startService(new Intent(context, SonetService.class).setAction(ACTION_DELETE).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds));
+		for (int appWidgetId : appWidgetIds) {
+			((AlarmManager) context.getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getService(context, 0, new Intent(context, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
+			context.getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=" + appWidgetId, null);
+			context.getContentResolver().delete(Accounts.CONTENT_URI, Accounts.WIDGET + "=" + appWidgetId, null);
+			context.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=" + appWidgetId, null);
+		}
 	}
 
 	private void onClick(Context context, Intent intent) {
-		mContext = context;
-		mAppWidgetId = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
-		mStatusId = intent.getIntExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, -1);
-		context.startService(new Intent(context, BuildScrollableWidget.class).setAction(ACTION_ONCLICK));
+		boolean hasbuttons = false;
+		int service = -1;
+		String link = null;
+		String appWidgetId = Integer.toString(intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
+		Uri uri = Widgets.CONTENT_URI;
+		Cursor c = context.getContentResolver().query(uri, new String[]{Widgets._ID, Widgets.HASBUTTONS}, Widgets.WIDGET + "=" + appWidgetId, null, null);
+		if (c.moveToFirst()) hasbuttons = c.getInt(c.getColumnIndex(Widgets.HASBUTTONS)) == 1;
+		c.close();
+		Uri statusUri = Uri.withAppendedPath(Statuses.CONTENT_URI, Integer.toString(intent.getIntExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, -1)));
+		Cursor item = context.getContentResolver().query(statusUri, new String[]{Statuses._ID, Statuses.SERVICE, Statuses.LINK}, null, null, null);
+		if (item.moveToFirst()) {
+			item.moveToFirst();
+			service = item.getInt(item.getColumnIndex(Statuses.SERVICE));
+			link = item.getString(item.getColumnIndex(Statuses.LINK));
+			if (link != null) context.startActivity(hasbuttons ? new Intent(Intent.ACTION_VIEW, Uri.parse(link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) : new Intent(context, StatusDialog.class).setAction(appWidgetId+"`"+service+"`"+link).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+		}
 	}
+	
+	private void appWidgetReady(Context context, int appWidgetId) {
 
-	public class BuildScrollableWidget extends Service implements ServiceConnection {
+		Intent replaceDummy = new Intent(LauncherIntent.Action.ACTION_SCROLL_WIDGET_START);
 
-		private ISonetService mSonetService;
-		private ISonetUI.Stub mSonetUI = new ISonetUI.Stub() {
+		// Put widget info
+		replaceDummy.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_PROVIDER_ALLOW_REQUERY, true);
+		replaceDummy.putExtra(LauncherIntent.Extra.EXTRA_VIEW_ID, R.id.messages);
 
-			@Override
-			public void setDefaultSettings(int interval_value,
-					int buttons_bg_color_value, int buttons_color_value,
-					int buttons_textsize_value, int messages_bg_color_value,
-					int messages_color_value, int messages_textsize_value,
-					int friend_color_value, int friend_textsize_value,
-					int created_color_value, int created_textsize_value,
-					boolean hasButtons, boolean time24hr)
-			throws RemoteException {
+		SimpleRemoteViews listView = new SimpleRemoteViews(R.layout.widget_listview);
+		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_REMOTEVIEWS, listView);
+
+		BoundRemoteViews itemViews = new BoundRemoteViews(R.layout.widget_item);
+
+		itemViews.setBoundBitmap(R.id.profile, "setImageBitmap", SonetProvider.SonetProviderColumns.profile.ordinal(), 0);
+		itemViews.setBoundCharSequence(R.id.friend, "setText", SonetProvider.SonetProviderColumns.friend.ordinal(), 0);
+		itemViews.setBoundCharSequence(R.id.created, "setText", SonetProvider.SonetProviderColumns.createdtext.ordinal(), 0);
+		itemViews.setBoundCharSequence(R.id.message, "setText", SonetProvider.SonetProviderColumns.message.ordinal(), 0);
+
+		Uri uri = Widgets.CONTENT_URI;
+		String widgetId = null;
+		Cursor c = context.getContentResolver().query(uri, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.FRIEND_COLOR, Widgets.CREATED_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_TEXTSIZE, Widgets.MESSAGES_TEXTSIZE, Widgets.SCROLLABLE}, Widgets.WIDGET + "=" + appWidgetId, null, null);
+		if (c.moveToFirst()) {
+			widgetId = Integer.toString(c.getInt(c.getColumnIndex(Widgets._ID)));
+			if (c.getInt(c.getColumnIndex(Widgets.SCROLLABLE)) != 1) {
+				ContentValues values = new ContentValues();
+				values.put(Widgets.SCROLLABLE, 1);
+				Uri updateUri = Uri.withAppendedPath(Widgets.CONTENT_URI, widgetId);
+				context.getContentResolver().update(updateUri, values, null, null);
 			}
-
-			@Override
-			public void listAccounts() throws RemoteException {
-			}
-
-			@Override
-			public void getAuth(int service) throws RemoteException {
-			}
-
-			@Override
-			public void getTimezone(int account) throws RemoteException {
-			}
-
-			@Override
-			public void buildScrollableWidget(int messages_color,
-					int friend_color, int created_color, int friend_textsize,
-					int created_textsize, int messages_textsize)
-			throws RemoteException {
-
-				String appWidgetUri = SonetProvider.CONTENT_URI.buildUpon().appendEncodedPath(Integer.toString(mAppWidgetId)).toString();
-				Intent replaceDummy = new Intent(LauncherIntent.Action.ACTION_SCROLL_WIDGET_START);
-				// Put widget info
-				replaceDummy.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
-				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_PROVIDER_ALLOW_REQUERY, true);
-				replaceDummy.putExtra(LauncherIntent.Extra.EXTRA_VIEW_ID, R.id.messages);
-
-				SimpleRemoteViews listView = new SimpleRemoteViews(R.layout.widget_listview);
-				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_REMOTEVIEWS, listView);
-
-				BoundRemoteViews itemViews = new BoundRemoteViews(R.layout.widget_item);
-
-				itemViews.setBoundBitmap(R.id.profile, "setImageBitmap", SonetProvider.SonetProviderColumns.profile.ordinal(), 0);
-				itemViews.setBoundCharSequence(R.id.friend, "setText", SonetProvider.SonetProviderColumns.friend.ordinal(), 0);
-				itemViews.setBoundCharSequence(R.id.created, "setText", SonetProvider.SonetProviderColumns.createdtext.ordinal(), 0);
-				itemViews.setBoundCharSequence(R.id.message, "setText", SonetProvider.SonetProviderColumns.message.ordinal(), 0);
-
-				itemViews.setTextColor(R.id.friend, friend_color);
-				itemViews.setTextColor(R.id.created, created_color);
-				itemViews.setTextColor(R.id.message, messages_color);
-				itemViews.setFloat(R.id.friend, "setTextSize", friend_textsize);
-				itemViews.setFloat(R.id.created, "setTextSize", created_textsize);
-				itemViews.setFloat(R.id.message, "setTextSize", messages_textsize);
-
-				Intent i= new Intent(mContext, mContext.getClass())
-				.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
-				.setData(Uri.parse(appWidgetUri))
-				.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
-				PendingIntent pi = PendingIntent.getBroadcast(mContext, 0, i, 0);
-				itemViews.SetBoundOnClickIntent(R.id.item, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.SonetProviderColumns._id.ordinal());
-
-				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_REMOTEVIEWS, itemViews);
-				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_CHILDREN_CLICKABLE, true);
-
-				String whereClause = WIDGET + "=" + Uri.parse(appWidgetUri).getLastPathSegment();
-				String orderBy = CREATED + " desc";
-				String[] selectionArgs = null;
-
-				// Put the data uri in as a string. Do not use setData, Home++ does not
-				// have a filter for that
-				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_URI, appWidgetUri);
-
-				// Other arguments for managed query
-				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_PROJECTION, SonetProvider.PROJECTION_APPWIDGETS);
-				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION, whereClause);
-				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION_ARGUMENTS, selectionArgs);
-				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SORT_ORDER, orderBy);
-
-				sendBroadcast(replaceDummy);
-			}
-
-			@Override
-			public void widgetOnClick(boolean hasbuttons, int service,
-					String link) throws RemoteException {
-				if (link != null) mContext.startActivity(hasbuttons ? new Intent(Intent.ACTION_VIEW, Uri.parse(link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) : new Intent(mContext, StatusDialog.class).setAction(mAppWidgetId+"`"+service+"`"+link).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-			}
-		};
-
-		@Override
-		public int onStartCommand(Intent intent, int flags, int startId) {
-			onStart(intent, startId);
-			return START_STICKY;
+			itemViews.setTextColor(R.id.friend, c.getInt(c.getColumnIndex(Widgets.FRIEND_COLOR)));
+			itemViews.setTextColor(R.id.created, c.getInt(c.getColumnIndex(Widgets.CREATED_COLOR)));
+			itemViews.setTextColor(R.id.message, c.getInt(c.getColumnIndex(Widgets.MESSAGES_COLOR)));
+			itemViews.setFloat(R.id.friend, "setTextSize", c.getInt(c.getColumnIndex(Widgets.FRIEND_TEXTSIZE)));
+			itemViews.setFloat(R.id.created, "setTextSize", c.getInt(c.getColumnIndex(Widgets.CREATED_TEXTSIZE)));
+			itemViews.setFloat(R.id.message, "setTextSize", c.getInt(c.getColumnIndex(Widgets.MESSAGES_TEXTSIZE)));
 		}
+		c.close();
+		
+		Intent i= new Intent(context, context.getClass())
+		.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
+		.setData(Statuses.CONTENT_URI)
+		.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+		PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
+		itemViews.SetBoundOnClickIntent(R.id.item, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.SonetProviderColumns._id.ordinal());
 
-		@Override
-		public void onStart(Intent intent, int startId) {
-			super.onStart(intent, startId);
-			bindService(new Intent(this, SonetService.class), this, BIND_AUTO_CREATE);
-			if (intent.getAction().equals(ACTION_MAKE_SCROLLABLE)) {
-				try {
-					mSonetService.getWidgetSettings(mAppWidgetId);
-				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			} else if (intent.getAction().equals(ACTION_ONCLICK)) {
-				try {
-					mSonetService.widgetOnClick(mAppWidgetId, mStatusId);
-				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				
-			}
-		}
+		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_REMOTEVIEWS, itemViews);
+		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_CHILDREN_CLICKABLE, true);
 
-		@Override
-		public void onDestroy() {
-			unbindService(this);
-			super.onDestroy();
-		}
+		String whereClause = Statuses.WIDGET + "=" + widgetId;
+		String orderBy = Statuses.CREATED + " desc";
+		String[] selectionArgs = null;
 
-		@Override
-		public void onServiceConnected(ComponentName name, IBinder service) {
-			mSonetService = ISonetService.Stub.asInterface((IBinder) service);
-			if (mSonetUI != null) {
-				try {
-					mSonetService.setCallback(mSonetUI.asBinder());
-				} catch (RemoteException e) {}
-			}
-		}
+		// Put the data uri in as a string. Do not use setData, Home++ does not
+		// have a filter for that
+		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_URI, Statuses.CONTENT_URI.toString());
 
-		@Override
-		public void onServiceDisconnected(ComponentName name) {
-			mSonetService = null;
-		}
+		// Other arguments for managed query
+		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_PROJECTION, SonetProvider.PROJECTION_APPWIDGETS);
+		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION, whereClause);
+		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION_ARGUMENTS, selectionArgs);
+		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SORT_ORDER, orderBy);
 
-		@Override
-		public IBinder onBind(Intent intent) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
+		context.sendBroadcast(replaceDummy);
+		
 	}
 
 }
