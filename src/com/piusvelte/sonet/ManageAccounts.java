@@ -119,10 +119,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		super.onListItemClick(list, view, position, id);
 		Uri uri = Uri.withAppendedPath(Accounts.CONTENT_URI, Long.toString(id));
 		Cursor c = getContentResolver().query(uri, new String[]{Accounts._ID, Accounts.SERVICE}, null, null, null);
-		if (c.getCount() > 0) {
-			c.moveToFirst();
+		if (c.moveToFirst())
 			getAuth(c.getInt(c.getColumnIndex(Accounts.SERVICE)));
-		}
 		c.close();
 	}
 

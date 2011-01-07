@@ -333,9 +333,8 @@ public class SonetService extends Service implements Runnable {
 						} else hasAccount = false;
 						this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=''", null);
 					}
-					if (accounts.getCount() > 0) {
-						// load the updates
-						accounts.moveToFirst();
+					if (accounts.moveToFirst()) {
+						// load the updates						
 						int iservice = accounts.getColumnIndex(Accounts.SERVICE),
 						itoken = accounts.getColumnIndex(Accounts.TOKEN),
 						isecret = accounts.getColumnIndex(Accounts.SECRET),
@@ -499,10 +498,8 @@ public class SonetService extends Service implements Runnable {
 				// this run finishes after the listview is created, but is not flagged as scrollable and replaces the listview with the regular widget
 				boolean scrollable = false;
 				settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.SCROLLABLE}, Widgets.WIDGET + "=" + appWidgetId, null, null);
-				if (settings.getCount() > 0) {
-					settings.moveToFirst();
+				if (settings.moveToFirst())
 					scrollable = settings.getInt(settings.getColumnIndex(Widgets.SCROLLABLE)) == 1;
-				}
 				settings.close();
 				// Push update for this widget to the home screen
 				// set messages background
@@ -534,9 +531,8 @@ public class SonetService extends Service implements Runnable {
 				views.setImageViewBitmap(R.id.messages_bg, messages_bg);
 				if (!scrollable) {
 					Cursor statuses = this.getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID, Statuses.LINK, Statuses.FRIEND, Statuses.PROFILE, Statuses.MESSAGE, Statuses.SERVICE, Statuses.CREATEDTEXT}, Statuses.WIDGET + "=" + appWidgetId, null, Statuses.CREATED + " desc");
-					if (statuses.getCount() > 0) {
+					if (statuses.moveToFirst()) {
 						int count_status = 0;
-						statuses.moveToFirst();
 						int ilink = statuses.getColumnIndex(Statuses.LINK),
 						iprofile = statuses.getColumnIndex(Statuses.PROFILE),
 						ifriend = statuses.getColumnIndex(Statuses.FRIEND),
