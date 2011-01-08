@@ -60,17 +60,6 @@ public class SonetProvider extends ContentProvider {
 
 	private DatabaseHelper mDatabaseHelper;
 
-	public static final String[] PROJECTION_APPWIDGETS = new String[] {
-		SonetProviderColumns._id.toString(),
-		SonetProviderColumns.created.toString(),
-		SonetProviderColumns.link.toString(),
-		SonetProviderColumns.friend.toString(),
-		SonetProviderColumns.profile.toString(),
-		SonetProviderColumns.message.toString(),
-		SonetProviderColumns.service.toString(),
-		SonetProviderColumns.createdtext.toString(),
-		SonetProviderColumns.widget.toString()};
-
 	static {
 		sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
@@ -184,7 +173,8 @@ public class SonetProvider extends ContentProvider {
 		case STATUSES:
 			rowId = db.insert(TABLE_STATUSES, Statuses._ID, values);
 			returnUri = ContentUris.withAppendedId(Statuses.CONTENT_URI, rowId);
-			getContext().getContentResolver().notifyChange(returnUri, null);
+			// many statuses will be inserted at once, so don't trigger a refresh for each one
+//			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);

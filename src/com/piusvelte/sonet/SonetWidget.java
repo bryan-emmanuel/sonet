@@ -126,16 +126,12 @@ public class SonetWidget extends AppWidgetProvider {
 		itemViews.setBoundCharSequence(R.id.created, "setText", SonetProvider.SonetProviderColumns.createdtext.ordinal(), 0);
 		itemViews.setBoundCharSequence(R.id.message, "setText", SonetProvider.SonetProviderColumns.message.ordinal(), 0);
 
-		Uri uri = Widgets.CONTENT_URI;
-		String widgetId = null;
-		Cursor c = context.getContentResolver().query(uri, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.FRIEND_COLOR, Widgets.CREATED_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_TEXTSIZE, Widgets.MESSAGES_TEXTSIZE, Widgets.SCROLLABLE}, Widgets.WIDGET + "=" + appWidgetId, null, null);
+		Cursor c = context.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.FRIEND_COLOR, Widgets.CREATED_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_TEXTSIZE, Widgets.MESSAGES_TEXTSIZE, Widgets.SCROLLABLE}, Widgets.WIDGET + "=" + appWidgetId, null, null);
 		if (c.moveToFirst()) {
-			widgetId = Integer.toString(c.getInt(c.getColumnIndex(Widgets._ID)));
 			if (c.getInt(c.getColumnIndex(Widgets.SCROLLABLE)) != 1) {
 				ContentValues values = new ContentValues();
 				values.put(Widgets.SCROLLABLE, 1);
-				Uri updateUri = Uri.withAppendedPath(Widgets.CONTENT_URI, widgetId);
-				context.getContentResolver().update(updateUri, values, null, null);
+				context.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets.WIDGET + "=" + appWidgetId, null);
 			}
 			itemViews.setTextColor(R.id.friend, c.getInt(c.getColumnIndex(Widgets.FRIEND_COLOR)));
 			itemViews.setTextColor(R.id.created, c.getInt(c.getColumnIndex(Widgets.CREATED_COLOR)));
@@ -150,28 +146,35 @@ public class SonetWidget extends AppWidgetProvider {
 		.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
 		.setData(Statuses.CONTENT_URI)
 		.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+		
 		PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
+		
 		itemViews.SetBoundOnClickIntent(R.id.item, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.SonetProviderColumns._id.ordinal());
 
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_REMOTEVIEWS, itemViews);
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_CHILDREN_CLICKABLE, true);
-
-		String whereClause = Statuses.WIDGET + "=" + widgetId;
-		String orderBy = Statuses.CREATED + " desc";
-		String[] selectionArgs = null;
-
-		// Put the data uri in as a string. Do not use setData, Home++ does not
-		// have a filter for that
-		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_URI, Statuses.CONTENT_URI.toString());
-
-		// Other arguments for managed query
-		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_PROJECTION, SonetProvider.PROJECTION_APPWIDGETS);
-		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION, whereClause);
-		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION_ARGUMENTS, selectionArgs);
-		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SORT_ORDER, orderBy);
-
+		
+		putProvider(replaceDummy, appWidgetId);
+		
 		context.sendBroadcast(replaceDummy);
 		
 	}
+
+    public static void putProvider(Intent intent, int appWidgetId) {
+            if (intent == null)
+                    return;
+
+    		// Put the data uri in as a string. Do not use setData, Home++ does not
+    		// have a filter for that
+    		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_URI, Statuses.CONTENT_URI.toString());
+
+    		String selectionArgs = null;
+    		
+    		// Other arguments for managed query
+    		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_PROJECTION, new String[]{Statuses._ID, Statuses.CREATED, Statuses.LINK, Statuses.FRIEND, Statuses.PROFILE, Statuses.MESSAGE, Statuses.SERVICE, Statuses.CREATEDTEXT, Statuses.WIDGET});
+    		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION, Statuses.WIDGET + "=" + appWidgetId);
+    		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION_ARGUMENTS, selectionArgs);
+    		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SORT_ORDER, Statuses.CREATED + " desc");
+    }
 
 }
