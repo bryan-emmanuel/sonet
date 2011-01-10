@@ -63,6 +63,7 @@ import com.facebook.android.FacebookError;
 import com.facebook.android.Util;
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
+import com.piusvelte.sonet.Sonet.Statuses_styles;
 import com.piusvelte.sonet.Sonet.Widgets;
 
 import twitter4j.Status;
@@ -191,7 +192,7 @@ public class SonetService extends Service implements Runnable {
 		return cal.getTime();
 	}
 
-	private ContentValues statusItem(long created, String link, String friend, byte[] profile, String message, int service, String createdText, int appWidgetId) {
+	private ContentValues statusItem(long created, String link, String friend, byte[] profile, String message, int service, String createdText, int appWidgetId, int accountId) {
 		ContentValues values = new ContentValues();
 		values.put(Statuses.CREATED, created);
 		values.put(Statuses.LINK, link);
@@ -201,6 +202,7 @@ public class SonetService extends Service implements Runnable {
 		values.put(Statuses.SERVICE, service);
 		values.put(Statuses.CREATEDTEXT, createdText);
 		values.put(Statuses.WIDGET, appWidgetId);
+		values.put(Statuses.ACCOUNT, accountId);
 		return values;
 	}
 
@@ -237,65 +239,46 @@ public class SonetService extends Service implements Runnable {
 		int interval,
 		buttons_bg_color,
 		buttons_color,
+		buttons_textsize,
 		messages_bg_color,
 		messages_color,
-		friend_color,
-		created_color,
-		buttons_textsize,
-		messages_textsize,
-		friend_textsize,
-		created_textsize;
+		messages_textsize;
 		SharedPreferences sp = null;
 		while (updatesQueued()) {
 			// first handle deletes, then scroll updates, finally regular updates
 			int appWidgetId;
 				appWidgetId = getNextUpdate();
 				alarmManager.cancel(PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
-				Cursor settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.HASBUTTONS, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.FRIEND_COLOR, Widgets.CREATED_COLOR, Widgets.TIME24HR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_TEXTSIZE}, Widgets.WIDGET + "=" + appWidgetId, null, null);
+				Cursor settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.HASBUTTONS, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.MESSAGES_BG_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE}, Widgets.WIDGET + "=" + appWidgetId, null, null);
 				if (settings.moveToFirst()) {
 					interval = settings.getInt(settings.getColumnIndex(Widgets.INTERVAL));
 					hasbuttons = settings.getInt(settings.getColumnIndex(Widgets.HASBUTTONS)) == 1;
 					buttons_bg_color = settings.getInt(settings.getColumnIndex(Widgets.BUTTONS_BG_COLOR));
 					buttons_color = settings.getInt(settings.getColumnIndex(Widgets.BUTTONS_COLOR));
+					buttons_textsize = settings.getInt(settings.getColumnIndex(Widgets.BUTTONS_TEXTSIZE));
 					messages_bg_color = settings.getInt(settings.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
 					messages_color = settings.getInt(settings.getColumnIndex(Widgets.MESSAGES_COLOR));
-					friend_color = settings.getInt(settings.getColumnIndex(Widgets.FRIEND_COLOR));
-					created_color = settings.getInt(settings.getColumnIndex(Widgets.CREATED_COLOR));
-					time24hr = settings.getInt(settings.getColumnIndex(Widgets.TIME24HR)) == 1;
-					buttons_textsize = settings.getInt(settings.getColumnIndex(Widgets.BUTTONS_TEXTSIZE));
 					messages_textsize = settings.getInt(settings.getColumnIndex(Widgets.MESSAGES_TEXTSIZE));
-					friend_textsize = settings.getInt(settings.getColumnIndex(Widgets.FRIEND_TEXTSIZE));
-					created_textsize = settings.getInt(settings.getColumnIndex(Widgets.CREATED_TEXTSIZE));
 				} else {
 					// upgrade, moving settings from sharedpreferences to db
 					if (sp == null) sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
-					interval = Integer.parseInt((String) sp.getString(getString(R.string.key_interval), getString(R.string.default_interval)));
+					interval = Integer.parseInt((String) sp.getString(getString(R.string.key_interval), Integer.toString(Sonet.default_interval)));
 					hasbuttons = sp.getBoolean(getString(R.string.key_display_buttons), true);
-					buttons_bg_color =Integer.parseInt(sp.getString(getString(R.string.key_head_background), getString(R.string.default_buttons_bg_color)));
-					buttons_color = Integer.parseInt(sp.getString(getString(R.string.key_head_text), getString(R.string.default_buttons_color)));
-					messages_bg_color = Integer.parseInt(sp.getString(getString(R.string.key_body_background), getString(R.string.default_message_bg_color)));
-					messages_color = Integer.parseInt(sp.getString(getString(R.string.key_body_text), getString(R.string.default_message_color)));
-					friend_color = Integer.parseInt(sp.getString(getString(R.string.key_friend_text), getString(R.string.default_friend_color)));
-					created_color = Integer.parseInt(sp.getString(getString(R.string.key_created_text), getString(R.string.default_created_color)));
-					time24hr = sp.getBoolean(getString(R.string.key_time_12_24), false);
-					buttons_textsize = Integer.parseInt(sp.getString(getString(R.string.key_buttons_textsize), getString(R.string.default_buttons_textsize)));
-					messages_textsize = Integer.parseInt(sp.getString(getString(R.string.key_messages_textsize), getString(R.string.default_messages_textsize)));
-					friend_textsize = Integer.parseInt(sp.getString(getString(R.string.key_friend_textsize), getString(R.string.default_friend_textsize)));
-					created_textsize = Integer.parseInt(sp.getString(getString(R.string.key_created_textsize), getString(R.string.default_created_textsize)));
+					buttons_bg_color =Integer.parseInt(sp.getString(getString(R.string.key_head_background), Integer.toString(Sonet.default_buttons_bg_color)));
+					buttons_color = Integer.parseInt(sp.getString(getString(R.string.key_head_text), Integer.toString(Sonet.default_buttons_color)));
+					buttons_textsize = Integer.parseInt(sp.getString(getString(R.string.key_buttons_textsize), Integer.toString(Sonet.default_buttons_textsize)));
+					messages_bg_color = Integer.parseInt(sp.getString(getString(R.string.key_body_background), Integer.toString(Sonet.default_message_bg_color)));
+					messages_color = Integer.parseInt(sp.getString(getString(R.string.key_body_text), Integer.toString(Sonet.default_message_color)));
+					messages_textsize = Integer.parseInt(sp.getString(getString(R.string.key_messages_textsize), Integer.toString(Sonet.default_messages_textsize)));
 					ContentValues values = new ContentValues();
 					values.put(Widgets.INTERVAL, interval);
 					values.put(Widgets.HASBUTTONS, hasbuttons);
 					values.put(Widgets.BUTTONS_BG_COLOR, buttons_bg_color);
 					values.put(Widgets.BUTTONS_COLOR, buttons_color);
+					values.put(Widgets.BUTTONS_TEXTSIZE, buttons_textsize);
 					values.put(Widgets.MESSAGES_BG_COLOR, messages_bg_color);
 					values.put(Widgets.MESSAGES_COLOR, messages_color);
-					values.put(Widgets.FRIEND_COLOR, friend_color);
-					values.put(Widgets.CREATED_COLOR, created_color);
-					values.put(Widgets.TIME24HR, time24hr);
-					values.put(Widgets.BUTTONS_TEXTSIZE, buttons_textsize);
 					values.put(Widgets.MESSAGES_TEXTSIZE, messages_textsize);
-					values.put(Widgets.FRIEND_TEXTSIZE, friend_textsize);
-					values.put(Widgets.CREATED_TEXTSIZE, created_textsize);
 					values.put(Widgets.WIDGET, appWidgetId);
 					this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 				}
@@ -335,11 +318,23 @@ public class SonetService extends Service implements Runnable {
 					}
 					if (accounts.moveToFirst()) {
 						// load the updates						
-						int iservice = accounts.getColumnIndex(Accounts.SERVICE),
+						int accountid = accounts.getInt(accounts.getColumnIndex(Accounts._ID)),
+						iservice = accounts.getColumnIndex(Accounts.SERVICE),
 						itoken = accounts.getColumnIndex(Accounts.TOKEN),
 						isecret = accounts.getColumnIndex(Accounts.SECRET),
 						iexpiry = accounts.getColumnIndex(Accounts.EXPIRY),
 						itimezone = accounts.getColumnIndex(Accounts.TIMEZONE);
+						Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR}, Widgets.WIDGET + "=" + appWidgetId  + " and " + Widgets.ACCOUNT + "=" + accountid, null, null);
+						if (c.moveToFirst()) time24hr = c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1;
+						else {
+							c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR}, Widgets.WIDGET + "=" + appWidgetId  + " and " + Widgets.ACCOUNT + "=" + Sonet.INVALID_ACCOUNT_ID, null, null);
+							if (c.moveToFirst()) time24hr = c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1;
+							else {
+								c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR}, Widgets.WIDGET + "=" + AppWidgetManager.INVALID_APPWIDGET_ID, null, null);
+								if (c.moveToFirst()) time24hr = c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1;
+								else time24hr = false;
+							}
+						}
 						String name = "name",
 						id = "id",
 						status = "status";
@@ -363,7 +358,8 @@ public class SonetService extends Service implements Runnable {
 												s.getText(),
 												service,
 												getCreatedText(now, created, time24hr),
-												appWidgetId));
+												appWidgetId,
+												accountid));
 									}
 								} catch (TwitterException te) {
 									Log.e(TAG, te.toString());
@@ -428,7 +424,8 @@ public class SonetService extends Service implements Runnable {
 														o.getString(message),
 														service,
 														getCreatedText(now, created, time24hr),
-														appWidgetId));
+														appWidgetId,
+														accountid));
 											}
 										}
 									}
@@ -470,7 +467,8 @@ public class SonetService extends Service implements Runnable {
 												entry.getString(status),
 												service,
 												getCreatedText(now, created, time24hr),
-												appWidgetId));
+												appWidgetId,
+												accountid));
 									}
 								} catch (ClientProtocolException e) {
 									Log.e(TAG, e.toString());
@@ -530,15 +528,21 @@ public class SonetService extends Service implements Runnable {
 				}
 				views.setImageViewBitmap(R.id.messages_bg, messages_bg);
 				if (!scrollable) {
-					Cursor statuses = this.getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID, Statuses.LINK, Statuses.FRIEND, Statuses.PROFILE, Statuses.MESSAGE, Statuses.SERVICE, Statuses.CREATEDTEXT}, Statuses.WIDGET + "=" + appWidgetId, null, Statuses.CREATED + " desc");
+					Cursor statuses = this.getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.LINK, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.SERVICE, Statuses_styles.CREATEDTEXT, Statuses_styles.FRIEND_COLOR, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.MESSAGES_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.CREATED_COLOR, Statuses_styles.CREATED_TEXTSIZE}, Statuses_styles.WIDGET + "=" + appWidgetId, null, Statuses_styles.CREATED + " desc");
 					if (statuses.moveToFirst()) {
 						int count_status = 0;
-						int ilink = statuses.getColumnIndex(Statuses.LINK),
-						iprofile = statuses.getColumnIndex(Statuses.PROFILE),
-						ifriend = statuses.getColumnIndex(Statuses.FRIEND),
-						imessage = statuses.getColumnIndex(Statuses.MESSAGE),
-						iservice = statuses.getColumnIndex(Statuses.SERVICE),
-						icreatedText = statuses.getColumnIndex(Statuses.CREATEDTEXT);
+						int ilink = statuses.getColumnIndex(Statuses_styles.LINK),
+						iprofile = statuses.getColumnIndex(Statuses_styles.PROFILE),
+						ifriend = statuses.getColumnIndex(Statuses_styles.FRIEND),
+						imessage = statuses.getColumnIndex(Statuses_styles.MESSAGE),
+						iservice = statuses.getColumnIndex(Statuses_styles.SERVICE),
+						icreatedText = statuses.getColumnIndex(Statuses_styles.CREATEDTEXT),
+						friend_color = statuses.getInt(statuses.getColumnIndex(Statuses_styles.FRIEND_COLOR)),
+						created_color = statuses.getInt(statuses.getColumnIndex(Statuses_styles.CREATED_COLOR)),
+						friend_textsize = statuses.getInt(statuses.getColumnIndex(Statuses_styles.FRIEND_TEXTSIZE)),
+						created_textsize = statuses.getInt(statuses.getColumnIndex(Statuses_styles.CREATED_TEXTSIZE));
+						messages_color = statuses.getInt(statuses.getColumnIndex(Statuses_styles.MESSAGES_COLOR));
+						messages_textsize = statuses.getInt(statuses.getColumnIndex(Statuses_styles.MESSAGES_TEXTSIZE));
 						while (!statuses.isAfterLast() && (count_status < map_item.length)) {
 							views.setTextViewText(map_message[count_status], statuses.getString(imessage));
 							views.setTextColor(map_message[count_status], messages_color);

@@ -74,6 +74,7 @@ public class About extends Activity implements View.OnClickListener, DialogInter
 				this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=" + appWidgetId, null);
 			}
 		}
+		((Button) findViewById(R.id.defaultsettings)).setOnClickListener(this);
 		((Button) findViewById(R.id.widgets)).setOnClickListener(this);
 		((Button) findViewById(R.id.refreshall)).setOnClickListener(this);
 		((Button) findViewById(R.id.donate)).setOnClickListener(this);
@@ -82,6 +83,9 @@ public class About extends Activity implements View.OnClickListener, DialogInter
 	@Override
 	public void onClick(View v) {
 		switch (v.getId()) {
+		case R.id.defaultsettings:
+			startActivity(new Intent(this, Settings.class));
+			break;
 		case R.id.widgets:
 			if (mAppWidgetIds.length > 0) {
 				String[] widgets = new String[mAppWidgetIds.length];

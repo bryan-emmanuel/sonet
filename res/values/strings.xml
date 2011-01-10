@@ -35,11 +35,6 @@
     <string name="button_add_account">Add Account</string>
     <string name="reply">Reply</string>
     <string name="delete_account">Delete Account</string>
-    <string name="default_interval">3600000</string>
-	<string name="default_buttons_bg_color">-16777216</string>
-	<string name="default_buttons_color">-1</string>
-	<string name="default_message_bg_color">-16777216</string>
-	<string name="default_message_color">-1</string>
     <string name="key_preferences">sonet</string>
     <string name="category_update">Update</string>
     <string name="interval">Refresh Interval</string>
@@ -59,10 +54,6 @@
     <string name="key_messages_textsize">messagesTextSize</string>
     <string name="key_friend_textsize">nameTextSize</string>
     <string name="key_created_textsize">timeTextSize</string>
-    <string name="default_buttons_textsize">14</string>
-    <string name="default_messages_textsize">14</string>
-    <string name="default_friend_textsize">14</string>
-    <string name="default_created_textsize">14</string>
     <string name="key_body_text">bodyText</string>
     <string name="key_requesttoken">requesttoken</string>
     <string name="key_requestsecret">requestsecret</string>
@@ -73,10 +64,8 @@
     <string name="hasbuttons">Display Buttons</string>
     <string name="category_messages">Messages</string>
     <string name="key_friend_text">friendText</string>
-    <string name="default_friend_color">-1</string>
     <string name="friend_color">Name Color</string>
     <string name="key_created_text">createdText</string>
-    <string name="default_created_color">-1</string>
     <string name="created_color">Time Color</string>
     <string name="am">a.m.</string>
     <string name="pm">p.m.</string>
@@ -89,4 +78,7 @@
 	<string name="refreshall">Refresh All</string>
 	<string name="timezone">Select Timezone</string>
 	<string name="nowidgets">No Sonet widgets have been created.</string>
+	<string name="defaultsettings">Default widget settings</string>
+	<string name="re_authenticate">Re-authenticate</string>
+	<string name="account_settings">Account settings</string>
 </resources>

@@ -33,9 +33,12 @@
 		<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 			android:layout_width="fill_parent" android:layout_height="fill_parent"
 			android:orientation="vertical">
+			<Button android:id="@+id/defaultsettings" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:text="@string/defaultsettings"
+				android:layout_below="@id/about" />
 			<Button android:id="@+id/widgets" android:layout_width="fill_parent"
 				android:layout_height="wrap_content" android:text="@string/widgets"
-				android:layout_below="@id/about" />
+				android:layout_below="@id/defaultsettings" />
 			<Button android:id="@+id/refreshall" android:layout_width="fill_parent"
 				android:layout_height="wrap_content" android:text="@string/refreshall"
 				android:layout_below="@id/widgets" />

@@ -83,18 +83,7 @@ public class Settings extends Activity implements View.OnClickListener {
 		mCreated_color = (Button) findViewById(R.id.created_color);
 		mCreated_textsize = (Button) findViewById(R.id.created_textsize);
 		mTime24hr = (CheckBox) findViewById(R.id.time24hr);
-		mInterval_value = Integer.parseInt(getString(R.string.default_interval));
-		mButtons_bg_color_value = Integer.parseInt(getString(R.string.buttons_bg_color));
-		mButtons_color_value = Integer.parseInt(getString(R.string.buttons_color));
-		mButtons_textsize_value = Integer.parseInt(getString(R.string.buttons_textsize));
-		mMessages_bg_color_value = Integer.parseInt(getString(R.string.message_bg_color));
-		mMessages_color_value = Integer.parseInt(getString(R.string.message_color));
-		mMessages_textsize_value = Integer.parseInt(getString(R.string.messages_textsize));
-		mFriend_color_value = Integer.parseInt(getString(R.string.friend_color));
-		mFriend_textsize_value = Integer.parseInt(getString(R.string.friend_textsize));
-		mCreated_color_value = Integer.parseInt(getString(R.string.created_color));
-		mCreated_textsize_value = Integer.parseInt(getString(R.string.created_textsize));
-		
+
 		Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR}, Widgets.WIDGET + "=" + mAppWidgetId, null, null);
 
 		if (c.moveToFirst()) {
@@ -111,6 +100,67 @@ public class Settings extends Activity implements View.OnClickListener {
 			mCreated_textsize_value = c.getInt(c.getColumnIndex(Widgets.CREATED_TEXTSIZE));
 			mHasButtons.setChecked(c.getInt(c.getColumnIndex(Widgets.HASBUTTONS)) == 1);
 			mTime24hr.setChecked(c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1);
+		} else {
+			c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR}, Widgets.WIDGET + "=" + AppWidgetManager.INVALID_APPWIDGET_ID, null, null);
+			if (c.moveToFirst()) {
+				mInterval_value = c.getInt(c.getColumnIndex(Widgets.INTERVAL));
+				mButtons_bg_color_value = c.getInt(c.getColumnIndex(Widgets.BUTTONS_BG_COLOR));
+				mButtons_color_value = c.getInt(c.getColumnIndex(Widgets.BUTTONS_COLOR));
+				mButtons_textsize_value = c.getInt(c.getColumnIndex(Widgets.BUTTONS_TEXTSIZE));
+				mMessages_bg_color_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
+				mMessages_color_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_COLOR));
+				mMessages_textsize_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_TEXTSIZE));
+				mFriend_color_value = c.getInt(c.getColumnIndex(Widgets.FRIEND_COLOR));
+				mFriend_textsize_value = c.getInt(c.getColumnIndex(Widgets.FRIEND_TEXTSIZE));
+				mCreated_color_value = c.getInt(c.getColumnIndex(Widgets.CREATED_COLOR));
+				mCreated_textsize_value = c.getInt(c.getColumnIndex(Widgets.CREATED_TEXTSIZE));
+				mHasButtons.setChecked(c.getInt(c.getColumnIndex(Widgets.HASBUTTONS)) == 1);
+				mTime24hr.setChecked(c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1);
+			}else {
+				mInterval_value = Sonet.default_interval;
+				mButtons_bg_color_value = Sonet.default_buttons_bg_color;
+				mButtons_color_value = Sonet.default_buttons_color;
+				mButtons_textsize_value = Sonet.default_buttons_textsize;
+				mMessages_bg_color_value = Sonet.default_message_bg_color;
+				mMessages_color_value = Sonet.default_message_color;
+				mMessages_textsize_value = Sonet.default_messages_textsize;
+				mFriend_color_value = Sonet.default_friend_color;
+				mFriend_textsize_value = Sonet.default_friend_textsize;
+				mCreated_color_value = Sonet.default_created_color;
+				mCreated_textsize_value = Sonet.default_created_textsize;
+				// initialize default settings
+				ContentValues values = new ContentValues();
+				values.put(Widgets.INTERVAL, mInterval_value);
+				values.put(Widgets.BUTTONS_BG_COLOR, mButtons_bg_color_value);
+				values.put(Widgets.BUTTONS_COLOR, mButtons_color_value);
+				values.put(Widgets.BUTTONS_TEXTSIZE, mButtons_textsize_value);
+				values.put(Widgets.MESSAGES_BG_COLOR, mMessages_bg_color_value);
+				values.put(Widgets.MESSAGES_COLOR, mMessages_color_value);
+				values.put(Widgets.MESSAGES_TEXTSIZE, mMessages_textsize_value);
+				values.put(Widgets.FRIEND_COLOR, mFriend_color_value);
+				values.put(Widgets.FRIEND_TEXTSIZE, mFriend_textsize_value);
+				values.put(Widgets.CREATED_COLOR, mCreated_color_value);
+				values.put(Widgets.CREATED_TEXTSIZE, mCreated_textsize_value);
+				values.put(Widgets.HASBUTTONS, false);
+				values.put(Widgets.TIME24HR, false);
+				this.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets.WIDGET + "=" + AppWidgetManager.INVALID_APPWIDGET_ID, null);
+			}
+			// initialize widget settings
+			ContentValues values = new ContentValues();
+			values.put(Widgets.INTERVAL, mInterval_value);
+			values.put(Widgets.BUTTONS_BG_COLOR, mButtons_bg_color_value);
+			values.put(Widgets.BUTTONS_COLOR, mButtons_color_value);
+			values.put(Widgets.BUTTONS_TEXTSIZE, mButtons_textsize_value);
+			values.put(Widgets.MESSAGES_BG_COLOR, mMessages_bg_color_value);
+			values.put(Widgets.MESSAGES_COLOR, mMessages_color_value);
+			values.put(Widgets.MESSAGES_TEXTSIZE, mMessages_textsize_value);
+			values.put(Widgets.FRIEND_COLOR, mFriend_color_value);
+			values.put(Widgets.FRIEND_TEXTSIZE, mFriend_textsize_value);
+			values.put(Widgets.CREATED_COLOR, mCreated_color_value);
+			values.put(Widgets.CREATED_TEXTSIZE, mCreated_textsize_value);
+			values.put(Widgets.HASBUTTONS, false);
+			values.put(Widgets.TIME24HR, false);
+			this.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets.WIDGET + "=" + mAppWidgetId, null);
 		}
 		c.close();
 
@@ -127,7 +177,7 @@ public class Settings extends Activity implements View.OnClickListener {
 		mCreated_textsize.setOnClickListener(Settings.this);
 		mHasButtons.setOnCheckedChangeListener(mHasButtonsListener);
 		mTime24hr.setOnCheckedChangeListener(mTime24hrListener);
-		
+
 	}
 
 	@Override
@@ -142,7 +192,7 @@ public class Settings extends Activity implements View.OnClickListener {
 		this.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets.WIDGET + "=" + mAppWidgetId, null);
 		mUpdateWidget = true;
 	}
-	
+
 	ColorPickerDialog.OnColorChangedListener mHeadBackgroundColorListener =
 		new ColorPickerDialog.OnColorChangedListener() {
 

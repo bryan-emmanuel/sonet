@@ -93,6 +93,8 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 public class ManageAccounts extends ListActivity implements OnClickListener, DialogInterface.OnClickListener, DialogListener, IMSSessionCallback {
 	private static final String TAG = "ManageAccounts";
 	private static final int DELETE_ID = Menu.FIRST;
+	private static final int REAUTH_ID = Menu.FIRST + 1;
+	private static final int SETTINGS_ID = Menu.FIRST + 2;
 	private Facebook mFacebook;
 	private AsyncFacebookRunner mAsyncRunner;
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
@@ -117,11 +119,28 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	@Override
 	protected void onListItemClick(ListView list, View view, int position, long id) {
 		super.onListItemClick(list, view, position, id);
-		Uri uri = Uri.withAppendedPath(Accounts.CONTENT_URI, Long.toString(id));
-		Cursor c = getContentResolver().query(uri, new String[]{Accounts._ID, Accounts.SERVICE}, null, null, null);
-		if (c.moveToFirst())
-			getAuth(c.getInt(c.getColumnIndex(Accounts.SERVICE)));
-		c.close();
+		final int item = (int) id;
+		final CharSequence[] items = {getString(R.string.re_authenticate), getString(R.string.account_settings)};
+		AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+		dialog.setItems(items, new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				which++; //fix indexing
+				switch (which) {
+				case REAUTH_ID:
+					Uri uri = Uri.withAppendedPath(Accounts.CONTENT_URI, Long.toString(item));
+					Cursor c = getContentResolver().query(uri, new String[]{Accounts._ID, Accounts.SERVICE}, null, null, null);
+					if (c.moveToFirst())
+						getAuth(c.getInt(c.getColumnIndex(Accounts.SERVICE)));
+					c.close();
+					break;
+				case SETTINGS_ID:
+					startActivity(new Intent(ManageAccounts.this, AccountSettings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, item));
+					break;
+				}
+				dialog.cancel();
+			}
+		}).show();
 	}
 
 	@Override
