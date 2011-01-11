@@ -23,6 +23,7 @@ import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
+import com.piusvelte.sonet.Sonet.Statuses_styles;
 import com.piusvelte.sonet.Sonet.Widgets;
 
 import mobi.intuitit.android.content.LauncherIntent;
@@ -33,7 +34,6 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -126,25 +126,17 @@ public class SonetWidget extends AppWidgetProvider {
 		itemViews.setBoundCharSequence(R.id.created, "setText", SonetProvider.SonetProviderColumns.createdtext.ordinal(), 0);
 		itemViews.setBoundCharSequence(R.id.message, "setText", SonetProvider.SonetProviderColumns.message.ordinal(), 0);
 
-		Cursor c = context.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.FRIEND_COLOR, Widgets.CREATED_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_TEXTSIZE, Widgets.MESSAGES_TEXTSIZE, Widgets.SCROLLABLE}, Widgets.WIDGET + "=" + appWidgetId, null, null);
-		if (c.moveToFirst()) {
-			if (c.getInt(c.getColumnIndex(Widgets.SCROLLABLE)) != 1) {
-				ContentValues values = new ContentValues();
-				values.put(Widgets.SCROLLABLE, 1);
-				context.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets.WIDGET + "=" + appWidgetId, null);
-			}
-			itemViews.setTextColor(R.id.friend, c.getInt(c.getColumnIndex(Widgets.FRIEND_COLOR)));
-			itemViews.setTextColor(R.id.created, c.getInt(c.getColumnIndex(Widgets.CREATED_COLOR)));
-			itemViews.setTextColor(R.id.message, c.getInt(c.getColumnIndex(Widgets.MESSAGES_COLOR)));
-			itemViews.setFloat(R.id.friend, "setTextSize", c.getInt(c.getColumnIndex(Widgets.FRIEND_TEXTSIZE)));
-			itemViews.setFloat(R.id.created, "setTextSize", c.getInt(c.getColumnIndex(Widgets.CREATED_TEXTSIZE)));
-			itemViews.setFloat(R.id.message, "setTextSize", c.getInt(c.getColumnIndex(Widgets.MESSAGES_TEXTSIZE)));
-		}
-		c.close();
+		itemViews.setBoundInt(R.id.friend, "setTextColor", SonetProvider.SonetProviderColumns.friend_color.ordinal());
+		itemViews.setBoundInt(R.id.created, "setTextColor", SonetProvider.SonetProviderColumns.created_color.ordinal());
+		itemViews.setBoundInt(R.id.message, "setTextColor", SonetProvider.SonetProviderColumns.messages_color.ordinal());
+		
+		itemViews.setBoundFloat(R.id.friend, "setTextSize", SonetProvider.SonetProviderColumns.friend_textsize.ordinal());
+		itemViews.setBoundFloat(R.id.created, "setTextSize", SonetProvider.SonetProviderColumns.created_textsize.ordinal());
+		itemViews.setBoundFloat(R.id.message, "setTextSize", SonetProvider.SonetProviderColumns.messages_textsize.ordinal());
 		
 		Intent i= new Intent(context, context.getClass())
 		.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
-		.setData(Statuses.CONTENT_URI)
+		.setData(Statuses_styles.CONTENT_URI)
 		.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
 		
 		PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
@@ -166,15 +158,15 @@ public class SonetWidget extends AppWidgetProvider {
 
     		// Put the data uri in as a string. Do not use setData, Home++ does not
     		// have a filter for that
-    		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_URI, Statuses.CONTENT_URI.toString());
+    		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_URI, Statuses_styles.CONTENT_URI.toString());
 
     		String selectionArgs = null;
     		
     		// Other arguments for managed query
-    		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_PROJECTION, new String[]{Statuses._ID, Statuses.CREATED, Statuses.LINK, Statuses.FRIEND, Statuses.PROFILE, Statuses.MESSAGE, Statuses.SERVICE, Statuses.CREATEDTEXT, Statuses.WIDGET});
-    		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION, Statuses.WIDGET + "=" + appWidgetId);
+    		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_PROJECTION, new String[]{Statuses_styles._ID, Statuses_styles.CREATED, Statuses_styles.LINK, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.SERVICE, Statuses_styles.CREATEDTEXT, Statuses_styles.WIDGET, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE});
+    		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION, Statuses_styles.WIDGET + "=" + appWidgetId);
     		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION_ARGUMENTS, selectionArgs);
-    		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SORT_ORDER, Statuses.CREATED + " desc");
+    		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SORT_ORDER, Statuses_styles.CREATED + " desc");
     }
 
 }

@@ -135,7 +135,7 @@ public class SonetProvider extends ContentProvider {
 	}
 
 	public enum SonetProviderColumns {
-		_id, created, link, friend, profile, message, service, createdtext, widget
+		_id, created, link, friend, profile, message, service, createdtext, widgets, messages_color, friend_color, created_color, messages_textsize, friend_textsize, created_textsize
 	}
 
 	@Override
