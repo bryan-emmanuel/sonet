@@ -97,8 +97,7 @@ public class SonetWidget extends AppWidgetProvider {
 		Cursor c = context.getContentResolver().query(uri, new String[]{Widgets._ID, Widgets.HASBUTTONS}, Widgets.WIDGET + "=" + appWidgetId, null, null);
 		if (c.moveToFirst()) hasbuttons = c.getInt(c.getColumnIndex(Widgets.HASBUTTONS)) == 1;
 		c.close();
-		Uri statusUri = Uri.withAppendedPath(Statuses.CONTENT_URI, Integer.toString(intent.getIntExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, -1)));
-		Cursor item = context.getContentResolver().query(statusUri, new String[]{Statuses._ID, Statuses.SERVICE, Statuses.LINK}, null, null, null);
+		Cursor item = context.getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID, Statuses.SERVICE, Statuses.LINK}, Statuses._ID + "=" + Integer.toString(intent.getIntExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, -1)), null, null);
 		if (item.moveToFirst()) {
 			item.moveToFirst();
 			service = item.getInt(item.getColumnIndex(Statuses.SERVICE));
@@ -165,7 +164,7 @@ public class SonetWidget extends AppWidgetProvider {
     		String selectionArgs = null;
     		
     		// Other arguments for managed query
-    		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_PROJECTION, new String[]{Statuses_styles._ID, Statuses_styles.CREATED, Statuses_styles.LINK, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.SERVICE, Statuses_styles.CREATEDTEXT, Statuses_styles.WIDGET, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE});
+    		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_PROJECTION, new String[]{Statuses_styles._ID, Statuses_styles.CREATED, Statuses_styles.LINK, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.SERVICE, Statuses_styles.CREATEDTEXT, Statuses_styles.WIDGET, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG});
     		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION, Statuses_styles.WIDGET + "=" + appWidgetId);
     		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION_ARGUMENTS, selectionArgs);
     		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SORT_ORDER, Statuses_styles.CREATED + " desc");

@@ -101,21 +101,21 @@ public class Settings extends Activity implements View.OnClickListener {
 			mHasButtons.setChecked(c.getInt(c.getColumnIndex(Widgets.HASBUTTONS)) == 1);
 			mTime24hr.setChecked(c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1);
 		} else {
-			c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR}, Widgets.WIDGET + "=" + AppWidgetManager.INVALID_APPWIDGET_ID, null, null);
-			if (c.moveToFirst()) {
-				mInterval_value = c.getInt(c.getColumnIndex(Widgets.INTERVAL));
-				mButtons_bg_color_value = c.getInt(c.getColumnIndex(Widgets.BUTTONS_BG_COLOR));
-				mButtons_color_value = c.getInt(c.getColumnIndex(Widgets.BUTTONS_COLOR));
-				mButtons_textsize_value = c.getInt(c.getColumnIndex(Widgets.BUTTONS_TEXTSIZE));
-				mMessages_bg_color_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
-				mMessages_color_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_COLOR));
-				mMessages_textsize_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_TEXTSIZE));
-				mFriend_color_value = c.getInt(c.getColumnIndex(Widgets.FRIEND_COLOR));
-				mFriend_textsize_value = c.getInt(c.getColumnIndex(Widgets.FRIEND_TEXTSIZE));
-				mCreated_color_value = c.getInt(c.getColumnIndex(Widgets.CREATED_COLOR));
-				mCreated_textsize_value = c.getInt(c.getColumnIndex(Widgets.CREATED_TEXTSIZE));
-				mHasButtons.setChecked(c.getInt(c.getColumnIndex(Widgets.HASBUTTONS)) == 1);
-				mTime24hr.setChecked(c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1);
+			Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR}, Widgets.WIDGET + "=" + AppWidgetManager.INVALID_APPWIDGET_ID, null, null);
+			if (d.moveToFirst()) {
+				mInterval_value = d.getInt(d.getColumnIndex(Widgets.INTERVAL));
+				mButtons_bg_color_value = d.getInt(d.getColumnIndex(Widgets.BUTTONS_BG_COLOR));
+				mButtons_color_value = d.getInt(d.getColumnIndex(Widgets.BUTTONS_COLOR));
+				mButtons_textsize_value = d.getInt(d.getColumnIndex(Widgets.BUTTONS_TEXTSIZE));
+				mMessages_bg_color_value = d.getInt(d.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
+				mMessages_color_value = d.getInt(d.getColumnIndex(Widgets.MESSAGES_COLOR));
+				mMessages_textsize_value = d.getInt(d.getColumnIndex(Widgets.MESSAGES_TEXTSIZE));
+				mFriend_color_value = d.getInt(d.getColumnIndex(Widgets.FRIEND_COLOR));
+				mFriend_textsize_value = d.getInt(d.getColumnIndex(Widgets.FRIEND_TEXTSIZE));
+				mCreated_color_value = d.getInt(d.getColumnIndex(Widgets.CREATED_COLOR));
+				mCreated_textsize_value = d.getInt(d.getColumnIndex(Widgets.CREATED_TEXTSIZE));
+				mHasButtons.setChecked(d.getInt(d.getColumnIndex(Widgets.HASBUTTONS)) == 1);
+				mTime24hr.setChecked(d.getInt(d.getColumnIndex(Widgets.TIME24HR)) == 1);
 			} else {
 				mInterval_value = Sonet.default_interval;
 				mButtons_bg_color_value = Sonet.default_buttons_bg_color;
@@ -147,6 +147,7 @@ public class Settings extends Activity implements View.OnClickListener {
 				values.put(Widgets.TIME24HR, false);
 				this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 			}
+			d.close();
 			// initialize widget settings
 			ContentValues values = new ContentValues();
 			values.put(Widgets.WIDGET, mAppWidgetId);

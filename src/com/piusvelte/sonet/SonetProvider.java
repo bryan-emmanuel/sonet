@@ -154,6 +154,8 @@ public class SonetProvider extends ContentProvider {
 			return Widgets.CONTENT_TYPE;
 		case STATUSES:
 			return Statuses.CONTENT_TYPE;
+		case STATUSES_STYLES:
+			return Statuses_styles.CONTENT_TYPE;
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
 		}
@@ -224,6 +226,10 @@ public class SonetProvider extends ContentProvider {
 		case STATUSES:
 			qb.setTables(TABLE_STATUSES);
 			qb.setProjectionMap(statusesProjectionMap);
+			break;
+		case STATUSES_STYLES:
+			qb.setTables(VIEW_STATUSES_STYLES);
+			qb.setProjectionMap(statuses_stylesProjectionMap);
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);

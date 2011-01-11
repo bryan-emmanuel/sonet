@@ -246,7 +246,7 @@ public class SonetService extends Service implements Runnable {
 			int appWidgetId;
 			appWidgetId = getNextUpdate();
 			alarmManager.cancel(PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
-			Cursor settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.HASBUTTONS, Widgets.BUTTONS_COLOR, Widgets.MESSAGES_BG_COLOR, Widgets.BUTTONS_TEXTSIZE}, Widgets.WIDGET + "=" + appWidgetId, null, null);
+			Cursor settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.HASBUTTONS, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_TEXTSIZE}, Widgets.WIDGET + "=" + appWidgetId, null, null);
 			if (settings.moveToFirst()) {
 				interval = settings.getInt(settings.getColumnIndex(Widgets.INTERVAL));
 				hasbuttons = settings.getInt(settings.getColumnIndex(Widgets.HASBUTTONS)) == 1;
@@ -316,23 +316,28 @@ public class SonetService extends Service implements Runnable {
 					iexpiry = accounts.getColumnIndex(Accounts.EXPIRY),
 					itimezone = accounts.getColumnIndex(Accounts.TIMEZONE);
 					Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=" + appWidgetId  + " and " + Widgets.ACCOUNT + "=" + accountId, null, null);
-					if (c.moveToFirst()) time24hr = c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1;
-					else {
-						c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=" + appWidgetId  + " and " + Widgets.ACCOUNT + "=" + Sonet.INVALID_ACCOUNT_ID, null, null);
-						if (c.moveToFirst()) {
-							time24hr = c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1;
-							status_bg_color = c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
+					if (c.moveToFirst()) {
+						time24hr = c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1;
+						status_bg_color = c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
+					} else {
+						Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=" + appWidgetId  + " and " + Widgets.ACCOUNT + "=" + Sonet.INVALID_ACCOUNT_ID, null, null);
+						if (d.moveToFirst()) {
+							time24hr = d.getInt(d.getColumnIndex(Widgets.TIME24HR)) == 1;
+							status_bg_color = d.getInt(d.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
 						} else {
-							c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=" + AppWidgetManager.INVALID_APPWIDGET_ID, null, null);
-							if (c.moveToFirst()) {
-								time24hr = c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1;
-								status_bg_color = c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
+							Cursor e = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=" + AppWidgetManager.INVALID_APPWIDGET_ID, null, null);
+							if (e.moveToFirst()) {
+								time24hr = e.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1;
+								status_bg_color = e.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
 							} else {
 								time24hr = false;
 								status_bg_color = Sonet.default_message_bg_color;
 							}
+							e.close();
 						}
+						d.close();
 					}
+					c.close();
 					// create the status_bg
 					Bitmap status_bg_bmp = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
 					Canvas status_bg_canvas = new Canvas(status_bg_bmp);

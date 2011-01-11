@@ -81,4 +81,5 @@
 	<string name="defaultsettings">Default widget settings</string>
 	<string name="re_authenticate">Re-authenticate</string>
 	<string name="account_settings">Account settings</string>
+	<string name="widget_settings">Widget settings</string>
 </resources>

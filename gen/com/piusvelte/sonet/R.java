@@ -27,18 +27,18 @@ public final class R {
     }
     public static final class id {
         public static final int about=0x7f070000;
-        public static final int account_username=0x7f07000d;
-        public static final int button_accounts=0x7f07000e;
-        public static final int button_add_account=0x7f07000c;
+        public static final int account_username=0x7f07000e;
+        public static final int button_accounts=0x7f07000f;
+        public static final int button_add_account=0x7f07000d;
         public static final int button_configure=0x7f07001b;
         public static final int button_post=0x7f07001a;
         public static final int button_refresh=0x7f07001c;
-        public static final int button_settings=0x7f07000f;
+        public static final int button_settings=0x7f070010;
         public static final int buttons=0x7f070018;
         public static final int buttons_bg=0x7f070019;
-        public static final int buttons_bg_color=0x7f070012;
-        public static final int buttons_color=0x7f070013;
-        public static final int buttons_textsize=0x7f070014;
+        public static final int buttons_bg_color=0x7f070013;
+        public static final int buttons_color=0x7f070014;
+        public static final int buttons_textsize=0x7f070015;
         public static final int created=0x7f07004c;
         public static final int created0=0x7f070022;
         public static final int created1=0x7f070028;
@@ -47,8 +47,8 @@ public final class R {
         public static final int created4=0x7f07003a;
         public static final int created5=0x7f070040;
         public static final int created6=0x7f070046;
-        public static final int created_color=0x7f070009;
-        public static final int created_textsize=0x7f07000a;
+        public static final int created_color=0x7f07000a;
+        public static final int created_textsize=0x7f07000b;
         public static final int defaultsettings=0x7f070002;
         public static final int donate=0x7f070001;
         public static final int friend=0x7f07004b;
@@ -59,11 +59,11 @@ public final class R {
         public static final int friend4=0x7f070039;
         public static final int friend5=0x7f07003f;
         public static final int friend6=0x7f070045;
-        public static final int friend_color=0x7f070007;
-        public static final int friend_textsize=0x7f070008;
-        public static final int hasbuttons=0x7f070011;
+        public static final int friend_color=0x7f070008;
+        public static final int friend_textsize=0x7f070009;
+        public static final int hasbuttons=0x7f070012;
         public static final int head_spacer=0x7f070017;
-        public static final int interval=0x7f070010;
+        public static final int interval=0x7f070011;
         public static final int item=0x7f070048;
         public static final int item0=0x7f07001e;
         public static final int item1=0x7f070024;
@@ -81,9 +81,9 @@ public final class R {
         public static final int message5=0x7f070041;
         public static final int message6=0x7f070047;
         public static final int messages=0x7f07001d;
-        public static final int messages_bg_color=0x7f070015;
-        public static final int messages_color=0x7f070005;
-        public static final int messages_textsize=0x7f070006;
+        public static final int messages_bg_color=0x7f070005;
+        public static final int messages_color=0x7f070006;
+        public static final int messages_textsize=0x7f070007;
         public static final int null_widget=0x7f070016;
         public static final int null_widgetnobuttons=0x7f07004e;
         public static final int profile=0x7f07004a;
@@ -103,7 +103,7 @@ public final class R {
         public static final int status_bg4=0x7f070037;
         public static final int status_bg5=0x7f07003d;
         public static final int status_bg6=0x7f070043;
-        public static final int time24hr=0x7f07000b;
+        public static final int time24hr=0x7f07000c;
         public static final int widgets=0x7f070003;
     }
     public static final class layout {
@@ -180,6 +180,7 @@ public final class R {
         public static final int timezone=0x7f060039;
         public static final int title_color_picker=0x7f060027;
         public static final int user_agent=0x7f060004;
+        public static final int widget_settings=0x7f06003e;
         public static final int widgets=0x7f060037;
     }
     public static final class xml {

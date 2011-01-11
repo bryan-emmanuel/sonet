@@ -92,9 +92,9 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class ManageAccounts extends ListActivity implements OnClickListener, DialogInterface.OnClickListener, DialogListener, IMSSessionCallback {
 	private static final String TAG = "ManageAccounts";
-	private static final int DELETE_ID = Menu.FIRST;
-	private static final int REAUTH_ID = Menu.FIRST + 1;
-	private static final int SETTINGS_ID = Menu.FIRST + 2;
+	private static final int REAUTH_ID = Menu.FIRST;
+	private static final int SETTINGS_ID = Menu.FIRST + 1;
+	private static final int DELETE_ID = Menu.FIRST + 2;
 	private Facebook mFacebook;
 	private AsyncFacebookRunner mAsyncRunner;
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
@@ -119,7 +119,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	@Override
 	protected void onListItemClick(ListView list, View view, int position, long id) {
 		super.onListItemClick(list, view, position, id);
-		final int item = (int) id;
+		final long item = id;
 		final CharSequence[] items = {getString(R.string.re_authenticate), getString(R.string.account_settings)};
 		AlertDialog.Builder dialog = new AlertDialog.Builder(this);
 		dialog.setItems(items, new DialogInterface.OnClickListener() {
@@ -128,8 +128,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 				which++; //fix indexing
 				switch (which) {
 				case REAUTH_ID:
-					Uri uri = Uri.withAppendedPath(Accounts.CONTENT_URI, Long.toString(item));
-					Cursor c = getContentResolver().query(uri, new String[]{Accounts._ID, Accounts.SERVICE}, null, null, null);
+					Cursor c = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SERVICE}, Accounts._ID + "=" + item, null, null);
 					if (c.moveToFirst())
 						getAuth(c.getInt(c.getColumnIndex(Accounts.SERVICE)));
 					c.close();
@@ -151,7 +150,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
-		if (item.getItemId() == DELETE_ID) getContentResolver().delete(Uri.withAppendedPath(Accounts.CONTENT_URI, Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)), null, null);
+		if (item.getItemId() == DELETE_ID) getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=" + ((AdapterContextMenuInfo) item.getMenuInfo()).id, null);
 		return super.onContextItemSelected(item);
 	}
 
