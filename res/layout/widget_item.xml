@@ -22,7 +22,11 @@
 	android:id="@+id/item" android:orientation="horizontal"
 	android:layout_width="fill_parent" android:layout_height="wrap_content"
 	android:padding="4dip">
-	<LinearLayout android:id="@+id/null_widget_item" android:layout_width="wrap_content" android:layout_height="wrap_content" android:visibility="gone"></LinearLayout>
+	<ImageView android:id="@+id/status_bg" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:layout_alignParentTop="true"
+		android:layout_alignParentRight="true"
+		android:layout_alignParentBottom="true"
+		android:layout_alignParentLeft="true" android:scaleType="fitXY" />
 	<ImageView android:id="@+id/profile" android:layout_width="48dip"
 		android:layout_height="48dip" android:layout_alignParentTop="true"
 		android:layout_alignParentLeft="true" android:layout_marginRight="4dip" />

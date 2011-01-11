@@ -116,7 +116,7 @@ public class Settings extends Activity implements View.OnClickListener {
 				mCreated_textsize_value = c.getInt(c.getColumnIndex(Widgets.CREATED_TEXTSIZE));
 				mHasButtons.setChecked(c.getInt(c.getColumnIndex(Widgets.HASBUTTONS)) == 1);
 				mTime24hr.setChecked(c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1);
-			}else {
+			} else {
 				mInterval_value = Sonet.default_interval;
 				mButtons_bg_color_value = Sonet.default_buttons_bg_color;
 				mButtons_color_value = Sonet.default_buttons_color;
@@ -130,6 +130,8 @@ public class Settings extends Activity implements View.OnClickListener {
 				mCreated_textsize_value = Sonet.default_created_textsize;
 				// initialize default settings
 				ContentValues values = new ContentValues();
+				values.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
+				values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
 				values.put(Widgets.INTERVAL, mInterval_value);
 				values.put(Widgets.BUTTONS_BG_COLOR, mButtons_bg_color_value);
 				values.put(Widgets.BUTTONS_COLOR, mButtons_color_value);
@@ -143,10 +145,12 @@ public class Settings extends Activity implements View.OnClickListener {
 				values.put(Widgets.CREATED_TEXTSIZE, mCreated_textsize_value);
 				values.put(Widgets.HASBUTTONS, false);
 				values.put(Widgets.TIME24HR, false);
-				this.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets.WIDGET + "=" + AppWidgetManager.INVALID_APPWIDGET_ID, null);
+				this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 			}
 			// initialize widget settings
 			ContentValues values = new ContentValues();
+			values.put(Widgets.WIDGET, mAppWidgetId);
+			values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
 			values.put(Widgets.INTERVAL, mInterval_value);
 			values.put(Widgets.BUTTONS_BG_COLOR, mButtons_bg_color_value);
 			values.put(Widgets.BUTTONS_COLOR, mButtons_color_value);
@@ -160,7 +164,7 @@ public class Settings extends Activity implements View.OnClickListener {
 			values.put(Widgets.CREATED_TEXTSIZE, mCreated_textsize_value);
 			values.put(Widgets.HASBUTTONS, false);
 			values.put(Widgets.TIME24HR, false);
-			this.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets.WIDGET + "=" + mAppWidgetId, null);
+			this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 		}
 		c.close();
 

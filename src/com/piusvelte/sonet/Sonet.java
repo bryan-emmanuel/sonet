@@ -105,6 +105,7 @@ public class Sonet {
     	public static final String CREATEDTEXT = "createdText";
     	// account specific settings per widget
     	public static final String ACCOUNT = "account";
+    	public static final String STATUS_BG = "status_bg";
     	
     }
     
@@ -137,6 +138,7 @@ public class Sonet {
     	public static final String CREATED_TEXTSIZE = "created_textsize";
     	// account specific settings per widget
     	public static final String ACCOUNT = "account";
+    	public static final String STATUS_BG = "status_bg";
     	
     }
     

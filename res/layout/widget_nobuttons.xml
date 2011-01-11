@@ -20,118 +20,186 @@
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="fill_parent" android:layout_height="fill_parent">
-	<LinearLayout android:id="@+id/null_widgetnobuttons" android:layout_width="wrap_content" android:layout_height="wrap_content" android:visibility="gone"></LinearLayout>
-	<ImageView android:id="@+id/messages_bg"
+	<LinearLayout android:id="@+id/null_widgetnobuttons"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:visibility="gone"></LinearLayout>
+	<LinearLayout android:id="@+id/messages"
 		android:layout_width="fill_parent" android:layout_height="fill_parent"
-		android:layout_alignParentTop="true" android:layout_alignParentRight="true"
-		android:layout_alignParentBottom="true"
-		android:layout_alignParentLeft="true" android:scaleType="fitXY" />
-	<LinearLayout android:id="@+id/messages" android:layout_width="fill_parent"
-		android:layout_height="fill_parent" android:orientation="vertical">
+		android:orientation="vertical">
 		<RelativeLayout android:id="@+id/item0"
 			android:orientation="horizontal" android:layout_width="fill_parent"
 			android:layout_height="wrap_content" android:padding="4dip">
+			<ImageView android:id="@+id/status_bg0"
+				android:layout_width="fill_parent" android:layout_height="fill_parent"
+				android:layout_alignParentTop="true"
+				android:layout_alignParentRight="true"
+				android:layout_alignParentBottom="true"
+				android:layout_alignParentLeft="true" android:scaleType="fitXY" />
 			<ImageView android:id="@+id/profile0" android:layout_width="48dip"
 				android:layout_height="48dip" android:layout_alignParentTop="true"
 				android:layout_alignParentLeft="true" android:layout_marginRight="4dip" />
-			<TextView android:layout_marginRight="4dip" android:id="@+id/friend0" android:singleLine="true" android:layout_toRightOf="@id/profile0"
-			android:layout_width="wrap_content"	android:layout_height="wrap_content"
-			android:layout_alignParentTop="true" android:textStyle="bold" />
-			<TextView android:gravity="right" android:id="@+id/created0" android:singleLine="true" android:layout_toRightOf="@id/friend0"
-			android:layout_width="fill_parent" android:layout_height="wrap_content"
-			android:layout_alignParentTop="true" android:layout_alignParentRight="true" />
-			<TextView android:layout_below="@id/friend0" android:id="@+id/message0" android:layout_toRightOf="@id/profile0"
-			android:layout_width="fill_parent" android:layout_height="wrap_content" android:text="@string/loading" />
+			<TextView android:layout_marginRight="4dip" android:id="@+id/friend0"
+				android:singleLine="true" android:layout_toRightOf="@id/profile0"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold" />
+			<TextView android:gravity="right" android:id="@+id/created0"
+				android:singleLine="true" android:layout_toRightOf="@id/friend0"
+				android:layout_width="fill_parent" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true"
+				android:layout_alignParentRight="true" />
+			<TextView android:layout_below="@id/friend0" android:id="@+id/message0"
+				android:layout_toRightOf="@id/profile0" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:text="@string/loading" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item1"
 			android:orientation="horizontal" android:layout_width="fill_parent"
 			android:layout_height="wrap_content" android:padding="4dip">
+			<ImageView android:id="@+id/status_bg1"
+				android:layout_width="fill_parent" android:layout_height="fill_parent"
+				android:layout_alignParentTop="true"
+				android:layout_alignParentRight="true"
+				android:layout_alignParentBottom="true"
+				android:layout_alignParentLeft="true" android:scaleType="fitXY" />
 			<ImageView android:id="@+id/profile1" android:layout_width="48dip"
 				android:layout_height="48dip" android:layout_alignParentTop="true"
 				android:layout_alignParentLeft="true" android:layout_marginRight="4dip" />
-			<TextView android:layout_marginRight="4dip" android:id="@+id/friend1" android:singleLine="true" android:layout_toRightOf="@id/profile1"
-			android:layout_width="wrap_content"	android:layout_height="wrap_content"
-			android:layout_alignParentTop="true" android:textStyle="bold" />
-			<TextView android:gravity="right" android:id="@+id/created1" android:singleLine="true" android:layout_toRightOf="@id/friend1"
-			android:layout_width="fill_parent" android:layout_height="wrap_content"
-			android:layout_alignParentTop="true" android:layout_alignParentRight="true" />
-			<TextView android:layout_below="@id/friend1" android:id="@+id/message1" android:layout_toRightOf="@id/profile1"
-			android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<TextView android:layout_marginRight="4dip" android:id="@+id/friend1"
+				android:singleLine="true" android:layout_toRightOf="@id/profile1"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold" />
+			<TextView android:gravity="right" android:id="@+id/created1"
+				android:singleLine="true" android:layout_toRightOf="@id/friend1"
+				android:layout_width="fill_parent" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true"
+				android:layout_alignParentRight="true" />
+			<TextView android:layout_below="@id/friend1" android:id="@+id/message1"
+				android:layout_toRightOf="@id/profile1" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item2"
 			android:orientation="horizontal" android:layout_width="fill_parent"
 			android:layout_height="wrap_content" android:padding="4dip">
+			<ImageView android:id="@+id/status_bg2"
+				android:layout_width="fill_parent" android:layout_height="fill_parent"
+				android:layout_alignParentTop="true"
+				android:layout_alignParentRight="true"
+				android:layout_alignParentBottom="true"
+				android:layout_alignParentLeft="true" android:scaleType="fitXY" />
 			<ImageView android:id="@+id/profile2" android:layout_width="48dip"
 				android:layout_height="48dip" android:layout_alignParentTop="true"
 				android:layout_alignParentLeft="true" android:layout_marginRight="4dip" />
-			<TextView android:layout_marginRight="4dip" android:id="@+id/friend2" android:singleLine="true" android:layout_toRightOf="@id/profile2"
-			android:layout_width="wrap_content"	android:layout_height="wrap_content"
-			android:layout_alignParentTop="true" android:textStyle="bold" />
-			<TextView android:gravity="right" android:id="@+id/created2" android:singleLine="true" android:layout_toRightOf="@id/friend2"
-			android:layout_width="fill_parent" android:layout_height="wrap_content"
-			android:layout_alignParentTop="true" android:layout_alignParentRight="true" />
-			<TextView android:layout_below="@id/friend2" android:id="@+id/message2" android:layout_toRightOf="@id/profile2"
-			android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<TextView android:layout_marginRight="4dip" android:id="@+id/friend2"
+				android:singleLine="true" android:layout_toRightOf="@id/profile2"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold" />
+			<TextView android:gravity="right" android:id="@+id/created2"
+				android:singleLine="true" android:layout_toRightOf="@id/friend2"
+				android:layout_width="fill_parent" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true"
+				android:layout_alignParentRight="true" />
+			<TextView android:layout_below="@id/friend2" android:id="@+id/message2"
+				android:layout_toRightOf="@id/profile2" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item3"
 			android:orientation="horizontal" android:layout_width="fill_parent"
 			android:layout_height="wrap_content" android:padding="4dip">
+			<ImageView android:id="@+id/status_bg3"
+				android:layout_width="fill_parent" android:layout_height="fill_parent"
+				android:layout_alignParentTop="true"
+				android:layout_alignParentRight="true"
+				android:layout_alignParentBottom="true"
+				android:layout_alignParentLeft="true" android:scaleType="fitXY" />
 			<ImageView android:id="@+id/profile3" android:layout_width="48dip"
 				android:layout_height="48dip" android:layout_alignParentTop="true"
 				android:layout_alignParentLeft="true" android:layout_marginRight="4dip" />
-			<TextView android:layout_marginRight="4dip" android:id="@+id/friend3" android:singleLine="true" android:layout_toRightOf="@id/profile3"
-			android:layout_width="wrap_content"	android:layout_height="wrap_content"
-			android:layout_alignParentTop="true" android:textStyle="bold" />
-			<TextView android:gravity="right" android:id="@+id/created3" android:singleLine="true" android:layout_toRightOf="@id/friend3"
-			android:layout_width="fill_parent" android:layout_height="wrap_content"
-			android:layout_alignParentTop="true" android:layout_alignParentRight="true" />
-			<TextView android:layout_below="@id/friend3" android:id="@+id/message3" android:layout_toRightOf="@id/profile3"
-			android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<TextView android:layout_marginRight="4dip" android:id="@+id/friend3"
+				android:singleLine="true" android:layout_toRightOf="@id/profile3"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold" />
+			<TextView android:gravity="right" android:id="@+id/created3"
+				android:singleLine="true" android:layout_toRightOf="@id/friend3"
+				android:layout_width="fill_parent" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true"
+				android:layout_alignParentRight="true" />
+			<TextView android:layout_below="@id/friend3" android:id="@+id/message3"
+				android:layout_toRightOf="@id/profile3" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item4"
 			android:orientation="horizontal" android:layout_width="fill_parent"
 			android:layout_height="wrap_content" android:padding="4dip">
+			<ImageView android:id="@+id/status_bg4"
+				android:layout_width="fill_parent" android:layout_height="fill_parent"
+				android:layout_alignParentTop="true"
+				android:layout_alignParentRight="true"
+				android:layout_alignParentBottom="true"
+				android:layout_alignParentLeft="true" android:scaleType="fitXY" />
 			<ImageView android:id="@+id/profile4" android:layout_width="48dip"
 				android:layout_height="48dip" android:layout_alignParentTop="true"
 				android:layout_alignParentLeft="true" android:layout_marginRight="4dip" />
-			<TextView android:layout_marginRight="4dip" android:id="@+id/friend4" android:singleLine="true" android:layout_toRightOf="@id/profile4"
-			android:layout_width="wrap_content"	android:layout_height="wrap_content"
-			android:layout_alignParentTop="true" android:textStyle="bold" />
-			<TextView android:gravity="right" android:id="@+id/created4" android:singleLine="true" android:layout_toRightOf="@id/friend4"
-			android:layout_width="fill_parent" android:layout_height="wrap_content"
-			android:layout_alignParentTop="true" android:layout_alignParentRight="true" />
-			<TextView android:layout_below="@id/friend4" android:id="@+id/message4" android:layout_toRightOf="@id/profile4"
-			android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<TextView android:layout_marginRight="4dip" android:id="@+id/friend4"
+				android:singleLine="true" android:layout_toRightOf="@id/profile4"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold" />
+			<TextView android:gravity="right" android:id="@+id/created4"
+				android:singleLine="true" android:layout_toRightOf="@id/friend4"
+				android:layout_width="fill_parent" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true"
+				android:layout_alignParentRight="true" />
+			<TextView android:layout_below="@id/friend4" android:id="@+id/message4"
+				android:layout_toRightOf="@id/profile4" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item5"
 			android:orientation="horizontal" android:layout_width="fill_parent"
 			android:layout_height="wrap_content" android:padding="4dip">
+			<ImageView android:id="@+id/status_bg5"
+				android:layout_width="fill_parent" android:layout_height="fill_parent"
+				android:layout_alignParentTop="true"
+				android:layout_alignParentRight="true"
+				android:layout_alignParentBottom="true"
+				android:layout_alignParentLeft="true" android:scaleType="fitXY" />
 			<ImageView android:id="@+id/profile5" android:layout_width="48dip"
 				android:layout_height="48dip" android:layout_alignParentTop="true"
 				android:layout_alignParentLeft="true" android:layout_marginRight="4dip" />
-			<TextView android:layout_marginRight="4dip" android:id="@+id/friend5" android:singleLine="true" android:layout_toRightOf="@id/profile5"
-			android:layout_width="wrap_content"	android:layout_height="wrap_content"
-			android:layout_alignParentTop="true" android:textStyle="bold" />
-			<TextView android:gravity="right" android:id="@+id/created5" android:singleLine="true" android:layout_toRightOf="@id/friend5"
-			android:layout_width="fill_parent" android:layout_height="wrap_content"
-			android:layout_alignParentTop="true" android:layout_alignParentRight="true" />
-			<TextView android:layout_below="@id/friend5" android:id="@+id/message5" android:layout_toRightOf="@id/profile5"
-			android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<TextView android:layout_marginRight="4dip" android:id="@+id/friend5"
+				android:singleLine="true" android:layout_toRightOf="@id/profile5"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold" />
+			<TextView android:gravity="right" android:id="@+id/created5"
+				android:singleLine="true" android:layout_toRightOf="@id/friend5"
+				android:layout_width="fill_parent" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true"
+				android:layout_alignParentRight="true" />
+			<TextView android:layout_below="@id/friend5" android:id="@+id/message5"
+				android:layout_toRightOf="@id/profile5" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item6"
 			android:orientation="horizontal" android:layout_width="fill_parent"
 			android:layout_height="wrap_content" android:padding="4dip">
+			<ImageView android:id="@+id/status_bg6"
+				android:layout_width="fill_parent" android:layout_height="fill_parent"
+				android:layout_alignParentTop="true"
+				android:layout_alignParentRight="true"
+				android:layout_alignParentBottom="true"
+				android:layout_alignParentLeft="true" android:scaleType="fitXY" />
 			<ImageView android:id="@+id/profile6" android:layout_width="48dip"
 				android:layout_height="48dip" android:layout_alignParentTop="true"
 				android:layout_alignParentLeft="true" android:layout_marginRight="4dip" />
-			<TextView android:layout_marginRight="4dip" android:id="@+id/friend6" android:singleLine="true" android:layout_toRightOf="@id/profile6"
-			android:layout_width="wrap_content"	android:layout_height="wrap_content"
-			android:layout_alignParentTop="true" android:textStyle="bold" />
-			<TextView android:gravity="right" android:id="@+id/created6" android:singleLine="true" android:layout_toRightOf="@id/friend6"
-			android:layout_width="fill_parent" android:layout_height="wrap_content"
-			android:layout_alignParentTop="true" android:layout_alignParentRight="true" />
-			<TextView android:layout_below="@id/friend6" android:id="@+id/message6" android:layout_toRightOf="@id/profile6"
-			android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<TextView android:layout_marginRight="4dip" android:id="@+id/friend6"
+				android:singleLine="true" android:layout_toRightOf="@id/profile6"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold" />
+			<TextView android:gravity="right" android:id="@+id/created6"
+				android:singleLine="true" android:layout_toRightOf="@id/friend6"
+				android:layout_width="fill_parent" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true"
+				android:layout_alignParentRight="true" />
+			<TextView android:layout_below="@id/friend6" android:id="@+id/message6"
+				android:layout_toRightOf="@id/profile6" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" />
 		</RelativeLayout>
 	</LinearLayout>
 </RelativeLayout>

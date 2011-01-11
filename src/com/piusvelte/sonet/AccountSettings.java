@@ -112,6 +112,8 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 					mCreated_textsize_value = Integer.parseInt(getString(R.string.created_textsize));
 					// initialize default settings
 					ContentValues values = new ContentValues();
+					values.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
+					values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
 					values.put(Widgets.MESSAGES_COLOR, mMessages_color_value);
 					values.put(Widgets.MESSAGES_TEXTSIZE, mMessages_textsize_value);
 					values.put(Widgets.FRIEND_COLOR, mFriend_color_value);
@@ -119,10 +121,12 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 					values.put(Widgets.CREATED_COLOR, mCreated_color_value);
 					values.put(Widgets.CREATED_TEXTSIZE, mCreated_textsize_value);
 					values.put(Widgets.TIME24HR, false);
-					this.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets.WIDGET + "=" + AppWidgetManager.INVALID_APPWIDGET_ID, null);
+					this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 				}
 				// initialize widget settings
 				ContentValues values = new ContentValues();
+				values.put(Widgets.WIDGET, mAppWidgetId);
+				values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
 				values.put(Widgets.MESSAGES_COLOR, mMessages_color_value);
 				values.put(Widgets.MESSAGES_TEXTSIZE, mMessages_textsize_value);
 				values.put(Widgets.FRIEND_COLOR, mFriend_color_value);
@@ -130,10 +134,12 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 				values.put(Widgets.CREATED_COLOR, mCreated_color_value);
 				values.put(Widgets.CREATED_TEXTSIZE, mCreated_textsize_value);
 				values.put(Widgets.TIME24HR, false);
-				this.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets.WIDGET + "=" + mAppWidgetId + " and " + Widgets.ACCOUNT + "=" + Sonet.INVALID_ACCOUNT_ID, null);
+				this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 			}
 			// initialize account settings
 			ContentValues values = new ContentValues();
+			values.put(Widgets.WIDGET, mAppWidgetId);
+			values.put(Widgets.ACCOUNT, mAccountId);
 			values.put(Widgets.MESSAGES_COLOR, mMessages_color_value);
 			values.put(Widgets.MESSAGES_TEXTSIZE, mMessages_textsize_value);
 			values.put(Widgets.FRIEND_COLOR, mFriend_color_value);
@@ -141,7 +147,7 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 			values.put(Widgets.CREATED_COLOR, mCreated_color_value);
 			values.put(Widgets.CREATED_TEXTSIZE, mCreated_textsize_value);
 			values.put(Widgets.TIME24HR, false);
-			this.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets.WIDGET + "=" + mAppWidgetId + " and " + Widgets.ACCOUNT + "=" + mAccountId, null);
+			this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 		}
 		c.close();
 

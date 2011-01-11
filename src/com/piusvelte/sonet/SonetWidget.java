@@ -133,6 +133,8 @@ public class SonetWidget extends AppWidgetProvider {
 		itemViews.setBoundFloat(R.id.friend, "setTextSize", SonetProvider.SonetProviderColumns.friend_textsize.ordinal());
 		itemViews.setBoundFloat(R.id.created, "setTextSize", SonetProvider.SonetProviderColumns.created_textsize.ordinal());
 		itemViews.setBoundFloat(R.id.message, "setTextSize", SonetProvider.SonetProviderColumns.messages_textsize.ordinal());
+
+		itemViews.setBoundBitmap(R.id.status_bg, "setImageBitmap", SonetProvider.SonetProviderColumns.status_bg.ordinal(), 0);
 		
 		Intent i= new Intent(context, context.getClass())
 		.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
