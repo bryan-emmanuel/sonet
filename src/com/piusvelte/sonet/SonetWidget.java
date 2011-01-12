@@ -148,7 +148,6 @@ public class SonetWidget extends AppWidgetProvider {
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_CHILDREN_CLICKABLE, true);
 		
 		putProvider(replaceDummy, appWidgetId);
-		
 		context.sendBroadcast(replaceDummy);
 		
 	}

@@ -213,7 +213,7 @@ public class SonetProvider extends ContentProvider {
 	@Override
 	public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String orderBy) {
 		SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
-		
+
 		switch (sUriMatcher.match(uri)) {
 		case ACCOUNTS:
 			qb.setTables(TABLE_ACCOUNTS);

@@ -191,6 +191,7 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
+			AccountSettings.this.mMessages_bg_color_value = color;
 			updateDatabase(Widgets.MESSAGES_BG_COLOR, color);
 		}
 
@@ -201,6 +202,7 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
+			AccountSettings.this.mMessages_color_value = color;
 			updateDatabase(Widgets.MESSAGES_COLOR, color);
 		}
 
@@ -211,6 +213,7 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
+			AccountSettings.this.mFriend_color_value = color;
 			updateDatabase(Widgets.FRIEND_COLOR, color);
 		}
 
@@ -221,6 +224,7 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 		new ColorPickerDialog.OnColorChangedListener() {
 
 		public void colorChanged(int color) {
+			AccountSettings.this.mCreated_color_value = color;
 			updateDatabase(Widgets.CREATED_COLOR, color);
 		}
 
@@ -256,7 +260,8 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 			.setSingleChoiceItems(R.array.textsize_entries, index, new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					updateDatabase(Widgets.MESSAGES_TEXTSIZE, Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]));
+					AccountSettings.this.mMessages_textsize_value = Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]);
+					updateDatabase(Widgets.MESSAGES_TEXTSIZE, mMessages_textsize_value);
 					dialog.cancel();
 				}
 			})
@@ -278,7 +283,8 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 			.setSingleChoiceItems(R.array.textsize_entries, index, new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					updateDatabase(Widgets.FRIEND_TEXTSIZE, Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]));
+					AccountSettings.this.mFriend_textsize_value = Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]);
+					updateDatabase(Widgets.FRIEND_TEXTSIZE, mFriend_textsize_value);
 					dialog.cancel();
 				}
 			})
@@ -300,7 +306,8 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 			.setSingleChoiceItems(R.array.textsize_entries, index, new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					updateDatabase(Widgets.CREATED_TEXTSIZE, Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]));
+					AccountSettings.this.mCreated_textsize_value = Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]);
+					updateDatabase(Widgets.CREATED_TEXTSIZE, mCreated_textsize_value);
 					dialog.cancel();
 				}
 			})

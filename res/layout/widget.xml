@@ -20,9 +20,6 @@
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="fill_parent" android:layout_height="fill_parent">
-	<LinearLayout android:id="@+id/null_widget"
-		android:layout_width="wrap_content" android:layout_height="wrap_content"
-		android:visibility="gone"></LinearLayout>
 	<TextView android:id="@+id/head_spacer" android:layout_width="wrap_content"
 		android:layout_height="wrap_content" android:text="@string/head_spacer"
 		android:layout_alignParentTop="true" android:layout_alignParentLeft="true"
