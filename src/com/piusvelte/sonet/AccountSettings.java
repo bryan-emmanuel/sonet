@@ -83,7 +83,7 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 			mFriend_textsize_value = c.getInt(c.getColumnIndex(Widgets.FRIEND_TEXTSIZE));
 			mCreated_color_value = c.getInt(c.getColumnIndex(Widgets.CREATED_COLOR));
 			mCreated_textsize_value = c.getInt(c.getColumnIndex(Widgets.CREATED_TEXTSIZE));
-			mTime24hr.setChecked(c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1);			
+			mTime24hr.setChecked(c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1);
 		} else {
 			// fall back on widget settings
 			Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=" + mAppWidgetId + " and " + Widgets.ACCOUNT + "=" + Sonet.INVALID_ACCOUNT_ID, null, null);
@@ -110,13 +110,13 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 					mTime24hr.setChecked(e.getInt(e.getColumnIndex(Widgets.TIME24HR)) == 1);
 				} else {
 					// ultimately fall back on the app defaults
-					mMessages_bg_color_value = Integer.parseInt(getString(R.string.message_bg_color));
-					mMessages_color_value = Integer.parseInt(getString(R.string.message_color));
-					mMessages_textsize_value = Integer.parseInt(getString(R.string.messages_textsize));
-					mFriend_color_value = Integer.parseInt(getString(R.string.friend_color));
-					mFriend_textsize_value = Integer.parseInt(getString(R.string.friend_textsize));
-					mCreated_color_value = Integer.parseInt(getString(R.string.created_color));
-					mCreated_textsize_value = Integer.parseInt(getString(R.string.created_textsize));
+					mMessages_bg_color_value = Sonet.default_message_bg_color;
+					mMessages_color_value = Sonet.default_message_color;
+					mMessages_textsize_value = Sonet.default_messages_textsize;
+					mFriend_color_value = Sonet.default_friend_color;
+					mFriend_textsize_value = Sonet.default_friend_textsize;
+					mCreated_color_value = Sonet.default_created_color;
+					mCreated_textsize_value = Sonet.default_created_textsize;
 					// initialize default settings
 					ContentValues values = new ContentValues();
 					values.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);

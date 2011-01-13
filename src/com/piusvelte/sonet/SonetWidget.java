@@ -120,6 +120,14 @@ public class SonetWidget extends AppWidgetProvider {
 
 		BoundRemoteViews itemViews = new BoundRemoteViews(R.layout.widget_item);
 
+		itemViews.setBoundCharSequence(R.id.friend_bg_clear, "setText", SonetProvider.SonetProviderColumns.friend.ordinal(), 0);
+		itemViews.setBoundFloat(R.id.friend_bg_clear, "setTextSize", SonetProvider.SonetProviderColumns.friend_textsize.ordinal());
+		
+		itemViews.setBoundCharSequence(R.id.message_bg_clear, "setText", SonetProvider.SonetProviderColumns.message.ordinal(), 0);
+		itemViews.setBoundFloat(R.id.message_bg_clear, "setTextSize", SonetProvider.SonetProviderColumns.messages_textsize.ordinal());
+
+		itemViews.setBoundBitmap(R.id.status_bg, "setImageBitmap", SonetProvider.SonetProviderColumns.status_bg.ordinal(), 0);
+
 		itemViews.setBoundBitmap(R.id.profile, "setImageBitmap", SonetProvider.SonetProviderColumns.profile.ordinal(), 0);
 		itemViews.setBoundCharSequence(R.id.friend, "setText", SonetProvider.SonetProviderColumns.friend.ordinal(), 0);
 		itemViews.setBoundCharSequence(R.id.created, "setText", SonetProvider.SonetProviderColumns.createdtext.ordinal(), 0);
@@ -132,8 +140,6 @@ public class SonetWidget extends AppWidgetProvider {
 		itemViews.setBoundFloat(R.id.friend, "setTextSize", SonetProvider.SonetProviderColumns.friend_textsize.ordinal());
 		itemViews.setBoundFloat(R.id.created, "setTextSize", SonetProvider.SonetProviderColumns.created_textsize.ordinal());
 		itemViews.setBoundFloat(R.id.message, "setTextSize", SonetProvider.SonetProviderColumns.messages_textsize.ordinal());
-
-		itemViews.setBoundBitmap(R.id.status_bg, "setImageBitmap", SonetProvider.SonetProviderColumns.status_bg.ordinal(), 0);
 		
 		Intent i= new Intent(context, context.getClass())
 		.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)

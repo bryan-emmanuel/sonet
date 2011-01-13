@@ -22,11 +22,20 @@
 	android:id="@+id/item" android:orientation="horizontal"
 	android:layout_width="fill_parent" android:layout_height="wrap_content"
 	android:padding="4dip">
+	<TextView android:id="@+id/friend_bg_clear"
+		android:singleLine="true" android:layout_alignParentLeft="true"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_alignParentTop="true" android:textStyle="bold" />
+	<TextView android:layout_below="@id/friend_bg_clear"
+		android:id="@+id/message_bg_clear" android:layout_alignParentLeft="true"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:text="@string/loading" />
+	<TextView android:id="@+id/bg_clear" android:layout_width="fill_parent"
+		android:layout_alignParentLeft="true" android:height="0dip"
+		android:layout_height="wrap_content" android:layout_below="@id/friend_bg_clear" />
 	<ImageView android:id="@+id/status_bg" android:layout_width="fill_parent"
-		android:layout_height="fill_parent" android:layout_alignParentTop="true"
-		android:layout_alignParentRight="true"
-		android:layout_alignParentBottom="true"
-		android:layout_alignParentLeft="true" android:scaleType="fitXY" />
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/bg_clear" />
 	<ImageView android:id="@+id/profile" android:layout_width="48dip"
 		android:layout_height="48dip" android:layout_alignParentTop="true"
 		android:layout_alignParentLeft="true" android:layout_marginRight="4dip" />

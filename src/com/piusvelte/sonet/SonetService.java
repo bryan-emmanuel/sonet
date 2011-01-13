@@ -519,7 +519,8 @@ public class SonetService extends Service implements Runnable {
 				Canvas buttons_bg_canvas = new Canvas(buttons_bg);
 				buttons_bg_canvas.drawColor(buttons_bg_color);
 				views.setImageViewBitmap(R.id.buttons_bg, buttons_bg);
-				views.setTextColor(R.id.head_spacer, buttons_bg_color);
+				views.setTextColor(R.id.buttons_bg_clear, buttons_bg_color);
+				views.setFloat(R.id.buttons_bg_clear, "setTextSize", buttons_textsize);
 				views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, new Intent(this, PostDialog.class), 0));
 				views.setTextColor(R.id.button_post, buttons_color);
 				views.setFloat(R.id.button_post, "setTextSize", buttons_textsize);
@@ -536,8 +537,10 @@ public class SonetService extends Service implements Runnable {
 				map_message = {R.id.message0, R.id.message1, R.id.message2, R.id.message3, R.id.message4, R.id.message5, R.id.message6},
 				map_screenname = {R.id.friend0, R.id.friend1, R.id.friend2, R.id.friend3, R.id.friend4, R.id.friend5, R.id.friend6},
 				map_created = {R.id.created0, R.id.created1, R.id.created2, R.id.created3, R.id.created4, R.id.created5, R.id.created6},
-				map_status_bg = {R.id.status_bg0, R.id.status_bg1, R.id.status_bg2, R.id.status_bg3, R.id.status_bg4, R.id.status_bg5, R.id.status_bg6};
-				Cursor statuses = this.getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.LINK, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.SERVICE, Statuses_styles.CREATEDTEXT, Statuses_styles.FRIEND_COLOR, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.MESSAGES_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.CREATED_COLOR, Statuses_styles.CREATED_TEXTSIZE}, Statuses_styles.WIDGET + "=" + appWidgetId, null, Statuses_styles.CREATED + " desc");
+				map_status_bg = {R.id.status_bg0, R.id.status_bg1, R.id.status_bg2, R.id.status_bg3, R.id.status_bg4, R.id.status_bg5, R.id.status_bg6},
+				map_friend_bg_clear = {R.id.friend_bg_clear0, R.id.friend_bg_clear1, R.id.friend_bg_clear2, R.id.friend_bg_clear3, R.id.friend_bg_clear4, R.id.friend_bg_clear5, R.id.friend_bg_clear6},
+				map_message_bg_clear = {R.id.message_bg_clear0, R.id.message_bg_clear1, R.id.message_bg_clear2, R.id.message_bg_clear3, R.id.message_bg_clear4, R.id.message_bg_clear5, R.id.message_bg_clear6};
+				Cursor statuses = this.getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.LINK, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.SERVICE, Statuses_styles.CREATEDTEXT, Statuses_styles.FRIEND_COLOR, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.MESSAGES_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.CREATED_COLOR, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG}, Statuses_styles.WIDGET + "=" + appWidgetId, null, Statuses_styles.CREATED + " desc");
 				if (statuses.moveToFirst()) {
 					int count_status = 0;
 					int ilink = statuses.getColumnIndex(Statuses_styles.LINK),
@@ -556,6 +559,10 @@ public class SonetService extends Service implements Runnable {
 					while (!statuses.isAfterLast() && (count_status < map_item.length)) {
 						// set messages background
 						byte[] status_bg = statuses.getBlob(istatus_bg);
+						views.setTextViewText(map_friend_bg_clear[count_status], statuses.getString(ifriend));
+						views.setFloat(map_friend_bg_clear[count_status], "setTextSize", friend_textsize);
+						views.setTextViewText(map_message_bg_clear[count_status], statuses.getString(imessage));
+						views.setFloat(map_message_bg_clear[count_status], "setTextSize", messages_textsize);
 						views.setImageViewBitmap(map_status_bg[count_status], BitmapFactory.decodeByteArray(status_bg, 0, status_bg.length));
 						views.setTextViewText(map_message[count_status], statuses.getString(imessage));
 						views.setTextColor(map_message[count_status], messages_color);
