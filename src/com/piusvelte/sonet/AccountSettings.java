@@ -63,7 +63,7 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 		Intent i = getIntent();
 		if (i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
 		if (i.hasExtra(Sonet.EXTRA_ACCOUNT_ID)) mAccountId = i.getLongExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID);
-
+		
 		mMessages_bg_color = (Button) findViewById(R.id.messages_bg_color);
 		mMessages_color = (Button) findViewById(R.id.messages_color);
 		mMessages_textsize = (Button) findViewById(R.id.messages_textsize);
@@ -183,7 +183,7 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 	private void updateDatabase(String column, int value) {
 		ContentValues values = new ContentValues();
 		values.put(column, value);
-		this.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets.WIDGET + "=" + mAppWidgetId, null);
+		this.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets.WIDGET + "=" + mAppWidgetId + " and " + Widgets.ACCOUNT + "=" + mAccountId, null);
 		mUpdateWidget = true;
 	}
 
