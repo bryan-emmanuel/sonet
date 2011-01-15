@@ -25,14 +25,16 @@
 	<TextView android:id="@+id/friend_bg_clear"
 		android:singleLine="true" android:layout_alignParentLeft="true"
 		android:layout_width="wrap_content" android:layout_height="wrap_content"
-		android:layout_alignParentTop="true" android:textStyle="bold" />
+		android:layout_alignParentTop="true" android:textStyle="bold"
+		android:textColor="#00000000" />
 	<TextView android:layout_below="@id/friend_bg_clear"
 		android:id="@+id/message_bg_clear" android:layout_alignParentLeft="true"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
-		android:text="@string/loading" />
+		android:textColor="#00000000" android:layout_marginLeft="52dip" />
 	<TextView android:id="@+id/bg_clear" android:layout_width="fill_parent"
 		android:layout_alignParentLeft="true" android:height="0dip"
-		android:layout_height="wrap_content" android:layout_below="@id/friend_bg_clear" />
+		android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear"
+		android:textColor="#00000000" />
 	<ImageView android:id="@+id/status_bg" android:layout_width="fill_parent"
 		android:layout_height="fill_parent" android:scaleType="fitXY"
 		android:layout_above="@id/bg_clear" />

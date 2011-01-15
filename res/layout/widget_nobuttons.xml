@@ -29,14 +29,14 @@
 			<TextView android:id="@+id/friend_bg_clear0"
 				android:singleLine="true" android:layout_alignParentLeft="true"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
-				android:layout_alignParentTop="true" android:textStyle="bold" />
+				android:layout_alignParentTop="true" android:textStyle="bold" android:textColor="#00000000" />
 			<TextView android:layout_below="@id/friend_bg_clear0"
 				android:id="@+id/message_bg_clear0" android:layout_alignParentLeft="true"
 				android:layout_width="fill_parent" android:layout_height="wrap_content"
-				android:text="@string/loading" />
+				android:text="@string/loading" android:textColor="#00000000" android:layout_marginLeft="52dip" />
 			<TextView android:id="@+id/bg_clear0" android:layout_width="fill_parent"
 				android:layout_alignParentLeft="true" android:height="0dip"
-				android:layout_height="wrap_content" android:layout_below="@id/friend_bg_clear0" />
+				android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear0" android:textColor="#00000000" />
 			<ImageView android:id="@+id/status_bg0"
 				android:layout_width="fill_parent" android:layout_height="fill_parent"
 				android:scaleType="fitXY" android:layout_above="@id/bg_clear0" />
@@ -62,14 +62,13 @@
 			<TextView android:id="@+id/friend_bg_clear1"
 				android:singleLine="true" android:layout_alignParentLeft="true"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
-				android:layout_alignParentTop="true" android:textStyle="bold" />
+				android:layout_alignParentTop="true" android:textStyle="bold" android:textColor="#00000000" />
 			<TextView android:layout_below="@id/friend_bg_clear1"
 				android:id="@+id/message_bg_clear1" android:layout_alignParentLeft="true"
-				android:layout_width="fill_parent" android:layout_height="wrap_content"
-				android:text="@string/loading" />
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:textColor="#00000000" android:layout_marginLeft="52dip" />
 			<TextView android:id="@+id/bg_clear1" android:layout_width="fill_parent"
 				android:layout_alignParentLeft="true" android:height="0dip"
-				android:layout_height="wrap_content" android:layout_below="@id/friend_bg_clear1" />
+				android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear1" android:textColor="#00000000" />
 			<ImageView android:id="@+id/status_bg1"
 				android:layout_width="fill_parent" android:layout_height="fill_parent"
 				android:scaleType="fitXY" android:layout_above="@id/bg_clear1" />
@@ -95,14 +94,13 @@
 			<TextView android:id="@+id/friend_bg_clear2"
 				android:singleLine="true" android:layout_alignParentLeft="true"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
-				android:layout_alignParentTop="true" android:textStyle="bold" />
+				android:layout_alignParentTop="true" android:textStyle="bold" android:textColor="#00000000" />
 			<TextView android:layout_below="@id/friend_bg_clear2"
 				android:id="@+id/message_bg_clear2" android:layout_alignParentLeft="true"
-				android:layout_width="fill_parent" android:layout_height="wrap_content"
-				android:text="@string/loading" />
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:textColor="#00000000" android:layout_marginLeft="52dip" />
 			<TextView android:id="@+id/bg_clear2" android:layout_width="fill_parent"
 				android:layout_alignParentLeft="true" android:height="0dip"
-				android:layout_height="wrap_content" android:layout_below="@id/friend_bg_clear2" />
+				android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear2" android:textColor="#00000000" />
 			<ImageView android:id="@+id/status_bg2"
 				android:layout_width="fill_parent" android:layout_height="fill_parent"
 				android:scaleType="fitXY" android:layout_above="@id/bg_clear2" />
@@ -128,14 +126,13 @@
 			<TextView android:id="@+id/friend_bg_clear3"
 				android:singleLine="true" android:layout_alignParentLeft="true"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
-				android:layout_alignParentTop="true" android:textStyle="bold" />
+				android:layout_alignParentTop="true" android:textStyle="bold" android:textColor="#00000000" />
 			<TextView android:layout_below="@id/friend_bg_clear3"
 				android:id="@+id/message_bg_clear3" android:layout_alignParentLeft="true"
-				android:layout_width="fill_parent" android:layout_height="wrap_content"
-				android:text="@string/loading" />
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:textColor="#00000000" android:layout_marginLeft="52dip" />
 			<TextView android:id="@+id/bg_clear3" android:layout_width="fill_parent"
 				android:layout_alignParentLeft="true" android:height="0dip"
-				android:layout_height="wrap_content" android:layout_below="@id/friend_bg_clear3" />
+				android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear3" android:textColor="#00000000" />
 			<ImageView android:id="@+id/status_bg3"
 				android:layout_width="fill_parent" android:layout_height="fill_parent"
 				android:scaleType="fitXY" android:layout_above="@id/bg_clear3" />
@@ -161,14 +158,13 @@
 			<TextView android:id="@+id/friend_bg_clear4"
 				android:singleLine="true" android:layout_alignParentLeft="true"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
-				android:layout_alignParentTop="true" android:textStyle="bold" />
+				android:layout_alignParentTop="true" android:textStyle="bold" android:textColor="#00000000" />
 			<TextView android:layout_below="@id/friend_bg_clear4"
 				android:id="@+id/message_bg_clear4" android:layout_alignParentLeft="true"
-				android:layout_width="fill_parent" android:layout_height="wrap_content"
-				android:text="@string/loading" />
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:textColor="#00000000" android:layout_marginLeft="52dip" />
 			<TextView android:id="@+id/bg_clear4" android:layout_width="fill_parent"
 				android:layout_alignParentLeft="true" android:height="0dip"
-				android:layout_height="wrap_content" android:layout_below="@id/friend_bg_clear4" />
+				android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear4" android:textColor="#00000000" />
 			<ImageView android:id="@+id/status_bg4"
 				android:layout_width="fill_parent" android:layout_height="fill_parent"
 				android:scaleType="fitXY" android:layout_above="@id/bg_clear4" />
@@ -194,14 +190,13 @@
 			<TextView android:id="@+id/friend_bg_clear5"
 				android:singleLine="true" android:layout_alignParentLeft="true"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
-				android:layout_alignParentTop="true" android:textStyle="bold" />
+				android:layout_alignParentTop="true" android:textStyle="bold" android:textColor="#00000000" />
 			<TextView android:layout_below="@id/friend_bg_clear5"
 				android:id="@+id/message_bg_clear5" android:layout_alignParentLeft="true"
-				android:layout_width="fill_parent" android:layout_height="wrap_content"
-				android:text="@string/loading" />
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:textColor="#00000000" android:layout_marginLeft="52dip" />
 			<TextView android:id="@+id/bg_clear5" android:layout_width="fill_parent"
 				android:layout_alignParentLeft="true" android:height="0dip"
-				android:layout_height="wrap_content" android:layout_below="@id/friend_bg_clear5" />
+				android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear5" android:textColor="#00000000" />
 			<ImageView android:id="@+id/status_bg5"
 				android:layout_width="fill_parent" android:layout_height="fill_parent"
 				android:scaleType="fitXY" android:layout_above="@id/bg_clear5" />
@@ -227,14 +222,13 @@
 			<TextView android:id="@+id/friend_bg_clear6"
 				android:singleLine="true" android:layout_alignParentLeft="true"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
-				android:layout_alignParentTop="true" android:textStyle="bold" />
+				android:layout_alignParentTop="true" android:textStyle="bold" android:textColor="#00000000" />
 			<TextView android:layout_below="@id/friend_bg_clear6"
 				android:id="@+id/message_bg_clear6" android:layout_alignParentLeft="true"
-				android:layout_width="fill_parent" android:layout_height="wrap_content"
-				android:text="@string/loading" />
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:textColor="#00000000" android:layout_marginLeft="52dip" />
 			<TextView android:id="@+id/bg_clear6" android:layout_width="fill_parent"
 				android:layout_alignParentLeft="true" android:height="0dip"
-				android:layout_height="wrap_content" android:layout_below="@id/friend_bg_clear6" />
+				android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear6" android:textColor="#00000000" />
 			<ImageView android:id="@+id/status_bg6"
 				android:layout_width="fill_parent" android:layout_height="fill_parent"
 				android:scaleType="fitXY" android:layout_above="@id/bg_clear6" />
