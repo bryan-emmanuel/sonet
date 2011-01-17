@@ -86,7 +86,7 @@
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item1"
 			android:orientation="horizontal" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:padding="4dip">
+			android:layout_height="wrap_content">
 			<TextView android:id="@+id/friend_bg_clear1"
 				android:singleLine="true" android:layout_alignParentLeft="true"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -118,7 +118,7 @@
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item2"
 			android:orientation="horizontal" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:padding="4dip">
+			android:layout_height="wrap_content">
 			<TextView android:id="@+id/friend_bg_clear2"
 				android:singleLine="true" android:layout_alignParentLeft="true"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -150,7 +150,7 @@
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item3"
 			android:orientation="horizontal" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:padding="4dip">
+			android:layout_height="wrap_content">
 			<TextView android:id="@+id/friend_bg_clear3"
 				android:singleLine="true" android:layout_alignParentLeft="true"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -182,7 +182,7 @@
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item4"
 			android:orientation="horizontal" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:padding="4dip">
+			android:layout_height="wrap_content">
 			<TextView android:id="@+id/friend_bg_clear4"
 				android:singleLine="true" android:layout_alignParentLeft="true"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -214,7 +214,7 @@
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item5"
 			android:orientation="horizontal" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:padding="4dip">
+			android:layout_height="wrap_content">
 			<TextView android:id="@+id/friend_bg_clear5"
 				android:singleLine="true" android:layout_alignParentLeft="true"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -246,7 +246,7 @@
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item6"
 			android:orientation="horizontal" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:padding="4dip">
+			android:layout_height="wrap_content">
 			<TextView android:id="@+id/friend_bg_clear6"
 				android:singleLine="true" android:layout_alignParentLeft="true"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
