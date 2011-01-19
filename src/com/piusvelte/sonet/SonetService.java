@@ -107,32 +107,13 @@ public class SonetService extends Service implements Runnable {
 			if (intent.getAction() != null) {
 				if (intent.getAction().equals(ACTION_REFRESH)) {
 					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
-					else SonetService.updateWidgets(getAppWidgetIds());
 				} else SonetService.updateWidgets(new int[] {Integer.parseInt(intent.getAction())});
 			} else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
 			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) SonetService.updateWidgets(new int[]{intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)});
-			else SonetService.updateWidgets(getAppWidgetIds());
-		} else SonetService.updateWidgets(getAppWidgetIds());
+		}
 		synchronized (sLock) {
 			if ((sThread == null) || !sThread.isAlive()) (sThread = new Thread(this)).start();
 		}
-	}
-
-	private int[] getAppWidgetIds() {
-		int[] appWidgetIds = new int[0];
-		Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.WIDGET}, null, null, null);
-		if (accounts.moveToFirst()) {
-			appWidgetIds = new int[accounts.getCount()];
-			int iwidget = accounts.getColumnIndex(Accounts.WIDGET),
-			counter = 0;
-			while (!accounts.isAfterLast()) {
-				appWidgetIds[counter] = accounts.getInt(iwidget);
-				counter++;
-				accounts.moveToNext();
-			}
-		} else appWidgetIds = new int[0];
-		accounts.close();
-		return appWidgetIds;
 	}
 
 	@Override
@@ -309,48 +290,50 @@ public class SonetService extends Service implements Runnable {
 				}
 				if (accounts.moveToFirst()) {
 					// load the updates						
-					int accountId = accounts.getInt(accounts.getColumnIndex(Accounts._ID)),
+					int iaccountid = accounts.getColumnIndex(Accounts._ID),
 					iservice = accounts.getColumnIndex(Accounts.SERVICE),
 					itoken = accounts.getColumnIndex(Accounts.TOKEN),
 					isecret = accounts.getColumnIndex(Accounts.SECRET),
 					iexpiry = accounts.getColumnIndex(Accounts.EXPIRY),
 					itimezone = accounts.getColumnIndex(Accounts.TIMEZONE);
-					Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=" + appWidgetId  + " and " + Widgets.ACCOUNT + "=" + accountId, null, null);
-					if (c.moveToFirst()) {
-						time24hr = c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1;
-						status_bg_color = c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
-					} else {
-						Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=" + appWidgetId  + " and " + Widgets.ACCOUNT + "=" + Sonet.INVALID_ACCOUNT_ID, null, null);
-						if (d.moveToFirst()) {
-							time24hr = d.getInt(d.getColumnIndex(Widgets.TIME24HR)) == 1;
-							status_bg_color = d.getInt(d.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
-						} else {
-							Cursor e = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=" + AppWidgetManager.INVALID_APPWIDGET_ID, null, null);
-							if (e.moveToFirst()) {
-								time24hr = e.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1;
-								status_bg_color = e.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
-							} else {
-								time24hr = false;
-								status_bg_color = Sonet.default_message_bg_color;
-							}
-							e.close();
-						}
-						d.close();
-					}
-					c.close();
-					// create the status_bg
-					Bitmap status_bg_bmp = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-					Canvas status_bg_canvas = new Canvas(status_bg_bmp);
-					status_bg_canvas.drawColor(status_bg_color);
-					ByteArrayOutputStream status_bg_blob = new ByteArrayOutputStream();
-					status_bg_bmp.compress(Bitmap.CompressFormat.PNG, 100, status_bg_blob);
-					status_bg = status_bg_blob.toByteArray();
 					String name = "name",
 					id = "id",
 					status = "status";
 					long now = new Date().getTime();
 					while (!accounts.isAfterLast()) {
-						int service = accounts.getInt(iservice);
+						int accountId = accounts.getInt(iaccountid),
+						service = accounts.getInt(iservice);
+						// get the settings form time24hr and bg_color
+						Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=" + appWidgetId  + " and " + Widgets.ACCOUNT + "=" + accountId, null, null);
+						if (c.moveToFirst()) {
+							time24hr = c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1;
+							status_bg_color = c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
+						} else {
+							Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=" + appWidgetId  + " and " + Widgets.ACCOUNT + "=" + Sonet.INVALID_ACCOUNT_ID, null, null);
+							if (d.moveToFirst()) {
+								time24hr = d.getInt(d.getColumnIndex(Widgets.TIME24HR)) == 1;
+								status_bg_color = d.getInt(d.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
+							} else {
+								Cursor e = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=" + AppWidgetManager.INVALID_APPWIDGET_ID, null, null);
+								if (e.moveToFirst()) {
+									time24hr = e.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1;
+									status_bg_color = e.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
+								} else {
+									time24hr = false;
+									status_bg_color = Sonet.default_message_bg_color;
+								}
+								e.close();
+							}
+							d.close();
+						}
+						c.close();
+						// create the status_bg
+						Bitmap status_bg_bmp = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+						Canvas status_bg_canvas = new Canvas(status_bg_bmp);
+						status_bg_canvas.drawColor(status_bg_color);
+						ByteArrayOutputStream status_bg_blob = new ByteArrayOutputStream();
+						status_bg_bmp.compress(Bitmap.CompressFormat.PNG, 100, status_bg_blob);
+						status_bg = status_bg_blob.toByteArray();
 						switch (service) {
 						case TWITTER:
 							String status_url = "http://twitter.com/%s/status/%s";
