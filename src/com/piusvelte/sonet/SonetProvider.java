@@ -102,6 +102,8 @@ public class SonetProvider extends ContentProvider {
 		widgetsProjectionMap.put(Widgets.ACCOUNT, Widgets.ACCOUNT);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_STATUSES, STATUSES);
+		// backward compatibility for upgrading <=0.9.8
+		sUriMatcher.addURI(AUTHORITY, TABLE_STATUSES + "/*", STATUSES);
 
 		statusesProjectionMap = new HashMap<String, String>();
 		statusesProjectionMap.put(Statuses._ID, Statuses._ID);
