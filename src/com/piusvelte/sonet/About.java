@@ -54,18 +54,18 @@ public class About extends Activity implements View.OnClickListener, DialogInter
 		int[] removeAppWidgets = new int[0];
 		this.getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=''", null);
 		this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts.WIDGET + "=''", null);
-		Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.WIDGET}, null, null, null);
-		if (accounts.moveToFirst()) {
-			int iwidget = accounts.getColumnIndex(Accounts.WIDGET),
+		Cursor widgets = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.WIDGET}, Widgets.ACCOUNT + "=" + Sonet.INVALID_ACCOUNT_ID, null, null);
+		if (widgets.moveToFirst()) {
+			int iwidget = widgets.getColumnIndex(Widgets.WIDGET),
 			appWidgetId;
-			while (!accounts.isAfterLast()) {
-				appWidgetId = accounts.getInt(iwidget);
+			while (!widgets.isAfterLast()) {
+				appWidgetId = widgets.getInt(iwidget);
 				if (arrayContains(appWidgetManagerAppWidgetIds, appWidgetId)) mAppWidgetIds = arrayPush(mAppWidgetIds, appWidgetId);
 				else removeAppWidgets = arrayPush(removeAppWidgets, appWidgetId);
-				accounts.moveToNext();
+				widgets.moveToNext();
 			}
 		}
-		accounts.close();
+		widgets.close();
 		if (removeAppWidgets.length > 0) {
 			// remove phantom widgets
 			for (int appWidgetId : removeAppWidgets) {
