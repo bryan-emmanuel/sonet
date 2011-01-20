@@ -102,7 +102,7 @@ public class Sonet {
     	public static final String MESSAGE = "message";
     	public static final String SERVICE = "service";
     	public static final String WIDGET = "widget";
-    	public static final String CREATEDTEXT = "createdText";
+    	public static final String CREATEDTEXT = "createdtext";
     	// account specific settings per widget
     	public static final String ACCOUNT = "account";
     	public static final String STATUS_BG = "status_bg";
@@ -129,7 +129,7 @@ public class Sonet {
     	public static final String MESSAGE = "message";
     	public static final String SERVICE = "service";
     	public static final String WIDGET = "widget";
-    	public static final String CREATEDTEXT = "createdText";
+    	public static final String CREATEDTEXT = "createdtext";
     	public static final String MESSAGES_COLOR = "messages_color";
     	public static final String FRIEND_COLOR = "friend_color";
     	public static final String CREATED_COLOR = "created_color";

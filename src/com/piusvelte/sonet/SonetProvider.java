@@ -113,8 +113,8 @@ public class SonetProvider extends ContentProvider {
 		statusesProjectionMap.put(Statuses.PROFILE, Statuses.PROFILE);
 		statusesProjectionMap.put(Statuses.MESSAGE, Statuses.MESSAGE);
 		statusesProjectionMap.put(Statuses.SERVICE, Statuses.SERVICE);
-		statusesProjectionMap.put(Statuses.WIDGET, Statuses.WIDGET);
 		statusesProjectionMap.put(Statuses.CREATEDTEXT, Statuses.CREATEDTEXT);
+		statusesProjectionMap.put(Statuses.WIDGET, Statuses.WIDGET);
 
 		sUriMatcher.addURI(AUTHORITY, VIEW_STATUSES_STYLES, STATUSES_STYLES);
 
@@ -126,8 +126,8 @@ public class SonetProvider extends ContentProvider {
 		statuses_stylesProjectionMap.put(Statuses_styles.PROFILE, Statuses_styles.PROFILE);
 		statuses_stylesProjectionMap.put(Statuses_styles.MESSAGE, Statuses_styles.MESSAGE);
 		statuses_stylesProjectionMap.put(Statuses_styles.SERVICE, Statuses_styles.SERVICE);
-		statuses_stylesProjectionMap.put(Statuses_styles.WIDGET, Statuses_styles.WIDGET);
 		statuses_stylesProjectionMap.put(Statuses_styles.CREATEDTEXT, Statuses_styles.CREATEDTEXT);
+		statuses_stylesProjectionMap.put(Statuses_styles.WIDGET, Statuses_styles.WIDGET);
 		statuses_stylesProjectionMap.put(Statuses_styles.MESSAGES_COLOR, Statuses_styles.MESSAGES_COLOR);
 		statuses_stylesProjectionMap.put(Statuses_styles.FRIEND_COLOR, Statuses_styles.FRIEND_COLOR);
 		statuses_stylesProjectionMap.put(Statuses_styles.CREATED_COLOR, Statuses_styles.CREATED_COLOR);
@@ -138,7 +138,11 @@ public class SonetProvider extends ContentProvider {
 	}
 
 	public enum SonetProviderColumns {
-		_id, created, link, friend, profile, message, service, createdtext, widgets, messages_color, friend_color, created_color, messages_textsize, friend_textsize, created_textsize, status_bg
+		_id, created, link, friend, profile, message, service, createdtext, widget
+	}
+	
+	public enum StatusesStylesColumns {
+		_id, created, link, friend, profile, message, service, createdtext, widget, messages_color, friend_color, created_color, messages_textsize, friend_textsize, created_textsize, status_bg
 	}
 
 	@Override
@@ -547,7 +551,7 @@ public class SonetProvider extends ContentProvider {
 				db.execSQL("drop table if exists " + TABLE_WIDGETS + "_bkp;");
 				db.execSQL("drop table if exists " + TABLE_STATUSES + "_bkp;");
 				// add column for account to handle account specific widget settings
-				// add column for status background
+				// add column for status background and rename createdText > createdtext
 				db.execSQL("create temp table " + TABLE_STATUSES + "_bkp as select * from " + TABLE_STATUSES + ";");
 				db.execSQL("drop table if exists " + TABLE_STATUSES + ";");
 				db.execSQL("create table if not exists " + TABLE_STATUSES
@@ -571,7 +575,7 @@ public class SonetProvider extends ContentProvider {
 						+ Statuses.PROFILE + ","
 						+ Statuses.MESSAGE + ","
 						+ Statuses.SERVICE + ","
-						+ Statuses.CREATEDTEXT + ","
+						+ "createdText,"
 						+ Statuses.WIDGET + ","
 						+ Sonet.INVALID_ACCOUNT_ID + ",null from " + TABLE_STATUSES + "_bkp;");
 				db.execSQL("drop table if exists " + TABLE_STATUSES + "_bkp;");

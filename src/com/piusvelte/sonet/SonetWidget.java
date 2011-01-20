@@ -120,26 +120,26 @@ public class SonetWidget extends AppWidgetProvider {
 
 		BoundRemoteViews itemViews = new BoundRemoteViews(R.layout.widget_item);
 
-		itemViews.setBoundCharSequence(R.id.friend_bg_clear, "setText", SonetProvider.SonetProviderColumns.friend.ordinal(), 0);
-		itemViews.setBoundFloat(R.id.friend_bg_clear, "setTextSize", SonetProvider.SonetProviderColumns.friend_textsize.ordinal());
+		itemViews.setBoundCharSequence(R.id.friend_bg_clear, "setText", SonetProvider.StatusesStylesColumns.friend.ordinal(), 0);
+		itemViews.setBoundFloat(R.id.friend_bg_clear, "setTextSize", SonetProvider.StatusesStylesColumns.friend_textsize.ordinal());
 		
-		itemViews.setBoundCharSequence(R.id.message_bg_clear, "setText", SonetProvider.SonetProviderColumns.message.ordinal(), 0);
-		itemViews.setBoundFloat(R.id.message_bg_clear, "setTextSize", SonetProvider.SonetProviderColumns.messages_textsize.ordinal());
+		itemViews.setBoundCharSequence(R.id.message_bg_clear, "setText", SonetProvider.StatusesStylesColumns.message.ordinal(), 0);
+		itemViews.setBoundFloat(R.id.message_bg_clear, "setTextSize", SonetProvider.StatusesStylesColumns.messages_textsize.ordinal());
 
-		itemViews.setBoundBitmap(R.id.status_bg, "setImageBitmap", SonetProvider.SonetProviderColumns.status_bg.ordinal(), 0);
+		itemViews.setBoundBitmap(R.id.status_bg, "setImageBitmap", SonetProvider.StatusesStylesColumns.status_bg.ordinal(), 0);
 
-		itemViews.setBoundBitmap(R.id.profile, "setImageBitmap", SonetProvider.SonetProviderColumns.profile.ordinal(), 0);
-		itemViews.setBoundCharSequence(R.id.friend, "setText", SonetProvider.SonetProviderColumns.friend.ordinal(), 0);
-		itemViews.setBoundCharSequence(R.id.created, "setText", SonetProvider.SonetProviderColumns.createdtext.ordinal(), 0);
-		itemViews.setBoundCharSequence(R.id.message, "setText", SonetProvider.SonetProviderColumns.message.ordinal(), 0);
+		itemViews.setBoundBitmap(R.id.profile, "setImageBitmap", SonetProvider.StatusesStylesColumns.profile.ordinal(), 0);
+		itemViews.setBoundCharSequence(R.id.friend, "setText", SonetProvider.StatusesStylesColumns.friend.ordinal(), 0);
+		itemViews.setBoundCharSequence(R.id.created, "setText", SonetProvider.StatusesStylesColumns.createdtext.ordinal(), 0);
+		itemViews.setBoundCharSequence(R.id.message, "setText", SonetProvider.StatusesStylesColumns.message.ordinal(), 0);
 
-		itemViews.setBoundInt(R.id.friend, "setTextColor", SonetProvider.SonetProviderColumns.friend_color.ordinal());
-		itemViews.setBoundInt(R.id.created, "setTextColor", SonetProvider.SonetProviderColumns.created_color.ordinal());
-		itemViews.setBoundInt(R.id.message, "setTextColor", SonetProvider.SonetProviderColumns.messages_color.ordinal());
+		itemViews.setBoundInt(R.id.friend, "setTextColor", SonetProvider.StatusesStylesColumns.friend_color.ordinal());
+		itemViews.setBoundInt(R.id.created, "setTextColor", SonetProvider.StatusesStylesColumns.created_color.ordinal());
+		itemViews.setBoundInt(R.id.message, "setTextColor", SonetProvider.StatusesStylesColumns.messages_color.ordinal());
 		
-		itemViews.setBoundFloat(R.id.friend, "setTextSize", SonetProvider.SonetProviderColumns.friend_textsize.ordinal());
-		itemViews.setBoundFloat(R.id.created, "setTextSize", SonetProvider.SonetProviderColumns.created_textsize.ordinal());
-		itemViews.setBoundFloat(R.id.message, "setTextSize", SonetProvider.SonetProviderColumns.messages_textsize.ordinal());
+		itemViews.setBoundFloat(R.id.friend, "setTextSize", SonetProvider.StatusesStylesColumns.friend_textsize.ordinal());
+		itemViews.setBoundFloat(R.id.created, "setTextSize", SonetProvider.StatusesStylesColumns.created_textsize.ordinal());
+		itemViews.setBoundFloat(R.id.message, "setTextSize", SonetProvider.StatusesStylesColumns.messages_textsize.ordinal());
 		
 		Intent i= new Intent(context, context.getClass())
 		.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
