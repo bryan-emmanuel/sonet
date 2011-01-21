@@ -102,7 +102,7 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 				if (e.moveToFirst()) {
 					mMessages_bg_color_value = e.getInt(e.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
 					mMessages_color_value = e.getInt(e.getColumnIndex(Widgets.MESSAGES_COLOR));
-					mMessages_textsize_value = c.getInt(e.getColumnIndex(Widgets.MESSAGES_TEXTSIZE));
+					mMessages_textsize_value = e.getInt(e.getColumnIndex(Widgets.MESSAGES_TEXTSIZE));
 					mFriend_color_value = e.getInt(e.getColumnIndex(Widgets.FRIEND_COLOR));
 					mFriend_textsize_value = e.getInt(e.getColumnIndex(Widgets.FRIEND_TEXTSIZE));
 					mCreated_color_value = e.getInt(e.getColumnIndex(Widgets.CREATED_COLOR));
