@@ -179,8 +179,9 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	}
 
 	private void listAccounts() {
-		Cursor cursor = this.managedQuery(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.SERVICE}, Accounts.WIDGET + "=" + mAppWidgetId, null, null);
-		setListAdapter(new SimpleCursorAdapter(ManageAccounts.this, R.layout.accounts_row, cursor, new String[] {Accounts.USERNAME}, new int[] {R.id.account_username}));
+		Cursor c = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)}, null);
+		setListAdapter(new SimpleCursorAdapter(ManageAccounts.this, R.layout.accounts_row, c, new String[] {Accounts.USERNAME}, new int[] {R.id.account_username}));
+		c.close();
 	}
 
 	@Override
