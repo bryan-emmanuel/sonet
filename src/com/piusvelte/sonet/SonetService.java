@@ -24,6 +24,7 @@ import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.ACTION_BUILD_SCROLL;
+import static com.piusvelte.sonet.Sonet.ACTION_UPDATE_SETTINGS;
 
 import static com.piusvelte.sonet.Tokens.TWITTER_KEY;
 import static com.piusvelte.sonet.Tokens.TWITTER_SECRET;
@@ -107,6 +108,8 @@ public class SonetService extends Service implements Runnable {
 			if (intent.getAction() != null) {
 				if (intent.getAction().equals(ACTION_REFRESH)) {
 					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
+				} else if (intent.getAction().equals(ACTION_UPDATE_SETTINGS)) {
+					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateSettingsWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));					
 				} else SonetService.updateWidgets(new int[] {Integer.parseInt(intent.getAction())});
 			} else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
 			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) SonetService.updateWidgets(new int[]{intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)});
@@ -150,6 +153,28 @@ public class SonetService extends Service implements Runnable {
 		synchronized (sLock) {
 			if (sAppWidgetIds.peek() == null) return AppWidgetManager.INVALID_APPWIDGET_ID;
 			else return sAppWidgetIds.poll();
+		}
+	}
+
+	private static Object sUpdateSettingsLock = new Object();
+	private static Queue<Integer> sUpdateSettingsAppWidgetIds = new LinkedList<Integer>();
+
+	public static void updateSettingsWidgets(int[] appWidgetIds) {
+		synchronized (sUpdateSettingsLock) {
+			for (int appWidgetId : appWidgetIds) sUpdateSettingsAppWidgetIds.add(appWidgetId);
+		}
+	}
+
+	private static boolean updateSettingsQueued() {
+		synchronized (sUpdateSettingsLock) {
+			return !sUpdateSettingsAppWidgetIds.isEmpty();
+		}
+	}
+
+	private static int getNextUpdateSettings() {
+		synchronized (sUpdateSettingsLock) {
+			if (sUpdateSettingsAppWidgetIds.peek() == null) return AppWidgetManager.INVALID_APPWIDGET_ID;
+			else return sUpdateSettingsAppWidgetIds.poll();
 		}
 	}
 
@@ -212,7 +237,8 @@ public class SonetService extends Service implements Runnable {
 	@Override
 	public void run() {
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-		boolean hasConnection = (cm.getActiveNetworkInfo() != null) && cm.getActiveNetworkInfo().isConnected();
+		boolean hasConnection = (cm.getActiveNetworkInfo() != null) && cm.getActiveNetworkInfo().isConnected(),
+		full_refresh = true;
 		AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
 		AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 		Boolean hasbuttons,
@@ -222,12 +248,16 @@ public class SonetService extends Service implements Runnable {
 		buttons_color,
 		buttons_textsize;
 		SharedPreferences sp = null;
-		while (updatesQueued()) {
+		while (updatesQueued() || updateSettingsQueued()) {
 			// first handle deletes, then scroll updates, finally regular updates
 			int appWidgetId;
-			appWidgetId = getNextUpdate();
-			alarmManager.cancel(PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
-			Cursor settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.HASBUTTONS, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_TEXTSIZE}, Widgets.WIDGET + "=" + appWidgetId, null, null);
+			if (updatesQueued()) appWidgetId = getNextUpdate();
+			else {
+				appWidgetId = getNextUpdateSettings();
+				full_refresh = false;
+			}
+			if (full_refresh) alarmManager.cancel(PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
+			Cursor settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.HASBUTTONS, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_TEXTSIZE}, Widgets.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
 			if (settings.moveToFirst()) {
 				interval = settings.getInt(settings.getColumnIndex(Widgets.INTERVAL));
 				hasbuttons = settings.getInt(settings.getColumnIndex(Widgets.HASBUTTONS)) == 1;
@@ -252,7 +282,8 @@ public class SonetService extends Service implements Runnable {
 				this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 			}
 			settings.close();
-			if (hasConnection) {
+			// if not a full_refresh, connection is irrelevant
+			if (!full_refresh || hasConnection) {
 				// query accounts
 				/* get statuses for all accounts
 				 * then sort them by datetime, descending
@@ -260,11 +291,11 @@ public class SonetService extends Service implements Runnable {
 				Boolean time24hr;
 				int status_bg_color = -1;
 				byte[] status_bg;
-				Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY, Accounts.TIMEZONE}, Accounts.WIDGET + "=" + appWidgetId, null, null);
+				Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY, Accounts.TIMEZONE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
 				if (accounts.getCount() == 0) {
 					// check for old accounts without appwidgetid
 					accounts.close();
-					accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY, Accounts.TIMEZONE}, Accounts.WIDGET + "=''", null, null);
+					accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY, Accounts.TIMEZONE}, Accounts.WIDGET + "=?", new String[]{""}, null);
 					if (accounts.moveToFirst()) {
 						// upgrade the accounts, adding the appwidgetid
 						int username = accounts.getColumnIndex(Accounts.USERNAME),
@@ -286,7 +317,7 @@ public class SonetService extends Service implements Runnable {
 							accounts.moveToNext();
 						}
 					} else hasAccount = false;
-					this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=''", null);
+					this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=?", new String[]{""});
 				}
 				if (accounts.moveToFirst()) {
 					// load the updates						
@@ -304,17 +335,17 @@ public class SonetService extends Service implements Runnable {
 						int accountId = accounts.getInt(iaccountid),
 						service = accounts.getInt(iservice);
 						// get the settings form time24hr and bg_color
-						Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=" + appWidgetId  + " and " + Widgets.ACCOUNT + "=" + accountId, null, null);
+						Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(accountId)}, null);
 						if (c.moveToFirst()) {
 							time24hr = c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1;
 							status_bg_color = c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
 						} else {
-							Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=" + appWidgetId  + " and " + Widgets.ACCOUNT + "=" + Sonet.INVALID_ACCOUNT_ID, null, null);
+							Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 							if (d.moveToFirst()) {
 								time24hr = d.getInt(d.getColumnIndex(Widgets.TIME24HR)) == 1;
 								status_bg_color = d.getInt(d.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
 							} else {
-								Cursor e = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=" + AppWidgetManager.INVALID_APPWIDGET_ID, null, null);
+								Cursor e = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
 								if (e.moveToFirst()) {
 									time24hr = e.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1;
 									status_bg_color = e.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
@@ -334,164 +365,171 @@ public class SonetService extends Service implements Runnable {
 						ByteArrayOutputStream status_bg_blob = new ByteArrayOutputStream();
 						status_bg_bmp.compress(Bitmap.CompressFormat.PNG, 100, status_bg_blob);
 						status_bg = status_bg_blob.toByteArray();
-						switch (service) {
-						case TWITTER:
-							String status_url = "http://twitter.com/%s/status/%s";
-							try {
-								List<Status> statuses = (new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(accounts.getString(itoken), accounts.getString(isecret)))).getFriendsTimeline();
-								// if there are updates, clear the cache
-								if (!statuses.isEmpty()) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=" + appWidgetId + " and " + Statuses.SERVICE + "=" + service, null);
-								for (Status s : statuses) {
-									String screenname = s.getUser().getScreenName();
-									Date created = s.getCreatedAt();
-									this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
-											String.format(status_url, screenname, Long.toString(s.getId())),
-											screenname,
-											getProfile(s.getUser().getProfileImageURL().toString()),
-											s.getText(),
-											service,
-											getCreatedText(now, created, time24hr),
-											appWidgetId,
-											accountId,
-											status_bg));
+						// if not a full_refresh, only update the status_bg
+						if (full_refresh) {
+							switch (service) {
+							case TWITTER:
+								String status_url = "http://twitter.com/%s/status/%s";
+								try {
+									List<Status> statuses = (new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(accounts.getString(itoken), accounts.getString(isecret)))).getFriendsTimeline();
+									// if there are updates, clear the cache
+									if (!statuses.isEmpty()) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
+									for (Status s : statuses) {
+										String screenname = s.getUser().getScreenName();
+										Date created = s.getCreatedAt();
+										this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
+												String.format(status_url, screenname, Long.toString(s.getId())),
+												screenname,
+												getProfile(s.getUser().getProfileImageURL().toString()),
+												s.getText(),
+												service,
+												getCreatedText(now, created, time24hr),
+												appWidgetId,
+												accountId,
+												status_bg));
+									}
+								} catch (TwitterException te) {
+									Log.e(TAG, te.toString());
 								}
-							} catch (TwitterException te) {
-								Log.e(TAG, te.toString());
-							}
-							break;
-						case FACEBOOK:
-							String created_time = "created_time",
-							actions = "actions",
-							link = "link",
-							comment = "Comment",
-							from = "from",
-							type = "type",
-							profile = "http://graph.facebook.com/%s/picture",
-							message = "message",
-							data = "data",
-							to = "to",
-							fburl = "http://www.facebook.com";
-							Facebook facebook = new Facebook();
-							facebook.setAccessToken(accounts.getString(itoken));
-							facebook.setAccessExpires((long)accounts.getInt(iexpiry));
-							try {
-								// limit the returned fields
-								Bundle parameters = new Bundle();
-								parameters.putString("fields", "actions,link,type,from,message,created_time,to");
-								JSONObject jobj = Util.parseJson(facebook.request("me/home", parameters));
-								JSONArray jarr = jobj.getJSONArray(data);
-								// if there are updates, clear the cache
-								if (jarr.length() > 0)  this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=" + appWidgetId + " and " + Statuses.SERVICE + "=" + service, null);
-								for (int d = 0; d < jarr.length(); d++) {
-									JSONObject o = jarr.getJSONObject(d);
-									// only parse status types, not photo, video or link
-									if (o.has(type) && o.getString(type).equals(status) && o.has(from) && o.has(message)) {
-										// parse the link
-										String l = fburl;
-										if (o.has(actions)) {											
-											JSONArray action = o.getJSONArray(actions);
-											for (int a = 0; a < action.length(); a++) {
-												JSONObject n = action.getJSONObject(a);
-												if (n.getString(name) == comment) {
-													l = n.getString(link);
-													break;
+								break;
+							case FACEBOOK:
+								String created_time = "created_time",
+								actions = "actions",
+								link = "link",
+								comment = "Comment",
+								from = "from",
+								type = "type",
+								profile = "http://graph.facebook.com/%s/picture",
+								message = "message",
+								data = "data",
+								to = "to",
+								fburl = "http://www.facebook.com";
+								Facebook facebook = new Facebook();
+								facebook.setAccessToken(accounts.getString(itoken));
+								facebook.setAccessExpires((long)accounts.getInt(iexpiry));
+								try {
+									// limit the returned fields
+									Bundle parameters = new Bundle();
+									parameters.putString("fields", "actions,link,type,from,message,created_time,to");
+									JSONObject jobj = Util.parseJson(facebook.request("me/home", parameters));
+									JSONArray jarr = jobj.getJSONArray(data);
+									// if there are updates, clear the cache
+									if (jarr.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
+									for (int d = 0; d < jarr.length(); d++) {
+										JSONObject o = jarr.getJSONObject(d);
+										// only parse status types, not photo, video or link
+										if (o.has(type) && o.getString(type).equals(status) && o.has(from) && o.has(message)) {
+											// parse the link
+											String l = fburl;
+											if (o.has(actions)) {											
+												JSONArray action = o.getJSONArray(actions);
+												for (int a = 0; a < action.length(); a++) {
+													JSONObject n = action.getJSONObject(a);
+													if (n.getString(name) == comment) {
+														l = n.getString(link);
+														break;
+													}
 												}
 											}
-										}
-										JSONObject f = o.getJSONObject(from);
-										if (f.has(name) && f.has(id)) {
-											String friend = f.getString(name);
-											if (o.has(to)) {
-												// handle wall messages from one friend to another
-												JSONObject t = o.getJSONObject(to);
-												if (t.has(data)) {
-													JSONObject n = t.getJSONArray(data).getJSONObject(0);
-													if (n.has(name)) friend += " > " + n.getString(name);
-												}												
+											JSONObject f = o.getJSONObject(from);
+											if (f.has(name) && f.has(id)) {
+												String friend = f.getString(name);
+												if (o.has(to)) {
+													// handle wall messages from one friend to another
+													JSONObject t = o.getJSONObject(to);
+													if (t.has(data)) {
+														JSONObject n = t.getJSONArray(data).getJSONObject(0);
+														if (n.has(name)) friend += " > " + n.getString(name);
+													}												
+												}
+												Date created = parseDate(o.getString(created_time), "yyyy-MM-dd'T'HH:mm:ss'+0000'", accounts.getInt(itimezone));
+												this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(
+														created.getTime(),
+														l,
+														friend,
+														getProfile(String.format(profile, f.getString(id))),
+														o.getString(message),
+														service,
+														getCreatedText(now, created, time24hr),
+														appWidgetId,
+														accountId,
+														status_bg));
 											}
-											Date created = parseDate(o.getString(created_time), "yyyy-MM-dd'T'HH:mm:ss'+0000'", accounts.getInt(itimezone));
-											this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(
-													created.getTime(),
-													l,
-													friend,
-													getProfile(String.format(profile, f.getString(id))),
-													o.getString(message),
-													service,
-													getCreatedText(now, created, time24hr),
-													appWidgetId,
-													accountId,
-													status_bg));
 										}
 									}
+								} catch (JSONException e) {
+									Log.e(TAG, e.toString());
+								} catch (FacebookError e) {
+									Log.e(TAG, e.toString());
+								} catch (IOException e) {
+									Log.e(TAG, e.toString());
 								}
-							} catch (JSONException e) {
-								Log.e(TAG, e.toString());
-							} catch (FacebookError e) {
-								Log.e(TAG, e.toString());
-							} catch (IOException e) {
-								Log.e(TAG, e.toString());
-							}
-							break;
-						case MYSPACE:
-							//								OAuthConsumer consumer = new DefaultOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET);
-							String displayName = "displayName",
-							moodStatusLastUpdated = "moodStatusLastUpdated",
-							thumbnailUrl = "thumbnailUrl",
-							source = "source",
-							url = "url",
-							author = "author";
-							OAuthConsumer consumer = new CommonsHttpOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET, SignatureMethod.HMAC_SHA1);
-							consumer.setTokenWithSecret(accounts.getString(itoken), accounts.getString(isecret));
-							HttpClient client = new DefaultHttpClient();
-							ResponseHandler <String> responseHandler = new BasicResponseHandler();
-							HttpGet request = new HttpGet("http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
-							try {
-								consumer.sign(request);
-								JSONObject jobj = new JSONObject(client.execute(request, responseHandler));
-								JSONArray entries = jobj.getJSONArray("entry");
-								// if there are updates, clear the cache
-								if (entries.length() > 0)  this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=" + appWidgetId + " and " + Statuses.SERVICE + "=" + service, null);
-								for (int e = 0; e < entries.length(); e++) {
-									JSONObject entry = entries.getJSONObject(e);
-									JSONObject authorObj = entry.getJSONObject(author);
-									Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", accounts.getInt(itimezone));
-									this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
-											entry.getJSONObject(source).getString(url),
-											authorObj.getString(displayName),
-											getProfile(authorObj.getString(thumbnailUrl)),
-											entry.getString(status),
-											service,
-											getCreatedText(now, created, time24hr),
-											appWidgetId,
-											accountId,
-											status_bg));
+								break;
+							case MYSPACE:
+								//								OAuthConsumer consumer = new DefaultOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET);
+								String displayName = "displayName",
+								moodStatusLastUpdated = "moodStatusLastUpdated",
+								thumbnailUrl = "thumbnailUrl",
+								source = "source",
+								url = "url",
+								author = "author";
+								OAuthConsumer consumer = new CommonsHttpOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET, SignatureMethod.HMAC_SHA1);
+								consumer.setTokenWithSecret(accounts.getString(itoken), accounts.getString(isecret));
+								HttpClient client = new DefaultHttpClient();
+								ResponseHandler <String> responseHandler = new BasicResponseHandler();
+								HttpGet request = new HttpGet("http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
+								try {
+									consumer.sign(request);
+									JSONObject jobj = new JSONObject(client.execute(request, responseHandler));
+									JSONArray entries = jobj.getJSONArray("entry");
+									// if there are updates, clear the cache
+									if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
+									for (int e = 0; e < entries.length(); e++) {
+										JSONObject entry = entries.getJSONObject(e);
+										JSONObject authorObj = entry.getJSONObject(author);
+										Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", accounts.getInt(itimezone));
+										this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
+												entry.getJSONObject(source).getString(url),
+												authorObj.getString(displayName),
+												getProfile(authorObj.getString(thumbnailUrl)),
+												entry.getString(status),
+												service,
+												getCreatedText(now, created, time24hr),
+												appWidgetId,
+												accountId,
+												status_bg));
+									}
+								} catch (ClientProtocolException e) {
+									Log.e(TAG, e.toString());
+								} catch (JSONException e) {
+									Log.e(TAG, e.toString());
+								} catch (IOException e) {
+									Log.e(TAG, e.toString());
+								} catch (OAuthMessageSignerException e) {
+									Log.e(TAG, e.toString());
+								} catch (OAuthExpectationFailedException e) {
+									Log.e(TAG, e.toString());
 								}
-							} catch (ClientProtocolException e) {
-								Log.e(TAG, e.toString());
-							} catch (JSONException e) {
-								Log.e(TAG, e.toString());
-							} catch (IOException e) {
-								Log.e(TAG, e.toString());
-							} catch (OAuthMessageSignerException e) {
-								Log.e(TAG, e.toString());
-							} catch (OAuthExpectationFailedException e) {
-								Log.e(TAG, e.toString());
+								//								} catch (OAuthCommunicationException e) {
+								//									Log.e(TAG, e.toString());
+								//								}
+								break;
 							}
-							//								} catch (OAuthCommunicationException e) {
-							//									Log.e(TAG, e.toString());
-							//								}
-							break;
+						} else {
+							ContentValues values = new ContentValues();
+							values.put(Statuses.STATUS_BG, status_bg);
+							this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
 						}
 						accounts.moveToNext();
 					}
-				} else this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=" + appWidgetId, null); // no accounts, clear cache
+				} else this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}); // no accounts, clear cache
 				accounts.close();
 			}
 			// race condition when finished configuring, the service starts.
 			// meanwhile, the launcher broadcasts READY and the listview is created. it's at this point that the widget is marked scrollable
 			// this run finishes after the listview is created, but is not flagged as scrollable and replaces the listview with the regular widget
 			boolean scrollable = false;
-			settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.SCROLLABLE}, Widgets.WIDGET + "=" + appWidgetId, null, null);
+			settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.SCROLLABLE}, Widgets.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
 			if (settings.moveToFirst())
 				scrollable = settings.getInt(settings.getColumnIndex(Widgets.SCROLLABLE)) == 1;
 			settings.close();
@@ -575,14 +613,14 @@ public class SonetService extends Service implements Runnable {
 			appWidgetManager.updateAppWidget(appWidgetId, views);
 			// replace with scrollable widget
 			if (scrollable) sendBroadcast(new Intent(this, SonetWidget.class).setAction(ACTION_BUILD_SCROLL).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId));
-			if (hasAccount && (interval > 0)) alarmManager.set(AlarmManager.RTC, System.currentTimeMillis() + interval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
+			if (hasAccount && (interval > 0) && full_refresh) alarmManager.set(AlarmManager.RTC, System.currentTimeMillis() + interval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
 		}
 		if (hasConnection) {
 			if (mReceiver != null) {
 				unregisterReceiver(mReceiver);
 				mReceiver = null;
 			}
-		} else if (mReceiver == null) {
+		} else if (full_refresh && (mReceiver == null)) {
 			// if there's no connection, listen for one
 			mReceiver = new BroadcastReceiver() {
 				@Override

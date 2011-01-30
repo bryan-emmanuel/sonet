@@ -16,6 +16,7 @@ public class Sonet {
     public static final String DONATE = "http://www.piusvelte.com?p=donate-sonet";
     public static final String EXTRA_ACCOUNT_ID = "com.piusvelte.sonet.Sonet.ACCOUNT_ID";
     public static final long INVALID_ACCOUNT_ID = -1;
+    public static final String ACTION_UPDATE_SETTINGS = "com.piusvelte.sonet.Sonet.UPDATE_SETTINGS";
 
     public static final int default_interval = 3600000;
     public static final int default_buttons_bg_color = -16777216;

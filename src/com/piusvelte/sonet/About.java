@@ -52,9 +52,9 @@ public class About extends Activity implements View.OnClickListener, DialogInter
 		mAppWidgetManager = AppWidgetManager.getInstance(this);
 		int[] appWidgetManagerAppWidgetIds = arrayCat(arrayCat(mAppWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x2.class)), mAppWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x3.class))), mAppWidgetManager.getAppWidgetIds(new ComponentName(this, SonetWidget_4x4.class)));
 		int[] removeAppWidgets = new int[0];
-		this.getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=''", null);
-		this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts.WIDGET + "=''", null);
-		Cursor widgets = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.WIDGET}, Widgets.ACCOUNT + "=" + Sonet.INVALID_ACCOUNT_ID, null, null);
+		this.getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=?", new String[]{""});
+		this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts.WIDGET + "=?", new String[]{""});
+		Cursor widgets = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.WIDGET}, Widgets.ACCOUNT + "=?", new String[]{Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 		if (widgets.moveToFirst()) {
 			int iwidget = widgets.getColumnIndex(Widgets.WIDGET),
 			appWidgetId;
@@ -69,9 +69,9 @@ public class About extends Activity implements View.OnClickListener, DialogInter
 		if (removeAppWidgets.length > 0) {
 			// remove phantom widgets
 			for (int appWidgetId : removeAppWidgets) {
-				this.getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=" + appWidgetId, null);
-				this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts.WIDGET + "=" + appWidgetId, null);
-				this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=" + appWidgetId, null);
+				this.getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
+				this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
+				this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
 			}
 		}
 		((Button) findViewById(R.id.defaultsettings)).setOnClickListener(this);

@@ -36,6 +36,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
+import android.util.Log;
 
 public class SonetProvider extends ContentProvider {
 
@@ -240,6 +241,11 @@ public class SonetProvider extends ContentProvider {
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
 		}
+		Log.v("query","uri:"+uri.toString());
+		for (String column : projection) Log.v("query","column:"+column);
+		Log.v("query","where:"+selection);
+		for (String clause : selectionArgs) Log.v("query","clause"+clause);
+		Log.v("query","orderBy"+orderBy);
 		
 		SQLiteDatabase db = mDatabaseHelper.getReadableDatabase();
 		Cursor c = qb.query(db, projection, selection, selectionArgs, null, null, orderBy);
@@ -318,15 +324,15 @@ public class SonetProvider extends ContentProvider {
 					+ Statuses.STATUS_BG + " blob);");
 			db.execSQL("create view if not exists " + VIEW_STATUSES_STYLES + " as select " +
 					TABLE_STATUSES + "." + Statuses._ID + " as " + Statuses_styles._ID + ","
-					+ Statuses.CREATED + ","
-					+ Statuses.LINK + ","
-					+ Statuses.FRIEND + ","
-					+ Statuses.PROFILE + ","
-					+ Statuses.MESSAGE + ","
-					+ Statuses.SERVICE + ","
-					+ Statuses.CREATEDTEXT + ","
-					+ Statuses.WIDGET + ","
-					+ Statuses.ACCOUNT + ","
+					+ Statuses.CREATED + " as " + Statuses_styles.CREATED + ","
+					+ Statuses.LINK + " as " + Statuses_styles.LINK + ","
+					+ Statuses.FRIEND + " as " + Statuses_styles.FRIEND + ","
+					+ Statuses.PROFILE + " as " + Statuses_styles.PROFILE + ","
+					+ Statuses.MESSAGE + " as " + Statuses_styles.MESSAGE + ","
+					+ Statuses.SERVICE + " as " + Statuses_styles.SERVICE + ","
+					+ Statuses.CREATEDTEXT + " as " + Statuses_styles.CREATEDTEXT + ","
+					+ Statuses.WIDGET + " as " + Statuses_styles.WIDGET + ","
+					+ Statuses.ACCOUNT + " as " + Statuses_styles.ACCOUNT + ","
 					+ "(case when (select " + Widgets._ID + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT + "=" + TABLE_STATUSES + "." + Statuses.ACCOUNT + ") is not null then (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT + "=" + TABLE_STATUSES + "." + Statuses.ACCOUNT
 					+ ") when (select " + Widgets._ID + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT + " is null) is not null then (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT
 					+ " is null) else "	+ Sonet.default_friend_color + " end) as " + Statuses_styles.FRIEND_COLOR + ","
@@ -345,7 +351,7 @@ public class SonetProvider extends ContentProvider {
 					+ "(case when (select " + Widgets._ID + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT + "=" + TABLE_STATUSES + "." + Statuses.ACCOUNT + ") is not null then (select " + Widgets.CREATED_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT + "=" + TABLE_STATUSES + "." + Statuses.ACCOUNT
 					+ ") when (select " + Widgets._ID + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT + " is null) is not null then (select " + Widgets.CREATED_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT
 					+ " is null) else "	+ Sonet.default_created_textsize + " end) as " + Statuses_styles.CREATED_TEXTSIZE + ","
-					+ Statuses.STATUS_BG
+					+ Statuses.STATUS_BG + " as " + Statuses_styles.STATUS_BG
 					+ " from " + TABLE_STATUSES);
 		}
 
@@ -617,15 +623,15 @@ public class SonetProvider extends ContentProvider {
 				db.execSQL("drop view if exists " + VIEW_STATUSES_STYLES + ";");
 				db.execSQL("create view if not exists " + VIEW_STATUSES_STYLES + " as select " +
 						TABLE_STATUSES + "." + Statuses._ID + " as " + Statuses_styles._ID + ","
-						+ Statuses.CREATED + ","
-						+ Statuses.LINK + ","
-						+ Statuses.FRIEND + ","
-						+ Statuses.PROFILE + ","
-						+ Statuses.MESSAGE + ","
-						+ Statuses.SERVICE + ","
-						+ Statuses.CREATEDTEXT + ","
-						+ Statuses.WIDGET + ","
-						+ Statuses.ACCOUNT + ","
+						+ Statuses.CREATED + " as " + Statuses_styles.CREATED + ","
+						+ Statuses.LINK + " as " + Statuses_styles.LINK + ","
+						+ Statuses.FRIEND + " as " + Statuses_styles.FRIEND + ","
+						+ Statuses.PROFILE + " as " + Statuses_styles.PROFILE + ","
+						+ Statuses.MESSAGE + " as " + Statuses_styles.MESSAGE + ","
+						+ Statuses.SERVICE + " as " + Statuses_styles.SERVICE + ","
+						+ Statuses.CREATEDTEXT + " as " + Statuses_styles.CREATEDTEXT + ","
+						+ Statuses.WIDGET + " as " + Statuses_styles.WIDGET + ","
+						+ Statuses.ACCOUNT + " as " + Statuses_styles.ACCOUNT + ","
 						+ "(case when (select " + Widgets._ID + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT + "=" + TABLE_STATUSES + "." + Statuses.ACCOUNT + ") is not null then (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT + "=" + TABLE_STATUSES + "." + Statuses.ACCOUNT
 						+ ") when (select " + Widgets._ID + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT + " is null) is not null then (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT
 						+ " is null) else "	+ Sonet.default_friend_color + " end) as " + Statuses_styles.FRIEND_COLOR + ","
@@ -644,7 +650,7 @@ public class SonetProvider extends ContentProvider {
 						+ "(case when (select " + Widgets._ID + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT + "=" + TABLE_STATUSES + "." + Statuses.ACCOUNT + ") is not null then (select " + Widgets.CREATED_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT + "=" + TABLE_STATUSES + "." + Statuses.ACCOUNT
 						+ ") when (select " + Widgets._ID + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT + " is null) is not null then (select " + Widgets.CREATED_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT
 						+ " is null) else "	+ Sonet.default_created_textsize + " end) as " + Statuses_styles.CREATED_TEXTSIZE + ","
-						+ Statuses.STATUS_BG
+						+ Statuses.STATUS_BG + " as " + Statuses_styles.STATUS_BG
 						+ " from " + TABLE_STATUSES);
 			}
 		}
