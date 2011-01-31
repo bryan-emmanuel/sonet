@@ -241,11 +241,6 @@ public class SonetProvider extends ContentProvider {
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
 		}
-		Log.v("query","uri:"+uri.toString());
-		for (String column : projection) Log.v("query","column:"+column);
-		Log.v("query","where:"+selection);
-		for (String clause : selectionArgs) Log.v("query","clause"+clause);
-		Log.v("query","orderBy"+orderBy);
 		
 		SQLiteDatabase db = mDatabaseHelper.getReadableDatabase();
 		Cursor c = qb.query(db, projection, selection, selectionArgs, null, null, orderBy);
