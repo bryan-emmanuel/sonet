@@ -477,7 +477,7 @@ public class SonetService extends Service implements Runnable {
 								consumer.setTokenWithSecret(accounts.getString(itoken), accounts.getString(isecret));
 								HttpClient client = new DefaultHttpClient();
 								ResponseHandler <String> responseHandler = new BasicResponseHandler();
-								HttpGet request = new HttpGet("http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
+								HttpGet request = new HttpGet("http://api.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
 								try {
 									consumer.sign(request);
 									JSONObject jobj = new JSONObject(client.execute(request, responseHandler));
@@ -545,7 +545,7 @@ public class SonetService extends Service implements Runnable {
 				views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, new Intent(this, PostDialog.class), 0));
 				views.setTextColor(R.id.button_post, buttons_color);
 				views.setFloat(R.id.button_post, "setTextSize", buttons_textsize);
-				views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, new Intent(this, UI.class).setAction(Integer.toString(appWidgetId)), 0));
+				views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, new Intent(this, ManageAccounts.class).setAction(Integer.toString(appWidgetId)), 0));
 				views.setTextColor(R.id.button_configure, buttons_color);
 				views.setFloat(R.id.button_configure, "setTextSize", buttons_textsize);
 				views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));

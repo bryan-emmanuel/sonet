@@ -78,8 +78,8 @@
 	<string name="refreshall">Refresh All</string>
 	<string name="timezone">Select Timezone</string>
 	<string name="nowidgets">No Sonet widgets have been created.</string>
-	<string name="defaultsettings">Default widget settings</string>
+	<string name="defaultsettings">Default settings</string>
 	<string name="re_authenticate">Re-authenticate</string>
 	<string name="account_settings">Account settings</string>
-	<string name="widget_settings">Widget settings</string>
+	<string name="default_widget_settings">Default widget settings</string>
 </resources>

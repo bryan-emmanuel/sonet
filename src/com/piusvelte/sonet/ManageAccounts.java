@@ -20,21 +20,18 @@
 package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
-import static com.piusvelte.sonet.Sonet.TWITTER_URL_ACCESS;
-import static com.piusvelte.sonet.Sonet.TWITTER_URL_AUTHORIZE;
-import static com.piusvelte.sonet.Sonet.TWITTER_URL_REQUEST;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_PERMISSIONS;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
 
-import static com.piusvelte.sonet.Tokens.TWITTER_KEY;
-import static com.piusvelte.sonet.Tokens.TWITTER_SECRET;
 import static com.piusvelte.sonet.Tokens.FACEBOOK_ID;
 import static com.piusvelte.sonet.Tokens.MYSPACE_KEY;
 import static com.piusvelte.sonet.Tokens.MYSPACE_SECRET;
 
 import com.piusvelte.sonet.Sonet.Accounts;
+import com.piusvelte.sonet.Sonet.Statuses;
+import com.piusvelte.sonet.Sonet.Widgets;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -57,13 +54,6 @@ import com.myspace.sdk.MSSDK;
 import com.myspace.sdk.MSSession;
 import com.myspace.sdk.MSSession.IMSSessionCallback;
 
-import oauth.signpost.OAuthProvider;
-import oauth.signpost.basic.DefaultOAuthProvider;
-import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
-import oauth.signpost.signature.SignatureMethod;
-import twitter4j.TwitterFactory;
-import twitter4j.http.AccessToken;
-
 //import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -71,8 +61,6 @@ import android.appwidget.AppWidgetManager;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -97,20 +85,33 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	private static final int DELETE_ID = Menu.FIRST + 2;
 	private Facebook mFacebook;
 	private AsyncFacebookRunner mAsyncRunner;
-	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
-	private String request_token,
-	request_secret;
+	protected static int sAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private MSSession mMSSession;
 	private boolean mUpdateWidget = false;
+	private static final int MENU_DEFAULT_WIDGET_SETTINGS = Menu.FIRST;
 
-	private static Uri TWITTER_CALLBACK = Uri.parse("sonet://twitter");
 	private static String MYSPACE_CALLBACK = "sonet://myspace";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		Intent i = getIntent();
-		if ((i != null) && i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
+
+		Intent intent = getIntent();
+		if (intent != null) {
+			Bundle extras = intent.getExtras();
+			if (extras != null) {
+				sAppWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+				// return result to launcher
+				setResult(RESULT_OK, intent);
+			}
+			// if called from widget, the id is set in the action, as pendingintents must have a unique action
+			else if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH)) && (!intent.getAction().equals(Intent.ACTION_VIEW))) sAppWidgetId = Integer.parseInt(intent.getAction());
+		}
+
+		Intent resultValue = new Intent();
+		resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, sAppWidgetId);
+		setResult(RESULT_OK, resultValue);
+
 		setContentView(R.layout.accounts);
 		registerForContextMenu(getListView());
 		((Button) findViewById(R.id.button_add_account)).setOnClickListener(this);
@@ -134,7 +135,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 					c.close();
 					break;
 				case SETTINGS_ID:
-					startActivity(new Intent(ManageAccounts.this, AccountSettings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, item));
+					startActivity(new Intent(ManageAccounts.this, AccountSettings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, sAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, item));
 					break;
 				}
 				dialog.cancel();
@@ -150,8 +151,31 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
-		if (item.getItemId() == DELETE_ID) getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=" + ((AdapterContextMenuInfo) item.getMenuInfo()).id, null);
+		if (item.getItemId() == DELETE_ID) {
+			mUpdateWidget = true;
+			getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=" + ((AdapterContextMenuInfo) item.getMenuInfo()).id, null);
+			// need to delete the statuses and settings for this account
+			getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(sAppWidgetId), Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
+			getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(sAppWidgetId), Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
+		}
 		return super.onContextItemSelected(item);
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		boolean result = super.onCreateOptionsMenu(menu);
+		menu.add(0, MENU_DEFAULT_WIDGET_SETTINGS, 0, R.string.default_widget_settings).setIcon(android.R.drawable.ic_menu_preferences);
+		return result;
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case MENU_DEFAULT_WIDGET_SETTINGS:
+			startActivity(new Intent(this, Settings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, sAppWidgetId));
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
 	}
 
 	public void onClick(View v) {
@@ -169,93 +193,25 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	@Override
 	protected void onResume() {
 		super.onResume();
+		Log.v(TAG,"onResume");
 		listAccounts();	
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
-		if (mUpdateWidget) startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
+		if (mUpdateWidget) startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{sAppWidgetId}));
 	}
-
+	
 	private void listAccounts() {
-		Cursor c = this.managedQuery(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)}, null);
+		Cursor c = this.managedQuery(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(sAppWidgetId)}, null);
 		setListAdapter(new SimpleCursorAdapter(ManageAccounts.this, R.layout.accounts_row, c, new String[] {Accounts.USERNAME}, new int[] {R.id.account_username}));
-	}
-
-	@Override
-	protected void onNewIntent(Intent intent) {
-		super.onNewIntent(intent);
-		Uri uri = intent.getData();
-		if (uri != null) {
-			if (TWITTER_CALLBACK.getScheme().equals(uri.getScheme())) {
-				try {
-					// use the requestToken and secret from earlier
-					SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
-					if ((request_token == null) || (request_secret == null)) {
-						request_token = sp.getString(getString(R.string.key_requesttoken), "");
-						request_secret = sp.getString(getString(R.string.key_requestsecret), "");
-					}
-					// clear the saved token/secret
-					Editor spe = sp.edit();
-					spe.putString(getString(R.string.key_requesttoken), "");
-					spe.putString(getString(R.string.key_requestsecret), "");
-					spe.commit();
-					// this will populate token and token_secret in consumer
-					String verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
-					//					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
-					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET, SignatureMethod.HMAC_SHA1);
-					consumer.setTokenWithSecret(request_token, request_secret);
-					//					OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
-					OAuthProvider provider = new DefaultOAuthProvider(consumer, TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
-					provider.setOAuth10a(true);
-					//					provider.retrieveAccessToken(consumer, verifier);
-					provider.retrieveAccessToken(verifier);
-					mUpdateWidget = true;
-					ContentValues values = new ContentValues();
-					values.put(Accounts.USERNAME, (new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(consumer.getToken(), consumer.getTokenSecret()))).getScreenName());
-					values.put(Accounts.TOKEN, consumer.getToken());
-					values.put(Accounts.SECRET, consumer.getTokenSecret());
-					values.put(Accounts.EXPIRY, 0);
-					values.put(Accounts.SERVICE, TWITTER);
-					values.put(Accounts.TIMEZONE, 0);
-					values.put(Accounts.WIDGET, mAppWidgetId);
-					getContentResolver().insert(Accounts.CONTENT_URI, values);
-				} catch (Exception e) {
-					Log.e(TAG, e.getMessage());
-					Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-				}
-			}
-		}
 	}
 
 	private void getAuth(int service) {
 		switch (service) {
 		case TWITTER:
-			try {
-				// switching to older signpost for myspace
-				//				CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
-				CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET, SignatureMethod.HMAC_SHA1);
-				//				OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
-				OAuthProvider provider = new DefaultOAuthProvider(consumer, TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
-				provider.setOAuth10a(true);
-				//				String authUrl = provider.retrieveRequestToken(consumer, TWITTER_CALLBACK.toString());
-				String authUrl = provider.retrieveRequestToken(TWITTER_CALLBACK.toString());
-				/*
-				 * need to save the requestToken and secret
-				 */
-				request_token = consumer.getToken();
-				request_secret = consumer.getTokenSecret();
-				SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
-				Editor spe = sp.edit();
-				spe.putString(getString(R.string.key_requesttoken), request_token);
-				spe.putString(getString(R.string.key_requestsecret), request_secret);
-				spe.commit();
-				startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)).setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
-			} catch (Exception e) {
-				Log.e(TAG, e.getMessage());
-				Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-			}
+			startActivity(new Intent(this, TwitterLogin.class));
 			break;
 		case FACEBOOK:
 			mFacebook = new Facebook();
@@ -295,7 +251,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 							values.put(Accounts.EXPIRY, (int) mFacebook.getAccessExpires());
 							values.put(Accounts.SERVICE, FACEBOOK);
 							values.put(Accounts.TIMEZONE, timezone);
-							values.put(Accounts.WIDGET, mAppWidgetId);
+							values.put(Accounts.WIDGET, sAppWidgetId);
 							getContentResolver().insert(Accounts.CONTENT_URI, values);
 						}
 					});
@@ -340,7 +296,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		Toast.makeText(ManageAccounts.this, "Authorization canceled", Toast.LENGTH_LONG).show();
 	}
 
-
 	@Override
 	public void sessionDidLogin(MSSession session) {
 		mMSSession.setToken(session.getToken());
@@ -376,10 +331,10 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 						values.put(Accounts.EXPIRY, 0);
 						values.put(Accounts.SERVICE, MYSPACE);
 						values.put(Accounts.TIMEZONE, 0);
-						values.put(Accounts.WIDGET, mAppWidgetId);
+						values.put(Accounts.WIDGET, sAppWidgetId);
 						Uri uri = getContentResolver().insert(Accounts.CONTENT_URI, values);
+						final String id = uri.getLastPathSegment();
 						// get the timezone, index set to GMT
-						final Uri timezoneUri = uri;
 						(new AlertDialog.Builder(ManageAccounts.this))
 						.setTitle(R.string.timezone)
 						.setSingleChoiceItems(R.array.timezone_entries, 12, new DialogInterface.OnClickListener() {
@@ -388,7 +343,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 								mUpdateWidget = true;
 								ContentValues values = new ContentValues();
 								values.put(Accounts.TIMEZONE, Integer.parseInt(getResources().getStringArray(R.array.timezone_values)[which]));
-								getContentResolver().update(timezoneUri, values, null, null);
+								getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{id});
 								dialog.cancel();
 							}
 						})
@@ -410,7 +365,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	//	@Override
 	//	public void onBackPressed() {
 	//		// make sure user is sent back to UI.java instead of reopening the browser for twitter
-	//		startActivity(new Intent(this, UI.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
+	//		startActivity(new Intent(this, UI.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, sAppWidgetId));
 	//		return;
 	//	}
 }

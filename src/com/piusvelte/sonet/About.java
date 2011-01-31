@@ -143,7 +143,7 @@ public class About extends Activity implements View.OnClickListener, DialogInter
 
 	@Override
 	public void onClick(DialogInterface dialog, int which) {
-		startActivity(new Intent(this, UI.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[which]));
+		startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[which]));
 		dialog.cancel();
 	}
 }

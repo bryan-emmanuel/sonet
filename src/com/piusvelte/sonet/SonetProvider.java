@@ -36,7 +36,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
-import android.util.Log;
 
 public class SonetProvider extends ContentProvider {
 
@@ -70,6 +69,7 @@ public class SonetProvider extends ContentProvider {
 		sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_ACCOUNTS, ACCOUNTS);
+		sUriMatcher.addURI(AUTHORITY, TABLE_ACCOUNTS + "/*", WIDGETS);
 
 		accountsProjectionMap = new HashMap<String, String>();
 		accountsProjectionMap.put(Accounts._ID, Accounts._ID);

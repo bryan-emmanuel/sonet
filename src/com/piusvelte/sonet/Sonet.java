@@ -43,7 +43,6 @@ public class Sonet {
     	
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.accounts";
     	
-    	public static final String _ID = "_id";
     	public static final String USERNAME = "username";
     	public static final String TOKEN = "token";
     	public static final String SECRET = "secret";
@@ -64,7 +63,6 @@ public class Sonet {
     	
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.widgets";
 
-    	public static final String _ID = "_id";
     	public static final String WIDGET = "widget";
     	// account specific settings per widget
     	public static final String ACCOUNT = "account";
@@ -95,7 +93,6 @@ public class Sonet {
     	
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.statuses";
 
-    	public static final String _ID = "_id";
     	public static final String CREATED = "created";
     	public static final String LINK = "link";
     	public static final String FRIEND = "friend";
@@ -122,7 +119,6 @@ public class Sonet {
     	
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.statuses_styles";
 
-    	public static final String _ID = "_id";
     	public static final String CREATED = "created";
     	public static final String LINK = "link";
     	public static final String FRIEND = "friend";
