@@ -88,7 +88,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	protected static int sAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private MSSession mMSSession;
 	private boolean mUpdateWidget = false;
-	private static final int MENU_DEFAULT_WIDGET_SETTINGS = Menu.FIRST;
+	protected static String sRequest_token,
+	sRequest_secret;
 
 	private static String MYSPACE_CALLBACK = "sonet://myspace";
 
@@ -114,6 +115,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 
 		setContentView(R.layout.accounts);
 		registerForContextMenu(getListView());
+		((Button) findViewById(R.id.default_widget_settings)).setOnClickListener(this);
 		((Button) findViewById(R.id.button_add_account)).setOnClickListener(this);
 	}
 
@@ -160,23 +162,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		}
 		return super.onContextItemSelected(item);
 	}
-	
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		boolean result = super.onCreateOptionsMenu(menu);
-		menu.add(0, MENU_DEFAULT_WIDGET_SETTINGS, 0, R.string.default_widget_settings).setIcon(android.R.drawable.ic_menu_preferences);
-		return result;
-	}
-	
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case MENU_DEFAULT_WIDGET_SETTINGS:
-			startActivity(new Intent(this, Settings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, sAppWidgetId));
-			return true;
-		}
-		return super.onOptionsItemSelected(item);
-	}
 
 	public void onClick(View v) {
 		switch (v.getId()) {
@@ -187,13 +172,15 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			.setItems(services, this)
 			.show();
 			break;
+		case R.id.default_widget_settings:
+			startActivity(new Intent(this, Settings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, sAppWidgetId));
+			break;
 		}
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		Log.v(TAG,"onResume");
 		listAccounts();	
 	}
 

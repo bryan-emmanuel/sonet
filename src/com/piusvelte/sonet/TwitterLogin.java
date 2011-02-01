@@ -37,72 +37,27 @@ import com.piusvelte.sonet.Sonet.Accounts;
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.net.Uri;
-import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
 public class TwitterLogin extends Activity {
 	private static final String TAG = "TwitterLogin";
 	private static Uri TWITTER_CALLBACK = Uri.parse("sonet://twitter");
-	private static String request_token,
-	request_secret;
-
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		try {
-			// switching to older signpost for myspace
-			//				CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
-			CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET, SignatureMethod.HMAC_SHA1);
-			//				OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
-			OAuthProvider provider = new DefaultOAuthProvider(consumer, TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
-			provider.setOAuth10a(true);
-			//				String authUrl = provider.retrieveRequestToken(consumer, TWITTER_CALLBACK.toString());
-			String authUrl = provider.retrieveRequestToken(TWITTER_CALLBACK.toString());
-			/*
-			 * need to save the requestToken and secret
-			 */
-			request_token = consumer.getToken();
-			request_secret = consumer.getTokenSecret();
-			SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
-			Editor spe = sp.edit();
-			spe.putString(getString(R.string.key_requesttoken), request_token);
-			spe.putString(getString(R.string.key_requestsecret), request_secret);
-			spe.commit();
-			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)).setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
-		} catch (Exception e) {
-			Log.e(TAG, e.getMessage());
-			Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-		}
-	}
 
 	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
+		Log.v(TAG,"onNewIntent");
 		Uri uri = intent.getData();
 		if (uri != null) {
 			if (TWITTER_CALLBACK.getScheme().equals(uri.getScheme())) {
-				Log.v(TAG,"twitter_callback:"+ManageAccounts.sAppWidgetId);
 				try {
-					// use the requestToken and secret from earlier
-					SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
-					if ((request_token == null) || (request_secret == null)) {
-						request_token = sp.getString(getString(R.string.key_requesttoken), "");
-						request_secret = sp.getString(getString(R.string.key_requestsecret), "");
-					}
-					// clear the saved token/secret
-					Editor spe = sp.edit();
-					spe.putString(getString(R.string.key_requesttoken), "");
-					spe.putString(getString(R.string.key_requestsecret), "");
-					spe.commit();
 					// this will populate token and token_secret in consumer
 					String verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
 					//					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
 					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET, SignatureMethod.HMAC_SHA1);
-					consumer.setTokenWithSecret(request_token, request_secret);
+					consumer.setTokenWithSecret(ManageAccounts.sRequest_token, ManageAccounts.sRequest_secret);
 					//					OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
 					OAuthProvider provider = new DefaultOAuthProvider(consumer, TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
 					provider.setOAuth10a(true);
@@ -117,12 +72,40 @@ public class TwitterLogin extends Activity {
 					values.put(Accounts.TIMEZONE, 0);
 					values.put(Accounts.WIDGET, ManageAccounts.sAppWidgetId);
 					getContentResolver().insert(Accounts.CONTENT_URI, values);
+					ManageAccounts.sRequest_token = null;
+					ManageAccounts.sRequest_secret = null;
 				} catch (Exception e) {
 					Log.e(TAG, e.getMessage());
 					Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
 				}
 			}
 		}
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		if ((ManageAccounts.sRequest_token != null) && (ManageAccounts.sRequest_secret != null)) {
+			try {
+				// switching to older signpost for myspace
+				//				CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
+				CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET, SignatureMethod.HMAC_SHA1);
+				//				OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
+				OAuthProvider provider = new DefaultOAuthProvider(consumer, TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
+				provider.setOAuth10a(true);
+				//				String authUrl = provider.retrieveRequestToken(consumer, TWITTER_CALLBACK.toString());
+				String authUrl = provider.retrieveRequestToken(TWITTER_CALLBACK.toString());
+				/*
+				 * need to save the requestToken and secret
+				 */
+				ManageAccounts.sRequest_token = consumer.getToken();
+				ManageAccounts.sRequest_secret = consumer.getTokenSecret();
+				startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)).setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
+			} catch (Exception e) {
+				Log.e(TAG, e.getMessage());
+				Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+			}
+		} else this.finish();
 	}
 
 }
