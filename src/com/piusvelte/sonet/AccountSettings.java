@@ -31,8 +31,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -78,37 +76,37 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 		// get this account/widgets settings, falling back on the defaults...
 		Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(mAccountId)}, null);
 		if (c.moveToFirst()) {
-			mMessages_bg_color_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
-			mMessages_color_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_COLOR));
-			mMessages_textsize_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_TEXTSIZE));
-			mFriend_color_value = c.getInt(c.getColumnIndex(Widgets.FRIEND_COLOR));
-			mFriend_textsize_value = c.getInt(c.getColumnIndex(Widgets.FRIEND_TEXTSIZE));
-			mCreated_color_value = c.getInt(c.getColumnIndex(Widgets.CREATED_COLOR));
-			mCreated_textsize_value = c.getInt(c.getColumnIndex(Widgets.CREATED_TEXTSIZE));
+			mMessages_bg_color_value = setColor(c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR)), Sonet.default_message_bg_color);
+			mMessages_color_value = setColor(c.getInt(c.getColumnIndex(Widgets.MESSAGES_COLOR)), Sonet.default_message_color);
+			mMessages_textsize_value = setColor(c.getInt(c.getColumnIndex(Widgets.MESSAGES_TEXTSIZE)), Sonet.default_messages_textsize);
+			mFriend_color_value = setColor(c.getInt(c.getColumnIndex(Widgets.FRIEND_COLOR)), Sonet.default_friend_color);
+			mFriend_textsize_value = setColor(c.getInt(c.getColumnIndex(Widgets.FRIEND_TEXTSIZE)), Sonet.default_friend_textsize);
+			mCreated_color_value = setColor(c.getInt(c.getColumnIndex(Widgets.CREATED_COLOR)), Sonet.default_created_color);
+			mCreated_textsize_value = setColor(c.getInt(c.getColumnIndex(Widgets.CREATED_TEXTSIZE)), Sonet.default_created_textsize);
 			mTime24hr.setChecked(c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1);
 		} else {
 			// fall back on widget settings
 			Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 			if (d.moveToFirst()) {
-				mMessages_bg_color_value = d.getInt(d.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
-				mMessages_color_value = d.getInt(d.getColumnIndex(Widgets.MESSAGES_COLOR));
-				mMessages_textsize_value = d.getInt(d.getColumnIndex(Widgets.MESSAGES_TEXTSIZE));
-				mFriend_color_value = d.getInt(d.getColumnIndex(Widgets.FRIEND_COLOR));
-				mFriend_textsize_value = d.getInt(d.getColumnIndex(Widgets.FRIEND_TEXTSIZE));
-				mCreated_color_value = d.getInt(d.getColumnIndex(Widgets.CREATED_COLOR));
-				mCreated_textsize_value = d.getInt(d.getColumnIndex(Widgets.CREATED_TEXTSIZE));
+				mMessages_bg_color_value = setColor(d.getInt(d.getColumnIndex(Widgets.MESSAGES_BG_COLOR)), Sonet.default_message_bg_color);
+				mMessages_color_value = setColor(d.getInt(d.getColumnIndex(Widgets.MESSAGES_COLOR)), Sonet.default_message_color);
+				mMessages_textsize_value = setColor(d.getInt(d.getColumnIndex(Widgets.MESSAGES_TEXTSIZE)), Sonet.default_messages_textsize);
+				mFriend_color_value = setColor(d.getInt(d.getColumnIndex(Widgets.FRIEND_COLOR)), Sonet.default_friend_color);
+				mFriend_textsize_value = setColor(d.getInt(d.getColumnIndex(Widgets.FRIEND_TEXTSIZE)), Sonet.default_friend_textsize);
+				mCreated_color_value = setColor(d.getInt(d.getColumnIndex(Widgets.CREATED_COLOR)), Sonet.default_created_color);
+				mCreated_textsize_value = setColor(d.getInt(d.getColumnIndex(Widgets.CREATED_TEXTSIZE)), Sonet.default_created_textsize);
 				mTime24hr.setChecked(d.getInt(d.getColumnIndex(Widgets.TIME24HR)) == 1);
 			} else {
 				// fall back on user defaults
 				Cursor e = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
 				if (e.moveToFirst()) {
-					mMessages_bg_color_value = e.getInt(e.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
-					mMessages_color_value = e.getInt(e.getColumnIndex(Widgets.MESSAGES_COLOR));
-					mMessages_textsize_value = e.getInt(e.getColumnIndex(Widgets.MESSAGES_TEXTSIZE));
-					mFriend_color_value = e.getInt(e.getColumnIndex(Widgets.FRIEND_COLOR));
-					mFriend_textsize_value = e.getInt(e.getColumnIndex(Widgets.FRIEND_TEXTSIZE));
-					mCreated_color_value = e.getInt(e.getColumnIndex(Widgets.CREATED_COLOR));
-					mCreated_textsize_value = e.getInt(e.getColumnIndex(Widgets.CREATED_TEXTSIZE));
+					mMessages_bg_color_value = setColor(e.getInt(e.getColumnIndex(Widgets.MESSAGES_BG_COLOR)), Sonet.default_message_bg_color);
+					mMessages_color_value = setColor(e.getInt(e.getColumnIndex(Widgets.MESSAGES_COLOR)), Sonet.default_message_color);
+					mMessages_textsize_value = setColor(e.getInt(e.getColumnIndex(Widgets.MESSAGES_TEXTSIZE)), Sonet.default_messages_textsize);
+					mFriend_color_value = setColor(e.getInt(e.getColumnIndex(Widgets.FRIEND_COLOR)), Sonet.default_friend_color);
+					mFriend_textsize_value = setColor(e.getInt(e.getColumnIndex(Widgets.FRIEND_TEXTSIZE)), Sonet.default_friend_textsize);
+					mCreated_color_value = setColor(e.getInt(e.getColumnIndex(Widgets.CREATED_COLOR)), Sonet.default_created_color);
+					mCreated_textsize_value = setColor(e.getInt(e.getColumnIndex(Widgets.CREATED_TEXTSIZE)), Sonet.default_created_textsize);
 					mTime24hr.setChecked(e.getInt(e.getColumnIndex(Widgets.TIME24HR)) == 1);
 				} else {
 					// ultimately fall back on the app defaults
@@ -180,6 +178,10 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 	protected void onPause() {
 		super.onPause();
 		if (mUpdateWidget) startService(new Intent(this, SonetService.class).setAction(ACTION_UPDATE_SETTINGS).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
+	}
+	
+	private int setColor(int color, int default_color) {
+		return color == 0 ? color : default_color;
 	}
 
 	private void updateDatabase(String column, int value) {

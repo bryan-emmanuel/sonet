@@ -21,8 +21,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="fill_parent" android:layout_height="fill_parent"
 	android:orientation="vertical">
-	<ScrollView android:layout_above="@id/donate"
-		android:layout_width="fill_parent" android:layout_height="wrap_content">
+	<ScrollView android:layout_width="fill_parent" android:layout_height="wrap_content">
 		<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 			android:layout_width="fill_parent" android:layout_height="fill_parent"
 			android:orientation="vertical">

@@ -38,6 +38,7 @@ import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -46,9 +47,14 @@ public class TwitterLogin extends Activity {
 	private static Uri TWITTER_CALLBACK = Uri.parse("sonet://twitter");
 
 	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.twitterlogin);
+	}
+	
+	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
-		Log.v(TAG,"onNewIntent");
 		Uri uri = intent.getData();
 		if (uri != null) {
 			if (TWITTER_CALLBACK.getScheme().equals(uri.getScheme())) {
@@ -72,8 +78,7 @@ public class TwitterLogin extends Activity {
 					values.put(Accounts.TIMEZONE, 0);
 					values.put(Accounts.WIDGET, ManageAccounts.sAppWidgetId);
 					getContentResolver().insert(Accounts.CONTENT_URI, values);
-					ManageAccounts.sRequest_token = null;
-					ManageAccounts.sRequest_secret = null;
+					ManageAccounts.sUpdateWidget = true;
 				} catch (Exception e) {
 					Log.e(TAG, e.getMessage());
 					Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
@@ -85,7 +90,7 @@ public class TwitterLogin extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		if ((ManageAccounts.sRequest_token != null) && (ManageAccounts.sRequest_secret != null)) {
+		if ((ManageAccounts.sRequest_token == null) && (ManageAccounts.sRequest_secret == null)) {
 			try {
 				// switching to older signpost for myspace
 				//				CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
@@ -105,7 +110,11 @@ public class TwitterLogin extends Activity {
 				Log.e(TAG, e.getMessage());
 				Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
 			}
-		} else this.finish();
+		} else {
+			ManageAccounts.sRequest_token = null;
+			ManageAccounts.sRequest_secret = null;
+//			this.finish();
+		}
 	}
 
 }

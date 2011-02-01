@@ -82,4 +82,5 @@
 	<string name="re_authenticate">Re-authenticate</string>
 	<string name="account_settings">Account settings</string>
 	<string name="default_widget_settings">Default widget settings</string>
+	<string name="twitterlogin_message">Press the Back button to continue.</string>
 </resources>

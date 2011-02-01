@@ -54,7 +54,6 @@ import com.myspace.sdk.MSSDK;
 import com.myspace.sdk.MSSession;
 import com.myspace.sdk.MSSession.IMSSessionCallback;
 
-//import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.appwidget.AppWidgetManager;
@@ -66,7 +65,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
-//import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -87,7 +85,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	private AsyncFacebookRunner mAsyncRunner;
 	protected static int sAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private MSSession mMSSession;
-	private boolean mUpdateWidget = false;
+	protected static boolean sUpdateWidget = false;
+	private boolean mHasAccounts = false;
 	protected static String sRequest_token,
 	sRequest_secret;
 
@@ -96,22 +95,16 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
+		
+		this.setResult(RESULT_CANCELED);
+		
 		Intent intent = getIntent();
 		if (intent != null) {
 			Bundle extras = intent.getExtras();
-			if (extras != null) {
-				sAppWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
-				// return result to launcher
-				setResult(RESULT_OK, intent);
-			}
+			if (extras != null) sAppWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 			// if called from widget, the id is set in the action, as pendingintents must have a unique action
 			else if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH)) && (!intent.getAction().equals(Intent.ACTION_VIEW))) sAppWidgetId = Integer.parseInt(intent.getAction());
 		}
-
-		Intent resultValue = new Intent();
-		resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, sAppWidgetId);
-		setResult(RESULT_OK, resultValue);
 
 		setContentView(R.layout.accounts);
 		registerForContextMenu(getListView());
@@ -154,7 +147,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
 		if (item.getItemId() == DELETE_ID) {
-			mUpdateWidget = true;
+			sUpdateWidget = true;
 			getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=" + ((AdapterContextMenuInfo) item.getMenuInfo()).id, null);
 			// need to delete the statuses and settings for this account
 			getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(sAppWidgetId), Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
@@ -181,17 +174,32 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	@Override
 	protected void onResume() {
 		super.onResume();
-		listAccounts();	
+		listAccounts();
+		// returning from twitter login, setresult needs to be called
+		if (sUpdateWidget && mHasAccounts) setResultOK();
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
-		if (mUpdateWidget) startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{sAppWidgetId}));
+		if (sUpdateWidget) startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{sAppWidgetId}));
+		else if (!mHasAccounts) {
+			// clean up any setup for this widget
+			getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=" + sAppWidgetId, null);
+			getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=" + sAppWidgetId, null);
+		}
+	}
+	
+	// convenience method
+	private void setResultOK() {
+		Intent resultValue = new Intent();
+		resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, sAppWidgetId);
+		setResult(RESULT_OK, resultValue);		
 	}
 	
 	private void listAccounts() {
 		Cursor c = this.managedQuery(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(sAppWidgetId)}, null);
+		mHasAccounts = c.getCount() != 0;
 		setListAdapter(new SimpleCursorAdapter(ManageAccounts.this, R.layout.accounts_row, c, new String[] {Accounts.USERNAME}, new int[] {R.id.account_username}));
 	}
 
@@ -230,7 +238,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 					final int timezone = Integer.parseInt(json.getString(Accounts.TIMEZONE));
 					ManageAccounts.this.runOnUiThread(new Runnable() {
 						public void run() {
-							mUpdateWidget = true;
+							sUpdateWidget = true;
+							setResultOK();
 							ContentValues values = new ContentValues();
 							values.put(Accounts.USERNAME, username);
 							values.put(Accounts.TOKEN, mFacebook.getAccessToken());
@@ -327,7 +336,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 						.setSingleChoiceItems(R.array.timezone_entries, 12, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialog, int which) {
-								mUpdateWidget = true;
+								sUpdateWidget = true;
+								setResultOK();
 								ContentValues values = new ContentValues();
 								values.put(Accounts.TIMEZONE, Integer.parseInt(getResources().getStringArray(R.array.timezone_values)[which]));
 								getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{id});
@@ -340,19 +350,4 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			}                       
 		}
 	}
-
-	//	@Override
-	//	public boolean onKeyDown(int keyCode, KeyEvent event)  {
-	//		if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.ECLAIR
-	//				&& keyCode == KeyEvent.KEYCODE_BACK
-	//				&& event.getRepeatCount() == 0) onBackPressed();
-	//		return super.onKeyDown(keyCode, event);
-	//	}
-	//
-	//	@Override
-	//	public void onBackPressed() {
-	//		// make sure user is sent back to UI.java instead of reopening the browser for twitter
-	//		startActivity(new Intent(this, UI.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, sAppWidgetId));
-	//		return;
-	//	}
 }
