@@ -42,12 +42,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-import oauth.signpost.OAuthConsumer;
-import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
+//import oauth.signpost.OAuthConsumer;
+//import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
 //import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
-import oauth.signpost.signature.SignatureMethod;
+//import oauth.signpost.signature.SignatureMethod;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
@@ -62,6 +62,8 @@ import org.json.JSONObject;
 import com.facebook.android.Facebook;
 import com.facebook.android.FacebookError;
 import com.facebook.android.Util;
+import com.myspace.sdk.MSOAuth;
+import com.myspace.sdk.MSSession;
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
@@ -473,15 +475,24 @@ public class SonetService extends Service implements Runnable {
 								source = "source",
 								url = "url",
 								author = "author";
-								OAuthConsumer consumer = new CommonsHttpOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET, SignatureMethod.HMAC_SHA1);
-								consumer.setTokenWithSecret(accounts.getString(itoken), accounts.getString(isecret));
+//								OAuthConsumer consumer = new CommonsHttpOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET, SignatureMethod.HMAC_SHA1);
+//								consumer.setTokenWithSecret(accounts.getString(itoken), accounts.getString(isecret));
 								HttpClient client = new DefaultHttpClient();
 								ResponseHandler <String> responseHandler = new BasicResponseHandler();
-								HttpGet request = new HttpGet("http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
+								HttpGet request = new HttpGet("http://api.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
+								
+								MSSession msSession = MSSession.getSession(MYSPACE_KEY, MYSPACE_SECRET, Sonet.MYSPACE_CALLBACK, null);
+//								msSession.setToken(accounts.getString(itoken));
+//								msSession.setTokenSecret(accounts.getString(isecret));
+								MSOAuth oauth = MSOAuth.init(msSession);
+								oauth.setTokenWithSecret(accounts.getString(itoken), accounts.getString(isecret));
+
 								try {
-									consumer.sign(request);
-									Log.v(TAG,"request:"+request.getURI().toString());
-									JSONObject jobj = new JSONObject(client.execute(request, responseHandler));
+
+//									consumer.sign(request);
+									oauth.sign(request);
+									String response = client.execute(request, responseHandler);
+									JSONObject jobj = new JSONObject(response);
 									JSONArray entries = jobj.getJSONArray("entry");
 									// if there are updates, clear the cache
 									if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
