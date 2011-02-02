@@ -105,6 +105,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			// if called from widget, the id is set in the action, as pendingintents must have a unique action
 			else if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH)) && (!intent.getAction().equals(Intent.ACTION_VIEW))) sAppWidgetId = Integer.parseInt(intent.getAction());
 		}
+		
+		Log.v(TAG,"widget:"+sAppWidgetId);
 
 		setContentView(R.layout.accounts);
 		registerForContextMenu(getListView());
@@ -182,6 +184,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	@Override
 	protected void onPause() {
 		super.onPause();
+		Log.v(TAG,(sUpdateWidget?"startService":"no update"));
 		if (sUpdateWidget) startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{sAppWidgetId}));
 		else if (!mHasAccounts) {
 			// clean up any setup for this widget
@@ -328,8 +331,10 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 						values.put(Accounts.SERVICE, MYSPACE);
 						values.put(Accounts.TIMEZONE, 0);
 						values.put(Accounts.WIDGET, sAppWidgetId);
+						Log.v(TAG,"insert:"+sAppWidgetId);
 						Uri uri = getContentResolver().insert(Accounts.CONTENT_URI, values);
 						final String id = uri.getLastPathSegment();
+						Log.v(TAG,"inserted:"+id);
 						// get the timezone, index set to GMT
 						(new AlertDialog.Builder(ManageAccounts.this))
 						.setTitle(R.string.timezone)

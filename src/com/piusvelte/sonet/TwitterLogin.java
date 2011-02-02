@@ -40,6 +40,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class TwitterLogin extends Activity {
@@ -91,6 +92,7 @@ public class TwitterLogin extends Activity {
 	protected void onResume() {
 		super.onResume();
 		if ((ManageAccounts.sRequest_token == null) && (ManageAccounts.sRequest_secret == null)) {
+			((TextView) findViewById(R.id.twitterlogin_message)).setText(R.string.loading);
 			try {
 				// switching to older signpost for myspace
 				//				CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
@@ -111,9 +113,9 @@ public class TwitterLogin extends Activity {
 				Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
 			}
 		} else {
+			((TextView) findViewById(R.id.twitterlogin_message)).setText(R.string.twitterlogin_message);
 			ManageAccounts.sRequest_token = null;
 			ManageAccounts.sRequest_secret = null;
-//			this.finish();
 		}
 	}
 

@@ -477,9 +477,10 @@ public class SonetService extends Service implements Runnable {
 								consumer.setTokenWithSecret(accounts.getString(itoken), accounts.getString(isecret));
 								HttpClient client = new DefaultHttpClient();
 								ResponseHandler <String> responseHandler = new BasicResponseHandler();
-								HttpGet request = new HttpGet("http://api.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
+								HttpGet request = new HttpGet("http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
 								try {
 									consumer.sign(request);
+									Log.v(TAG,"request:"+request.getURI().toString());
 									JSONObject jobj = new JSONObject(client.execute(request, responseHandler));
 									JSONArray entries = jobj.getJSONArray("entry");
 									// if there are updates, clear the cache
