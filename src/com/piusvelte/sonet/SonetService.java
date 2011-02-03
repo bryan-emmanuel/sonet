@@ -329,7 +329,7 @@ public class SonetService extends Service implements Runnable {
 					this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=?", new String[]{""});
 				}
 				if (accounts.moveToFirst()) {
-					// load the updates						
+					// load the updates
 					int iaccountid = accounts.getColumnIndex(Accounts._ID),
 					iservice = accounts.getColumnIndex(Accounts.SERVICE),
 					itoken = accounts.getColumnIndex(Accounts.TOKEN),
