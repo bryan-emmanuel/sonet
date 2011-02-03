@@ -31,8 +31,11 @@ import static com.piusvelte.sonet.Tokens.TWITTER_SECRET;
 import static com.piusvelte.sonet.Tokens.MYSPACE_KEY;
 import static com.piusvelte.sonet.Tokens.MYSPACE_SECRET;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -49,11 +52,14 @@ import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
 //import oauth.signpost.signature.SignatureMethod;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
+//import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.client.methods.HttpRequestBase;
+//import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -63,6 +69,7 @@ import com.facebook.android.Facebook;
 import com.facebook.android.FacebookError;
 import com.facebook.android.Util;
 import com.myspace.sdk.MSOAuth;
+//import com.myspace.sdk.MSRequest;
 import com.myspace.sdk.MSSession;
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
@@ -477,9 +484,12 @@ public class SonetService extends Service implements Runnable {
 								author = "author";
 //								OAuthConsumer consumer = new CommonsHttpOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET, SignatureMethod.HMAC_SHA1);
 //								consumer.setTokenWithSecret(accounts.getString(itoken), accounts.getString(isecret));
-								HttpClient client = new DefaultHttpClient();
-								ResponseHandler <String> responseHandler = new BasicResponseHandler();
-								HttpGet request = new HttpGet("http://api.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
+//								HttpClient client = new DefaultHttpClient();
+//								ResponseHandler <String> responseHandler = new BasicResponseHandler();
+//								HttpGet request = new HttpGet("http://api.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
+								
+								HttpRequestBase httpRequest = new HttpGet("http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
+								
 								
 								MSSession msSession = MSSession.getSession(MYSPACE_KEY, MYSPACE_SECRET, Sonet.MYSPACE_CALLBACK, null);
 //								msSession.setToken(accounts.getString(itoken));
@@ -489,9 +499,36 @@ public class SonetService extends Service implements Runnable {
 
 								try {
 
-//									consumer.sign(request);
-									oauth.sign(request);
-									String response = client.execute(request, responseHandler);
+									oauth.sign(httpRequest);
+
+			                        HttpClient httpClient = new DefaultHttpClient();
+			                        HttpResponse httpResponse = httpClient.execute(httpRequest);
+			                        HttpEntity entity = httpResponse.getEntity();
+			                        String response = "";
+			                        if (entity != null) {
+			                                InputStream is = entity.getContent();
+			                                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+			                                StringBuilder sb = new StringBuilder();
+
+			                                String line = null;
+			                                try {
+			                                        while ((line = reader.readLine()) != null) {
+			                                                sb.append(line + "\n");
+			                                        }
+			                                } catch (IOException e) {
+			                                        e.printStackTrace();
+			                                } finally {
+			                                        try {
+			                                                is.close();
+			                                        } catch (IOException e) {
+			                                                e.printStackTrace();
+			                                        }
+			                                }
+			                                response = sb.toString();
+			                        }
+
+//									consumer.sign(request);									
+//									String response = client.execute(request, responseHandler);
 									JSONObject jobj = new JSONObject(response);
 									JSONArray entries = jobj.getJSONArray("entry");
 									// if there are updates, clear the cache
