@@ -93,9 +93,9 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
+
 		this.setResult(RESULT_CANCELED);
-		
+
 		Intent intent = getIntent();
 		if (intent != null) {
 			Bundle extras = intent.getExtras();
@@ -187,14 +187,14 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=" + sAppWidgetId, null);
 		}
 	}
-	
+
 	// convenience method
 	private void setResultOK() {
 		Intent resultValue = new Intent();
 		resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, sAppWidgetId);
 		setResult(RESULT_OK, resultValue);		
 	}
-	
+
 	private void listAccounts() {
 		Cursor c = this.managedQuery(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(sAppWidgetId)}, null);
 		mHasAccounts = c.getCount() != 0;
@@ -340,6 +340,16 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 								values.put(Accounts.TIMEZONE, Integer.parseInt(getResources().getStringArray(R.array.timezone_values)[which]));
 								getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{id});
 								dialog.cancel();
+								// warn about new myspace permissions
+								(new AlertDialog.Builder(ManageAccounts.this))
+								.setTitle(R.string.myspace_permissions_title)
+								.setMessage(R.string.myspace_permissions_message)
+								.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface dialog, int id) {
+										dialog.cancel();
+									}
+								})
+								.show();
 							}
 						})
 						.show();

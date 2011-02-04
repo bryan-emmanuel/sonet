@@ -23,7 +23,6 @@
     <string name="sonet_4x2">Sonet 4x2</string>
     <string name="sonet_4x3">Sonet 4x3</string>
     <string name="sonet_4x4">Sonet 4x4</string>
-    <string name="user_agent" formatted="false">"%s/%s (Linux; Android)"</string>
     <string name="loading">Loading...</string>
     <string name="no_connection">No connection</string>
     <string name="no_accounts">No accounts setup</string>
@@ -83,4 +82,6 @@
 	<string name="account_settings">Account settings</string>
 	<string name="default_widget_settings">Default widget settings</string>
 	<string name="twitterlogin_message">Press the Back button to continue.</string>
+	<string name="myspace_permissions_title">Update MySpace permissions</string>
+	<string name="myspace_permissions_message">To get MySpaces statuses, you must log into the MySpace website, go to My Stuff, Privacy Settings, External Apps, edit Sonet and enable \"Access my stream and my friends\' stream.\"</string>
 </resources>

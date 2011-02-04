@@ -48,12 +48,16 @@ import java.util.Queue;
 //import oauth.signpost.OAuthConsumer;
 //import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
 //import oauth.signpost.exception.OAuthCommunicationException;
+import oauth.signpost.OAuthConsumer;
+import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
+import oauth.signpost.signature.SignatureMethod;
 //import oauth.signpost.signature.SignatureMethod;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 //import org.apache.http.client.ResponseHandler;
@@ -68,9 +72,6 @@ import org.json.JSONObject;
 import com.facebook.android.Facebook;
 import com.facebook.android.FacebookError;
 import com.facebook.android.Util;
-import com.myspace.sdk.MSOAuth;
-//import com.myspace.sdk.MSRequest;
-import com.myspace.sdk.MSSession;
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
@@ -278,7 +279,7 @@ public class SonetService extends Service implements Runnable {
 				if (sp == null) sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
 				interval = Integer.parseInt((String) sp.getString(getString(R.string.key_interval), Integer.toString(Sonet.default_interval)));
 				hasbuttons = sp.getBoolean(getString(R.string.key_display_buttons), true);
-				buttons_bg_color =Integer.parseInt(sp.getString(getString(R.string.key_head_background), Integer.toString(Sonet.default_buttons_bg_color)));
+				buttons_bg_color = Integer.parseInt(sp.getString(getString(R.string.key_head_background), Integer.toString(Sonet.default_buttons_bg_color)));
 				buttons_color = Integer.parseInt(sp.getString(getString(R.string.key_head_text), Integer.toString(Sonet.default_buttons_color)));
 				buttons_textsize = Integer.parseInt(sp.getString(getString(R.string.key_buttons_textsize), Integer.toString(Sonet.default_buttons_textsize)));
 				ContentValues values = new ContentValues();
@@ -482,75 +483,79 @@ public class SonetService extends Service implements Runnable {
 								source = "source",
 								url = "url",
 								author = "author";
-//								OAuthConsumer consumer = new CommonsHttpOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET, SignatureMethod.HMAC_SHA1);
-//								consumer.setTokenWithSecret(accounts.getString(itoken), accounts.getString(isecret));
-//								HttpClient client = new DefaultHttpClient();
-//								ResponseHandler <String> responseHandler = new BasicResponseHandler();
-//								HttpGet request = new HttpGet("http://api.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
-								
-								HttpRequestBase httpRequest = new HttpGet("http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
-								
-								
-								MSSession msSession = MSSession.getSession(MYSPACE_KEY, MYSPACE_SECRET, Sonet.MYSPACE_CALLBACK, null);
-//								msSession.setToken(accounts.getString(itoken));
-//								msSession.setTokenSecret(accounts.getString(isecret));
-								MSOAuth oauth = MSOAuth.init(msSession);
-								oauth.setTokenWithSecret(accounts.getString(itoken), accounts.getString(isecret));
+
+								OAuthConsumer consumer = new CommonsHttpOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET, SignatureMethod.HMAC_SHA1);
+								consumer.setTokenWithSecret(accounts.getString(itoken),	accounts.getString(isecret));
+								HttpRequestBase request = new HttpGet("http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
 
 								try {
 
-									oauth.sign(httpRequest);
+									consumer.sign(request);
+									HttpClient httpClient = new DefaultHttpClient();
+									HttpResponse httpResponse = httpClient.execute(request);
+									StatusLine statusLine = httpResponse.getStatusLine();
+									HttpEntity entity = httpResponse.getEntity();
 
-			                        HttpClient httpClient = new DefaultHttpClient();
-			                        HttpResponse httpResponse = httpClient.execute(httpRequest);
-			                        HttpEntity entity = httpResponse.getEntity();
-			                        String response = "";
-			                        if (entity != null) {
-			                                InputStream is = entity.getContent();
-			                                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-			                                StringBuilder sb = new StringBuilder();
+									switch(statusLine.getStatusCode()) {
+									case 200:
+									case 201:
+										String response = "";
+										if (entity != null) {
+											InputStream is = entity.getContent();
+											BufferedReader reader = new BufferedReader(new
+													InputStreamReader(is));
+											StringBuilder sb = new StringBuilder();
 
-			                                String line = null;
-			                                try {
-			                                        while ((line = reader.readLine()) != null) {
-			                                                sb.append(line + "\n");
-			                                        }
-			                                } catch (IOException e) {
-			                                        e.printStackTrace();
-			                                } finally {
-			                                        try {
-			                                                is.close();
-			                                        } catch (IOException e) {
-			                                                e.printStackTrace();
-			                                        }
-			                                }
-			                                response = sb.toString();
-			                        }
-
-//									consumer.sign(request);									
-//									String response = client.execute(request, responseHandler);
-									JSONObject jobj = new JSONObject(response);
-									JSONArray entries = jobj.getJSONArray("entry");
-									// if there are updates, clear the cache
-									if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
-									for (int e = 0; e < entries.length(); e++) {
-										JSONObject entry = entries.getJSONObject(e);
-										JSONObject authorObj = entry.getJSONObject(author);
-										Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", accounts.getInt(itimezone));
-										this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
-												entry.getJSONObject(source).getString(url),
-												authorObj.getString(displayName),
-												getProfile(authorObj.getString(thumbnailUrl)),
-												entry.getString(status),
-												service,
-												getCreatedText(now, created, time24hr),
-												appWidgetId,
-												accountId,
-												status_bg));
+											String line = null;
+											try {
+												while ((line = reader.readLine()) != null) {
+													sb.append(line + "\n");
+												}
+											} catch (IOException e) {
+												e.printStackTrace();
+											} finally {
+												try {
+													is.close();
+												} catch (IOException e) {
+													e.printStackTrace();
+												}
+											}
+											response = sb.toString();
+											JSONObject jobj = new JSONObject(response);
+											JSONArray entries = jobj.getJSONArray("entry");
+											// if there are updates, clear the cache
+											if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
+											for (int e = 0; e < entries.length(); e++) {
+												JSONObject entry = entries.getJSONObject(e);
+												JSONObject authorObj = entry.getJSONObject(author);
+												Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", accounts.getInt(itimezone));
+												this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
+														entry.getJSONObject(source).getString(url),
+														authorObj.getString(displayName),
+														getProfile(authorObj.getString(thumbnailUrl)),
+														entry.getString(status),
+														service,
+														getCreatedText(now, created, time24hr),
+														appWidgetId,
+														accountId,
+														status_bg));
+											}
+										}
+										break;
+									default:
+										// warn about myspace permissions
+										ContentValues values = new ContentValues();
+										values.put(Statuses.FRIEND, getString(R.string.myspace_permissions_title));
+										values.put(Statuses.MESSAGE, getString(R.string.myspace_permissions_message));
+										values.put(Statuses.SERVICE, service);
+										values.put(Statuses.WIDGET, appWidgetId);
+										values.put(Statuses.ACCOUNT, accountId);
+										values.put(Statuses.STATUS_BG, status_bg);
+										this.getContentResolver().insert(Statuses.CONTENT_URI, values);
+										break;
 									}
+
 								} catch (ClientProtocolException e) {
-									Log.e(TAG, e.toString());
-								} catch (JSONException e) {
 									Log.e(TAG, e.toString());
 								} catch (IOException e) {
 									Log.e(TAG, e.toString());
@@ -558,10 +563,9 @@ public class SonetService extends Service implements Runnable {
 									Log.e(TAG, e.toString());
 								} catch (OAuthExpectationFailedException e) {
 									Log.e(TAG, e.toString());
+								} catch (JSONException e) {
+									Log.e(TAG, e.toString());
 								}
-								//								} catch (OAuthCommunicationException e) {
-								//									Log.e(TAG, e.toString());
-								//								}
 								break;
 							}
 						} else {
@@ -579,8 +583,7 @@ public class SonetService extends Service implements Runnable {
 			// this run finishes after the listview is created, but is not flagged as scrollable and replaces the listview with the regular widget
 			boolean scrollable = false;
 			settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.SCROLLABLE}, Widgets.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
-			if (settings.moveToFirst())
-				scrollable = settings.getInt(settings.getColumnIndex(Widgets.SCROLLABLE)) == 1;
+			if (settings.moveToFirst()) scrollable = settings.getInt(settings.getColumnIndex(Widgets.SCROLLABLE)) == 1;
 			settings.close();
 			// Push update for this widget to the home screen
 			RemoteViews views = new RemoteViews(getPackageName(), hasbuttons ? R.layout.widget : R.layout.widget_nobuttons);
@@ -619,14 +622,14 @@ public class SonetService extends Service implements Runnable {
 					imessage = statuses.getColumnIndex(Statuses_styles.MESSAGE),
 					iservice = statuses.getColumnIndex(Statuses_styles.SERVICE),
 					icreatedText = statuses.getColumnIndex(Statuses_styles.CREATEDTEXT),
-					friend_color = statuses.getInt(statuses.getColumnIndex(Statuses_styles.FRIEND_COLOR)),
-					created_color = statuses.getInt(statuses.getColumnIndex(Statuses_styles.CREATED_COLOR)),
-					friend_textsize = statuses.getInt(statuses.getColumnIndex(Statuses_styles.FRIEND_TEXTSIZE)),
-					created_textsize = statuses.getInt(statuses.getColumnIndex(Statuses_styles.CREATED_TEXTSIZE)),
-					messages_color = statuses.getInt(statuses.getColumnIndex(Statuses_styles.MESSAGES_COLOR)),
-					messages_textsize = statuses.getInt(statuses.getColumnIndex(Statuses_styles.MESSAGES_TEXTSIZE)),
 					istatus_bg = statuses.getColumnIndex(Statuses_styles.STATUS_BG);
 					while (!statuses.isAfterLast() && (count_status < map_item.length)) {
+						int friend_color = statuses.getInt(statuses.getColumnIndex(Statuses_styles.FRIEND_COLOR)),
+						created_color = statuses.getInt(statuses.getColumnIndex(Statuses_styles.CREATED_COLOR)),
+						friend_textsize = statuses.getInt(statuses.getColumnIndex(Statuses_styles.FRIEND_TEXTSIZE)),
+						created_textsize = statuses.getInt(statuses.getColumnIndex(Statuses_styles.CREATED_TEXTSIZE)),
+						messages_color = statuses.getInt(statuses.getColumnIndex(Statuses_styles.MESSAGES_COLOR)),
+						messages_textsize = statuses.getInt(statuses.getColumnIndex(Statuses_styles.MESSAGES_TEXTSIZE));
 						// set messages background
 						byte[] status_bg = statuses.getBlob(istatus_bg);
 						views.setTextViewText(map_friend_bg_clear[count_status], statuses.getString(ifriend));
@@ -638,7 +641,8 @@ public class SonetService extends Service implements Runnable {
 						views.setTextColor(map_message[count_status], messages_color);
 						views.setFloat(map_message[count_status], "setTextSize", messages_textsize);
 						// if no buttons, use StatusDialog.java with options for Config and Refresh
-						if (hasbuttons) views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(Intent.ACTION_VIEW, Uri.parse(statuses.getString(ilink))), 0));
+						String url = statuses.getString(ilink);
+						if (hasbuttons && (url != null)) views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(Intent.ACTION_VIEW, Uri.parse(url)), 0));
 						else views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(this, StatusDialog.class).setAction(appWidgetId+"`"+statuses.getInt(iservice)+"`"+statuses.getString(ilink)), 0));
 						views.setTextViewText(map_screenname[count_status], statuses.getString(ifriend));
 						views.setTextColor(map_screenname[count_status], friend_color);
@@ -647,7 +651,7 @@ public class SonetService extends Service implements Runnable {
 						views.setTextColor(map_created[count_status], created_color);
 						views.setFloat(map_created[count_status], "setTextSize", created_textsize);
 						byte[] profile = statuses.getBlob(iprofile);
-						views.setImageViewBitmap(map_profile[count_status], BitmapFactory.decodeByteArray(profile, 0, profile.length));						
+						if (profile != null) views.setImageViewBitmap(map_profile[count_status], BitmapFactory.decodeByteArray(profile, 0, profile.length));						
 						count_status++;
 						statuses.moveToNext();
 					}
