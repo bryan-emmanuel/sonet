@@ -93,6 +93,8 @@
             android:authorities="com.piusvelte.sonet.SonetProvider"
             android:multiprocess="true"
             android:grantUriPermissions="true" />
+		<!-- The application's publisher ID assigned by AdMob -->
+    	<meta-data android:value="a14d5598b4afd11" android:name="ADMOB_PUBLISHER_ID" />
     </application>
     
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />

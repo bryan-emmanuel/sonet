@@ -18,11 +18,16 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="fill_parent" android:layout_height="fill_parent"
 	android:orientation="vertical">
-	<ScrollView android:layout_width="fill_parent" android:layout_height="wrap_content">
-		<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	<com.admob.android.ads.AdView android:id="@+id/ad"
+		android:visibility="gone" android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:layout_alignParentTop="true"
+		app:backgroundColor="@color/tertiary" app:primaryTextColor="@color/primary"
+		app:secondaryTextColor="@color/secondary" />
+	<ScrollView android:layout_below="@id/ad" android:layout_width="fill_parent" android:layout_height="wrap_content">
+		<LinearLayout
 			android:layout_width="fill_parent" android:layout_height="fill_parent"
 			android:orientation="vertical">
 			<Button android:id="@+id/interval" android:text="@string/interval"
@@ -53,4 +58,4 @@
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 		</LinearLayout>
 	</ScrollView>
-</LinearLayout>
+</RelativeLayout>
