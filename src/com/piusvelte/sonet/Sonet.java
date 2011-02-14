@@ -13,7 +13,6 @@ public class Sonet {
     public static final String[] FACEBOOK_PERMISSIONS = new String[] {"offline_access"};
     public static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
     public static final String ACTION_BUILD_SCROLL = "com.piusvelte.sonet.Sonet.BUILD_SCROLL";
-    public static final String DONATE = "http://www.piusvelte.com?p=donate-sonet";
     public static final String EXTRA_ACCOUNT_ID = "com.piusvelte.sonet.Sonet.ACCOUNT_ID";
     public static final long INVALID_ACCOUNT_ID = -1;
     public static final String ACTION_UPDATE_SETTINGS = "com.piusvelte.sonet.Sonet.UPDATE_SETTINGS";

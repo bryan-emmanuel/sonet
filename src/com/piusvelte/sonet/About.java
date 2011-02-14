@@ -19,8 +19,6 @@
  */
 package com.piusvelte.sonet;
 
-import static com.piusvelte.sonet.Sonet.DONATE;
-
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Widgets;
@@ -33,7 +31,6 @@ import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -96,7 +93,6 @@ DialogInterface.OnClickListener {
 		((Button) findViewById(R.id.defaultsettings)).setOnClickListener(this);
 		((Button) findViewById(R.id.widgets)).setOnClickListener(this);
 		((Button) findViewById(R.id.refreshall)).setOnClickListener(this);
-		((Button) findViewById(R.id.donate)).setOnClickListener(this);
 	}
 
 	@Override
@@ -127,9 +123,6 @@ DialogInterface.OnClickListener {
 		case R.id.refreshall:
 			startService(new Intent(this, SonetService.class).putExtra(
 					AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
-			break;
-		case R.id.donate:
-			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(DONATE)));
 			break;
 		}
 	}
