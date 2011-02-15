@@ -78,7 +78,10 @@ public class TwitterLogin extends Activity {
 					values.put(Accounts.SERVICE, TWITTER);
 					values.put(Accounts.TIMEZONE, 0);
 					values.put(Accounts.WIDGET, ManageAccounts.sAppWidgetId);
-					getContentResolver().insert(Accounts.CONTENT_URI, values);
+					if (ManageAccounts.sAccountId != Sonet.INVALID_ACCOUNT_ID) {
+						getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Long.toString(ManageAccounts.sAccountId)});
+						ManageAccounts.sAccountId = Sonet.INVALID_ACCOUNT_ID;
+					} else getContentResolver().insert(Accounts.CONTENT_URI, values);
 					ManageAccounts.sUpdateWidget = true;
 				} catch (Exception e) {
 					Log.e(TAG, e.getMessage());

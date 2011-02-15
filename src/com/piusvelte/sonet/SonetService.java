@@ -193,7 +193,7 @@ public class SonetService extends Service implements Runnable {
 		return null;
 	}
 
-	private Date parseDate(String date, String format, int timezone) {
+	private Date parseDate(String date, String format, double timezone) {
 		SimpleDateFormat msformat = new SimpleDateFormat(format);
 		Calendar cal = Calendar.getInstance();
 		Date created;
@@ -204,7 +204,7 @@ public class SonetService extends Service implements Runnable {
 			Log.e(TAG,e.toString());
 		}
 		cal.setTime(created);
-		cal.add(Calendar.HOUR, timezone);
+		cal.add(Calendar.MILLISECOND, (int) (timezone * 3600000));
 		return cal.getTime();
 	}
 
@@ -452,7 +452,7 @@ public class SonetService extends Service implements Runnable {
 														if (n.has(name)) friend += " > " + n.getString(name);
 													}												
 												}
-												Date created = parseDate(o.getString(created_time), "yyyy-MM-dd'T'HH:mm:ss'+0000'", accounts.getInt(itimezone));
+												Date created = parseDate(o.getString(created_time), "yyyy-MM-dd'T'HH:mm:ss'+0000'", accounts.getDouble(itimezone));
 												this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(
 														created.getTime(),
 														l,
@@ -528,7 +528,7 @@ public class SonetService extends Service implements Runnable {
 											for (int e = 0; e < entries.length(); e++) {
 												JSONObject entry = entries.getJSONObject(e);
 												JSONObject authorObj = entry.getJSONObject(author);
-												Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", accounts.getInt(itimezone));
+												Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", accounts.getDouble(itimezone));
 												this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
 														entry.getJSONObject(source).getString(url),
 														authorObj.getString(displayName),

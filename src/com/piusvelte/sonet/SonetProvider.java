@@ -49,7 +49,7 @@ public class SonetProvider extends ContentProvider {
 	private static final int STATUSES_STYLES = 3;
 
 	private static final String DATABASE_NAME = "sonet.db";
-	private static final int DATABASE_VERSION = 8;
+	private static final int DATABASE_VERSION = 9;
 
 	private static final String TABLE_ACCOUNTS = "accounts";
 	private static HashMap<String, String> accountsProjectionMap;
@@ -285,7 +285,7 @@ public class SonetProvider extends ContentProvider {
 					+ Accounts.SECRET + " text, "
 					+ Accounts.SERVICE + " integer, "
 					+ Accounts.EXPIRY + " integer, "
-					+ Accounts.TIMEZONE + " integer, "
+					+ Accounts.TIMEZONE + " real, "
 					+ Accounts.WIDGET + " integer);");
 			db.execSQL("create table if not exists " + TABLE_WIDGETS
 					+ " (" + Widgets._ID + " integer primary key autoincrement, "
@@ -647,6 +647,33 @@ public class SonetProvider extends ContentProvider {
 						+ " is null) else "	+ Sonet.default_created_textsize + " end) as " + Statuses_styles.CREATED_TEXTSIZE + ","
 						+ Statuses.STATUS_BG + " as " + Statuses_styles.STATUS_BG
 						+ " from " + TABLE_STATUSES);
+			}
+			if (oldVersion < 9) {
+				// support additional timezones, with partial hour increments
+				// change timezone column from integer to real
+				db.execSQL("drop table if exists " + TABLE_ACCOUNTS + "_bkp;");
+				db.execSQL("create temp table " + TABLE_ACCOUNTS + "_bkp as select * from " + TABLE_ACCOUNTS + ";");
+				db.execSQL("drop table if exists " + TABLE_ACCOUNTS + ";");
+				db.execSQL("create table if not exists " + TABLE_ACCOUNTS
+						+ " (" + Accounts._ID + " integer primary key autoincrement, "
+						+ Accounts.USERNAME + " text, "
+						+ Accounts.TOKEN + " text, "
+						+ Accounts.SECRET + " text, "
+						+ Accounts.SERVICE + " integer, "
+						+ Accounts.EXPIRY + " integer, "
+						+ Accounts.TIMEZONE + " real, "
+						+ Accounts.WIDGET + " integer);");
+				db.execSQL("insert into " + TABLE_ACCOUNTS
+						+ " select "
+						+ Accounts._ID + ","
+						+ Accounts.USERNAME + ","
+						+ Accounts.TOKEN + ","
+						+ Accounts.SECRET + ","
+						+ Accounts.SERVICE + ","
+						+ Accounts.EXPIRY + ","
+						+ Accounts.TIMEZONE + ","
+						+ Accounts.WIDGET + " from " + TABLE_ACCOUNTS + "_bkp;");
+				db.execSQL("drop table if exists " + TABLE_ACCOUNTS + "_bkp;");
 			}
 		}
 

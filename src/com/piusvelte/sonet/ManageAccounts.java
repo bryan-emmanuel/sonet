@@ -89,6 +89,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	private boolean mHasAccounts = false;
 	protected static String sRequest_token,
 	sRequest_secret;
+	protected static long sAccountId = Sonet.INVALID_ACCOUNT_ID;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -122,9 +123,10 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 				which++; //fix indexing
 				switch (which) {
 				case REAUTH_ID:
+					// need the account id if reauthenticating
+					sAccountId = item;
 					Cursor c = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SERVICE}, Accounts._ID + "=" + item, null, null);
-					if (c.moveToFirst())
-						getAuth(c.getInt(c.getColumnIndex(Accounts.SERVICE)));
+					if (c.moveToFirst()) getAuth(c.getInt(c.getColumnIndex(Accounts.SERVICE)));
 					c.close();
 					break;
 				case SETTINGS_ID:
@@ -233,7 +235,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 				try {
 					JSONObject json = Util.parseJson(response);
 					final String username = json.getString("name");
-					final int timezone = Integer.parseInt(json.getString(Accounts.TIMEZONE));
+					final double timezone = Double.parseDouble(json.getString(Accounts.TIMEZONE));
 					ManageAccounts.this.runOnUiThread(new Runnable() {
 						public void run() {
 							sUpdateWidget = true;
@@ -246,7 +248,10 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 							values.put(Accounts.SERVICE, FACEBOOK);
 							values.put(Accounts.TIMEZONE, timezone);
 							values.put(Accounts.WIDGET, sAppWidgetId);
-							getContentResolver().insert(Accounts.CONTENT_URI, values);
+							if (sAccountId != Sonet.INVALID_ACCOUNT_ID) {
+								getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Long.toString(sAccountId)});
+								sAccountId = Sonet.INVALID_ACCOUNT_ID;
+							} else getContentResolver().insert(Accounts.CONTENT_URI, values);
 						}
 					});
 				} catch (JSONException e) {
@@ -326,8 +331,12 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 						values.put(Accounts.SERVICE, MYSPACE);
 						values.put(Accounts.TIMEZONE, 0);
 						values.put(Accounts.WIDGET, sAppWidgetId);
-						Uri uri = getContentResolver().insert(Accounts.CONTENT_URI, values);
-						final String id = uri.getLastPathSegment();
+						// check if updating
+						if (sAccountId != Sonet.INVALID_ACCOUNT_ID) getContentResolver().update(Accounts.CONTENT_URI, values, Sonet.Accounts._ID + "=?", new String[]{Long.toString(sAccountId)});
+						else {
+							Uri uri = getContentResolver().insert(Accounts.CONTENT_URI, values);
+							sAccountId = Long.parseLong(uri.getLastPathSegment());							
+						}
 						// get the timezone, index set to GMT
 						(new AlertDialog.Builder(ManageAccounts.this))
 						.setTitle(R.string.timezone)
@@ -337,8 +346,9 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 								sUpdateWidget = true;
 								setResultOK();
 								ContentValues values = new ContentValues();
-								values.put(Accounts.TIMEZONE, Integer.parseInt(getResources().getStringArray(R.array.timezone_values)[which]));
-								getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{id});
+								values.put(Accounts.TIMEZONE, Double.parseDouble(getResources().getStringArray(R.array.timezone_values)[which]));
+								getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Long.toString(sAccountId)});
+								sAccountId = Sonet.INVALID_ACCOUNT_ID;
 								dialog.cancel();
 								// warn about new myspace permissions
 								(new AlertDialog.Builder(ManageAccounts.this))
