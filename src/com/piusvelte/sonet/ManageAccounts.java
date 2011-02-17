@@ -33,6 +33,8 @@ import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Widgets;
 
+import static com.piusvelte.sonet.Sonet.BUZZ;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -206,7 +208,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	private void getAuth(int service) {
 		switch (service) {
 		case TWITTER:
-			startActivity(new Intent(this, TwitterLogin.class));
+			startActivity(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, service));
 			break;
 		case FACEBOOK:
 			mFacebook = new Facebook();
@@ -218,6 +220,9 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		case MYSPACE:
 			mMSSession = MSSession.getSession(MYSPACE_KEY, MYSPACE_SECRET, Sonet.MYSPACE_CALLBACK, this);
 			startActivity(new Intent(this, MSLoginActivity.class));
+			break;
+		case BUZZ:
+			startActivity(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, service));
 			break;
 		}
 	}

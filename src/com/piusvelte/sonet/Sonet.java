@@ -18,6 +18,14 @@ public class Sonet {
     public static final String ACTION_UPDATE_SETTINGS = "com.piusvelte.sonet.Sonet.UPDATE_SETTINGS";
 	public static final String MYSPACE_CALLBACK = "sonet://myspace";
 	
+	public static final int BUZZ = 3;
+	public static final String BUZZ_URL_REQUEST = "https://www.google.com/accounts/OAuthGetRequestToken";
+	public static final String BUZZ_URL_ACCESS = "https://www.google.com/accounts/OAuthGetAccessToken";
+	public static final String BUZZ_URL_AUTHORIZE = "https://www.google.com/buzz/api/auth/OAuthAuthorizeToken";
+	public static final String BUZZ_SCOPE = "https://www.googleapis.com/auth/buzz.readonly";
+	
+	public static final int INVALID_SERVICE = -1;
+	
     public static final int default_interval = 3600000;
     public static final int default_buttons_bg_color = -16777216;
     public static final int default_buttons_color = -1;

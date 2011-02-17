@@ -31,6 +31,10 @@ import static com.piusvelte.sonet.Tokens.TWITTER_SECRET;
 import static com.piusvelte.sonet.Tokens.MYSPACE_KEY;
 import static com.piusvelte.sonet.Tokens.MYSPACE_SECRET;
 
+import static com.piusvelte.sonet.Sonet.BUZZ;
+import static com.piusvelte.sonet.Tokens.BUZZ_KEY;
+import static com.piusvelte.sonet.Tokens.BUZZ_SECRET;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -566,6 +570,9 @@ public class SonetService extends Service implements Runnable {
 								} catch (JSONException e) {
 									Log.e(TAG, e.toString());
 								}
+								break;
+							case BUZZ:
+								String BUZZ_ACTIVITIES = "https://www.googleapis.com/buzz/v1/activities/";
 								break;
 							}
 						} else {
