@@ -379,6 +379,8 @@ public class SonetService extends Service implements Runnable {
 						ByteArrayOutputStream status_bg_blob = new ByteArrayOutputStream();
 						status_bg_bmp.compress(Bitmap.CompressFormat.PNG, 100, status_bg_blob);
 						status_bg = status_bg_blob.toByteArray();
+						OAuthConsumer consumer;
+						HttpRequestBase request;
 						// if not a full_refresh, only update the status_bg
 						if (full_refresh) {
 							switch (service) {
@@ -488,9 +490,9 @@ public class SonetService extends Service implements Runnable {
 								url = "url",
 								author = "author";
 
-								OAuthConsumer consumer = new CommonsHttpOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET, SignatureMethod.HMAC_SHA1);
+								consumer = new CommonsHttpOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET, SignatureMethod.HMAC_SHA1);
 								consumer.setTokenWithSecret(accounts.getString(itoken),	accounts.getString(isecret));
-								HttpRequestBase request = new HttpGet("http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
+								request = new HttpGet("http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
 
 								try {
 
@@ -572,7 +574,90 @@ public class SonetService extends Service implements Runnable {
 								}
 								break;
 							case BUZZ:
-								String BUZZ_ACTIVITIES = "https://www.googleapis.com/buzz/v1/activities/";
+								consumer = new CommonsHttpOAuthConsumer(BUZZ_KEY, BUZZ_SECRET, SignatureMethod.HMAC_SHA1);
+								consumer.setTokenWithSecret(accounts.getString(itoken),	accounts.getString(isecret));
+								request = new HttpGet("https://www.googleapis.com/buzz/v1/activities/?alt=json");
+
+								try {
+
+									consumer.sign(request);
+									HttpClient httpClient = new DefaultHttpClient();
+									HttpResponse httpResponse = httpClient.execute(request);
+									StatusLine statusLine = httpResponse.getStatusLine();
+									HttpEntity entity = httpResponse.getEntity();
+
+									switch(statusLine.getStatusCode()) {
+									case 200:
+									case 201:
+										String response = "";
+										if (entity != null) {
+											InputStream is = entity.getContent();
+											BufferedReader reader = new BufferedReader(new
+													InputStreamReader(is));
+											StringBuilder sb = new StringBuilder();
+
+											String line = null;
+											try {
+												while ((line = reader.readLine()) != null) {
+													sb.append(line + "\n");
+												}
+											} catch (IOException e) {
+												e.printStackTrace();
+											} finally {
+												try {
+													is.close();
+												} catch (IOException e) {
+													e.printStackTrace();
+												}
+											}
+											response = sb.toString();
+											Log.v(TAG,"buzz:"+response);
+//											JSONObject jobj = new JSONObject(response);
+//											JSONArray entries = jobj.getJSONArray("entry");
+//											// if there are updates, clear the cache
+//											if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
+//											for (int e = 0; e < entries.length(); e++) {
+//												JSONObject entry = entries.getJSONObject(e);
+//												JSONObject authorObj = entry.getJSONObject(author);
+//												Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", accounts.getDouble(itimezone));
+//												this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
+//														entry.getJSONObject(source).getString(url),
+//														authorObj.getString(displayName),
+//														getProfile(authorObj.getString(thumbnailUrl)),
+//														entry.getString(status),
+//														service,
+//														getCreatedText(now, created, time24hr),
+//														appWidgetId,
+//														accountId,
+//														status_bg));
+//											}
+										}
+										break;
+									default:
+										// warn about myspace permissions
+										ContentValues values = new ContentValues();
+										values.put(Statuses.FRIEND, getString(R.string.myspace_permissions_title));
+										values.put(Statuses.MESSAGE, getString(R.string.myspace_permissions_message));
+										values.put(Statuses.SERVICE, service);
+										values.put(Statuses.WIDGET, appWidgetId);
+										values.put(Statuses.ACCOUNT, accountId);
+										values.put(Statuses.STATUS_BG, status_bg);
+										this.getContentResolver().insert(Statuses.CONTENT_URI, values);
+										break;
+									}
+
+								} catch (ClientProtocolException e) {
+									Log.e(TAG, e.toString());
+								} catch (IOException e) {
+									Log.e(TAG, e.toString());
+								} catch (OAuthMessageSignerException e) {
+									Log.e(TAG, e.toString());
+								} catch (OAuthExpectationFailedException e) {
+									Log.e(TAG, e.toString());
+								}
+//								} catch (JSONException e) {
+//									Log.e(TAG, e.toString());
+//								}
 								break;
 							}
 						} else {
@@ -673,7 +758,7 @@ public class SonetService extends Service implements Runnable {
 			appWidgetManager.updateAppWidget(appWidgetId, views);
 			// replace with scrollable widget
 			if (scrollable) sendBroadcast(new Intent(this, SonetWidget.class).setAction(ACTION_BUILD_SCROLL).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId));
-			if (hasAccount && (interval > 0) && full_refresh) alarmManager.set(AlarmManager.RTC, System.currentTimeMillis() + interval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
+			if (hasAccount && (interval > 0) && full_refresh) alarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
 		}
 		if (hasConnection) {
 			if (mReceiver != null) {

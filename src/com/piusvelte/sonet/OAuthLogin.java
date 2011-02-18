@@ -37,9 +37,9 @@ import static com.piusvelte.sonet.Tokens.BUZZ_KEY;
 import static com.piusvelte.sonet.Tokens.BUZZ_SECRET;
 
 import oauth.signpost.OAuthProvider;
-import oauth.signpost.basic.DefaultOAuthProvider;
 import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
 import oauth.signpost.signature.SignatureMethod;
+import oauth.signpost.basic.DefaultOAuthProvider;
 import twitter4j.TwitterFactory;
 import twitter4j.http.AccessToken;
 
@@ -68,13 +68,14 @@ public class OAuthLogin extends Activity {
 			Bundle extras = intent.getExtras();
 			if (extras != null) mService = extras.getInt(Sonet.Accounts.SERVICE, Sonet.INVALID_SERVICE);
 		}
-		setContentView(R.layout.twitterlogin);
+		setContentView(R.layout.oauthlogin);
 	}
 	
 	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
 		Uri uri = intent.getData();
+		Log.v(TAG,"onNewIntent:"+uri.toString());
 		if (uri != null) {
 			if (TWITTER_CALLBACK.getScheme().equals(uri.getScheme())) {
 				try {
@@ -138,7 +139,7 @@ public class OAuthLogin extends Activity {
 	protected void onResume() {
 		super.onResume();
 		if ((ManageAccounts.sRequest_token == null) && (ManageAccounts.sRequest_secret == null)) {
-			((TextView) findViewById(R.id.twitterlogin_message)).setText(R.string.loading);
+			((TextView) findViewById(R.id.oauthlogin_message)).setText(R.string.loading);
 			try {
 				// switching to older signpost for myspace
 				//				CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
@@ -159,8 +160,9 @@ public class OAuthLogin extends Activity {
 					startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)).setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
 					break;
 				case BUZZ:
+					// need to request a token and secret
 					consumer = new CommonsHttpOAuthConsumer(BUZZ_KEY, BUZZ_SECRET, SignatureMethod.HMAC_SHA1);
-					provider = new DefaultOAuthProvider(consumer, BUZZ_URL_REQUEST + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8"), BUZZ_URL_ACCESS, BUZZ_URL_AUTHORIZE + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&domain=" + "&alt=json");
+					provider = new DefaultOAuthProvider(consumer, BUZZ_URL_REQUEST + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8"), BUZZ_URL_ACCESS, BUZZ_URL_AUTHORIZE + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&domain=" + BUZZ_KEY + "&alt=json");
 					provider.setOAuth10a(true);
 					authUrl = provider.retrieveRequestToken(BUZZ_CALLBACK.toString());
 					// need to save the requestToken and secret
@@ -174,7 +176,7 @@ public class OAuthLogin extends Activity {
 				Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
 			}
 		} else {
-			((TextView) findViewById(R.id.twitterlogin_message)).setText(R.string.twitterlogin_message);
+			((TextView) findViewById(R.id.oauthlogin_message)).setText(R.string.oauthlogin_message);
 			ManageAccounts.sRequest_token = null;
 			ManageAccounts.sRequest_secret = null;
 		}
