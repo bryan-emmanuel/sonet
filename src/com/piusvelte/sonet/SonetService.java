@@ -50,13 +50,12 @@ import java.util.List;
 import java.util.Queue;
 
 //import oauth.signpost.OAuthConsumer;
-//import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
 //import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.OAuthConsumer;
 import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
+import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
-import oauth.signpost.signature.SignatureMethod;
 //import oauth.signpost.signature.SignatureMethod;
 
 import org.apache.http.HttpEntity;
@@ -490,7 +489,8 @@ public class SonetService extends Service implements Runnable {
 								url = "url",
 								author = "author";
 
-								consumer = new CommonsHttpOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET, SignatureMethod.HMAC_SHA1);
+//								consumer = new CommonsHttpOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET, SignatureMethod.HMAC_SHA1);
+								consumer = new CommonsHttpOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET);
 								consumer.setTokenWithSecret(accounts.getString(itoken),	accounts.getString(isecret));
 								request = new HttpGet("http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
 
@@ -571,10 +571,14 @@ public class SonetService extends Service implements Runnable {
 									Log.e(TAG, e.toString());
 								} catch (JSONException e) {
 									Log.e(TAG, e.toString());
+								} catch (OAuthCommunicationException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
 								}
 								break;
 							case BUZZ:
-								consumer = new CommonsHttpOAuthConsumer(BUZZ_KEY, BUZZ_SECRET, SignatureMethod.HMAC_SHA1);
+//								consumer = new CommonsHttpOAuthConsumer(BUZZ_KEY, BUZZ_SECRET, SignatureMethod.HMAC_SHA1);
+								consumer = new CommonsHttpOAuthConsumer(BUZZ_KEY, BUZZ_SECRET);
 								consumer.setTokenWithSecret(accounts.getString(itoken),	accounts.getString(isecret));
 								request = new HttpGet("https://www.googleapis.com/buzz/v1/activities/?alt=json");
 
@@ -654,6 +658,9 @@ public class SonetService extends Service implements Runnable {
 									Log.e(TAG, e.toString());
 								} catch (OAuthExpectationFailedException e) {
 									Log.e(TAG, e.toString());
+								} catch (OAuthCommunicationException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
 								}
 //								} catch (JSONException e) {
 //									Log.e(TAG, e.toString());

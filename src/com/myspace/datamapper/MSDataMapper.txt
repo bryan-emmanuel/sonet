@@ -1,0 +1,159 @@
+{"currentStatus": 
+	{ 	"serviceURL": "http://opensocial.myspace.com/1.0/statusmood/@me/@self",
+		"objectAttributes": 
+			{	"key": "statusId",
+				"commentCount": "numComments",
+				"commentUserNames": "recentComments.author.displayName",
+				"comments": "recentComments.body",
+				"moodImageURL": "moodPictureUrl",
+				"moodKey": "moodId",
+				"moodName": "moodName",
+				"sourceImageURL": "source.imageUrl",
+				"sourceName": "source.name",
+				"sourceURL": "source.url",
+				"status" : "status",
+				"timestamp": "moodStatusLastUpdated",
+				"userID": "userId",
+				"userName": "author.displayName",
+				"userProfileURL": "author.profileUrl",
+				"userThumbnailImageURL": "author.thumbnailUrl"						
+			},
+		"objectFormatters": 
+			{	"timestamp": "date"
+			}
+     },
+"updateStatus": 
+ 	{ 	"serviceURL": "http://opensocial.myspace.com/1.0/statusmood/@me/@self"
+	},
+"mood": 
+ 	{ 	"serviceURL": "http://opensocial.myspace.com/1.0/statusmood/@me/@supportedMood",
+		"objectAttributes": 
+			{ 	"key": "moodId",
+				"moodImageURL": "moodPictureUrl",
+				"moodName": "moodName"
+			}
+	},
+"userInfo": 
+	{ 	"serviceURL": "http://opensocial.myspace.com/1.0/people/@me/@self",
+		"objectAttributes": 
+			{	"userID": "person.userId",
+				"userName": "person.displayName",
+				"userProfileURL": "person.profileUrl",
+				"userThumbnailImageURL": "person.thumbnailUrl"						
+			}
+     },
+"friend": 
+ 	{ 	"serviceURL": "http://opensocial.myspace.com/1.0/people/@me/@friends",
+		"objectArrayKeyPath": "entry",
+		"objectAttributes": 
+			{ 	"key": "person.id",
+				"userName": "person.displayName",
+				"userProfileURL": "person.profileUrl",
+				"userThumbnailImageURL": "person.thumbnailUrl"
+			}
+	},
+"friendStatus": 
+	{ 	"serviceURL": "http://opensocial.myspace.com/1.0/statusmood/@me/@friends/%s?fields=@all",
+		"objectArrayKeyPath": "entry",
+		"objectAttributes": 
+			{	"key": "statusId",
+				"commentCount": "numComments",
+				"commentUserNames": "recentComments.author.displayName",
+				"comments": "recentComments.body",
+				"moodImageURL": "moodPictureUrl",
+				"moodKey": "moodId",
+				"moodName": "moodName",
+				"sourceImageURL": "source.imageUrl",
+				"sourceName": "source.name",
+				"sourceURL": "source.url",
+				"status" : "status",
+				"timestamp": "moodStatusLastUpdated",
+				"userID": "userId",
+				"userName": "author.displayName",
+				"userProfileURL": "author.profileUrl",
+				"userThumbnailImageURL": "author.thumbnailUrl"						
+			},
+		"objectFormatters": 
+			{	"timestamp": "date"
+			}
+     },
+"friendStatusHistory": 
+	{ 	"serviceURL": "http://opensocial.myspace.com/1.0/statusmood/@me/@friends/%s/history?fields=author,recentcomments,source",
+		"objectArrayKeyPath": "entry",
+		"objectAttributes": 
+			{	"key": "statusId",
+				"commentCount": "numComments",
+				"commentUserNames": "recentComments.author.displayName",
+				"comments": "recentComments.body",
+				"moodImageURL": "moodPictureUrl",
+				"moodKey": "moodId",
+				"moodName": "moodName",
+				"sourceImageURL": "source.imageUrl",
+				"sourceName": "source.name",
+				"sourceURL": "source.url",
+				"status" : "status",
+				"timestamp": "moodStatusLastUpdated",
+				"userID": "userId",
+				"userName": "author.displayName",
+				"userProfileURL": "author.profileUrl",
+				"userThumbnailImageURL": "author.thumbnailUrl"						
+			},
+		"objectFormatters": 
+			{	"timestamp": "date"
+			}
+     },
+"friendsStatus": 
+ 	{ 	"serviceURL": "http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?fields=author,recentcomments,source",
+		"objectArrayKeyPath": "entry",
+		"objectAttributes": 
+			{ 	"key": "statusId",
+				"commentCount": "numComments",
+				"commentUserNames": "recentComments.author.displayName",
+				"comments": "recentComments.body",
+				"moodImageURL": "moodPictureUrl",
+				"moodName": "moodName",
+				"sourceImageURL": "source.imageUrl",
+				"sourceName": "source.name",
+				"sourceURL": "source.url",
+				"status": "status",
+				"timestamp": "moodStatusLastUpdated",
+				"userID": "userId",
+				"userName": "author.displayName",
+				"userProfileURL": "author.profileUrl",
+				"userThumbnailImageURL": "author.thumbnailUrl"	
+			},
+		"objectFormatters": 
+			{	"timestamp": "date"
+			}
+	},
+"uploadPhoto": 
+ 	{ 	"serviceURL": "http://opensocial.myspace.com/1.0/mediaitems/@me/@self/0?type=image"
+	},
+"uploadVideo": 
+ 	{ 	"serviceURL": "http://opensocial.myspace.com/1.0/mediaitems/@me/@self/0?type=video"
+	},
+"friendActivity": 
+ 	{ 	"serviceURL": "http://opensocial.myspace.com/1.0/activities/@me/@friends?fields=actor,id,postedtime,source,title,userid,body,msPerson&amp;wap=1",
+		"objectArrayKeyPath": "entry",
+		"objectAttributes": 
+			{ 	"key": "activity.id",
+				"sourceImageURL": "activity.source.imageUrl",
+				"sourceName": "activity.source.name",
+				"sourceURL": "activity.source.url",
+				"timestamp": "activity.postedTime",
+				"title": "activity.title",
+				"body": "activity.body",
+				"timestamp": "activity.postedTime",
+				"userID": "activity.userId",
+				"userName": "activity.msPerson.displayName",
+				"userProfileURL": "activity.msPerson.profileUrl",
+				"userThumbnailImageURL": "activity.msPerson.thumbnailUrl"
+			},
+		"objectFormatters": 
+			{	"timestamp": "date"
+			}
+	},
+"publishActivity": 
+ 	{ 	"serviceURL": "http://opensocial.myspace.com/1.0/activities/@me/@self/@app"
+	}
+}

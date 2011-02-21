@@ -38,8 +38,9 @@ import static com.piusvelte.sonet.Tokens.BUZZ_SECRET;
 
 import oauth.signpost.OAuthProvider;
 import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
-import oauth.signpost.signature.SignatureMethod;
-import oauth.signpost.basic.DefaultOAuthProvider;
+//import oauth.signpost.signature.SignatureMethod;
+//import oauth.signpost.basic.DefaultOAuthProvider;
+import oauth.signpost.commonshttp.CommonsHttpOAuthProvider;
 import twitter4j.TwitterFactory;
 import twitter4j.http.AccessToken;
 
@@ -82,13 +83,15 @@ public class OAuthLogin extends Activity {
 					// this will populate token and token_secret in consumer
 					String verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
 					//					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
-					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET, SignatureMethod.HMAC_SHA1);
+//					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET, SignatureMethod.HMAC_SHA1);
+					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
 					consumer.setTokenWithSecret(ManageAccounts.sRequest_token, ManageAccounts.sRequest_secret);
 					//					OAuthProvider provider = new DefaultOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
-					OAuthProvider provider = new DefaultOAuthProvider(consumer, TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
+//					OAuthProvider provider = new DefaultOAuthProvider(consumer, TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
+					OAuthProvider provider = new CommonsHttpOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
 					provider.setOAuth10a(true);
 					//					provider.retrieveAccessToken(consumer, verifier);
-					provider.retrieveAccessToken(verifier);
+					provider.retrieveAccessToken(consumer, verifier);
 					ContentValues values = new ContentValues();
 					values.put(Accounts.USERNAME, (new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(consumer.getToken(), consumer.getTokenSecret()))).getScreenName());
 					values.put(Accounts.TOKEN, consumer.getToken());
@@ -109,11 +112,12 @@ public class OAuthLogin extends Activity {
 			} else if (BUZZ_CALLBACK.getScheme().equals(uri.getScheme())) {
 				try {
 					String verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
-					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(BUZZ_KEY, BUZZ_SECRET, SignatureMethod.HMAC_SHA1);
+//					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(BUZZ_KEY, BUZZ_SECRET, SignatureMethod.HMAC_SHA1);
+					CommonsHttpOAuthConsumer consumer = new CommonsHttpOAuthConsumer(BUZZ_KEY, BUZZ_SECRET);
 					consumer.setTokenWithSecret(ManageAccounts.sRequest_token, ManageAccounts.sRequest_secret);
-					OAuthProvider provider = new DefaultOAuthProvider(consumer, BUZZ_URL_REQUEST + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8"), BUZZ_URL_ACCESS, BUZZ_URL_AUTHORIZE + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&domain=" );
+					OAuthProvider provider = new CommonsHttpOAuthProvider(BUZZ_URL_REQUEST + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8"), BUZZ_URL_ACCESS, BUZZ_URL_AUTHORIZE + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&domain=" );
 					provider.setOAuth10a(true);
-					provider.retrieveAccessToken(verifier);
+					provider.retrieveAccessToken(consumer, verifier);
 					ContentValues values = new ContentValues();
 					values.put(Accounts.USERNAME, (new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(consumer.getToken(), consumer.getTokenSecret()))).getScreenName());
 					values.put(Accounts.TOKEN, consumer.getToken());
@@ -150,10 +154,11 @@ public class OAuthLogin extends Activity {
 				String authUrl;
 				switch (mService) {
 				case TWITTER:
-					consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET, SignatureMethod.HMAC_SHA1);
-					provider = new DefaultOAuthProvider(consumer, TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
+//					consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET, SignatureMethod.HMAC_SHA1);
+					consumer = new CommonsHttpOAuthConsumer(TWITTER_KEY, TWITTER_SECRET);
+					provider = new CommonsHttpOAuthProvider(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE);
 					provider.setOAuth10a(true);
-					authUrl = provider.retrieveRequestToken(TWITTER_CALLBACK.toString());
+					authUrl = provider.retrieveRequestToken(consumer, TWITTER_CALLBACK.toString());
 					// need to save the requestToken and secret
 					ManageAccounts.sRequest_token = consumer.getToken();
 					ManageAccounts.sRequest_secret = consumer.getTokenSecret();
@@ -161,10 +166,11 @@ public class OAuthLogin extends Activity {
 					break;
 				case BUZZ:
 					// need to request a token and secret
-					consumer = new CommonsHttpOAuthConsumer(BUZZ_KEY, BUZZ_SECRET, SignatureMethod.HMAC_SHA1);
-					provider = new DefaultOAuthProvider(consumer, BUZZ_URL_REQUEST + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8"), BUZZ_URL_ACCESS, BUZZ_URL_AUTHORIZE + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&domain=" + BUZZ_KEY + "&alt=json");
+//					consumer = new CommonsHttpOAuthConsumer(BUZZ_KEY, BUZZ_SECRET, SignatureMethod.HMAC_SHA1);
+					consumer = new CommonsHttpOAuthConsumer(BUZZ_KEY, BUZZ_SECRET);
+					provider = new CommonsHttpOAuthProvider(BUZZ_URL_REQUEST + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8"), BUZZ_URL_ACCESS, BUZZ_URL_AUTHORIZE + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&domain=" + BUZZ_KEY + "&alt=json");
 					provider.setOAuth10a(true);
-					authUrl = provider.retrieveRequestToken(BUZZ_CALLBACK.toString());
+					authUrl = provider.retrieveRequestToken(consumer, BUZZ_CALLBACK.toString());
 					// need to save the requestToken and secret
 					ManageAccounts.sRequest_token = consumer.getToken();
 					ManageAccounts.sRequest_secret = consumer.getTokenSecret();
