@@ -17,6 +17,9 @@ public class Sonet {
     public static final long INVALID_ACCOUNT_ID = -1;
     public static final String ACTION_UPDATE_SETTINGS = "com.piusvelte.sonet.Sonet.UPDATE_SETTINGS";
 	public static final String MYSPACE_CALLBACK = "sonet://myspace";
+	public static final String MYSPACE_URL_REQUEST = "http://api.myspace.com/request_token";
+	public static final String MYSPACE_URL_AUTHORIZE = "http://api.myspace.com/authorize";
+	public static final String MYSPACE_URL_ACCESS = "http://api.myspace.com/access_token";
 	
 	public static final int BUZZ = 3;
 	public static final String BUZZ_URL_REQUEST = "https://www.google.com/accounts/OAuthGetRequestToken";

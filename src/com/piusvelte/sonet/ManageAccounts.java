@@ -218,8 +218,9 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			mFacebook.authorize(this, FACEBOOK_ID, FACEBOOK_PERMISSIONS, this);
 			break;
 		case MYSPACE:
-			mMSSession = MSSession.getSession(MYSPACE_KEY, MYSPACE_SECRET, Sonet.MYSPACE_CALLBACK, this);
-			startActivity(new Intent(this, MSLoginActivity.class));
+//			mMSSession = MSSession.getSession(MYSPACE_KEY, MYSPACE_SECRET, Sonet.MYSPACE_CALLBACK, this);
+//			startActivity(new Intent(this, MSLoginActivity.class));
+			startActivity(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, service));
 			break;
 		case BUZZ:
 			startActivity(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, service));

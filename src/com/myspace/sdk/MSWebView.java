@@ -30,6 +30,7 @@ public abstract class MSWebView {
     }
     
     public void open(String url) {
+    	Log.v("MSWebView","open:"+url);
     	mWebView.loadUrl(url);
     }
     
