@@ -4,7 +4,8 @@ import oauth.signpost.OAuthConsumer;
 import oauth.signpost.OAuthProvider;
 // update to use signpost-commonshttp4-1.2.1.1
 //import oauth.signpost.basic.DefaultOAuthProvider;
-import oauth.signpost.commonshttp.CommonsHttpOAuthProvider;
+import oauth.signpost.basic.DefaultOAuthProvider;
+//import oauth.signpost.commonshttp.CommonsHttpOAuthProvider;
 import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
 import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
@@ -63,8 +64,8 @@ public class MSOAuth {
 		String requestedPermissions = MSSession.getSession().getRequestedPermissions();
 		String authUrl = (requestedPermissions == null) ? OAUTH_AUTHORIZATION_URL : OAUTH_AUTHORIZATION_URL + "?myspaceid.permissions=" + requestedPermissions;
 		// update to use signpost-commonshttp4-1.2.1.1
-//		mOAuthProvider = new DefaultOAuthProvider(mOAuthConsumer, OAUTH_REQUEST_TOKEN_URL, OAUTH_ACCESS_TOKEN_URL, authUrl);
-		mOAuthProvider = new CommonsHttpOAuthProvider(OAUTH_REQUEST_TOKEN_URL, OAUTH_ACCESS_TOKEN_URL, authUrl);
+		mOAuthProvider = new DefaultOAuthProvider(OAUTH_REQUEST_TOKEN_URL, OAUTH_ACCESS_TOKEN_URL, authUrl);
+//		mOAuthProvider = new CommonsHttpOAuthProvider(OAUTH_REQUEST_TOKEN_URL, OAUTH_ACCESS_TOKEN_URL, authUrl);
 	}
 
 	public String retrieveRequestToken(String callbackUrl) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
