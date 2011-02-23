@@ -67,8 +67,7 @@ public class Sonet {
     	private Accounts() {
     	}
     	
-    	public static final Uri CONTENT_URI = Uri.parse("content://"
-    			+ SonetProvider.AUTHORITY + "/accounts");
+    	public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/accounts");
     	
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.accounts";
     	
@@ -87,8 +86,7 @@ public class Sonet {
     	private Widgets() {
     	}
     	
-    	public static final Uri CONTENT_URI = Uri.parse("content://"
-    			+ SonetProvider.AUTHORITY + "/widgets");
+    	public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/widgets");
     	
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.widgets";
 
@@ -117,8 +115,7 @@ public class Sonet {
     	private Statuses() {
     	}
     	
-    	public static final Uri CONTENT_URI = Uri.parse("content://"
-    			+ SonetProvider.AUTHORITY + "/statuses");
+    	public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/statuses");
     	
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.statuses";
 
@@ -143,8 +140,7 @@ public class Sonet {
     	private Statuses_styles() {
     	}
     	
-    	public static final Uri CONTENT_URI = Uri.parse("content://"
-    			+ SonetProvider.AUTHORITY + "/statuses_styles");
+    	public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/statuses_styles");
     	
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.statuses_styles";
 

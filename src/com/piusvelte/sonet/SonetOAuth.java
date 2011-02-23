@@ -30,10 +30,11 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.util.Log;
+import oauth.signpost.OAuthConsumer;
+import oauth.signpost.OAuthProvider;
 import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
 import oauth.signpost.commonshttp.CommonsHttpOAuthProvider;
 import oauth.signpost.exception.OAuthCommunicationException;
@@ -44,8 +45,8 @@ import oauth.signpost.signature.HmacSha1MessageSigner;
 
 public class SonetOAuth {
 
-	private CommonsHttpOAuthConsumer mOAuthConsumer;
-	private CommonsHttpOAuthProvider mOAuthProvider;
+	private OAuthConsumer mOAuthConsumer;
+	private OAuthProvider mOAuthProvider;
 	private String mApiKey;
 	private String mApiSecret;
 	private static final String TAG = "SonetOAuth";
@@ -61,21 +62,16 @@ public class SonetOAuth {
 	public String getAuthUrl(String request, String access, String authorize, String callback, boolean isOAuth10a) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
 		mOAuthProvider = new CommonsHttpOAuthProvider(request, access, authorize);
 		mOAuthProvider.setOAuth10a(isOAuth10a);
-		Log.v(TAG, "retrieveRequestToken");
 		String authUrl = mOAuthProvider.retrieveRequestToken(mOAuthConsumer, callback);
-		Log.v(TAG, "authUrl:"+authUrl);
 		return authUrl;
 	}
 	
 	public void retrieveAccessToken(String verifier) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
-		Log.v(TAG, "retrieveAccessToken");
 		mOAuthProvider.retrieveAccessToken(mOAuthConsumer, verifier);
-		Log.v(TAG,"accesstoken:"+mOAuthConsumer.getToken());
-		Log.v(TAG,"accesssecret:"+mOAuthConsumer.getTokenSecret());
 	}
 	
 	public String get(String url) throws ClientProtocolException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException {
-		HttpRequestBase httpRequest = new HttpGet(url);
+		HttpGet httpRequest = new HttpGet(url);
 		mOAuthConsumer.sign(httpRequest);
 		HttpClient httpClient = new DefaultHttpClient();
 		HttpResponse httpResponse = httpClient.execute(httpRequest);
