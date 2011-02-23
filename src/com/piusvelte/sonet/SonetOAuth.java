@@ -63,6 +63,7 @@ public class SonetOAuth {
 		mOAuthProvider.setOAuth10a(isOAuth10a);
 		Log.v(TAG, "retrieveRequestToken");
 		String authUrl = mOAuthProvider.retrieveRequestToken(mOAuthConsumer, callback);
+		Log.v(TAG, "authUrl:"+authUrl);
 		return authUrl;
 	}
 	
@@ -70,7 +71,7 @@ public class SonetOAuth {
 		Log.v(TAG, "retrieveAccessToken");
 		mOAuthProvider.retrieveAccessToken(mOAuthConsumer, verifier);
 		Log.v(TAG,"accesstoken:"+mOAuthConsumer.getToken());
-		Log.v(TAG,"accesssecret:"+mOAuthConsumer.getTokenSecret());		
+		Log.v(TAG,"accesssecret:"+mOAuthConsumer.getTokenSecret());
 	}
 	
 	public String get(String url) throws ClientProtocolException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException {

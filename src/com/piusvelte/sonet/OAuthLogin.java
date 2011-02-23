@@ -63,7 +63,6 @@ public class OAuthLogin extends Activity {
 	private static Uri TWITTER_CALLBACK = Uri.parse("sonet://twitter");
 	private static Uri BUZZ_CALLBACK = Uri.parse("sonet://buzz");
 	private static Uri MYSPACE_CALLBACK = Uri.parse("sonet://myspace");
-	private int mService = Sonet.INVALID_SERVICE;
 	private TextView mMessageView;
 	private SonetOAuth mSonetOAuth;
 
@@ -74,10 +73,10 @@ public class OAuthLogin extends Activity {
 		if (intent != null) {
 			Bundle extras = intent.getExtras();
 			if (extras != null) {
-				mService = extras.getInt(Sonet.Accounts.SERVICE, Sonet.INVALID_SERVICE);
+				int service = extras.getInt(Sonet.Accounts.SERVICE, Sonet.INVALID_SERVICE);
 				SonetWebView sonetWebView = new SonetWebView();
 				try {
-					switch (mService) {
+					switch (service) {
 					case TWITTER:
 						mSonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET);
 						sonetWebView.open(mSonetOAuth.getAuthUrl(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE, TWITTER_CALLBACK.toString(), false));
@@ -91,6 +90,8 @@ public class OAuthLogin extends Activity {
 						mSonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET);
 						sonetWebView.open(mSonetOAuth.getAuthUrl(BUZZ_URL_REQUEST + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8"), BUZZ_URL_ACCESS, BUZZ_URL_AUTHORIZE + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&domain=" + BUZZ_KEY + "&alt=json", BUZZ_CALLBACK.toString(), false));
 						break;
+					default:
+						this.finish();
 					}
 				} catch (Exception e) {
 					Log.e(TAG, e.getMessage());
