@@ -52,7 +52,6 @@ public class SonetOAuth {
 	private static final String TAG = "SonetOAuth";
 	
 	public SonetOAuth(String apiKey, String apiSecret) {
-		Log.v(TAG,"create new oauth");
 		this.mApiKey = apiKey;
 		this.mApiSecret = apiSecret;
 		mOAuthConsumer = new CommonsHttpOAuthConsumer(this.mApiKey, this.mApiSecret);
