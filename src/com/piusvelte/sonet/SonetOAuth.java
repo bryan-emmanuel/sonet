@@ -70,8 +70,10 @@ public class SonetOAuth {
 	}
 	
 	public String get(String url) throws ClientProtocolException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException {
+		Log.v(TAG,"get:"+url);
 		HttpGet httpRequest = new HttpGet(url);
 		mOAuthConsumer.sign(httpRequest);
+		Log.v(TAG,"signed:"+httpRequest.toString());
 		HttpClient httpClient = new DefaultHttpClient();
 		HttpResponse httpResponse = httpClient.execute(httpRequest);
 		StatusLine statusLine = httpResponse.getStatusLine();
@@ -102,7 +104,7 @@ public class SonetOAuth {
 			}
 			break;
 		default:
-			Log.v(TAG,"get error:"+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
+			Log.e(TAG,"get error:"+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
 			break;
 		}
 		return response;

@@ -80,7 +80,6 @@
 	<string name="re_authenticate">Re-authenticate</string>
 	<string name="account_settings">Account settings</string>
 	<string name="default_widget_settings">Default widget settings</string>
-	<string name="oauthlogin_message">Press the Back button to continue.</string>
 	<string name="myspace_permissions_title">Update MySpace permissions</string>
 	<string name="myspace_permissions_message">To get MySpaces statuses, you must log into the MySpace website, go to My Stuff, Privacy Settings, External Apps, edit Sonet and enable \"Access my stream and my friends\' stream.\"</string>
 </resources>
