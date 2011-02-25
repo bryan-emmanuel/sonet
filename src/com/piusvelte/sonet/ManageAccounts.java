@@ -26,8 +26,6 @@ import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
 
 import static com.piusvelte.sonet.Tokens.FACEBOOK_ID;
-//import static com.piusvelte.sonet.Tokens.MYSPACE_KEY;
-//import static com.piusvelte.sonet.Tokens.MYSPACE_SECRET;
 
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
@@ -38,7 +36,6 @@ import static com.piusvelte.sonet.Sonet.BUZZ;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
-//import java.util.Map;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -50,11 +47,6 @@ import com.facebook.android.FacebookError;
 import com.facebook.android.Util;
 import com.facebook.android.AsyncFacebookRunner.RequestListener;
 import com.facebook.android.Facebook.DialogListener;
-//import com.myspace.sdk.MSLoginActivity;
-//import com.myspace.sdk.MSRequest;
-//import com.myspace.sdk.MSSDK;
-//import com.myspace.sdk.MSSession;
-//import com.myspace.sdk.MSSession.IMSSessionCallback;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -63,7 +55,6 @@ import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
-//import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -86,7 +77,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	private Facebook mFacebook;
 	private AsyncFacebookRunner mAsyncRunner;
 	protected static int sAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
-//	private MSSession mMSSession;
 	protected static boolean sUpdateWidget = false;
 	private boolean mHasAccounts = false;
 	protected static long sAccountId = Sonet.INVALID_ACCOUNT_ID;
@@ -198,7 +188,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	}
 
 	private void listAccounts() {
-		Cursor c = this.managedQuery(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(sAppWidgetId)}, null);
+		// prepend service name to username
+		Cursor c = this.managedQuery(Accounts.CONTENT_URI, new String[]{Accounts._ID, "(case when " + Accounts.SERVICE + "='" + TWITTER + "' then 'Twitter: ' when " + Accounts.SERVICE + "='" + FACEBOOK + "' then 'Facebook: ' when " + Accounts.SERVICE + "='" + MYSPACE + "' then 'MySpace: ' when " + Accounts.SERVICE + "='" + BUZZ + "' then 'Buzz: ' else '' end)||" + Accounts.USERNAME + " as " + Accounts.USERNAME, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(sAppWidgetId)}, null);
 		mHasAccounts = c.getCount() != 0;
 		setListAdapter(new SimpleCursorAdapter(ManageAccounts.this, R.layout.accounts_row, c, new String[] {Accounts.USERNAME}, new int[] {R.id.account_username}));
 	}
@@ -216,8 +207,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			mFacebook.authorize(this, FACEBOOK_ID, FACEBOOK_PERMISSIONS, this);
 			break;
 		case MYSPACE:
-//			mMSSession = MSSession.getSession(MYSPACE_KEY, MYSPACE_SECRET, Sonet.MYSPACE_CALLBACK, this);
-//			startActivity(new Intent(this, MSLoginActivity.class));
 			startActivity(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, service));
 			break;
 		case BUZZ:
@@ -299,78 +288,4 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	public void onCancel() {
 		Toast.makeText(ManageAccounts.this, "Authorization canceled", Toast.LENGTH_LONG).show();
 	}
-//
-//	@Override
-//	public void sessionDidLogin(MSSession session) {
-//		mMSSession.setToken(session.getToken());
-//		mMSSession.setTokenSecret(session.getTokenSecret());
-//		MSSDK.getUserInfo(new MSRequestCallback());
-//	}
-//
-//	@Override
-//	public void sessionDidLogout(MSSession session) {
-//	}
-//
-//	// MySpace
-//	private class MSRequestCallback extends MSRequest.MSRequestCallback {
-//
-//		@Override
-//		public void requestDidFail(MSRequest request, Throwable error) {
-//			Log.e(TAG, error.getMessage());
-//		}
-//
-//		@Override
-//		public void requestDidLoad(MSRequest request, Object result) {
-//			Map<?, ?> data = (Map<?, ?>) result;
-//			result = data.get("data");
-//			if (result instanceof Map<?, ?>) {
-//				Map<?, ?> userObject = (Map<?, ?>) result;
-//				final String username = userObject.get("userName").toString();
-//				ManageAccounts.this.runOnUiThread(new Runnable() {
-//					public void run() {
-//						ContentValues values = new ContentValues();
-//						values.put(Accounts.USERNAME, username);
-//						values.put(Accounts.TOKEN, mMSSession.getToken());
-//						values.put(Accounts.SECRET, mMSSession.getTokenSecret());
-//						values.put(Accounts.EXPIRY, 0);
-//						values.put(Accounts.SERVICE, MYSPACE);
-//						values.put(Accounts.TIMEZONE, 0);
-//						values.put(Accounts.WIDGET, sAppWidgetId);
-//						// check if updating
-//						if (sAccountId != Sonet.INVALID_ACCOUNT_ID) getContentResolver().update(Accounts.CONTENT_URI, values, Sonet.Accounts._ID + "=?", new String[]{Long.toString(sAccountId)});
-//						else {
-//							Uri uri = getContentResolver().insert(Accounts.CONTENT_URI, values);
-//							sAccountId = Long.parseLong(uri.getLastPathSegment());							
-//						}
-//						// get the timezone, index set to GMT
-//						(new AlertDialog.Builder(ManageAccounts.this))
-//						.setTitle(R.string.timezone)
-//						.setSingleChoiceItems(R.array.timezone_entries, 12, new DialogInterface.OnClickListener() {
-//							@Override
-//							public void onClick(DialogInterface dialog, int which) {
-//								sUpdateWidget = true;
-//								setResultOK();
-//								ContentValues values = new ContentValues();
-//								values.put(Accounts.TIMEZONE, Double.parseDouble(getResources().getStringArray(R.array.timezone_values)[which]));
-//								getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Long.toString(sAccountId)});
-//								sAccountId = Sonet.INVALID_ACCOUNT_ID;
-//								dialog.cancel();
-//								// warn about new myspace permissions
-//								(new AlertDialog.Builder(ManageAccounts.this))
-//								.setTitle(R.string.myspace_permissions_title)
-//								.setMessage(R.string.myspace_permissions_message)
-//								.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-//									public void onClick(DialogInterface dialog, int id) {
-//										dialog.cancel();
-//									}
-//								})
-//								.show();
-//							}
-//						})
-//						.show();
-//					}
-//				});
-//			}                       
-//		}
-//	}
 }

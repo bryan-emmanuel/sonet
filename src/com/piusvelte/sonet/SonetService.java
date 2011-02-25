@@ -35,40 +35,25 @@ import static com.piusvelte.sonet.Sonet.BUZZ;
 import static com.piusvelte.sonet.Tokens.BUZZ_KEY;
 import static com.piusvelte.sonet.Tokens.BUZZ_SECRET;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 
 //import oauth.signpost.OAuthConsumer;
 //import oauth.signpost.exception.OAuthCommunicationException;
-import oauth.signpost.OAuthConsumer;
-import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
 import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
-import oauth.signpost.signature.HmacSha1MessageSigner;
 //import oauth.signpost.signature.SignatureMethod;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-//import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
-//import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.DefaultHttpClient;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -80,11 +65,6 @@ import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
 import com.piusvelte.sonet.Sonet.Widgets;
-
-import twitter4j.Status;
-import twitter4j.TwitterException;
-import twitter4j.TwitterFactory;
-import twitter4j.http.AccessToken;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -379,33 +359,45 @@ public class SonetService extends Service implements Runnable {
 						ByteArrayOutputStream status_bg_blob = new ByteArrayOutputStream();
 						status_bg_bmp.compress(Bitmap.CompressFormat.PNG, 100, status_bg_blob);
 						status_bg = status_bg_blob.toByteArray();
-						OAuthConsumer consumer;
-						HttpRequestBase request;
+						SonetOAuth sonetOAuth;
 						// if not a full_refresh, only update the status_bg
 						if (full_refresh) {
 							switch (service) {
 							case TWITTER:
 								String status_url = "http://twitter.com/%s/status/%s";
+								sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, accounts.getString(itoken),	accounts.getString(isecret));
 								try {
-									List<Status> statuses = (new TwitterFactory().getOAuthAuthorizedInstance(TWITTER_KEY, TWITTER_SECRET, new AccessToken(accounts.getString(itoken), accounts.getString(isecret)))).getFriendsTimeline();
-									// if there are updates, clear the cache
-									if (!statuses.isEmpty()) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
-									for (Status s : statuses) {
-										String screenname = s.getUser().getScreenName();
-										Date created = s.getCreatedAt();
+									String response = sonetOAuth.get("http://api.twitter.com/1/statuses/home_timeline.json");
+									JSONArray entries = new JSONArray(response);
+//									// if there are updates, clear the cache
+									if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
+									for (int e = 0; e < entries.length(); e++) {
+										JSONObject entry = entries.getJSONObject(e);
+										JSONObject user = entry.getJSONObject("user");
+										Date created = parseDate(entry.getString("created_at"), "EEE MMM dd HH:mm:ss z yyyy", accounts.getDouble(itimezone));
 										this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
-												String.format(status_url, screenname, Long.toString(s.getId())),
-												screenname,
-												getProfile(s.getUser().getProfileImageURL().toString()),
-												s.getText(),
+												String.format(status_url, user.getString("screen_name"), Long.toString(entry.getLong("id"))),
+												user.getString("name"),
+												getProfile(user.getString("profile_image_url")),
+												entry.getString("text"),
 												service,
 												getCreatedText(now, created, time24hr),
 												appWidgetId,
 												accountId,
 												status_bg));
 									}
-								} catch (TwitterException te) {
-									Log.e(TAG, te.toString());
+								} catch (ClientProtocolException e) {
+									Log.e(TAG,e.toString());
+								} catch (OAuthMessageSignerException e) {
+									Log.e(TAG,e.toString());
+								} catch (OAuthExpectationFailedException e) {
+									Log.e(TAG,e.toString());
+								} catch (OAuthCommunicationException e) {
+									Log.e(TAG,e.toString());
+								} catch (IOException e) {
+									Log.e(TAG,e.toString());
+								} catch (JSONException e) {
+									Log.e(TAG,e.toString());
 								}
 								break;
 							case FACEBOOK:
@@ -489,46 +481,11 @@ public class SonetService extends Service implements Runnable {
 								source = "source",
 								url = "url",
 								author = "author";
-
-//								consumer = new CommonsHttpOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET, SignatureMethod.HMAC_SHA1);
-								consumer = new CommonsHttpOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET);
-								consumer.setTokenWithSecret(accounts.getString(itoken),	accounts.getString(isecret));
-								consumer.setMessageSigner(new HmacSha1MessageSigner());
-								request = new HttpGet("http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
-
+								sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
-
-									consumer.sign(request);
-									HttpClient httpClient = new DefaultHttpClient();
-									HttpResponse httpResponse = httpClient.execute(request);
-									StatusLine statusLine = httpResponse.getStatusLine();
-									HttpEntity entity = httpResponse.getEntity();
-
-									switch(statusLine.getStatusCode()) {
-									case 200:
-									case 201:
-										String response = "";
-										if (entity != null) {
-											InputStream is = entity.getContent();
-											BufferedReader reader = new BufferedReader(new
-													InputStreamReader(is));
-											StringBuilder sb = new StringBuilder();
-
-											String line = null;
-											try {
-												while ((line = reader.readLine()) != null) {
-													sb.append(line + "\n");
-												}
-											} catch (IOException e) {
-												e.printStackTrace();
-											} finally {
-												try {
-													is.close();
-												} catch (IOException e) {
-													e.printStackTrace();
-												}
-											}
-											response = sb.toString();
+									String response = sonetOAuth.get("http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
+									Log.v(TAG,"myspace:"+response);
+									if (response != null) {
 											JSONObject jobj = new JSONObject(response);
 											JSONArray entries = jobj.getJSONArray("entry");
 											// if there are updates, clear the cache
@@ -548,9 +505,7 @@ public class SonetService extends Service implements Runnable {
 														accountId,
 														status_bg));
 											}
-										}
-										break;
-									default:
+									} else {
 										// warn about myspace permissions
 										ContentValues values = new ContentValues();
 										values.put(Statuses.FRIEND, getString(R.string.myspace_permissions_title));
@@ -560,9 +515,7 @@ public class SonetService extends Service implements Runnable {
 										values.put(Statuses.ACCOUNT, accountId);
 										values.put(Statuses.STATUS_BG, status_bg);
 										this.getContentResolver().insert(Statuses.CONTENT_URI, values);
-										break;
 									}
-
 								} catch (ClientProtocolException e) {
 									Log.e(TAG, e.toString());
 								} catch (IOException e) {
@@ -578,94 +531,40 @@ public class SonetService extends Service implements Runnable {
 								}
 								break;
 							case BUZZ:
-//								consumer = new CommonsHttpOAuthConsumer(BUZZ_KEY, BUZZ_SECRET, SignatureMethod.HMAC_SHA1);
-								consumer = new CommonsHttpOAuthConsumer(BUZZ_KEY, BUZZ_SECRET);
-								consumer.setTokenWithSecret(accounts.getString(itoken),	accounts.getString(isecret));
-								consumer.setMessageSigner(new HmacSha1MessageSigner());
-								request = new HttpGet("https://www.googleapis.com/buzz/v1/activities/?alt=json");
-
+								sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
-
-									consumer.sign(request);
-									HttpClient httpClient = new DefaultHttpClient();
-									HttpResponse httpResponse = httpClient.execute(request);
-									StatusLine statusLine = httpResponse.getStatusLine();
-									HttpEntity entity = httpResponse.getEntity();
-
-									switch(statusLine.getStatusCode()) {
-									case 200:
-									case 201:
-										String response = "";
-										if (entity != null) {
-											InputStream is = entity.getContent();
-											BufferedReader reader = new BufferedReader(new
-													InputStreamReader(is));
-											StringBuilder sb = new StringBuilder();
-
-											String line = null;
-											try {
-												while ((line = reader.readLine()) != null) {
-													sb.append(line + "\n");
-												}
-											} catch (IOException e) {
-												e.printStackTrace();
-											} finally {
-												try {
-													is.close();
-												} catch (IOException e) {
-													e.printStackTrace();
-												}
-											}
-											response = sb.toString();
-											Log.v(TAG,"buzz:"+response);
-//											JSONObject jobj = new JSONObject(response);
-//											JSONArray entries = jobj.getJSONArray("entry");
-//											// if there are updates, clear the cache
-//											if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
-//											for (int e = 0; e < entries.length(); e++) {
-//												JSONObject entry = entries.getJSONObject(e);
-//												JSONObject authorObj = entry.getJSONObject(author);
-//												Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", accounts.getDouble(itimezone));
-//												this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
-//														entry.getJSONObject(source).getString(url),
-//														authorObj.getString(displayName),
-//														getProfile(authorObj.getString(thumbnailUrl)),
-//														entry.getString(status),
-//														service,
-//														getCreatedText(now, created, time24hr),
-//														appWidgetId,
-//														accountId,
-//														status_bg));
-//											}
-										}
-										break;
-									default:
-										// warn about myspace permissions
-										ContentValues values = new ContentValues();
-										values.put(Statuses.FRIEND, getString(R.string.myspace_permissions_title));
-										values.put(Statuses.MESSAGE, getString(R.string.myspace_permissions_message));
-										values.put(Statuses.SERVICE, service);
-										values.put(Statuses.WIDGET, appWidgetId);
-										values.put(Statuses.ACCOUNT, accountId);
-										values.put(Statuses.STATUS_BG, status_bg);
-										this.getContentResolver().insert(Statuses.CONTENT_URI, values);
-										break;
-									}
-
+									String response = sonetOAuth.get("https://www.googleapis.com/buzz/v1/activities/@me/@consumption?alt=json");
+									Log.v(TAG,"buzz:"+response);
+//									JSONObject jobj = new JSONObject(response);
+//									JSONArray entries = jobj.getJSONArray("entry");
+//									// if there are updates, clear the cache
+//									if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
+//									for (int e = 0; e < entries.length(); e++) {
+//										JSONObject entry = entries.getJSONObject(e);
+//										JSONObject authorObj = entry.getJSONObject(author);
+//										Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", accounts.getDouble(itimezone));
+//										this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
+//												entry.getJSONObject(source).getString(url),
+//												authorObj.getString(displayName),
+//												getProfile(authorObj.getString(thumbnailUrl)),
+//												entry.getString(status),
+//												service,
+//												getCreatedText(now, created, time24hr),
+//												appWidgetId,
+//												accountId,
+//												status_bg));
+//									}
 								} catch (ClientProtocolException e) {
-									Log.e(TAG, e.toString());
-								} catch (IOException e) {
-									Log.e(TAG, e.toString());
+									Log.e(TAG,e.toString());
 								} catch (OAuthMessageSignerException e) {
-									Log.e(TAG, e.toString());
+									Log.e(TAG,e.toString());
 								} catch (OAuthExpectationFailedException e) {
-									Log.e(TAG, e.toString());
+									Log.e(TAG,e.toString());
 								} catch (OAuthCommunicationException e) {
-									e.printStackTrace();
+									Log.e(TAG,e.toString());
+								} catch (IOException e) {
+									Log.e(TAG,e.toString());
 								}
-//								} catch (JSONException e) {
-//									Log.e(TAG, e.toString());
-//								}
 								break;
 							}
 						} else {

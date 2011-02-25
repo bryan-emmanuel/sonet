@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
-import oauth.signpost.OAuth;
 import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
@@ -73,9 +72,9 @@ import android.widget.TextView;
 
 public class OAuthLogin extends Activity {
 	private static final String TAG = "OAuthLogin";
-	private static Uri TWITTER_CALLBACK = Uri.parse("sonet://twitter");
-	private static Uri BUZZ_CALLBACK = Uri.parse("sonet://Sonet");
-	private static Uri MYSPACE_CALLBACK = Uri.parse("sonet://myspace");
+	private static Uri TWITTER_CALLBACK = Uri.parse("twitter://Sonet");
+	private static Uri BUZZ_CALLBACK = Uri.parse("buzz://Sonet");
+	private static Uri MYSPACE_CALLBACK = Uri.parse("myspace://Sonet");
 	private TextView mMessageView;
 	private SonetOAuth mSonetOAuth;
 
@@ -166,7 +165,7 @@ public class OAuthLogin extends Activity {
 				public boolean shouldOverrideUrlLoading(WebView view, String url) {
 					if (url != null) {
 						Uri uri = Uri.parse(url);
-						if (TWITTER_CALLBACK.getHost().equals(uri.getHost())) {
+						if (TWITTER_CALLBACK.getScheme().equals(uri.getScheme())) {
 							try {
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
 								JSONObject jobj = new JSONObject(mSonetOAuth.get("http://api.twitter.com/1/account/verify_credentials.json"));
@@ -176,7 +175,7 @@ public class OAuthLogin extends Activity {
 								values.put(Accounts.SECRET, mSonetOAuth.getTokenSecret());
 								values.put(Accounts.EXPIRY, 0);
 								values.put(Accounts.SERVICE, TWITTER);
-								values.put(Accounts.TIMEZONE, 0);
+								values.put(Accounts.TIMEZONE, 0);//tweets are in local time; //jobj.getString("utc_offset")
 								values.put(Accounts.WIDGET, ManageAccounts.sAppWidgetId);
 								if (ManageAccounts.sAccountId != Sonet.INVALID_ACCOUNT_ID) {
 									getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Long.toString(ManageAccounts.sAccountId)});
@@ -198,50 +197,50 @@ public class OAuthLogin extends Activity {
 							} catch (IOException e) {
 								Log.e(TAG, e.getMessage());
 							}
-						} else if (MYSPACE_CALLBACK.getHost().equals(uri.getHost())) {
+						} else if (MYSPACE_CALLBACK.getScheme().equals(uri.getScheme())) {
 							try {
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
 								String response = mSonetOAuth.get("http://opensocial.myspace.com/1.0/people/@me/@self");
 								Log.v(TAG,"response:"+response);
 								final String accountId;
 								JSONObject jobj = new JSONObject(response);
-//								ContentValues values = new ContentValues();
-//								values.put(Accounts.USERNAME, "");
-//								values.put(Accounts.TOKEN, mSonetOAuth.getToken());
-//								values.put(Accounts.SECRET, mSonetOAuth.getTokenSecret());
-//								values.put(Accounts.EXPIRY, 0);
-//								values.put(Accounts.SERVICE, MYSPACE);
-//								values.put(Accounts.TIMEZONE, 0);
-//								values.put(Accounts.WIDGET, ManageAccounts.sAppWidgetId);
-//								if (ManageAccounts.sAccountId != Sonet.INVALID_ACCOUNT_ID) {
-//									accountId = Long.toString(ManageAccounts.sAccountId);
-//									getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{accountId});
-//									ManageAccounts.sAccountId = Sonet.INVALID_ACCOUNT_ID;
-//								} else accountId = getContentResolver().insert(Accounts.CONTENT_URI, values).getLastPathSegment();
-//								// get the timezone, index set to GMT
-//								(new AlertDialog.Builder(OAuthLogin.this))
-//								.setTitle(R.string.timezone)
-//								.setSingleChoiceItems(R.array.timezone_entries, 12, new DialogInterface.OnClickListener() {
-//									@Override
-//									public void onClick(DialogInterface dialog, int which) {
-//										ManageAccounts.sUpdateWidget = true;
-//										ContentValues values = new ContentValues();
-//										values.put(Accounts.TIMEZONE, Integer.parseInt(getResources().getStringArray(R.array.timezone_values)[which]));
-//										getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{accountId});
-//										dialog.cancel();
-//										// warn about new myspace permissions
-//										(new AlertDialog.Builder(OAuthLogin.this))
-//										.setTitle(R.string.myspace_permissions_title)
-//										.setMessage(R.string.myspace_permissions_message)
-//										.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-//											public void onClick(DialogInterface dialog, int id) {
-//												dialog.cancel();
-//											}
-//										})
-//										.show();
-//									}
-//								})
-//								.show();
+								//								ContentValues values = new ContentValues();
+								//								values.put(Accounts.USERNAME, "");
+								//								values.put(Accounts.TOKEN, mSonetOAuth.getToken());
+								//								values.put(Accounts.SECRET, mSonetOAuth.getTokenSecret());
+								//								values.put(Accounts.EXPIRY, 0);
+								//								values.put(Accounts.SERVICE, MYSPACE);
+								//								values.put(Accounts.TIMEZONE, 0);
+								//								values.put(Accounts.WIDGET, ManageAccounts.sAppWidgetId);
+								//								if (ManageAccounts.sAccountId != Sonet.INVALID_ACCOUNT_ID) {
+								//									accountId = Long.toString(ManageAccounts.sAccountId);
+								//									getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{accountId});
+								//									ManageAccounts.sAccountId = Sonet.INVALID_ACCOUNT_ID;
+								//								} else accountId = getContentResolver().insert(Accounts.CONTENT_URI, values).getLastPathSegment();
+								//								// get the timezone, index set to GMT
+								//								(new AlertDialog.Builder(OAuthLogin.this))
+								//								.setTitle(R.string.timezone)
+								//								.setSingleChoiceItems(R.array.timezone_entries, 12, new DialogInterface.OnClickListener() {
+								//									@Override
+								//									public void onClick(DialogInterface dialog, int which) {
+								//										ManageAccounts.sUpdateWidget = true;
+								//										ContentValues values = new ContentValues();
+								//										values.put(Accounts.TIMEZONE, Integer.parseInt(getResources().getStringArray(R.array.timezone_values)[which]));
+								//										getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{accountId});
+								//										dialog.cancel();
+								//										// warn about new myspace permissions
+								//										(new AlertDialog.Builder(OAuthLogin.this))
+								//										.setTitle(R.string.myspace_permissions_title)
+								//										.setMessage(R.string.myspace_permissions_message)
+								//										.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+								//											public void onClick(DialogInterface dialog, int id) {
+								//												dialog.cancel();
+								//											}
+								//										})
+								//										.show();
+								//									}
+								//								})
+								//								.show();
 							} catch (OAuthMessageSignerException e) {
 								Log.e(TAG, e.getMessage());
 							} catch (OAuthNotAuthorizedException e) {
@@ -258,27 +257,25 @@ public class OAuthLogin extends Activity {
 								Log.e(TAG, e.getMessage());
 							}
 
-						} else if (BUZZ_CALLBACK.getHost().equals(uri.getHost())) {
+						} else if (BUZZ_CALLBACK.getScheme().equals(uri.getScheme())) {
 							try {
 								mWebView.setVisibility(View.INVISIBLE);
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
-								String response = mSonetOAuth.get("https://www.googleapis.com/buzz/v1/people/@me/@self&alt=json");
-								Log.v(TAG,"response:"+response);
-								JSONObject jobj = new JSONObject(response);
-								//								ContentValues values = new ContentValues();
-								// need to get username
-								//								values.put(Accounts.USERNAME, "");
-								//								values.put(Accounts.TOKEN, mSonetOAuth.getToken());
-								//								values.put(Accounts.SECRET, mSonetOAuth.getTokenSecret());
-								//								values.put(Accounts.EXPIRY, 0);
-								//								values.put(Accounts.SERVICE, BUZZ);
-								//								values.put(Accounts.TIMEZONE, 0);
-								//								values.put(Accounts.WIDGET, ManageAccounts.sAppWidgetId);
-								//								if (ManageAccounts.sAccountId != Sonet.INVALID_ACCOUNT_ID) {
-								//									getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Long.toString(ManageAccounts.sAccountId)});
-								//									ManageAccounts.sAccountId = Sonet.INVALID_ACCOUNT_ID;
-								//								} else getContentResolver().insert(Accounts.CONTENT_URI, values);
-								//								ManageAccounts.sUpdateWidget = true;
+								String username = new JSONObject(mSonetOAuth.get("https://www.googleapis.com/buzz/v1/people/@me/@self?alt=json")).getJSONObject("data").getString("displayName");
+								Log.v(TAG,"response:"+username);
+								ContentValues values = new ContentValues();
+								values.put(Accounts.USERNAME, username);
+								values.put(Accounts.TOKEN, mSonetOAuth.getToken());
+								values.put(Accounts.SECRET, mSonetOAuth.getTokenSecret());
+								values.put(Accounts.EXPIRY, 0);
+								values.put(Accounts.SERVICE, BUZZ);
+								values.put(Accounts.TIMEZONE, 0);
+								values.put(Accounts.WIDGET, ManageAccounts.sAppWidgetId);
+								if (ManageAccounts.sAccountId != Sonet.INVALID_ACCOUNT_ID) {
+									getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Long.toString(ManageAccounts.sAccountId)});
+									ManageAccounts.sAccountId = Sonet.INVALID_ACCOUNT_ID;
+								} else getContentResolver().insert(Accounts.CONTENT_URI, values);
+								ManageAccounts.sUpdateWidget = true;
 							} catch (OAuthMessageSignerException e) {
 								Log.e(TAG, e.getMessage());
 							} catch (OAuthNotAuthorizedException e) {
