@@ -128,7 +128,7 @@ public class OAuthLogin extends Activity {
 				case BUZZ:
 					mSonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET);
 					try {
-						sonetWebView.open(mSonetOAuth.getAuthUrl(BUZZ_URL_REQUEST + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8"), BUZZ_URL_ACCESS, BUZZ_URL_AUTHORIZE + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + getString(R.string.app_name) + "&alt=json", BUZZ_CALLBACK.toString(), true));
+						sonetWebView.open(mSonetOAuth.getAuthUrl(BUZZ_URL_REQUEST + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + getString(R.string.app_name), BUZZ_URL_ACCESS, BUZZ_URL_AUTHORIZE + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + getString(R.string.app_name) + "&btmpl=mobile", BUZZ_CALLBACK.toString(), true));
 					} catch (OAuthMessageSignerException e) {
 						Log.e(TAG,e.toString());
 						this.finish();

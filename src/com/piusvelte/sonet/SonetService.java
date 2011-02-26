@@ -19,6 +19,7 @@
  */
 package com.piusvelte.sonet;
 
+import static com.piusvelte.sonet.Sonet.BUZZ_SCOPE;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
@@ -38,6 +39,7 @@ import static com.piusvelte.sonet.Tokens.BUZZ_SECRET;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -533,7 +535,7 @@ public class SonetService extends Service implements Runnable {
 							case BUZZ:
 								sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
-									String response = sonetOAuth.get("https://www.googleapis.com/buzz/v1/activities/@me/@consumption?alt=json");
+									String response = sonetOAuth.get("https://www.googleapis.com/buzz/v1/activities/@me/@consumption?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&domain=" + getString(R.string.app_name) + "&alt=json");
 									Log.v(TAG,"buzz:"+response);
 //									JSONObject jobj = new JSONObject(response);
 //									JSONArray entries = jobj.getJSONArray("entry");

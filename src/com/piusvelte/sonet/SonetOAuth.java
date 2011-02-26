@@ -63,7 +63,7 @@ public class SonetOAuth {
 		this.mApiSecret = apiSecret;
 		mOAuthConsumer = new CommonsHttpOAuthConsumer(this.mApiKey, this.mApiSecret);
 		mOAuthConsumer.setMessageSigner(new HmacSha1MessageSigner());
-		mOAuthConsumer.setTokenWithSecret(token, tokenSecret);		
+		mOAuthConsumer.setTokenWithSecret(token, tokenSecret);
 	}
 	
 	public String getAuthUrl(String request, String access, String authorize, String callback, boolean isOAuth10a) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
