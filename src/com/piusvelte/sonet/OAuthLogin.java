@@ -128,7 +128,7 @@ public class OAuthLogin extends Activity {
 				case BUZZ:
 					mSonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET);
 					try {
-						sonetWebView.open(mSonetOAuth.getAuthUrl(BUZZ_URL_REQUEST + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + getString(R.string.app_name), BUZZ_URL_ACCESS, BUZZ_URL_AUTHORIZE + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + getString(R.string.app_name) + "&btmpl=mobile", BUZZ_CALLBACK.toString(), true));
+						sonetWebView.open(mSonetOAuth.getAuthUrl(BUZZ_URL_REQUEST + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + BUZZ_KEY, BUZZ_URL_ACCESS, BUZZ_URL_AUTHORIZE + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + BUZZ_KEY + "&btmpl=mobile", BUZZ_CALLBACK.toString(), true));
 					} catch (OAuthMessageSignerException e) {
 						Log.e(TAG,e.toString());
 						this.finish();
@@ -262,20 +262,21 @@ public class OAuthLogin extends Activity {
 								mWebView.setVisibility(View.INVISIBLE);
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
 								String username = new JSONObject(mSonetOAuth.get("https://www.googleapis.com/buzz/v1/people/@me/@self?alt=json")).getJSONObject("data").getString("displayName");
-								Log.v(TAG,"response:"+username);
-								ContentValues values = new ContentValues();
-								values.put(Accounts.USERNAME, username);
-								values.put(Accounts.TOKEN, mSonetOAuth.getToken());
-								values.put(Accounts.SECRET, mSonetOAuth.getTokenSecret());
-								values.put(Accounts.EXPIRY, 0);
-								values.put(Accounts.SERVICE, BUZZ);
-								values.put(Accounts.TIMEZONE, 0);
-								values.put(Accounts.WIDGET, ManageAccounts.sAppWidgetId);
-								if (ManageAccounts.sAccountId != Sonet.INVALID_ACCOUNT_ID) {
-									getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Long.toString(ManageAccounts.sAccountId)});
-									ManageAccounts.sAccountId = Sonet.INVALID_ACCOUNT_ID;
-								} else getContentResolver().insert(Accounts.CONTENT_URI, values);
-								ManageAccounts.sUpdateWidget = true;
+								if (username != null) {
+									ContentValues values = new ContentValues();
+									values.put(Accounts.USERNAME, username);
+									values.put(Accounts.TOKEN, mSonetOAuth.getToken());
+									values.put(Accounts.SECRET, mSonetOAuth.getTokenSecret());
+									values.put(Accounts.EXPIRY, 0);
+									values.put(Accounts.SERVICE, BUZZ);
+									values.put(Accounts.TIMEZONE, 0);
+									values.put(Accounts.WIDGET, ManageAccounts.sAppWidgetId);
+									if (ManageAccounts.sAccountId != Sonet.INVALID_ACCOUNT_ID) {
+										getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Long.toString(ManageAccounts.sAccountId)});
+										ManageAccounts.sAccountId = Sonet.INVALID_ACCOUNT_ID;
+									} else getContentResolver().insert(Accounts.CONTENT_URI, values);
+									ManageAccounts.sUpdateWidget = true;
+								}
 							} catch (OAuthMessageSignerException e) {
 								Log.e(TAG, e.getMessage());
 							} catch (OAuthNotAuthorizedException e) {
