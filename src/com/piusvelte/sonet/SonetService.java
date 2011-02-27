@@ -535,7 +535,7 @@ public class SonetService extends Service implements Runnable {
 							case BUZZ:
 								sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
-									String response = sonetOAuth.get("https://www.googleapis.com/buzz/v1/activities/@me/@consumption?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&domain=" + getString(R.string.app_name) + "&alt=json");
+									String response = sonetOAuth.get("https://www.googleapis.com/buzz/v1/activities/@me/@consumption?alt=json");
 									Log.v(TAG,"buzz:"+response);
 //									JSONObject jobj = new JSONObject(response);
 //									JSONArray entries = jobj.getJSONArray("entry");

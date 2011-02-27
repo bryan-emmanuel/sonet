@@ -47,21 +47,15 @@ public class SonetOAuth {
 
 	private OAuthConsumer mOAuthConsumer;
 	private OAuthProvider mOAuthProvider;
-	private String mApiKey;
-	private String mApiSecret;
 	private static final String TAG = "SonetOAuth";
 	
 	public SonetOAuth(String apiKey, String apiSecret) {
-		this.mApiKey = apiKey;
-		this.mApiSecret = apiSecret;
-		mOAuthConsumer = new CommonsHttpOAuthConsumer(this.mApiKey, this.mApiSecret);
+		mOAuthConsumer = new CommonsHttpOAuthConsumer(apiKey, apiSecret);
 		mOAuthConsumer.setMessageSigner(new HmacSha1MessageSigner());
 	}
 	
 	public SonetOAuth(String apiKey, String apiSecret, String token, String tokenSecret) {
-		this.mApiKey = apiKey;
-		this.mApiSecret = apiSecret;
-		mOAuthConsumer = new CommonsHttpOAuthConsumer(this.mApiKey, this.mApiSecret);
+		mOAuthConsumer = new CommonsHttpOAuthConsumer(apiKey, apiSecret);
 		mOAuthConsumer.setMessageSigner(new HmacSha1MessageSigner());
 		mOAuthConsumer.setTokenWithSecret(token, tokenSecret);
 	}
