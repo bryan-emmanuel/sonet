@@ -371,7 +371,7 @@ public class SonetService extends Service implements Runnable {
 								try {
 									String response = sonetOAuth.get("http://api.twitter.com/1/statuses/home_timeline.json");
 									JSONArray entries = new JSONArray(response);
-//									// if there are updates, clear the cache
+									//									// if there are updates, clear the cache
 									if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
 									for (int e = 0; e < entries.length(); e++) {
 										JSONObject entry = entries.getJSONObject(e);
@@ -488,25 +488,25 @@ public class SonetService extends Service implements Runnable {
 									String response = sonetOAuth.get("http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
 									Log.v(TAG,"myspace:"+response);
 									if (response != null) {
-											JSONObject jobj = new JSONObject(response);
-											JSONArray entries = jobj.getJSONArray("entry");
-											// if there are updates, clear the cache
-											if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
-											for (int e = 0; e < entries.length(); e++) {
-												JSONObject entry = entries.getJSONObject(e);
-												JSONObject authorObj = entry.getJSONObject(author);
-												Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", accounts.getDouble(itimezone));
-												this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
-														entry.getJSONObject(source).getString(url),
-														authorObj.getString(displayName),
-														getProfile(authorObj.getString(thumbnailUrl)),
-														entry.getString(status),
-														service,
-														getCreatedText(now, created, time24hr),
-														appWidgetId,
-														accountId,
-														status_bg));
-											}
+										JSONObject jobj = new JSONObject(response);
+										JSONArray entries = jobj.getJSONArray("entry");
+										// if there are updates, clear the cache
+										if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
+										for (int e = 0; e < entries.length(); e++) {
+											JSONObject entry = entries.getJSONObject(e);
+											JSONObject authorObj = entry.getJSONObject(author);
+											Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", accounts.getDouble(itimezone));
+											this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
+													entry.getJSONObject(source).getString(url),
+													authorObj.getString(displayName),
+													getProfile(authorObj.getString(thumbnailUrl)),
+													entry.getString(status),
+													service,
+													getCreatedText(now, created, time24hr),
+													appWidgetId,
+													accountId,
+													status_bg));
+										}
 									} else {
 										// warn about myspace permissions
 										ContentValues values = new ContentValues();
@@ -536,26 +536,29 @@ public class SonetService extends Service implements Runnable {
 								sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
 									String response = sonetOAuth.get("https://www.googleapis.com/buzz/v1/activities/@me/@consumption?alt=json");
-									Log.v(TAG,"buzz:"+response);
-//									JSONObject jobj = new JSONObject(response);
-//									JSONArray entries = jobj.getJSONArray("entry");
-//									// if there are updates, clear the cache
-//									if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
-//									for (int e = 0; e < entries.length(); e++) {
-//										JSONObject entry = entries.getJSONObject(e);
-//										JSONObject authorObj = entry.getJSONObject(author);
-//										Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", accounts.getDouble(itimezone));
-//										this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
-//												entry.getJSONObject(source).getString(url),
-//												authorObj.getString(displayName),
-//												getProfile(authorObj.getString(thumbnailUrl)),
-//												entry.getString(status),
-//												service,
-//												getCreatedText(now, created, time24hr),
-//												appWidgetId,
-//												accountId,
-//												status_bg));
-//									}
+									JSONArray entries = new JSONObject(response).getJSONObject("data").getJSONArray("items");
+									// if there are updates, clear the cache
+									if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
+									for (int e = 0; e < entries.length(); e++) {
+										JSONObject entry = entries.getJSONObject(e);
+										if (entry.has("published") && entry.has("actor") && entry.has("object")) {
+											Date created = parseDate(entry.getString("published"), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", accounts.getDouble(itimezone));
+											JSONObject actor = entry.getJSONObject("actor");
+											JSONObject object = entry.getJSONObject("object");
+											if (actor.has("name") && actor.has("thumbnailUrl") && object.has("originalContent")) {
+												this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
+														object.has("links") && object.getJSONObject("links").has("alternate") ? object.getJSONObject("links").getString("alternate") : "",
+																actor.getString("name"),
+																getProfile(actor.getString("thumbnailUrl")),
+																object.getString("originalContent"),
+																service,
+																getCreatedText(now, created, time24hr),
+																appWidgetId,
+																accountId,
+																status_bg));
+											}
+										}
+									}
 								} catch (ClientProtocolException e) {
 									Log.e(TAG,e.toString());
 								} catch (OAuthMessageSignerException e) {
@@ -565,6 +568,8 @@ public class SonetService extends Service implements Runnable {
 								} catch (OAuthCommunicationException e) {
 									Log.e(TAG,e.toString());
 								} catch (IOException e) {
+									Log.e(TAG,e.toString());
+								} catch (JSONException e) {
 									Log.e(TAG,e.toString());
 								}
 								break;
