@@ -19,7 +19,6 @@
  */
 package com.piusvelte.sonet;
 
-import static com.piusvelte.sonet.Sonet.BUZZ_SCOPE;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
@@ -36,10 +35,13 @@ import static com.piusvelte.sonet.Sonet.BUZZ;
 import static com.piusvelte.sonet.Tokens.BUZZ_KEY;
 import static com.piusvelte.sonet.Tokens.BUZZ_SECRET;
 
+import static com.piusvelte.sonet.Sonet.TWITTER_FEED;
+import static com.piusvelte.sonet.Sonet.MYSPACE_FEED;
+import static com.piusvelte.sonet.Sonet.BUZZ_FEED;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -369,7 +371,7 @@ public class SonetService extends Service implements Runnable {
 								String status_url = "http://twitter.com/%s/status/%s";
 								sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, accounts.getString(itoken),	accounts.getString(isecret));
 								try {
-									String response = sonetOAuth.get("http://api.twitter.com/1/statuses/home_timeline.json");
+									String response = sonetOAuth.get(TWITTER_FEED);
 									JSONArray entries = new JSONArray(response);
 									//									// if there are updates, clear the cache
 									if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
@@ -476,7 +478,6 @@ public class SonetService extends Service implements Runnable {
 								}
 								break;
 							case MYSPACE:
-								//								OAuthConsumer consumer = new DefaultOAuthConsumer(MYSPACE_KEY, MYSPACE_SECRET);
 								String displayName = "displayName",
 								moodStatusLastUpdated = "moodStatusLastUpdated",
 								thumbnailUrl = "thumbnailUrl",
@@ -485,7 +486,7 @@ public class SonetService extends Service implements Runnable {
 								author = "author";
 								sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
-									String response = sonetOAuth.get("http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source");
+									String response = sonetOAuth.get(MYSPACE_FEED);
 									Log.v(TAG,"myspace:"+response);
 									if (response != null) {
 										JSONObject jobj = new JSONObject(response);
@@ -535,7 +536,7 @@ public class SonetService extends Service implements Runnable {
 							case BUZZ:
 								sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
-									String response = sonetOAuth.get("https://www.googleapis.com/buzz/v1/activities/@me/@consumption?alt=json");
+									String response = sonetOAuth.get(BUZZ_FEED);
 									JSONArray entries = new JSONObject(response).getJSONObject("data").getJSONArray("items");
 									// if there are updates, clear the cache
 									if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});

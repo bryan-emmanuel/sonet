@@ -48,29 +48,29 @@ public class SonetOAuth {
 	private OAuthConsumer mOAuthConsumer;
 	private OAuthProvider mOAuthProvider;
 	private static final String TAG = "SonetOAuth";
-	
+
 	public SonetOAuth(String apiKey, String apiSecret) {
 		mOAuthConsumer = new CommonsHttpOAuthConsumer(apiKey, apiSecret);
 		mOAuthConsumer.setMessageSigner(new HmacSha1MessageSigner());
 	}
-	
+
 	public SonetOAuth(String apiKey, String apiSecret, String token, String tokenSecret) {
 		mOAuthConsumer = new CommonsHttpOAuthConsumer(apiKey, apiSecret);
 		mOAuthConsumer.setMessageSigner(new HmacSha1MessageSigner());
 		mOAuthConsumer.setTokenWithSecret(token, tokenSecret);
 	}
-	
+
 	public String getAuthUrl(String request, String access, String authorize, String callback, boolean isOAuth10a) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
 		mOAuthProvider = new CommonsHttpOAuthProvider(request, access, authorize);
 		mOAuthProvider.setOAuth10a(isOAuth10a);
 		String authUrl = mOAuthProvider.retrieveRequestToken(mOAuthConsumer, callback);
 		return authUrl;
 	}
-	
+
 	public void retrieveAccessToken(String verifier) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
 		mOAuthProvider.retrieveAccessToken(mOAuthConsumer, verifier);
 	}
-	
+
 	public String get(String url) throws ClientProtocolException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException {
 		HttpGet httpRequest = new HttpGet(url);
 		mOAuthConsumer.sign(httpRequest);
@@ -109,11 +109,11 @@ public class SonetOAuth {
 		}
 		return response;
 	}
-	
+
 	public String getToken() {
 		return mOAuthConsumer.getToken();
 	}
-	
+
 	public String getTokenSecret() {
 		return mOAuthConsumer.getTokenSecret();
 	}

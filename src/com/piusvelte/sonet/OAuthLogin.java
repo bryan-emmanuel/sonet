@@ -87,66 +87,38 @@ public class OAuthLogin extends Activity {
 			if (extras != null) {
 				int service = extras.getInt(Sonet.Accounts.SERVICE, Sonet.INVALID_SERVICE);
 				SonetWebView sonetWebView = new SonetWebView();
-				switch (service) {
-				case TWITTER:
-					mSonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET);
-					try {
+				try {
+					switch (service) {
+					case TWITTER:
+						mSonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET);
 						sonetWebView.open(mSonetOAuth.getAuthUrl(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE, TWITTER_CALLBACK.toString(), true));
-					} catch (OAuthMessageSignerException e) {
-						Log.e(TAG,e.toString());
-						this.finish();
-					} catch (OAuthNotAuthorizedException e) {
-						Log.e(TAG,e.toString());
-						this.finish();
-					} catch (OAuthExpectationFailedException e) {
-						Log.e(TAG,e.toString());
-						this.finish();
-					} catch (OAuthCommunicationException e) {
-						Log.e(TAG,e.toString());
-						this.finish();
-					}
-					break;
-				case MYSPACE:
-					Log.v(TAG,"MYSPACE");
-					mSonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET);
-					try {
+						break;
+					case MYSPACE:
+						Log.v(TAG,"MYSPACE");
+						mSonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET);
 						sonetWebView.open(mSonetOAuth.getAuthUrl(MYSPACE_URL_REQUEST, MYSPACE_URL_ACCESS, MYSPACE_URL_AUTHORIZE, MYSPACE_CALLBACK.toString(), true));
-					} catch (OAuthMessageSignerException e) {
-						Log.e(TAG,e.toString());
-						this.finish();
-					} catch (OAuthNotAuthorizedException e) {
-						Log.e(TAG,e.toString());
-						this.finish();
-					} catch (OAuthExpectationFailedException e) {
-						Log.e(TAG,e.toString());
-						this.finish();
-					} catch (OAuthCommunicationException e) {
-						Log.e(TAG,e.toString());
-						this.finish();
-					}
-					break;
-				case BUZZ:
-					mSonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET);
-					try {
+						break;
+					case BUZZ:
+						mSonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET);
 						sonetWebView.open(mSonetOAuth.getAuthUrl(BUZZ_URL_REQUEST + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + BUZZ_KEY, BUZZ_URL_ACCESS, BUZZ_URL_AUTHORIZE + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + BUZZ_KEY + "&btmpl=mobile", BUZZ_CALLBACK.toString(), true));
-					} catch (OAuthMessageSignerException e) {
-						Log.e(TAG,e.toString());
-						this.finish();
-					} catch (OAuthNotAuthorizedException e) {
-						Log.e(TAG,e.toString());
-						this.finish();
-					} catch (OAuthExpectationFailedException e) {
-						Log.e(TAG,e.toString());
-						this.finish();
-					} catch (OAuthCommunicationException e) {
-						Log.e(TAG,e.toString());
-						this.finish();
-					} catch (UnsupportedEncodingException e) {
-						Log.e(TAG,e.toString());
+						break;
+					default:
 						this.finish();
 					}
-					break;
-				default:
+				} catch (OAuthMessageSignerException e) {
+					Log.e(TAG,e.toString());
+					this.finish();
+				} catch (OAuthNotAuthorizedException e) {
+					Log.e(TAG,e.toString());
+					this.finish();
+				} catch (OAuthExpectationFailedException e) {
+					Log.e(TAG,e.toString());
+					this.finish();
+				} catch (OAuthCommunicationException e) {
+					Log.e(TAG,e.toString());
+					this.finish();
+				} catch (UnsupportedEncodingException e) {
+					Log.e(TAG,e.toString());
 					this.finish();
 				}
 			}
@@ -165,8 +137,8 @@ public class OAuthLogin extends Activity {
 				public boolean shouldOverrideUrlLoading(WebView view, String url) {
 					if (url != null) {
 						Uri uri = Uri.parse(url);
-						if (TWITTER_CALLBACK.getScheme().equals(uri.getScheme())) {
-							try {
+						try {
+							if (TWITTER_CALLBACK.getScheme().equals(uri.getScheme())) {
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
 								JSONObject jobj = new JSONObject(mSonetOAuth.get("http://api.twitter.com/1/account/verify_credentials.json"));
 								ContentValues values = new ContentValues();
@@ -182,23 +154,7 @@ public class OAuthLogin extends Activity {
 									ManageAccounts.sAccountId = Sonet.INVALID_ACCOUNT_ID;
 								} else getContentResolver().insert(Accounts.CONTENT_URI, values);
 								ManageAccounts.sUpdateWidget = true;
-							} catch (OAuthMessageSignerException e) {
-								Log.e(TAG, e.getMessage());
-							} catch (OAuthNotAuthorizedException e) {
-								Log.e(TAG, e.getMessage());
-							} catch (OAuthExpectationFailedException e) {
-								Log.e(TAG, e.getMessage());
-							} catch (OAuthCommunicationException e) {
-								Log.e(TAG, e.getMessage());
-							} catch (ClientProtocolException e) {
-								Log.e(TAG, e.getMessage());
-							} catch (JSONException e) {
-								Log.e(TAG, e.getMessage());
-							} catch (IOException e) {
-								Log.e(TAG, e.getMessage());
-							}
-						} else if (MYSPACE_CALLBACK.getScheme().equals(uri.getScheme())) {
-							try {
+							} else if (MYSPACE_CALLBACK.getScheme().equals(uri.getScheme())) {
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
 								String response = mSonetOAuth.get("http://opensocial.myspace.com/1.0/people/@me/@self");
 								Log.v(TAG,"response:"+response);
@@ -241,24 +197,7 @@ public class OAuthLogin extends Activity {
 								//									}
 								//								})
 								//								.show();
-							} catch (OAuthMessageSignerException e) {
-								Log.e(TAG, e.getMessage());
-							} catch (OAuthNotAuthorizedException e) {
-								Log.e(TAG, e.getMessage());
-							} catch (OAuthExpectationFailedException e) {
-								Log.e(TAG, e.getMessage());
-							} catch (OAuthCommunicationException e) {
-								Log.e(TAG, e.getMessage());
-							} catch (ClientProtocolException e) {
-								Log.e(TAG, e.getMessage());
-							} catch (JSONException e) {
-								Log.e(TAG, e.getMessage());
-							} catch (IOException e) {
-								Log.e(TAG, e.getMessage());
-							}
-
-						} else if (BUZZ_CALLBACK.getScheme().equals(uri.getScheme())) {
-							try {
+							} else if (BUZZ_CALLBACK.getScheme().equals(uri.getScheme())) {
 								mWebView.setVisibility(View.INVISIBLE);
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
 								String username = new JSONObject(mSonetOAuth.get("https://www.googleapis.com/buzz/v1/people/@me/@self?alt=json")).getJSONObject("data").getString("displayName");
@@ -277,22 +216,22 @@ public class OAuthLogin extends Activity {
 									} else getContentResolver().insert(Accounts.CONTENT_URI, values);
 									ManageAccounts.sUpdateWidget = true;
 								}
-							} catch (OAuthMessageSignerException e) {
-								Log.e(TAG, e.getMessage());
-							} catch (OAuthNotAuthorizedException e) {
-								Log.e(TAG, e.getMessage());
-							} catch (OAuthExpectationFailedException e) {
-								Log.e(TAG, e.getMessage());
-							} catch (OAuthCommunicationException e) {
-								Log.e(TAG, e.getMessage());
-							} catch (ClientProtocolException e) {
-								Log.e(TAG, e.getMessage());
-							} catch (JSONException e) {
-								Log.e(TAG, e.getMessage());
-							} catch (IOException e) {
-								Log.e(TAG, e.getMessage());
-							}
-						} else return false;// allow google to redirect
+							} else return false;// allow google to redirect
+						} catch (OAuthMessageSignerException e) {
+							Log.e(TAG, e.getMessage());
+						} catch (OAuthNotAuthorizedException e) {
+							Log.e(TAG, e.getMessage());
+						} catch (OAuthExpectationFailedException e) {
+							Log.e(TAG, e.getMessage());
+						} catch (OAuthCommunicationException e) {
+							Log.e(TAG, e.getMessage());
+						} catch (ClientProtocolException e) {
+							Log.e(TAG, e.getMessage());
+						} catch (JSONException e) {
+							Log.e(TAG, e.getMessage());
+						} catch (IOException e) {
+							Log.e(TAG, e.getMessage());
+						}
 					}
 					OAuthLogin.this.finish();
 					return true;
