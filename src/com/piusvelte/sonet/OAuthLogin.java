@@ -72,9 +72,9 @@ import android.widget.TextView;
 
 public class OAuthLogin extends Activity {
 	private static final String TAG = "OAuthLogin";
-	private static Uri TWITTER_CALLBACK = Uri.parse("twitter://Sonet");
-	private static Uri BUZZ_CALLBACK = Uri.parse("buzz://Sonet");
-	private static Uri MYSPACE_CALLBACK = Uri.parse("myspace://Sonet");
+	private static Uri TWITTER_CALLBACK = Uri.parse("sonet://twitter");
+	private static Uri BUZZ_CALLBACK = Uri.parse("sonet://buzz");
+	private static Uri MYSPACE_CALLBACK = Uri.parse("sonet://myspace");
 	private TextView mMessageView;
 	private SonetOAuth mSonetOAuth;
 
@@ -94,7 +94,6 @@ public class OAuthLogin extends Activity {
 						sonetWebView.open(mSonetOAuth.getAuthUrl(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE, TWITTER_CALLBACK.toString(), true));
 						break;
 					case MYSPACE:
-						Log.v(TAG,"MYSPACE");
 						mSonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET);
 						sonetWebView.open(mSonetOAuth.getAuthUrl(MYSPACE_URL_REQUEST, MYSPACE_URL_ACCESS, MYSPACE_URL_AUTHORIZE, MYSPACE_CALLBACK.toString(), true));
 						break;
@@ -138,7 +137,7 @@ public class OAuthLogin extends Activity {
 					if (url != null) {
 						Uri uri = Uri.parse(url);
 						try {
-							if (TWITTER_CALLBACK.getScheme().equals(uri.getScheme())) {
+							if (TWITTER_CALLBACK.getHost().equals(uri.getHost())) {
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
 								JSONObject jobj = new JSONObject(mSonetOAuth.get("http://api.twitter.com/1/account/verify_credentials.json"));
 								ContentValues values = new ContentValues();
@@ -154,7 +153,7 @@ public class OAuthLogin extends Activity {
 									ManageAccounts.sAccountId = Sonet.INVALID_ACCOUNT_ID;
 								} else getContentResolver().insert(Accounts.CONTENT_URI, values);
 								ManageAccounts.sUpdateWidget = true;
-							} else if (MYSPACE_CALLBACK.getScheme().equals(uri.getScheme())) {
+							} else if (MYSPACE_CALLBACK.getHost().equals(uri.getHost())) {
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
 								String response = mSonetOAuth.get("http://opensocial.myspace.com/1.0/people/@me/@self");
 								Log.v(TAG,"response:"+response);
@@ -197,7 +196,7 @@ public class OAuthLogin extends Activity {
 								//									}
 								//								})
 								//								.show();
-							} else if (BUZZ_CALLBACK.getScheme().equals(uri.getScheme())) {
+							} else if (BUZZ_CALLBACK.getHost().equals(uri.getHost())) {
 								mWebView.setVisibility(View.INVISIBLE);
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
 								String username = new JSONObject(mSonetOAuth.get("https://www.googleapis.com/buzz/v1/people/@me/@self?alt=json")).getJSONObject("data").getString("displayName");
