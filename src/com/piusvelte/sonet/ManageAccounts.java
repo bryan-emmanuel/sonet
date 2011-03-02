@@ -32,6 +32,7 @@ import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Widgets;
 
 import static com.piusvelte.sonet.Sonet.BUZZ;
+import static com.piusvelte.sonet.Sonet.SALESFORCE;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -210,6 +211,9 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			startActivity(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, service));
 			break;
 		case BUZZ:
+			startActivity(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, service));
+			break;
+		case SALESFORCE:
 			startActivity(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, service));
 			break;
 		}

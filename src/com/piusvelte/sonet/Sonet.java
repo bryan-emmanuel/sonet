@@ -27,8 +27,8 @@ public class Sonet {
 	public static final int FACEBOOK = 1;
 	public static final int MYSPACE = 2;
 	public static final String TWITTER_URL_REQUEST = "http://api.twitter.com/oauth/request_token";
-	public static final String TWITTER_URL_ACCESS = "http://api.twitter.com/oauth/access_token";
 	public static final String TWITTER_URL_AUTHORIZE = "http://api.twitter.com/oauth/authorize";
+	public static final String TWITTER_URL_ACCESS = "http://api.twitter.com/oauth/access_token";
 	public static final String TWITTER_FEED = "http://api.twitter.com/1/statuses/home_timeline.json";
 
 	public static final String[] FACEBOOK_PERMISSIONS = new String[] {"offline_access"};
@@ -45,10 +45,15 @@ public class Sonet {
 
 	public static final int BUZZ = 3;
 	public static final String BUZZ_URL_REQUEST = "https://www.google.com/accounts/OAuthGetRequestToken";
-	public static final String BUZZ_URL_ACCESS = "https://www.google.com/accounts/OAuthGetAccessToken";
 	public static final String BUZZ_URL_AUTHORIZE = "https://www.google.com/buzz/api/auth/OAuthAuthorizeToken";
+	public static final String BUZZ_URL_ACCESS = "https://www.google.com/accounts/OAuthGetAccessToken";
 	public static final String BUZZ_SCOPE = "https://www.googleapis.com/auth/buzz.readonly";
 	public static final String BUZZ_FEED = "https://www.googleapis.com/buzz/v1/activities/@me/@consumption?alt=json";
+	
+	public static final int SALESFORCE = 4;
+	public static final String SALESFORCE_URL_REQUEST = "https://login.salesforce.com/_nc_external/system/security/oauth/RequestTokenHandler";
+	public static final String SALESFORCE_URL_AUTHORIZE = "https://login.salesforce.com/setup/secur/RemoteAccessAuthorizationPage.apexp";
+	public static final String SALESFORCE_URL_ACCESS = "https://login.salesforce.com/_nc_external/system/security/oauth/AccessTokenHandler";
 
 	public static final int INVALID_SERVICE = -1;
 

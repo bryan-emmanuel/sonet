@@ -30,6 +30,8 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.util.Log;
@@ -70,9 +72,8 @@ public class SonetOAuth {
 	public void retrieveAccessToken(String verifier) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
 		mOAuthProvider.retrieveAccessToken(mOAuthConsumer, verifier);
 	}
-
-	public String get(String url) throws ClientProtocolException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException {
-		HttpGet httpRequest = new HttpGet(url);
+	
+	public String httpResponse(HttpUriRequest httpRequest) throws OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, ClientProtocolException, IOException {
 		mOAuthConsumer.sign(httpRequest);
 		HttpClient httpClient = new DefaultHttpClient();
 		HttpResponse httpResponse = httpClient.execute(httpRequest);
@@ -107,7 +108,15 @@ public class SonetOAuth {
 			Log.e(TAG,"get error:"+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
 			break;
 		}
-		return response;
+		return response;		
+	}
+
+	public String get(String url) throws ClientProtocolException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException {
+		return httpResponse(new HttpGet(url));
+	}
+
+	public String post(String url) throws ClientProtocolException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException {
+		return httpResponse(new HttpPost(url));
 	}
 
 	public String getToken() {

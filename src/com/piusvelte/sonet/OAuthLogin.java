@@ -54,6 +54,13 @@ import static com.piusvelte.sonet.Sonet.MYSPACE_URL_REQUEST;
 import static com.piusvelte.sonet.Tokens.MYSPACE_KEY;
 import static com.piusvelte.sonet.Tokens.MYSPACE_SECRET;
 
+import static com.piusvelte.sonet.Sonet.SALESFORCE;
+import static com.piusvelte.sonet.Sonet.SALESFORCE_URL_ACCESS;
+import static com.piusvelte.sonet.Sonet.SALESFORCE_URL_AUTHORIZE;
+import static com.piusvelte.sonet.Sonet.SALESFORCE_URL_REQUEST;
+import static com.piusvelte.sonet.Tokens.SALESFORCE_KEY;
+import static com.piusvelte.sonet.Tokens.SALESFORCE_SECRET;
+
 import com.piusvelte.sonet.Sonet.Accounts;
 
 import android.app.Activity;
@@ -75,6 +82,7 @@ public class OAuthLogin extends Activity {
 	private static Uri TWITTER_CALLBACK = Uri.parse("sonet://twitter");
 	private static Uri BUZZ_CALLBACK = Uri.parse("sonet://buzz");
 	private static Uri MYSPACE_CALLBACK = Uri.parse("sonet://myspace");
+	private static Uri SALESFORCE_CALLBACK = Uri.parse("sonet://salesforce");
 	private TextView mMessageView;
 	private SonetOAuth mSonetOAuth;
 
@@ -100,6 +108,10 @@ public class OAuthLogin extends Activity {
 					case BUZZ:
 						mSonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET);
 						sonetWebView.open(mSonetOAuth.getAuthUrl(BUZZ_URL_REQUEST + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + BUZZ_KEY, BUZZ_URL_ACCESS, BUZZ_URL_AUTHORIZE + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + BUZZ_KEY + "&btmpl=mobile", BUZZ_CALLBACK.toString(), true));
+						break;
+					case SALESFORCE:
+						mSonetOAuth = new SonetOAuth(SALESFORCE_KEY, SALESFORCE_SECRET);
+						sonetWebView.open(mSonetOAuth.getAuthUrl(SALESFORCE_URL_REQUEST, SALESFORCE_URL_ACCESS, SALESFORCE_URL_AUTHORIZE, SALESFORCE_CALLBACK.toString(), true));
 						break;
 					default:
 						this.finish();
@@ -135,6 +147,7 @@ public class OAuthLogin extends Activity {
 				@Override
 				public boolean shouldOverrideUrlLoading(WebView view, String url) {
 					if (url != null) {
+						Log.v(TAG,"url:"+url);
 						Uri uri = Uri.parse(url);
 						try {
 							if (TWITTER_CALLBACK.getHost().equals(uri.getHost())) {
@@ -215,6 +228,12 @@ public class OAuthLogin extends Activity {
 									} else getContentResolver().insert(Accounts.CONTENT_URI, values);
 									ManageAccounts.sUpdateWidget = true;
 								}
+							} else if (SALESFORCE_CALLBACK.getHost().equals(uri.getHost())) {
+									mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
+									String response = mSonetOAuth.post("https://login.salesforce.com/services/OAuth/u/21.0");
+									Log.v(TAG,"response:"+response);
+									//account info
+									//https://login.salesforce.com/ID/orgID/userID?Format=json
 							} else return false;// allow google to redirect
 						} catch (OAuthMessageSignerException e) {
 							Log.e(TAG, e.getMessage());
