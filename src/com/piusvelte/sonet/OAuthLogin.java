@@ -107,11 +107,11 @@ public class OAuthLogin extends Activity {
 						break;
 					case BUZZ:
 						mSonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET);
-						sonetWebView.open(mSonetOAuth.getAuthUrl(BUZZ_URL_REQUEST + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + BUZZ_KEY, BUZZ_URL_ACCESS, BUZZ_URL_AUTHORIZE + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + BUZZ_KEY + "&btmpl=mobile", BUZZ_CALLBACK.toString(), true));
+						sonetWebView.open(mSonetOAuth.getAuthUrl(BUZZ_URL_REQUEST + "&scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + BUZZ_KEY, BUZZ_URL_ACCESS, BUZZ_URL_AUTHORIZE + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + BUZZ_KEY + "&btmpl=mobile", BUZZ_CALLBACK.toString(), true));
 						break;
 					case SALESFORCE:
 						mSonetOAuth = new SonetOAuth(SALESFORCE_KEY, SALESFORCE_SECRET);
-						sonetWebView.open(mSonetOAuth.getAuthUrl(SALESFORCE_URL_REQUEST, SALESFORCE_URL_ACCESS, SALESFORCE_URL_AUTHORIZE, SALESFORCE_CALLBACK.toString(), true));
+						sonetWebView.open(mSonetOAuth.getAuthUrl(SALESFORCE_URL_REQUEST, SALESFORCE_URL_ACCESS, SALESFORCE_URL_AUTHORIZE, SALESFORCE_CALLBACK.toString(), true) + "&oauth_consumer_key=" + SALESFORCE_KEY);
 						break;
 					default:
 						this.finish();
@@ -146,8 +146,8 @@ public class OAuthLogin extends Activity {
 
 				@Override
 				public boolean shouldOverrideUrlLoading(WebView view, String url) {
+					Log.v(TAG,"url:"+url);
 					if (url != null) {
-						Log.v(TAG,"url:"+url);
 						Uri uri = Uri.parse(url);
 						try {
 							if (TWITTER_CALLBACK.getHost().equals(uri.getHost())) {
@@ -234,6 +234,10 @@ public class OAuthLogin extends Activity {
 									Log.v(TAG,"response:"+response);
 									//account info
 									//https://login.salesforce.com/ID/orgID/userID?Format=json
+							} else if (uri.getHost().contains("salesforce.com") && (uri.getQueryParameter("oauth_consumer_key") == null)) {
+								Log.v(TAG,"load:"+url + "&oauth_consumer_key=" + SALESFORCE_KEY);
+								view.loadUrl(url + "&oauth_consumer_key=" + SALESFORCE_KEY);
+								return true;
 							} else return false;// allow google to redirect
 						} catch (OAuthMessageSignerException e) {
 							Log.e(TAG, e.getMessage());

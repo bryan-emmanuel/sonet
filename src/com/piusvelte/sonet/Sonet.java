@@ -54,6 +54,7 @@ public class Sonet {
 	public static final String SALESFORCE_URL_REQUEST = "https://login.salesforce.com/_nc_external/system/security/oauth/RequestTokenHandler";
 	public static final String SALESFORCE_URL_AUTHORIZE = "https://login.salesforce.com/setup/secur/RemoteAccessAuthorizationPage.apexp";
 	public static final String SALESFORCE_URL_ACCESS = "https://login.salesforce.com/_nc_external/system/security/oauth/AccessTokenHandler";
+	public static final String SALESFORCE_FEED = "";
 
 	public static final int INVALID_SERVICE = -1;
 

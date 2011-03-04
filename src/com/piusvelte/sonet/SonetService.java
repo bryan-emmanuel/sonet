@@ -39,6 +39,11 @@ import static com.piusvelte.sonet.Sonet.TWITTER_FEED;
 import static com.piusvelte.sonet.Sonet.MYSPACE_FEED;
 import static com.piusvelte.sonet.Sonet.BUZZ_FEED;
 
+import static com.piusvelte.sonet.Sonet.SALESFORCE;
+import static com.piusvelte.sonet.Tokens.SALESFORCE_KEY;
+import static com.piusvelte.sonet.Tokens.SALESFORCE_SECRET;
+import static com.piusvelte.sonet.Sonet.SALESFORCE_FEED;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -537,6 +542,48 @@ public class SonetService extends Service implements Runnable {
 								sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
 									String response = sonetOAuth.get(BUZZ_FEED);
+									JSONArray entries = new JSONObject(response).getJSONObject("data").getJSONArray("items");
+									// if there are updates, clear the cache
+									if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
+									for (int e = 0; e < entries.length(); e++) {
+										JSONObject entry = entries.getJSONObject(e);
+										if (entry.has("published") && entry.has("actor") && entry.has("object")) {
+											Date created = parseDate(entry.getString("published"), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", accounts.getDouble(itimezone));
+											JSONObject actor = entry.getJSONObject("actor");
+											JSONObject object = entry.getJSONObject("object");
+											if (actor.has("name") && actor.has("thumbnailUrl") && object.has("originalContent")) {
+												this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
+														object.has("links") && object.getJSONObject("links").has("alternate") ? object.getJSONObject("links").getString("alternate") : "",
+																actor.getString("name"),
+																getProfile(actor.getString("thumbnailUrl")),
+																object.getString("originalContent"),
+																service,
+																getCreatedText(now, created, time24hr),
+																appWidgetId,
+																accountId,
+																status_bg));
+											}
+										}
+									}
+								} catch (ClientProtocolException e) {
+									Log.e(TAG,e.toString());
+								} catch (OAuthMessageSignerException e) {
+									Log.e(TAG,e.toString());
+								} catch (OAuthExpectationFailedException e) {
+									Log.e(TAG,e.toString());
+								} catch (OAuthCommunicationException e) {
+									Log.e(TAG,e.toString());
+								} catch (IOException e) {
+									Log.e(TAG,e.toString());
+								} catch (JSONException e) {
+									Log.e(TAG,e.toString());
+								}
+								break;
+							case SALESFORCE:
+								sonetOAuth = new SonetOAuth(SALESFORCE_KEY, SALESFORCE_SECRET, accounts.getString(itoken), accounts.getString(isecret));
+								try {
+									String response = sonetOAuth.get(SALESFORCE_FEED);
+									Log.v(TAG,"response:"+response);
 									JSONArray entries = new JSONObject(response).getJSONObject("data").getJSONArray("items");
 									// if there are updates, clear the cache
 									if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});

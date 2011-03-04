@@ -65,8 +65,7 @@ public class SonetOAuth {
 	public String getAuthUrl(String request, String access, String authorize, String callback, boolean isOAuth10a) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
 		mOAuthProvider = new CommonsHttpOAuthProvider(request, access, authorize);
 		mOAuthProvider.setOAuth10a(isOAuth10a);
-		String authUrl = mOAuthProvider.retrieveRequestToken(mOAuthConsumer, callback);
-		return authUrl;
+		return mOAuthProvider.retrieveRequestToken(mOAuthConsumer, callback);
 	}
 
 	public void retrieveAccessToken(String verifier) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
