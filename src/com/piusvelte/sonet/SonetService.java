@@ -492,7 +492,6 @@ public class SonetService extends Service implements Runnable {
 								sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
 									String response = sonetOAuth.get(MYSPACE_FEED);
-									Log.v(TAG,"myspace:"+response);
 									if (response != null) {
 										JSONObject jobj = new JSONObject(response);
 										JSONArray entries = jobj.getJSONArray("entry");

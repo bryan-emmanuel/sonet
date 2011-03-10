@@ -75,7 +75,6 @@ import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.TextView;
 
 public class OAuthLogin extends Activity {
 	private static final String TAG = "OAuthLogin";
@@ -83,7 +82,6 @@ public class OAuthLogin extends Activity {
 	private static Uri BUZZ_CALLBACK = Uri.parse("sonet://buzz");
 	private static Uri MYSPACE_CALLBACK = Uri.parse("sonet://myspace");
 	private static Uri SALESFORCE_CALLBACK = Uri.parse("sonet://salesforce");
-	private TextView mMessageView;
 	private SonetOAuth mSonetOAuth;
 
 	@Override
@@ -107,7 +105,7 @@ public class OAuthLogin extends Activity {
 						break;
 					case BUZZ:
 						mSonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET);
-						sonetWebView.open(mSonetOAuth.getAuthUrl(BUZZ_URL_REQUEST + "&scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + BUZZ_KEY, BUZZ_URL_ACCESS, BUZZ_URL_AUTHORIZE + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + BUZZ_KEY + "&btmpl=mobile", BUZZ_CALLBACK.toString(), true));
+						sonetWebView.open(mSonetOAuth.getAuthUrl(BUZZ_URL_REQUEST + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + BUZZ_KEY, BUZZ_URL_ACCESS, BUZZ_URL_AUTHORIZE + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + BUZZ_KEY + "&btmpl=mobile", BUZZ_CALLBACK.toString(), true));
 						break;
 					case SALESFORCE:
 						mSonetOAuth = new SonetOAuth(SALESFORCE_KEY, SALESFORCE_SECRET);
@@ -146,7 +144,6 @@ public class OAuthLogin extends Activity {
 
 				@Override
 				public boolean shouldOverrideUrlLoading(WebView view, String url) {
-					Log.v(TAG,"url:"+url);
 					if (url != null) {
 						Uri uri = Uri.parse(url);
 						try {
@@ -169,46 +166,52 @@ public class OAuthLogin extends Activity {
 							} else if (MYSPACE_CALLBACK.getHost().equals(uri.getHost())) {
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
 								String response = mSonetOAuth.get("http://opensocial.myspace.com/1.0/people/@me/@self");
-								Log.v(TAG,"response:"+response);
 								final String accountId;
 								JSONObject jobj = new JSONObject(response);
-								//								ContentValues values = new ContentValues();
-								//								values.put(Accounts.USERNAME, "");
-								//								values.put(Accounts.TOKEN, mSonetOAuth.getToken());
-								//								values.put(Accounts.SECRET, mSonetOAuth.getTokenSecret());
-								//								values.put(Accounts.EXPIRY, 0);
-								//								values.put(Accounts.SERVICE, MYSPACE);
-								//								values.put(Accounts.TIMEZONE, 0);
-								//								values.put(Accounts.WIDGET, ManageAccounts.sAppWidgetId);
-								//								if (ManageAccounts.sAccountId != Sonet.INVALID_ACCOUNT_ID) {
-								//									accountId = Long.toString(ManageAccounts.sAccountId);
-								//									getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{accountId});
-								//									ManageAccounts.sAccountId = Sonet.INVALID_ACCOUNT_ID;
-								//								} else accountId = getContentResolver().insert(Accounts.CONTENT_URI, values).getLastPathSegment();
-								//								// get the timezone, index set to GMT
-								//								(new AlertDialog.Builder(OAuthLogin.this))
-								//								.setTitle(R.string.timezone)
-								//								.setSingleChoiceItems(R.array.timezone_entries, 12, new DialogInterface.OnClickListener() {
-								//									@Override
-								//									public void onClick(DialogInterface dialog, int which) {
-								//										ManageAccounts.sUpdateWidget = true;
-								//										ContentValues values = new ContentValues();
-								//										values.put(Accounts.TIMEZONE, Integer.parseInt(getResources().getStringArray(R.array.timezone_values)[which]));
-								//										getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{accountId});
-								//										dialog.cancel();
-								//										// warn about new myspace permissions
-								//										(new AlertDialog.Builder(OAuthLogin.this))
-								//										.setTitle(R.string.myspace_permissions_title)
-								//										.setMessage(R.string.myspace_permissions_message)
-								//										.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-								//											public void onClick(DialogInterface dialog, int id) {
-								//												dialog.cancel();
-								//											}
-								//										})
-								//										.show();
-								//									}
-								//								})
-								//								.show();
+								ContentValues values = new ContentValues();
+								values.put(Accounts.USERNAME, jobj.getJSONObject("person").getString("displayName"));
+								values.put(Accounts.TOKEN, mSonetOAuth.getToken());
+								values.put(Accounts.SECRET, mSonetOAuth.getTokenSecret());
+								values.put(Accounts.EXPIRY, 0);
+								values.put(Accounts.SERVICE, MYSPACE);
+								values.put(Accounts.TIMEZONE, 0);
+								values.put(Accounts.WIDGET, ManageAccounts.sAppWidgetId);
+								if (ManageAccounts.sAccountId != Sonet.INVALID_ACCOUNT_ID) {
+									accountId = Long.toString(ManageAccounts.sAccountId);
+									getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{accountId});
+									ManageAccounts.sAccountId = Sonet.INVALID_ACCOUNT_ID;
+								} else accountId = getContentResolver().insert(Accounts.CONTENT_URI, values).getLastPathSegment();
+								// get the timezone, index set to GMT
+								OAuthLogin.this.runOnUiThread(new Runnable() {
+									@Override
+									public void run() {
+										(new AlertDialog.Builder(OAuthLogin.this))
+										.setTitle(R.string.timezone)
+										.setSingleChoiceItems(R.array.timezone_entries, 12, new DialogInterface.OnClickListener() {
+											@Override
+											public void onClick(DialogInterface dialog, int which) {
+												ManageAccounts.sUpdateWidget = true;
+												ContentValues values = new ContentValues();
+												values.put(Accounts.TIMEZONE, Integer.parseInt(getResources().getStringArray(R.array.timezone_values)[which]));
+												getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{accountId});
+												dialog.cancel();
+												// warn about new myspace permissions
+												(new AlertDialog.Builder(OAuthLogin.this))
+												.setTitle(R.string.myspace_permissions_title)
+												.setMessage(R.string.myspace_permissions_message)
+												.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+													public void onClick(DialogInterface dialog, int id) {
+														dialog.cancel();
+														OAuthLogin.this.finish();
+													}
+												})
+												.show();
+											}
+										})
+										.show();
+									}
+								});
+								return true;
 							} else if (BUZZ_CALLBACK.getHost().equals(uri.getHost())) {
 								mWebView.setVisibility(View.INVISIBLE);
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
@@ -229,11 +232,11 @@ public class OAuthLogin extends Activity {
 									ManageAccounts.sUpdateWidget = true;
 								}
 							} else if (SALESFORCE_CALLBACK.getHost().equals(uri.getHost())) {
-									mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
-									String response = mSonetOAuth.post("https://login.salesforce.com/services/OAuth/u/21.0");
-									Log.v(TAG,"response:"+response);
-									//account info
-									//https://login.salesforce.com/ID/orgID/userID?Format=json
+								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
+								String response = mSonetOAuth.post("https://login.salesforce.com/services/OAuth/u/21.0");
+								Log.v(TAG,"response:"+response);
+								//account info
+								//https://login.salesforce.com/ID/orgID/userID?Format=json
 							} else if (uri.getHost().contains("salesforce.com") && (uri.getQueryParameter("oauth_consumer_key") == null)) {
 								Log.v(TAG,"load:"+url + "&oauth_consumer_key=" + SALESFORCE_KEY);
 								view.loadUrl(url + "&oauth_consumer_key=" + SALESFORCE_KEY);

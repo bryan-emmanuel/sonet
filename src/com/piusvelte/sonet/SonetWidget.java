@@ -34,6 +34,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -108,6 +109,18 @@ public class SonetWidget extends AppWidgetProvider {
 
 	private void appWidgetReady(Context context, int appWidgetId) {
 
+		// set widget as scrollable
+		String widgetId = Integer.toString(appWidgetId);
+		Cursor c = context.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.SCROLLABLE}, Widgets.WIDGET + "=?", new String[]{widgetId}, null);
+		if (c.moveToFirst()) {
+			if (c.getInt(c.getColumnIndex(Widgets.SCROLLABLE)) != 1) {
+				ContentValues values = new ContentValues();
+				values.put(Widgets.SCROLLABLE, 1);
+				context.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets.WIDGET + "=?", new String[] {widgetId});
+			}
+		}
+		c.close();
+		
 		Intent replaceDummy = new Intent(LauncherIntent.Action.ACTION_SCROLL_WIDGET_START);
 
 		// Put widget info

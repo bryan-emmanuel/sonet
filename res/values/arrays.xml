@@ -34,14 +34,14 @@
 		<item>Facebook</item>
 		<item>MySpace</item>
 		<item>Buzz</item>
-		<item>Salesforce</item>
+<!--		<item>Salesforce</item>-->
 	</string-array>
 	<string-array name="service_values">
 		<item>0</item>
 		<item>1</item>
 		<item>2</item>
 		<item>3</item>
-		<item>4</item>
+<!--		<item>4</item>-->
 	</string-array>
 	<string-array name="textsize_entries">
 		<item>10</item>
