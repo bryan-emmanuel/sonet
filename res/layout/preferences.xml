@@ -57,6 +57,8 @@
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<CheckBox android:id="@+id/time24hr" android:text="@string/time24hr"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<CheckBox android:id="@+id/icon" android:text="@string/icon"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 		</LinearLayout>
 	</ScrollView>
 </RelativeLayout>

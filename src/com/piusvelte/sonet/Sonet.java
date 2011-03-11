@@ -118,6 +118,7 @@ public class Sonet {
 		public static final String MESSAGES_TEXTSIZE = "messages_textsize";
 		public static final String FRIEND_TEXTSIZE = "friend_textsize";
 		public static final String CREATED_TEXTSIZE = "created_textsize";
+		public static final String ICON = "icon";
 
 	}
 
@@ -141,6 +142,7 @@ public class Sonet {
 		// account specific settings per widget
 		public static final String ACCOUNT = "account";
 		public static final String STATUS_BG = "status_bg";
+		public static final String ICON = "icon";
 
 	}
 
@@ -172,6 +174,7 @@ public class Sonet {
 		// account specific settings per widget
 		public static final String ACCOUNT = "account";
 		public static final String STATUS_BG = "status_bg";
+		public static final String ICON = "icon";
 
 	}
 

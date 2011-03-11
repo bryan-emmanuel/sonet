@@ -138,7 +138,7 @@ public class SonetWidget extends AppWidgetProvider {
 		.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
 		.setData(Statuses_styles.CONTENT_URI)
 		.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-		PendingIntent pi = PendingIntent.getBroadcast(context, 0, i , 0);
+		PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
 
 		itemViews.SetBoundOnClickIntent(R.id.item, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.StatusesStylesColumns._id.ordinal());
 
@@ -162,6 +162,8 @@ public class SonetWidget extends AppWidgetProvider {
 		itemViews.setBoundFloat(R.id.friend, "setTextSize", SonetProvider.StatusesStylesColumns.friend_textsize.ordinal());
 		itemViews.setBoundFloat(R.id.created, "setTextSize", SonetProvider.StatusesStylesColumns.created_textsize.ordinal());
 		itemViews.setBoundFloat(R.id.message, "setTextSize", SonetProvider.StatusesStylesColumns.messages_textsize.ordinal());
+		
+		itemViews.setBoundBitmap(R.id.icon, "setImageBitmap", SonetProvider.StatusesStylesColumns.icon.ordinal(), 0);
 
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_REMOTEVIEWS, itemViews);
 
@@ -177,7 +179,7 @@ public class SonetWidget extends AppWidgetProvider {
 		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_URI, Statuses_styles.CONTENT_URI.toString());
 
 		// Other arguments for managed query
-		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_PROJECTION, new String[]{Statuses_styles._ID, Statuses_styles.CREATED, Statuses_styles.LINK, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.SERVICE, Statuses_styles.CREATEDTEXT, Statuses_styles.WIDGET, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG});
+		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_PROJECTION, new String[]{Statuses_styles._ID, Statuses_styles.CREATED, Statuses_styles.LINK, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.SERVICE, Statuses_styles.CREATEDTEXT, Statuses_styles.WIDGET, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON});
 		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION, Statuses_styles.WIDGET + "=?");
 		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION_ARGUMENTS, new String[]{Integer.toString(appWidgetId)});
 		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SORT_ORDER, Statuses_styles.CREATED + " desc");

@@ -52,6 +52,7 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 	private Button mCreated_color;
 	private Button mCreated_textsize;
 	private CheckBox mTime24hr;
+	private CheckBox mIcon;
 	private boolean mUpdateWidget = false;
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private long mAccountId = Sonet.INVALID_ACCOUNT_ID;
@@ -72,9 +73,10 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 		mCreated_color = (Button) findViewById(R.id.created_color);
 		mCreated_textsize = (Button) findViewById(R.id.created_textsize);
 		mTime24hr = (CheckBox) findViewById(R.id.time24hr);
+		mIcon = (CheckBox) findViewById(R.id.icon);
 
 		// get this account/widgets settings, falling back on the defaults...
-		Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(mAccountId)}, null);
+		Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(mAccountId)}, null);
 		if (c.moveToFirst()) {
 			mMessages_bg_color_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
 			mMessages_color_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_COLOR));
@@ -84,9 +86,10 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 			mCreated_color_value = c.getInt(c.getColumnIndex(Widgets.CREATED_COLOR));
 			mCreated_textsize_value = c.getInt(c.getColumnIndex(Widgets.CREATED_TEXTSIZE));
 			mTime24hr.setChecked(c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1);
+			mIcon.setChecked(c.getInt(c.getColumnIndex(Widgets.ICON)) == 1);
 		} else {
 			// fall back on widget settings
-			Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+			Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 			if (d.moveToFirst()) {
 				mMessages_bg_color_value = d.getInt(d.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
 				mMessages_color_value = d.getInt(d.getColumnIndex(Widgets.MESSAGES_COLOR));
@@ -96,9 +99,10 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 				mCreated_color_value = d.getInt(d.getColumnIndex(Widgets.CREATED_COLOR));
 				mCreated_textsize_value = d.getInt(d.getColumnIndex(Widgets.CREATED_TEXTSIZE));
 				mTime24hr.setChecked(d.getInt(d.getColumnIndex(Widgets.TIME24HR)) == 1);
+				mIcon.setChecked(d.getInt(d.getColumnIndex(Widgets.ICON)) == 1);
 			} else {
 				// fall back on user defaults
-				Cursor e = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
+				Cursor e = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON}, Widgets.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
 				if (e.moveToFirst()) {
 					mMessages_bg_color_value = e.getInt(e.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
 					mMessages_color_value = e.getInt(e.getColumnIndex(Widgets.MESSAGES_COLOR));
@@ -108,6 +112,7 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 					mCreated_color_value = e.getInt(e.getColumnIndex(Widgets.CREATED_COLOR));
 					mCreated_textsize_value = e.getInt(e.getColumnIndex(Widgets.CREATED_TEXTSIZE));
 					mTime24hr.setChecked(e.getInt(e.getColumnIndex(Widgets.TIME24HR)) == 1);
+					mIcon.setChecked(e.getInt(e.getColumnIndex(Widgets.ICON)) == 1);
 				} else {
 					// ultimately fall back on the app defaults
 					mMessages_bg_color_value = Sonet.default_message_bg_color;
@@ -129,6 +134,7 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 					values.put(Widgets.CREATED_COLOR, mCreated_color_value);
 					values.put(Widgets.CREATED_TEXTSIZE, mCreated_textsize_value);
 					values.put(Widgets.TIME24HR, false);
+					values.put(Widgets.ICON, true);
 					this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 				}
 				e.close();
@@ -144,6 +150,7 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 				values.put(Widgets.CREATED_COLOR, mCreated_color_value);
 				values.put(Widgets.CREATED_TEXTSIZE, mCreated_textsize_value);
 				values.put(Widgets.TIME24HR, false);
+				values.put(Widgets.ICON, true);
 				this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 			}
 			d.close();
@@ -159,6 +166,7 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 			values.put(Widgets.CREATED_COLOR, mCreated_color_value);
 			values.put(Widgets.CREATED_TEXTSIZE, mCreated_textsize_value);
 			values.put(Widgets.TIME24HR, false);
+			values.put(Widgets.ICON, true);
 			this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 		}
 		c.close();
@@ -171,6 +179,7 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 		mCreated_color.setOnClickListener(AccountSettings.this);
 		mCreated_textsize.setOnClickListener(AccountSettings.this);
 		mTime24hr.setOnCheckedChangeListener(mTime24hrListener);
+		mIcon.setOnCheckedChangeListener(mIconListener);
 
 	}
 
@@ -236,6 +245,14 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 		@Override
 		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 			updateDatabase(Widgets.TIME24HR, isChecked ? 1 : 0);
+		}
+	};
+
+	CompoundButton.OnCheckedChangeListener mIconListener =
+		new CompoundButton.OnCheckedChangeListener() {
+		@Override
+		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+			updateDatabase(Widgets.ICON, isChecked ? 1 : 0);
 		}
 	};
 

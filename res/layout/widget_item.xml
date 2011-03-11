@@ -59,4 +59,8 @@
 		android:layout_toRightOf="@id/profile" android:layout_width="fill_parent"
 		android:layout_height="wrap_content" android:text="@string/loading"
 		android:paddingRight="4dip" android:paddingBottom="4dip" />
+	<ImageView android:id="@+id/icon" android:layout_width="16dip"
+		android:layout_height="16dip" android:layout_alignParentRight="true"
+		android:layout_alignParentBottom="true" android:paddingRight="4dip"
+		android:paddingBottom="4dip" />
 </RelativeLayout>

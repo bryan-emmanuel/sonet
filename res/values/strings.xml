@@ -82,4 +82,5 @@
 	<string name="default_widget_settings">Default widget settings</string>
 	<string name="myspace_permissions_title">Update MySpace permissions</string>
 	<string name="myspace_permissions_message">To get MySpaces statuses, you must log into the MySpace website, go to My Stuff, Privacy Settings, External Apps, edit Sonet and enable \"Access my stream and my friends\' stream.\"</string>
+	<string name="icon">Include service icon</string>
 </resources>

@@ -101,8 +101,8 @@ import android.widget.RemoteViews;
 
 public class SonetService extends Service implements Runnable {
 	private static final String TAG = "SonetService";
-	private BroadcastReceiver mReceiver;
 	private Thread sThread;
+	private static int[] map_icons = new int[]{R.drawable.twitter, R.drawable.facebook, R.drawable.myspace, R.drawable.buzz};
 
 	@Override
 	public void onStart(Intent intent, int startId) {
@@ -126,15 +126,6 @@ public class SonetService extends Service implements Runnable {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		onStart(intent, startId);
 		return START_STICKY;
-	}
-
-	@Override
-	public void onDestroy() {
-		if (mReceiver != null) {
-			unregisterReceiver(mReceiver);
-			mReceiver = null;
-		}
-		super.onDestroy();
 	}
 
 	private static Object sLock = new Object();
@@ -201,7 +192,7 @@ public class SonetService extends Service implements Runnable {
 		return cal.getTime();
 	}
 
-	private ContentValues statusItem(long created, String link, String friend, byte[] profile, String message, int service, String createdText, int appWidgetId, int accountId, byte[] status_bg) {
+	private ContentValues statusItem(long created, String link, String friend, byte[] profile, String message, int service, String createdText, int appWidgetId, int accountId) {
 		ContentValues values = new ContentValues();
 		values.put(Statuses.CREATED, created);
 		values.put(Statuses.LINK, link);
@@ -212,7 +203,6 @@ public class SonetService extends Service implements Runnable {
 		values.put(Statuses.CREATEDTEXT, createdText);
 		values.put(Statuses.WIDGET, appWidgetId);
 		values.put(Statuses.ACCOUNT, accountId);
-		values.put(Statuses.STATUS_BG, status_bg);
 		return values;
 	}
 
@@ -224,8 +214,13 @@ public class SonetService extends Service implements Runnable {
 						: String.format("%s %d", getResources().getStringArray(R.array.months)[created.getMonth()], created.getDate());
 	}
 
-	private byte[] getProfile(String url) {
+	private byte[] getBlob(Bitmap bmp) {
 		ByteArrayOutputStream blob = new ByteArrayOutputStream();
+		if (bmp != null) bmp.compress(Bitmap.CompressFormat.PNG, 100, blob);
+		return blob.toByteArray();		
+	}
+
+	private byte[] getProfile(String url) {
 		Bitmap profile = null;
 		// get profile
 		try {
@@ -233,8 +228,7 @@ public class SonetService extends Service implements Runnable {
 		} catch (IOException e) {
 			Log.e(TAG,e.getMessage());
 		}
-		if (profile != null) profile.compress(Bitmap.CompressFormat.PNG, 100, blob);
-		return blob.toByteArray();
+		return getBlob(profile);
 	}
 
 	@Override
@@ -291,7 +285,8 @@ public class SonetService extends Service implements Runnable {
 				/* get statuses for all accounts
 				 * then sort them by datetime, descending
 				 */
-				Boolean time24hr;
+				Boolean time24hr,
+				icon;
 				int status_bg_color = -1;
 				byte[] status_bg;
 				Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY, Accounts.TIMEZONE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
@@ -338,23 +333,27 @@ public class SonetService extends Service implements Runnable {
 						int accountId = accounts.getInt(iaccountid),
 						service = accounts.getInt(iservice);
 						// get the settings form time24hr and bg_color
-						Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(accountId)}, null);
+						Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(accountId)}, null);
 						if (c.moveToFirst()) {
 							time24hr = c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1;
 							status_bg_color = c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
+							icon = c.getInt(c.getColumnIndex(Widgets.ICON)) == 1;
 						} else {
-							Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+							Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 							if (d.moveToFirst()) {
 								time24hr = d.getInt(d.getColumnIndex(Widgets.TIME24HR)) == 1;
 								status_bg_color = d.getInt(d.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
+								icon = d.getInt(d.getColumnIndex(Widgets.ICON)) == 1;
 							} else {
-								Cursor e = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR}, Widgets.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
+								Cursor e = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON}, Widgets.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
 								if (e.moveToFirst()) {
 									time24hr = e.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1;
 									status_bg_color = e.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
+									icon = e.getInt(e.getColumnIndex(Widgets.ICON)) == 1;
 								} else {
 									time24hr = false;
 									status_bg_color = Sonet.default_message_bg_color;
+									icon = true;
 								}
 								e.close();
 							}
@@ -369,7 +368,7 @@ public class SonetService extends Service implements Runnable {
 						status_bg_bmp.compress(Bitmap.CompressFormat.PNG, 100, status_bg_blob);
 						status_bg = status_bg_blob.toByteArray();
 						SonetOAuth sonetOAuth;
-						// if not a full_refresh, only update the status_bg
+						// if not a full_refresh, only update the status_bg and icons
 						if (full_refresh) {
 							switch (service) {
 							case TWITTER:
@@ -392,8 +391,7 @@ public class SonetService extends Service implements Runnable {
 												service,
 												getCreatedText(now, created, time24hr),
 												appWidgetId,
-												accountId,
-												status_bg));
+												accountId));
 									}
 								} catch (ClientProtocolException e) {
 									Log.e(TAG,e.toString());
@@ -469,8 +467,7 @@ public class SonetService extends Service implements Runnable {
 														service,
 														getCreatedText(now, created, time24hr),
 														appWidgetId,
-														accountId,
-														status_bg));
+														accountId));
 											}
 										}
 									}
@@ -509,8 +506,7 @@ public class SonetService extends Service implements Runnable {
 													service,
 													getCreatedText(now, created, time24hr),
 													appWidgetId,
-													accountId,
-													status_bg));
+													accountId));
 										}
 									} else {
 										// warn about myspace permissions
@@ -551,16 +547,20 @@ public class SonetService extends Service implements Runnable {
 											JSONObject actor = entry.getJSONObject("actor");
 											JSONObject object = entry.getJSONObject("object");
 											if (actor.has("name") && actor.has("thumbnailUrl") && object.has("originalContent")) {
+												link = "http://www.google.com/buzz";
+												if (object.has("links") && object.getJSONObject("links").has("alternate")) {
+													JSONArray links = object.getJSONObject("links").getJSONArray("alternate");
+													if (links.length() > 0) link = links.getJSONObject(0).getString("href");
+												}
 												this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
-														object.has("links") && object.getJSONObject("links").has("alternate") ? object.getJSONObject("links").getString("alternate") : "",
-																actor.getString("name"),
-																getProfile(actor.getString("thumbnailUrl")),
-																object.getString("originalContent"),
-																service,
-																getCreatedText(now, created, time24hr),
-																appWidgetId,
-																accountId,
-																status_bg));
+														link,
+														actor.getString("name"),
+														getProfile(actor.getString("thumbnailUrl")),
+														object.getString("originalContent"),
+														service,
+														getCreatedText(now, created, time24hr),
+														appWidgetId,
+														accountId));
 											}
 										}
 									}
@@ -601,8 +601,7 @@ public class SonetService extends Service implements Runnable {
 																service,
 																getCreatedText(now, created, time24hr),
 																appWidgetId,
-																accountId,
-																status_bg));
+																accountId));
 											}
 										}
 									}
@@ -621,11 +620,12 @@ public class SonetService extends Service implements Runnable {
 								}
 								break;
 							}
-						} else {
-							ContentValues values = new ContentValues();
-							values.put(Statuses.STATUS_BG, status_bg);
-							this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
 						}
+						// update the bg and icon
+						ContentValues values = new ContentValues();
+						values.put(Statuses.STATUS_BG, status_bg);
+						values.put(Statuses.ICON, icon ? getBlob(BitmapFactory.decodeResource(getResources(), map_icons[service])) : null);
+						this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
 						accounts.moveToNext();
 					}
 				} else this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}); // no accounts, clear cache
@@ -720,29 +720,6 @@ public class SonetService extends Service implements Runnable {
 			// replace with scrollable widget
 			if (scrollable) sendBroadcast(new Intent(this, SonetWidget.class).setAction(ACTION_BUILD_SCROLL).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId));
 			if (hasAccount && (interval > 0) && full_refresh) alarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
-		}
-		if (hasConnection) {
-			if (mReceiver != null) {
-				unregisterReceiver(mReceiver);
-				mReceiver = null;
-			}
-		} else if (full_refresh && (mReceiver == null)) {
-			// if there's no connection, listen for one
-			mReceiver = new BroadcastReceiver() {
-				@Override
-				public void onReceive(Context context, Intent intent) {
-					if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
-						if (((NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO)).isConnected()) {
-							synchronized (sLock) {
-								if ((sThread == null) || !sThread.isAlive()) (sThread = new Thread((Runnable) context)).start();
-							}								
-						}
-					}
-				}
-			};
-			IntentFilter f = new IntentFilter();
-			f.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
-			registerReceiver(mReceiver, f);	
 		}
 	}
 }
