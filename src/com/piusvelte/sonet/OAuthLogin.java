@@ -19,6 +19,9 @@
  */
 package com.piusvelte.sonet;
 
+import static com.piusvelte.sonet.Sonet.TOKEN;
+import static com.piusvelte.sonet.Sonet.EXPIRES;
+
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_ACCESS;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_AUTHORIZE;
@@ -26,8 +29,18 @@ import static com.piusvelte.sonet.Sonet.TWITTER_URL_REQUEST;
 import static com.piusvelte.sonet.Tokens.TWITTER_KEY;
 import static com.piusvelte.sonet.Tokens.TWITTER_SECRET;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 
 import oauth.signpost.exception.OAuthCommunicationException;
@@ -35,7 +48,13 @@ import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
 import oauth.signpost.exception.OAuthNotAuthorizedException;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -61,6 +80,19 @@ import static com.piusvelte.sonet.Sonet.SALESFORCE_URL_REQUEST;
 import static com.piusvelte.sonet.Tokens.SALESFORCE_KEY;
 import static com.piusvelte.sonet.Tokens.SALESFORCE_SECRET;
 
+import static com.piusvelte.sonet.Sonet.FACEBOOK;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_AUTHORIZE;
+import static com.piusvelte.sonet.Tokens.FACEBOOK_ID;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_PERMISSIONS;
+import static com.piusvelte.sonet.Sonet.GRAPH_BASE_URL;
+
+import static com.piusvelte.sonet.Sonet.FOURSQUARE;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_ACCESS;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_AUTHORIZE;
+import static com.piusvelte.sonet.Tokens.FOURSQUARE_KEY;
+import static com.piusvelte.sonet.Tokens.FOURSQUARE_SECRET;
+
+import com.facebook.android.Util;
 import com.piusvelte.sonet.Sonet.Accounts;
 
 import android.app.Activity;
@@ -70,6 +102,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.webkit.WebSettings;
@@ -82,6 +115,8 @@ public class OAuthLogin extends Activity {
 	private static Uri BUZZ_CALLBACK = Uri.parse("sonet://buzz");
 	private static Uri MYSPACE_CALLBACK = Uri.parse("sonet://myspace");
 	private static Uri SALESFORCE_CALLBACK = Uri.parse("sonet://salesforce");
+	private static Uri FACEBOOK_CALLBACK = Uri.parse("sonet://facebook"); // may need to use this> fbconnect://success
+	private static Uri FOURSQUARE_CALLBACK = Uri.parse("sonet://foursquare");
 	private SonetOAuth mSonetOAuth;
 
 	@Override
@@ -95,6 +130,22 @@ public class OAuthLogin extends Activity {
 				SonetWebView sonetWebView = new SonetWebView();
 				try {
 					switch (service) {
+					case FOURSQUARE:
+						sonetWebView.open(FOURSQUARE_URL_AUTHORIZE + "?" + "client_id=" + FOURSQUARE_KEY + "&response_type=code&redirect_uri=" + FOURSQUARE_CALLBACK + "&display=touch");
+						break;
+					case FACEBOOK:
+				        Bundle params = new Bundle();
+				        params.putString("client_id", FACEBOOK_ID);
+				        if (FACEBOOK_PERMISSIONS.length > 0) params.putString("scope", TextUtils.join(",", FACEBOOK_PERMISSIONS));
+			            params.putString("type", "user_agent");
+			            params.putString("redirect_uri", FACEBOOK_CALLBACK.toString());
+				        params.putString("display", "touch");
+				        params.putString("sdk", "android");
+//				        if (isSessionValid()) {
+//				            parameters.putString(TOKEN, getAccessToken());
+//				        }
+				        sonetWebView.open(FACEBOOK_URL_AUTHORIZE + "?" + encodeUrl(params));
+						break;
 					case TWITTER:
 						mSonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET);
 						sonetWebView.open(mSonetOAuth.getAuthUrl(TWITTER_URL_REQUEST, TWITTER_URL_ACCESS, TWITTER_URL_AUTHORIZE, TWITTER_CALLBACK.toString(), true));
@@ -133,6 +184,141 @@ public class OAuthLogin extends Activity {
 			}
 		}
 	}
+	
+	private String addAccount(String username, String token, String secret, int expiry, int service, int timezone) {
+		String accountId;
+		ContentValues values = new ContentValues();
+		values.put(Accounts.USERNAME, username);
+		values.put(Accounts.TOKEN, token);
+		values.put(Accounts.SECRET, secret);
+		values.put(Accounts.EXPIRY, expiry);
+		values.put(Accounts.SERVICE, service);
+		values.put(Accounts.TIMEZONE, timezone);
+		values.put(Accounts.WIDGET, ManageAccounts.sAppWidgetId);
+		if (ManageAccounts.sAccountId != Sonet.INVALID_ACCOUNT_ID) {
+			accountId = Long.toString(ManageAccounts.sAccountId);
+			getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Long.toString(ManageAccounts.sAccountId)});
+			ManageAccounts.sAccountId = Sonet.INVALID_ACCOUNT_ID;
+		} else accountId = getContentResolver().insert(Accounts.CONTENT_URI, values).getLastPathSegment();
+		ManageAccounts.sUpdateWidget = true;
+		return accountId;
+	}
+	
+	private String get(String url) {
+		HttpClient httpClient = new DefaultHttpClient();
+		HttpResponse httpResponse;
+		String response = null;
+		try {
+			httpResponse = httpClient.execute(new HttpGet(url));
+			StatusLine statusLine = httpResponse.getStatusLine();
+			HttpEntity entity = httpResponse.getEntity();
+
+			switch(statusLine.getStatusCode()) {
+			case 200:
+			case 201:
+				if (entity != null) {
+					InputStream is = entity.getContent();
+					BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+					StringBuilder sb = new StringBuilder();
+
+					String line = null;
+					try {
+						while ((line = reader.readLine()) != null) sb.append(line + "\n");
+					} catch (IOException e) {
+						e.printStackTrace();
+					} finally {
+						try {
+							is.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+					response = sb.toString();
+				}
+				break;
+			default:
+				Log.e(TAG,"get error:"+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
+				break;
+			}
+		} catch (ClientProtocolException e) {
+			Log.e(TAG,"error:" + e);
+		} catch (IOException e) {
+			Log.e(TAG,"error:" + e);
+		}
+		return response;
+	}
+
+	private static Bundle decodeUrl(String s) {
+        Bundle params = new Bundle();
+        if (s != null) {
+            String array[] = s.split("&");
+            for (String parameter : array) {
+                String v[] = parameter.split("=");
+                params.putString(v[0], v[1]);
+            }
+        }
+        return params;
+    }
+
+    public static String encodePostBody(Bundle parameters, String boundary) {
+        if (parameters == null) return "";
+        StringBuilder sb = new StringBuilder();
+        
+        for (String key : parameters.keySet()) {
+            if (parameters.getByteArray(key) != null) {
+        	    continue;
+            }
+        	
+            sb.append("Content-Disposition: form-data; name=\"" + key + 
+            		"\"\r\n\r\n" + parameters.getString(key));
+            sb.append("\r\n" + "--" + boundary + "\r\n");
+        }
+        
+        return sb.toString();
+    }
+
+    public static String encodeUrl(Bundle parameters) {
+        if (parameters == null) {
+        	return "";
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        boolean first = true;
+        for (String key : parameters.keySet()) {
+            if (first) first = false; else sb.append("&");
+            sb.append(key + "=" + parameters.getString(key));
+        }
+        return sb.toString();
+    }
+
+    public static String openUrl(String url, Bundle params) 
+          throws MalformedURLException, IOException {
+    	
+        url = url + "?" + encodeUrl(params);
+        HttpURLConnection conn = 
+            (HttpURLConnection) new URL(url).openConnection();
+        conn.setRequestProperty("User-Agent", System.getProperties().
+                getProperty("http.agent") + " FacebookAndroidSDK");
+        
+        String response = "";
+        try {
+        	response = read(conn.getInputStream());
+        } catch (FileNotFoundException e) {
+            // Error Stream contains JSON that we can parse to a FB error
+            response = read(conn.getErrorStream());
+        }
+        return response;
+    }
+
+    private static String read(InputStream in) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        BufferedReader r = new BufferedReader(new InputStreamReader(in), 1000);
+        for (String line = r.readLine(); line != null; line = r.readLine()) {
+            sb.append(line);
+        }
+        in.close();
+        return sb.toString();
+    }
 
 	private class SonetWebView {
 		private WebView mWebView;
@@ -150,37 +336,43 @@ public class OAuthLogin extends Activity {
 							if (TWITTER_CALLBACK.getHost().equals(uri.getHost())) {
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
 								JSONObject jobj = new JSONObject(mSonetOAuth.get("http://api.twitter.com/1/account/verify_credentials.json"));
-								ContentValues values = new ContentValues();
-								values.put(Accounts.USERNAME, jobj.getString("screen_name"));
-								values.put(Accounts.TOKEN, mSonetOAuth.getToken());
-								values.put(Accounts.SECRET, mSonetOAuth.getTokenSecret());
-								values.put(Accounts.EXPIRY, 0);
-								values.put(Accounts.SERVICE, TWITTER);
-								values.put(Accounts.TIMEZONE, 0);//tweets are in local time; //jobj.getString("utc_offset")
-								values.put(Accounts.WIDGET, ManageAccounts.sAppWidgetId);
-								if (ManageAccounts.sAccountId != Sonet.INVALID_ACCOUNT_ID) {
-									getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Long.toString(ManageAccounts.sAccountId)});
-									ManageAccounts.sAccountId = Sonet.INVALID_ACCOUNT_ID;
-								} else getContentResolver().insert(Accounts.CONTENT_URI, values);
-								ManageAccounts.sUpdateWidget = true;
+								addAccount(jobj.getString("screen_name"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, TWITTER, 0);
+							} else if (FOURSQUARE_CALLBACK.getHost().equals(uri.getHost())) {
+								// get the access_token
+								JSONObject jobj = new JSONObject(get(FOURSQUARE_URL_ACCESS + "?client_id=" + FOURSQUARE_KEY + "&client_secret=" + FOURSQUARE_SECRET + "&grant_type=authorization_code&redirect_uri=" + FOURSQUARE_CALLBACK + "&code=CODE"));
+								String token = jobj.getString("access_token");
+							} else if (FACEBOOK_CALLBACK.getHost().equals(uri.getHost())) {
+								Bundle b;
+						        try {
+						            URL u = new URL(url);
+						            b = decodeUrl(u.getQuery());
+						            b.putAll(decodeUrl(u.getRef()));
+						        } catch (MalformedURLException e) {
+						            b = new Bundle();
+						        }
+								String token = b.getString(TOKEN);
+								int expiry = (int) System.currentTimeMillis() + Integer.parseInt(b.getString(EXPIRES)) * 1000;
+								Bundle parameters = new Bundle();
+						        parameters.putString("format", "json");
+						        parameters.putString("sdk", "android");
+					            parameters.putString(TOKEN, token);
+					            url = GRAPH_BASE_URL + "me" + "?" + encodeUrl(parameters);
+					            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+					            conn.setRequestProperty("User-Agent", System.getProperties().getProperty("http.agent") + " FacebookAndroidSDK");
+					            String response = "";
+					            try {
+					            	response = read(conn.getInputStream());
+					            } catch (FileNotFoundException e) {
+					                // Error Stream contains JSON that we can parse to a FB error
+					                response = read(conn.getErrorStream());
+					            }
+					            JSONObject jobj = new JSONObject(response);
+					            addAccount(jobj.getString("name"), token, "", expiry, FACEBOOK, 0);
 							} else if (MYSPACE_CALLBACK.getHost().equals(uri.getHost())) {
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
 								String response = mSonetOAuth.get("http://opensocial.myspace.com/1.0/people/@me/@self");
-								final String accountId;
 								JSONObject jobj = new JSONObject(response);
-								ContentValues values = new ContentValues();
-								values.put(Accounts.USERNAME, jobj.getJSONObject("person").getString("displayName"));
-								values.put(Accounts.TOKEN, mSonetOAuth.getToken());
-								values.put(Accounts.SECRET, mSonetOAuth.getTokenSecret());
-								values.put(Accounts.EXPIRY, 0);
-								values.put(Accounts.SERVICE, MYSPACE);
-								values.put(Accounts.TIMEZONE, 0);
-								values.put(Accounts.WIDGET, ManageAccounts.sAppWidgetId);
-								if (ManageAccounts.sAccountId != Sonet.INVALID_ACCOUNT_ID) {
-									accountId = Long.toString(ManageAccounts.sAccountId);
-									getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{accountId});
-									ManageAccounts.sAccountId = Sonet.INVALID_ACCOUNT_ID;
-								} else accountId = getContentResolver().insert(Accounts.CONTENT_URI, values).getLastPathSegment();
+								final String accountId = addAccount(jobj.getJSONObject("person").getString("displayName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, MYSPACE, 0);
 								// get the timezone, index set to GMT
 								OAuthLogin.this.runOnUiThread(new Runnable() {
 									@Override
@@ -190,7 +382,6 @@ public class OAuthLogin extends Activity {
 										.setSingleChoiceItems(R.array.timezone_entries, 12, new DialogInterface.OnClickListener() {
 											@Override
 											public void onClick(DialogInterface dialog, int which) {
-												ManageAccounts.sUpdateWidget = true;
 												ContentValues values = new ContentValues();
 												values.put(Accounts.TIMEZONE, Integer.parseInt(getResources().getStringArray(R.array.timezone_values)[which]));
 												getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{accountId});
@@ -216,21 +407,7 @@ public class OAuthLogin extends Activity {
 								mWebView.setVisibility(View.INVISIBLE);
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
 								String username = new JSONObject(mSonetOAuth.get("https://www.googleapis.com/buzz/v1/people/@me/@self?alt=json")).getJSONObject("data").getString("displayName");
-								if (username != null) {
-									ContentValues values = new ContentValues();
-									values.put(Accounts.USERNAME, username);
-									values.put(Accounts.TOKEN, mSonetOAuth.getToken());
-									values.put(Accounts.SECRET, mSonetOAuth.getTokenSecret());
-									values.put(Accounts.EXPIRY, 0);
-									values.put(Accounts.SERVICE, BUZZ);
-									values.put(Accounts.TIMEZONE, 0);
-									values.put(Accounts.WIDGET, ManageAccounts.sAppWidgetId);
-									if (ManageAccounts.sAccountId != Sonet.INVALID_ACCOUNT_ID) {
-										getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Long.toString(ManageAccounts.sAccountId)});
-										ManageAccounts.sAccountId = Sonet.INVALID_ACCOUNT_ID;
-									} else getContentResolver().insert(Accounts.CONTENT_URI, values);
-									ManageAccounts.sUpdateWidget = true;
-								}
+								if (username != null) addAccount(username, mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, BUZZ, 0);
 							} else if (SALESFORCE_CALLBACK.getHost().equals(uri.getHost())) {
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
 								String response = mSonetOAuth.post("https://login.salesforce.com/services/OAuth/u/21.0");

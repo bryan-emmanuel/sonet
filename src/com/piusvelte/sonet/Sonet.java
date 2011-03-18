@@ -23,52 +23,63 @@ import android.net.Uri;
 import android.provider.BaseColumns;
 
 public class Sonet {
-	public static final int TWITTER = 0;
-	public static final int FACEBOOK = 1;
-	public static final int MYSPACE = 2;
-	public static final String TWITTER_URL_REQUEST = "http://api.twitter.com/oauth/request_token";
-	public static final String TWITTER_URL_AUTHORIZE = "http://api.twitter.com/oauth/authorize";
-	public static final String TWITTER_URL_ACCESS = "http://api.twitter.com/oauth/access_token";
-	public static final String TWITTER_FEED = "http://api.twitter.com/1/statuses/home_timeline.json";
 
-	public static final String[] FACEBOOK_PERMISSIONS = new String[] {"offline_access"};
-	public static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
-	public static final String ACTION_BUILD_SCROLL = "com.piusvelte.sonet.Sonet.BUILD_SCROLL";
-	public static final String EXTRA_ACCOUNT_ID = "com.piusvelte.sonet.Sonet.ACCOUNT_ID";
-	public static final long INVALID_ACCOUNT_ID = -1;
-	public static final String ACTION_UPDATE_SETTINGS = "com.piusvelte.sonet.Sonet.UPDATE_SETTINGS";
+	protected static final String TOKEN = "access_token";
+	protected static final String EXPIRES = "expires_in";
+    
+	protected static final int TWITTER = 0;
+	protected static final String TWITTER_URL_REQUEST = "http://api.twitter.com/oauth/request_token";
+	protected static final String TWITTER_URL_AUTHORIZE = "http://api.twitter.com/oauth/authorize";
+	protected static final String TWITTER_URL_ACCESS = "http://api.twitter.com/oauth/access_token";
+	protected static final String TWITTER_FEED = "http://api.twitter.com/1/statuses/home_timeline.json";
 
-	public static final String MYSPACE_URL_REQUEST = "http://api.myspace.com/request_token";
-	public static final String MYSPACE_URL_AUTHORIZE = "http://api.myspace.com/authorize";
-	public static final String MYSPACE_URL_ACCESS = "http://api.myspace.com/access_token";
-	public static final String MYSPACE_FEED = "http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source";
+	protected static final int FACEBOOK = 1;
+	protected static final String[] FACEBOOK_PERMISSIONS = new String[] {"offline_access"};
+    protected static final String FACEBOOK_URL_AUTHORIZE = "https://graph.facebook.com/oauth/authorize";
+    protected static final String GRAPH_BASE_URL = "https://graph.facebook.com/";
 
-	public static final int BUZZ = 3;
-	public static final String BUZZ_URL_REQUEST = "https://www.google.com/accounts/OAuthGetRequestToken";
-	public static final String BUZZ_URL_AUTHORIZE = "https://www.google.com/buzz/api/auth/OAuthAuthorizeToken";
-	public static final String BUZZ_URL_ACCESS = "https://www.google.com/accounts/OAuthGetAccessToken";
-	public static final String BUZZ_SCOPE = "https://www.googleapis.com/auth/buzz.readonly";
-	public static final String BUZZ_FEED = "https://www.googleapis.com/buzz/v1/activities/@me/@consumption?alt=json";
+    protected static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
+    protected static final String ACTION_BUILD_SCROLL = "com.piusvelte.sonet.Sonet.BUILD_SCROLL";
+    protected static final String EXTRA_ACCOUNT_ID = "com.piusvelte.sonet.Sonet.ACCOUNT_ID";
+    protected static final long INVALID_ACCOUNT_ID = -1;
+    protected static final String ACTION_UPDATE_SETTINGS = "com.piusvelte.sonet.Sonet.UPDATE_SETTINGS";
+
+	protected static final int MYSPACE = 2;
+    protected static final String MYSPACE_URL_REQUEST = "http://api.myspace.com/request_token";
+    protected static final String MYSPACE_URL_AUTHORIZE = "http://api.myspace.com/authorize";
+    protected static final String MYSPACE_URL_ACCESS = "http://api.myspace.com/access_token";
+    protected static final String MYSPACE_FEED = "http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source";
+
+    protected static final int BUZZ = 3;
+    protected static final String BUZZ_URL_REQUEST = "https://www.google.com/accounts/OAuthGetRequestToken";
+    protected static final String BUZZ_URL_AUTHORIZE = "https://www.google.com/buzz/api/auth/OAuthAuthorizeToken";
+    protected static final String BUZZ_URL_ACCESS = "https://www.google.com/accounts/OAuthGetAccessToken";
+    protected static final String BUZZ_SCOPE = "https://www.googleapis.com/auth/buzz.readonly";
+    protected static final String BUZZ_FEED = "https://www.googleapis.com/buzz/v1/activities/@me/@consumption?alt=json";
+    
+    protected static final int FOURSQUARE = 4;
+    protected static final String FOURSQUARE_URL_ACCESS = "https://foursquare.com/oauth2/access_token";
+    protected static final String FOURSQUARE_URL_AUTHORIZE = "https://foursquare.com/oauth2/authorize";
 	
-	public static final int SALESFORCE = 4;
-	public static final String SALESFORCE_URL_REQUEST = "https://login.salesforce.com/_nc_external/system/security/oauth/RequestTokenHandler";
-	public static final String SALESFORCE_URL_AUTHORIZE = "https://login.salesforce.com/setup/secur/RemoteAccessAuthorizationPage.apexp";
-	public static final String SALESFORCE_URL_ACCESS = "https://login.salesforce.com/_nc_external/system/security/oauth/AccessTokenHandler";
-	public static final String SALESFORCE_FEED = "";
+    protected static final int SALESFORCE = 5;
+    protected static final String SALESFORCE_URL_REQUEST = "https://login.salesforce.com/_nc_external/system/security/oauth/RequestTokenHandler";
+    protected static final String SALESFORCE_URL_AUTHORIZE = "https://login.salesforce.com/setup/secur/RemoteAccessAuthorizationPage.apexp";
+    protected static final String SALESFORCE_URL_ACCESS = "https://login.salesforce.com/_nc_external/system/security/oauth/AccessTokenHandler";
+    protected static final String SALESFORCE_FEED = "";
 
-	public static final int INVALID_SERVICE = -1;
+    protected static final int INVALID_SERVICE = -1;
 
-	public static final int default_interval = 3600000;
-	public static final int default_buttons_bg_color = -16777216;
-	public static final int default_buttons_color = -1;
-	public static final int default_message_bg_color = -16777216;
-	public static final int default_message_color = -1;
-	public static final int default_friend_color = -1;
-	public static final int default_created_color = -1;
-	public static final int default_buttons_textsize = 14;
-	public static final int default_messages_textsize = 14;
-	public static final int default_friend_textsize = 14;
-	public static final int default_created_textsize = 14;
+    protected static final int default_interval = 3600000;
+    protected static final int default_buttons_bg_color = -16777216;
+    protected static final int default_buttons_color = -1;
+    protected static final int default_message_bg_color = -16777216;
+    protected static final int default_message_color = -1;
+    protected static final int default_friend_color = -1;
+    protected static final int default_created_color = -1;
+    protected static final int default_buttons_textsize = 14;
+    protected static final int default_messages_textsize = 14;
+    protected static final int default_friend_textsize = 14;
+    protected static final int default_created_textsize = 14;
 
 	public Sonet() {
 	}

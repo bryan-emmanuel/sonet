@@ -79,11 +79,9 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.appwidget.AppWidgetManager;
-import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -91,9 +89,7 @@ import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -185,7 +181,7 @@ public class SonetService extends Service implements Runnable {
 			created = msformat.parse(date);
 		} catch (ParseException e) {
 			created = new Date();
-			Log.e(TAG,e.toString());
+			Log.e(TAG,e.toString()); //Sun Mar 13 01:34:20 +0000 2011
 		}
 		cal.setTime(created);
 		cal.add(Calendar.MILLISECOND, (int) (timezone * 3600000));
@@ -582,7 +578,7 @@ public class SonetService extends Service implements Runnable {
 								sonetOAuth = new SonetOAuth(SALESFORCE_KEY, SALESFORCE_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
 									String response = sonetOAuth.get(SALESFORCE_FEED);
-									Log.v(TAG,"response:"+response);
+									Log.d(TAG,"response:"+response);
 									JSONArray entries = new JSONObject(response).getJSONObject("data").getJSONArray("items");
 									// if there are updates, clear the cache
 									if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});

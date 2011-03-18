@@ -64,7 +64,9 @@ public class SonetWidget extends AppWidgetProvider {
 			if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) onDeleted(context, new int[]{appWidgetId});
 			else super.onReceive(context, intent);
 		} else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_READY)) {
-			if (intent.getExtras().getInt(LauncherIntent.Extra.EXTRA_API_VERSION, 1) >= 2)
+			// LauncherPro doesn't support the required version
+			// testing launcherpro
+//			if (intent.getExtras().getInt(LauncherIntent.Extra.EXTRA_API_VERSION, 1) >= 2)
 				appWidgetReady(context, intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
 		} else if (Sonet.ACTION_BUILD_SCROLL.equals(action)) 
 			appWidgetReady(context, intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
@@ -108,7 +110,6 @@ public class SonetWidget extends AppWidgetProvider {
 	}
 
 	private void appWidgetReady(Context context, int appWidgetId) {
-
 		// set widget as scrollable
 		String widgetId = Integer.toString(appWidgetId);
 		Cursor c = context.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.SCROLLABLE}, Widgets.WIDGET + "=?", new String[]{widgetId}, null);
@@ -129,8 +130,10 @@ public class SonetWidget extends AppWidgetProvider {
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_CHILDREN_CLICKABLE, true);
 		replaceDummy.putExtra(LauncherIntent.Extra.EXTRA_VIEW_ID, R.id.messages);
 
-		SimpleRemoteViews listView = new SimpleRemoteViews(R.layout.widget_listview);
-		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_REMOTEVIEWS, listView);
+//		SimpleRemoteViews listView = new SimpleRemoteViews(R.layout.widget_listview);
+//		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_REMOTEVIEWS, listView);
+		// testing for launcherpro
+		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_LAYOUT_ID, R.layout.widget_listview);
 
 		BoundRemoteViews itemViews = new BoundRemoteViews(R.layout.widget_item);
 

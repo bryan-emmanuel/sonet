@@ -201,11 +201,12 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			startActivity(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, service));
 			break;
 		case FACEBOOK:
-			mFacebook = new Facebook();
-			mAsyncRunner = new AsyncFacebookRunner(mFacebook);
-			mFacebook.setAccessToken(null);
-			mFacebook.setAccessExpires(0);
-			mFacebook.authorize(this, FACEBOOK_ID, FACEBOOK_PERMISSIONS, this);
+//			mFacebook = new Facebook();
+//			mAsyncRunner = new AsyncFacebookRunner(mFacebook);
+//			mFacebook.setAccessToken(null);
+//			mFacebook.setAccessExpires(0);
+//			mFacebook.authorize(this, FACEBOOK_ID, FACEBOOK_PERMISSIONS, this);
+			startActivity(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, service));
 			break;
 		case MYSPACE:
 			startActivity(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, service));
