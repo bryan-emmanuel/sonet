@@ -29,10 +29,7 @@ import static com.piusvelte.sonet.Sonet.TWITTER_URL_REQUEST;
 import static com.piusvelte.sonet.Tokens.TWITTER_KEY;
 import static com.piusvelte.sonet.Tokens.TWITTER_SECRET;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -42,13 +39,7 @@ import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
 import oauth.signpost.exception.OAuthNotAuthorizedException;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -185,49 +176,6 @@ public class OAuthLogin extends Activity {
 		return accountId;
 	}
 	
-	private String get(String url) {
-		HttpClient httpClient = new DefaultHttpClient();
-		HttpResponse httpResponse;
-		String response = null;
-		try {
-			httpResponse = httpClient.execute(new HttpGet(url));
-			StatusLine statusLine = httpResponse.getStatusLine();
-			HttpEntity entity = httpResponse.getEntity();
-
-			switch(statusLine.getStatusCode()) {
-			case 200:
-			case 201:
-				if (entity != null) {
-					InputStream is = entity.getContent();
-					BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-					StringBuilder sb = new StringBuilder();
-
-					String line = null;
-					try {
-						while ((line = reader.readLine()) != null) sb.append(line + "\n");
-					} catch (IOException e) {
-						e.printStackTrace();
-					} finally {
-						try {
-							is.close();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					}
-					response = sb.toString();
-				}
-				break;
-			default:
-				Log.e(TAG,"get error:"+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
-				break;
-			}
-		} catch (ClientProtocolException e) {
-			Log.e(TAG,"error:" + e);
-		} catch (IOException e) {
-			Log.e(TAG,"error:" + e);
-		}
-		return response;
-	}
 
 	private class SonetWebView {
 		private WebView mWebView;
@@ -259,7 +207,7 @@ public class OAuthLogin extends Activity {
 										break;
 									}
 								}
-								JSONObject jobj = (new JSONObject(get("https://api.foursquare.com/v2/users/self?oauth_token=" + token))).getJSONObject("response").getJSONObject("user");
+								JSONObject jobj = (new JSONObject(Sonet.httpGet("https://api.foursquare.com/v2/users/self?oauth_token=" + token))).getJSONObject("response").getJSONObject("user");
 								addAccount(jobj.getString("firstName") + " " + jobj.getString("lastName"), token, "", 0, FOURSQUARE, 0);
 							} else if (FACEBOOK_CALLBACK.getHost().equals(uri.getHost())) {
 						        url = url.replace("fbconnect", "http");
@@ -272,7 +220,7 @@ public class OAuthLogin extends Activity {
 									if (TOKEN.equals(param[0])) token = param[1];
 									else if (EXPIRES.equals(param[0])) expiry = param[1] == "0" ? 0 : (int) System.currentTimeMillis() + Integer.parseInt(param[1]) * 1000;
 								}
-					            JSONObject jobj = new JSONObject(get(GRAPH_BASE_URL + "me?format=json&sdk=android&" + TOKEN + "=" + token));
+					            JSONObject jobj = new JSONObject(Sonet.httpGet(GRAPH_BASE_URL + "me?format=json&sdk=android&" + TOKEN + "=" + token));
 					            addAccount(jobj.getString("name"), token, "", expiry, FACEBOOK, 0);
 							} else if (MYSPACE_CALLBACK.getHost().equals(uri.getHost())) {
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));

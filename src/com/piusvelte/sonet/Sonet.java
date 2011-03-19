@@ -19,10 +19,26 @@
  */
 package com.piusvelte.sonet;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+
 import android.net.Uri;
 import android.provider.BaseColumns;
+import android.util.Log;
 
 public class Sonet {
+	
+	private static final String TAG = "Sonet";
 
 	protected static final String TOKEN = "access_token";
 	protected static final String EXPIRES = "expires_in";
@@ -187,6 +203,50 @@ public class Sonet {
 		public static final String STATUS_BG = "status_bg";
 		public static final String ICON = "icon";
 
+	}
+
+	protected static String httpGet(String url) {
+		HttpClient httpClient = new DefaultHttpClient();
+		HttpResponse httpResponse;
+		String response = null;
+		try {
+			httpResponse = httpClient.execute(new HttpGet(url));
+			StatusLine statusLine = httpResponse.getStatusLine();
+			HttpEntity entity = httpResponse.getEntity();
+
+			switch(statusLine.getStatusCode()) {
+			case 200:
+			case 201:
+				if (entity != null) {
+					InputStream is = entity.getContent();
+					BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+					StringBuilder sb = new StringBuilder();
+
+					String line = null;
+					try {
+						while ((line = reader.readLine()) != null) sb.append(line + "\n");
+					} catch (IOException e) {
+						e.printStackTrace();
+					} finally {
+						try {
+							is.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+					response = sb.toString();
+				}
+				break;
+			default:
+				Log.e(TAG,"get error:"+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
+				break;
+			}
+		} catch (ClientProtocolException e) {
+			Log.e(TAG,"error:" + e);
+		} catch (IOException e) {
+			Log.e(TAG,"error:" + e);
+		}
+		return response;
 	}
 
 }

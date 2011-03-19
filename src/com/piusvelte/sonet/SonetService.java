@@ -49,11 +49,8 @@ import static com.piusvelte.sonet.Sonet.GRAPH_BASE_URL;
 
 import static com.piusvelte.sonet.Sonet.FOURSQUARE;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -62,20 +59,11 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.Queue;
 
-//import oauth.signpost.OAuthConsumer;
-//import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
-//import oauth.signpost.signature.SignatureMethod;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -235,50 +223,6 @@ public class SonetService extends Service implements Runnable {
 			Log.e(TAG,e.getMessage());
 		}
 		return getBlob(profile);
-	}
-	
-	private String get(String url) {
-		HttpClient httpClient = new DefaultHttpClient();
-		HttpResponse httpResponse;
-		String response = null;
-		try {
-			httpResponse = httpClient.execute(new HttpGet(url));
-			StatusLine statusLine = httpResponse.getStatusLine();
-			HttpEntity entity = httpResponse.getEntity();
-
-			switch(statusLine.getStatusCode()) {
-			case 200:
-			case 201:
-				if (entity != null) {
-					InputStream is = entity.getContent();
-					BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-					StringBuilder sb = new StringBuilder();
-
-					String line = null;
-					try {
-						while ((line = reader.readLine()) != null) sb.append(line + "\n");
-					} catch (IOException e) {
-						e.printStackTrace();
-					} finally {
-						try {
-							is.close();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					}
-					response = sb.toString();
-				}
-				break;
-			default:
-				Log.e(TAG,"get error:"+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
-				break;
-			}
-		} catch (ClientProtocolException e) {
-			Log.e(TAG,"error:" + e);
-		} catch (IOException e) {
-			Log.e(TAG,"error:" + e);
-		}
-		return response;
 	}
 
 	@Override
@@ -469,7 +413,7 @@ public class SonetService extends Service implements Runnable {
 								to = "to",
 								fburl = "http://www.facebook.com";
 								try {
-									JSONObject jobj = new JSONObject(get(GRAPH_BASE_URL + "me/home?format=json&sdk=android&" + TOKEN + "=" + accounts.getString(itoken) + "&fields=actions,link,type,from,message,created_time,to"));
+									JSONObject jobj = new JSONObject(Sonet.httpGet(GRAPH_BASE_URL + "me/home?format=json&sdk=android&" + TOKEN + "=" + accounts.getString(itoken) + "&fields=actions,link,type,from,message,created_time,to"));
 									JSONArray jarr = jobj.getJSONArray(data);
 									// if there are updates, clear the cache
 									if (jarr.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
@@ -659,6 +603,30 @@ public class SonetService extends Service implements Runnable {
 								}
 								break;
 							case FOURSQUARE:
+								try {
+									String response = Sonet.httpGet("https://api.foursquare.com/v2/checkins/recent?limit=20&oauth_token=" + accounts.getString(itoken));
+									Log.d(TAG,"response:"+response);
+									JSONArray checkins = new JSONObject(response).getJSONObject("response").getJSONArray("recent");
+									// if there are updates, clear the cache
+									if (checkins.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
+									for (int e = 0; e < checkins.length(); e++) {
+										JSONObject checkin = checkins.getJSONObject(e);
+										JSONObject user = checkin.getJSONObject("user");
+										Date created = parseDate(checkin.getString("createdAt"), null, 0);
+
+										this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
+												"http://www.foursquare.com",
+												user.getString("firstName") + " " + user.getString("lastName"),
+												getProfile(user.getString("photo")),
+												checkin.getString("shout"),
+												service,
+												getCreatedText(now, created, time24hr),
+												appWidgetId,
+												accountId));
+									}
+								} catch (JSONException e) {
+									Log.e(TAG,e.toString());
+								}
 								break;
 							}
 						}
