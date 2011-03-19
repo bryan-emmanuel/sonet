@@ -20,13 +20,10 @@
 package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_PERMISSIONS;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE;
-
-import static com.piusvelte.sonet.Tokens.FACEBOOK_ID;
 
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
@@ -35,30 +32,13 @@ import com.piusvelte.sonet.Sonet.Widgets;
 import static com.piusvelte.sonet.Sonet.BUZZ;
 import static com.piusvelte.sonet.Sonet.SALESFORCE;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.MalformedURLException;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import com.facebook.android.AsyncFacebookRunner;
-import com.facebook.android.DialogError;
-import com.facebook.android.Facebook;
-import com.facebook.android.FacebookError;
-import com.facebook.android.Util;
-import com.facebook.android.AsyncFacebookRunner.RequestListener;
-import com.facebook.android.Facebook.DialogListener;
-
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.appwidget.AppWidgetManager;
-import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -68,16 +48,12 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
-import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class ManageAccounts extends ListActivity implements OnClickListener, DialogInterface.OnClickListener, DialogListener/*, IMSSessionCallback*/ {
-	private static final String TAG = "ManageAccounts";
+public class ManageAccounts extends ListActivity implements OnClickListener, DialogInterface.OnClickListener {
 	private static final int REAUTH_ID = Menu.FIRST;
 	private static final int SETTINGS_ID = Menu.FIRST + 1;
 	private static final int DELETE_ID = Menu.FIRST + 2;
-	private Facebook mFacebook;
-	private AsyncFacebookRunner mAsyncRunner;
 	protected static int sAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	protected static boolean sUpdateWidget = false;
 	private boolean mHasAccounts = false;
@@ -230,71 +206,4 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		dialog.cancel();
 	}
 
-	// facebook
-	public void onComplete(Bundle values) {
-		mAsyncRunner.request("me", new RequestListener() {
-			@Override
-			public void onComplete(String response) {
-				try {
-					JSONObject json = Util.parseJson(response);
-					final String username = json.getString("name");
-					final double timezone = Double.parseDouble(json.getString(Accounts.TIMEZONE));
-					ManageAccounts.this.runOnUiThread(new Runnable() {
-						public void run() {
-							sUpdateWidget = true;
-							setResultOK();
-							ContentValues values = new ContentValues();
-							values.put(Accounts.USERNAME, username);
-							values.put(Accounts.TOKEN, mFacebook.getAccessToken());
-							values.put(Accounts.SECRET, "");
-							values.put(Accounts.EXPIRY, (int) mFacebook.getAccessExpires());
-							values.put(Accounts.SERVICE, FACEBOOK);
-							values.put(Accounts.TIMEZONE, timezone);
-							values.put(Accounts.WIDGET, sAppWidgetId);
-							if (sAccountId != Sonet.INVALID_ACCOUNT_ID) {
-								getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Long.toString(sAccountId)});
-								sAccountId = Sonet.INVALID_ACCOUNT_ID;
-							} else getContentResolver().insert(Accounts.CONTENT_URI, values);
-						}
-					});
-				} catch (JSONException e) {
-					Log.e(TAG, e.toString());
-				} catch (FacebookError e) {
-					Log.e(TAG, e.toString());
-				}
-			}
-
-			@Override
-			public void onFacebookError(FacebookError e) {
-				Log.e(TAG, e.toString());
-			}
-
-			@Override
-			public void onFileNotFoundException(FileNotFoundException e) {
-				Log.e(TAG, e.toString());
-			}
-
-			@Override
-			public void onIOException(IOException e) {
-				Log.e(TAG, e.toString());
-			}
-
-			@Override
-			public void onMalformedURLException(MalformedURLException e) {
-				Log.e(TAG, e.toString());
-			}
-		});
-	}
-
-	public void onFacebookError(FacebookError error) {
-		Toast.makeText(ManageAccounts.this, error.getMessage(), Toast.LENGTH_LONG).show();
-	}
-
-	public void onError(DialogError error) {
-		Toast.makeText(ManageAccounts.this, error.getMessage(), Toast.LENGTH_LONG).show();
-	}
-
-	public void onCancel() {
-		Toast.makeText(ManageAccounts.this, "Authorization canceled", Toast.LENGTH_LONG).show();
-	}
 }
