@@ -167,7 +167,13 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 
 	private void listAccounts() {
 		// prepend service name to username
-		Cursor c = this.managedQuery(Accounts.CONTENT_URI, new String[]{Accounts._ID, "(case when " + Accounts.SERVICE + "='" + TWITTER + "' then 'Twitter: ' when " + Accounts.SERVICE + "='" + FACEBOOK + "' then 'Facebook: ' when " + Accounts.SERVICE + "='" + MYSPACE + "' then 'MySpace: ' when " + Accounts.SERVICE + "='" + BUZZ + "' then 'Buzz: ' else '' end)||" + Accounts.USERNAME + " as " + Accounts.USERNAME, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(sAppWidgetId)}, null);
+		Cursor c = this.managedQuery(Accounts.CONTENT_URI, new String[]{Accounts._ID,
+				"(case when " + Accounts.SERVICE + "='" + TWITTER + "' then 'Twitter: ' when "
+				+ Accounts.SERVICE + "='" + FACEBOOK + "' then 'Facebook: ' when "
+				+ Accounts.SERVICE + "='" + MYSPACE + "' then 'MySpace: ' when "
+				+ Accounts.SERVICE + "='" + BUZZ + "' then 'Buzz: ' when "
+				+ Accounts.SERVICE + "='" + SALESFORCE + "' then 'Salesforce: ' when "
+				+ Accounts.SERVICE + "='" + FOURSQUARE + "' then 'Foursquare: ' else '' end)||" + Accounts.USERNAME + " as " + Accounts.USERNAME, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(sAppWidgetId)}, null);
 		mHasAccounts = c.getCount() != 0;
 		setListAdapter(new SimpleCursorAdapter(ManageAccounts.this, R.layout.accounts_row, c, new String[] {Accounts.USERNAME}, new int[] {R.id.account_username}));
 	}

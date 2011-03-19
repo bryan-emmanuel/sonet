@@ -47,6 +47,8 @@ import static com.piusvelte.sonet.Sonet.SALESFORCE_FEED;
 
 import static com.piusvelte.sonet.Sonet.GRAPH_BASE_URL;
 
+import static com.piusvelte.sonet.Sonet.FOURSQUARE;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -655,6 +657,8 @@ public class SonetService extends Service implements Runnable {
 								} catch (JSONException e) {
 									Log.e(TAG,e.toString());
 								}
+								break;
+							case FOURSQUARE:
 								break;
 							}
 						}

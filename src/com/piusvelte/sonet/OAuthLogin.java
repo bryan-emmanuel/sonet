@@ -81,10 +81,8 @@ import static com.piusvelte.sonet.Sonet.FACEBOOK_PERMISSIONS;
 import static com.piusvelte.sonet.Sonet.GRAPH_BASE_URL;
 
 import static com.piusvelte.sonet.Sonet.FOURSQUARE;
-import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_ACCESS;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Tokens.FOURSQUARE_KEY;
-import static com.piusvelte.sonet.Tokens.FOURSQUARE_SECRET;
 
 import com.piusvelte.sonet.Sonet.Accounts;
 
@@ -124,7 +122,7 @@ public class OAuthLogin extends Activity {
 				try {
 					switch (service) {
 					case FOURSQUARE:
-						sonetWebView.open(FOURSQUARE_URL_AUTHORIZE + "?client_id=" + FOURSQUARE_KEY + "&response_type=code&redirect_uri=" + FOURSQUARE_CALLBACK + "&display=touch");
+						sonetWebView.open(FOURSQUARE_URL_AUTHORIZE + "?client_id=" + FOURSQUARE_KEY + "&response_type=token&redirect_uri=" + FOURSQUARE_CALLBACK + "&display=touch");
 						break;
 					case FACEBOOK:
 				        sonetWebView.open(FACEBOOK_URL_AUTHORIZE + "?client_id=" + FACEBOOK_ID + "&scope=" + TextUtils.join(",", FACEBOOK_PERMISSIONS) + "&type=user_agent&redirect_uri=" + FACEBOOK_CALLBACK.toString() + "&display=touch&sdk=android");
@@ -250,13 +248,19 @@ public class OAuthLogin extends Activity {
 								addAccount(jobj.getString("screen_name"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, TWITTER, 0);
 							} else if (FOURSQUARE_CALLBACK.getHost().equals(uri.getHost())) {
 								// get the access_token
-								String response = get(FOURSQUARE_URL_ACCESS + "?client_id=" + FOURSQUARE_KEY + "&client_secret=" + FOURSQUARE_SECRET + "&grant_type=authorization_code&redirect_uri=" + FOURSQUARE_CALLBACK + "&code=" + uri.getQueryParameter("CODE"));
-								Log.v(TAG,"4sq:"+response);
-								JSONObject jobj = new JSONObject(response);
-								String token = jobj.getString("access_token");
-								Log.v(TAG, "4sq:"+token);
-								jobj = new JSONObject(get("https://api.foursquare.com/v2/users/self"));
-								Log.v(TAG, "4sq:"+jobj.toString());
+						        url = url.replace("sonet", "http");
+								URL u = new URL(url);
+								String token = "";
+								String[] parameters = (u.getQuery() + "&" + u.getRef()).split("&");
+								for (String parameter : parameters) {
+									String[] param = parameter.split("=");
+									if (TOKEN.equals(param[0])) {
+										token = param[1];
+										break;
+									}
+								}
+								JSONObject jobj = (new JSONObject(get("https://api.foursquare.com/v2/users/self?oauth_token=" + token))).getJSONObject("response").getJSONObject("user");
+								addAccount(jobj.getString("firstName") + " " + jobj.getString("lastName"), token, "", 0, FOURSQUARE, 0);
 							} else if (FACEBOOK_CALLBACK.getHost().equals(uri.getHost())) {
 						        url = url.replace("fbconnect", "http");
 								URL u = new URL(url);
