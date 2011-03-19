@@ -28,7 +28,6 @@ import com.piusvelte.sonet.Sonet.Widgets;
 
 import mobi.intuitit.android.content.LauncherIntent;
 import mobi.intuitit.android.widget.BoundRemoteViews;
-import mobi.intuitit.android.widget.SimpleRemoteViews;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -66,7 +65,7 @@ public class SonetWidget extends AppWidgetProvider {
 		} else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_READY)) {
 			// LauncherPro doesn't support the required version
 			// testing launcherpro
-//			if (intent.getExtras().getInt(LauncherIntent.Extra.EXTRA_API_VERSION, 1) >= 2)
+			if (intent.getExtras().getInt(LauncherIntent.Extra.EXTRA_API_VERSION, 1) >= 2)
 				appWidgetReady(context, intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
 		} else if (Sonet.ACTION_BUILD_SCROLL.equals(action)) 
 			appWidgetReady(context, intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));

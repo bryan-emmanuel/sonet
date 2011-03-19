@@ -19,6 +19,7 @@
  */
 package com.piusvelte.sonet;
 
+import static com.piusvelte.sonet.Sonet.TOKEN;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
@@ -44,8 +45,13 @@ import static com.piusvelte.sonet.Tokens.SALESFORCE_KEY;
 import static com.piusvelte.sonet.Tokens.SALESFORCE_SECRET;
 import static com.piusvelte.sonet.Sonet.SALESFORCE_FEED;
 
+import static com.piusvelte.sonet.Sonet.GRAPH_BASE_URL;
+
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -61,15 +67,18 @@ import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
 //import oauth.signpost.signature.SignatureMethod;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.facebook.android.Facebook;
-import com.facebook.android.FacebookError;
-import com.facebook.android.Util;
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
@@ -90,7 +99,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.net.ConnectivityManager;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.RemoteViews;
@@ -226,6 +234,50 @@ public class SonetService extends Service implements Runnable {
 		}
 		return getBlob(profile);
 	}
+	
+	private String get(String url) {
+		HttpClient httpClient = new DefaultHttpClient();
+		HttpResponse httpResponse;
+		String response = null;
+		try {
+			httpResponse = httpClient.execute(new HttpGet(url));
+			StatusLine statusLine = httpResponse.getStatusLine();
+			HttpEntity entity = httpResponse.getEntity();
+
+			switch(statusLine.getStatusCode()) {
+			case 200:
+			case 201:
+				if (entity != null) {
+					InputStream is = entity.getContent();
+					BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+					StringBuilder sb = new StringBuilder();
+
+					String line = null;
+					try {
+						while ((line = reader.readLine()) != null) sb.append(line + "\n");
+					} catch (IOException e) {
+						e.printStackTrace();
+					} finally {
+						try {
+							is.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+					response = sb.toString();
+				}
+				break;
+			default:
+				Log.e(TAG,"get error:"+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
+				break;
+			}
+		} catch (ClientProtocolException e) {
+			Log.e(TAG,"error:" + e);
+		} catch (IOException e) {
+			Log.e(TAG,"error:" + e);
+		}
+		return response;
+	}
 
 	@Override
 	public void run() {
@@ -319,7 +371,6 @@ public class SonetService extends Service implements Runnable {
 					iservice = accounts.getColumnIndex(Accounts.SERVICE),
 					itoken = accounts.getColumnIndex(Accounts.TOKEN),
 					isecret = accounts.getColumnIndex(Accounts.SECRET),
-					iexpiry = accounts.getColumnIndex(Accounts.EXPIRY),
 					itimezone = accounts.getColumnIndex(Accounts.TIMEZONE);
 					String name = "name",
 					id = "id",
@@ -369,7 +420,7 @@ public class SonetService extends Service implements Runnable {
 							switch (service) {
 							case TWITTER:
 								String status_url = "http://twitter.com/%s/status/%s";
-								sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, accounts.getString(itoken),	accounts.getString(isecret));
+								sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
 									String response = sonetOAuth.get(TWITTER_FEED);
 									JSONArray entries = new JSONArray(response);
@@ -415,14 +466,8 @@ public class SonetService extends Service implements Runnable {
 								data = "data",
 								to = "to",
 								fburl = "http://www.facebook.com";
-								Facebook facebook = new Facebook();
-								facebook.setAccessToken(accounts.getString(itoken));
-								facebook.setAccessExpires((long)accounts.getInt(iexpiry));
 								try {
-									// limit the returned fields
-									Bundle parameters = new Bundle();
-									parameters.putString("fields", "actions,link,type,from,message,created_time,to");
-									JSONObject jobj = Util.parseJson(facebook.request("me/home", parameters));
+									JSONObject jobj = new JSONObject(get(GRAPH_BASE_URL + "me/home?format=json&sdk=android&" + TOKEN + "=" + accounts.getString(itoken) + "&fields=actions,link,type,from,message,created_time,to"));
 									JSONArray jarr = jobj.getJSONArray(data);
 									// if there are updates, clear the cache
 									if (jarr.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
@@ -468,10 +513,6 @@ public class SonetService extends Service implements Runnable {
 										}
 									}
 								} catch (JSONException e) {
-									Log.e(TAG, e.toString());
-								} catch (FacebookError e) {
-									Log.e(TAG, e.toString());
-								} catch (IOException e) {
 									Log.e(TAG, e.toString());
 								}
 								break;

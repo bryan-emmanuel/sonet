@@ -29,18 +29,12 @@ import static com.piusvelte.sonet.Sonet.TWITTER_URL_REQUEST;
 import static com.piusvelte.sonet.Tokens.TWITTER_KEY;
 import static com.piusvelte.sonet.Tokens.TWITTER_SECRET;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 
 import oauth.signpost.exception.OAuthCommunicationException;
@@ -92,7 +86,6 @@ import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Tokens.FOURSQUARE_KEY;
 import static com.piusvelte.sonet.Tokens.FOURSQUARE_SECRET;
 
-import com.facebook.android.Util;
 import com.piusvelte.sonet.Sonet.Accounts;
 
 import android.app.Activity;
@@ -115,7 +108,7 @@ public class OAuthLogin extends Activity {
 	private static Uri BUZZ_CALLBACK = Uri.parse("sonet://buzz");
 	private static Uri MYSPACE_CALLBACK = Uri.parse("sonet://myspace");
 	private static Uri SALESFORCE_CALLBACK = Uri.parse("sonet://salesforce");
-	private static Uri FACEBOOK_CALLBACK = Uri.parse("sonet://facebook"); // may need to use this> fbconnect://success
+	private static Uri FACEBOOK_CALLBACK = Uri.parse("fbconnect://success");
 	private static Uri FOURSQUARE_CALLBACK = Uri.parse("sonet://foursquare");
 	private SonetOAuth mSonetOAuth;
 
@@ -131,20 +124,10 @@ public class OAuthLogin extends Activity {
 				try {
 					switch (service) {
 					case FOURSQUARE:
-						sonetWebView.open(FOURSQUARE_URL_AUTHORIZE + "?" + "client_id=" + FOURSQUARE_KEY + "&response_type=code&redirect_uri=" + FOURSQUARE_CALLBACK + "&display=touch");
+						sonetWebView.open(FOURSQUARE_URL_AUTHORIZE + "?client_id=" + FOURSQUARE_KEY + "&response_type=code&redirect_uri=" + FOURSQUARE_CALLBACK + "&display=touch");
 						break;
 					case FACEBOOK:
-				        Bundle params = new Bundle();
-				        params.putString("client_id", FACEBOOK_ID);
-				        if (FACEBOOK_PERMISSIONS.length > 0) params.putString("scope", TextUtils.join(",", FACEBOOK_PERMISSIONS));
-			            params.putString("type", "user_agent");
-			            params.putString("redirect_uri", FACEBOOK_CALLBACK.toString());
-				        params.putString("display", "touch");
-				        params.putString("sdk", "android");
-//				        if (isSessionValid()) {
-//				            parameters.putString(TOKEN, getAccessToken());
-//				        }
-				        sonetWebView.open(FACEBOOK_URL_AUTHORIZE + "?" + encodeUrl(params));
+				        sonetWebView.open(FACEBOOK_URL_AUTHORIZE + "?client_id=" + FACEBOOK_ID + "&scope=" + TextUtils.join(",", FACEBOOK_PERMISSIONS) + "&type=user_agent&redirect_uri=" + FACEBOOK_CALLBACK.toString() + "&display=touch&sdk=android");
 						break;
 					case TWITTER:
 						mSonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET);
@@ -248,78 +231,6 @@ public class OAuthLogin extends Activity {
 		return response;
 	}
 
-	private static Bundle decodeUrl(String s) {
-        Bundle params = new Bundle();
-        if (s != null) {
-            String array[] = s.split("&");
-            for (String parameter : array) {
-                String v[] = parameter.split("=");
-                params.putString(v[0], v[1]);
-            }
-        }
-        return params;
-    }
-
-    public static String encodePostBody(Bundle parameters, String boundary) {
-        if (parameters == null) return "";
-        StringBuilder sb = new StringBuilder();
-        
-        for (String key : parameters.keySet()) {
-            if (parameters.getByteArray(key) != null) {
-        	    continue;
-            }
-        	
-            sb.append("Content-Disposition: form-data; name=\"" + key + 
-            		"\"\r\n\r\n" + parameters.getString(key));
-            sb.append("\r\n" + "--" + boundary + "\r\n");
-        }
-        
-        return sb.toString();
-    }
-
-    public static String encodeUrl(Bundle parameters) {
-        if (parameters == null) {
-        	return "";
-        }
-        
-        StringBuilder sb = new StringBuilder();
-        boolean first = true;
-        for (String key : parameters.keySet()) {
-            if (first) first = false; else sb.append("&");
-            sb.append(key + "=" + parameters.getString(key));
-        }
-        return sb.toString();
-    }
-
-    public static String openUrl(String url, Bundle params) 
-          throws MalformedURLException, IOException {
-    	
-        url = url + "?" + encodeUrl(params);
-        HttpURLConnection conn = 
-            (HttpURLConnection) new URL(url).openConnection();
-        conn.setRequestProperty("User-Agent", System.getProperties().
-                getProperty("http.agent") + " FacebookAndroidSDK");
-        
-        String response = "";
-        try {
-        	response = read(conn.getInputStream());
-        } catch (FileNotFoundException e) {
-            // Error Stream contains JSON that we can parse to a FB error
-            response = read(conn.getErrorStream());
-        }
-        return response;
-    }
-
-    private static String read(InputStream in) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        BufferedReader r = new BufferedReader(new InputStreamReader(in), 1000);
-        for (String line = r.readLine(); line != null; line = r.readLine()) {
-            sb.append(line);
-        }
-        in.close();
-        return sb.toString();
-    }
-
 	private class SonetWebView {
 		private WebView mWebView;
 
@@ -339,34 +250,25 @@ public class OAuthLogin extends Activity {
 								addAccount(jobj.getString("screen_name"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, TWITTER, 0);
 							} else if (FOURSQUARE_CALLBACK.getHost().equals(uri.getHost())) {
 								// get the access_token
-								JSONObject jobj = new JSONObject(get(FOURSQUARE_URL_ACCESS + "?client_id=" + FOURSQUARE_KEY + "&client_secret=" + FOURSQUARE_SECRET + "&grant_type=authorization_code&redirect_uri=" + FOURSQUARE_CALLBACK + "&code=CODE"));
+								String response = get(FOURSQUARE_URL_ACCESS + "?client_id=" + FOURSQUARE_KEY + "&client_secret=" + FOURSQUARE_SECRET + "&grant_type=authorization_code&redirect_uri=" + FOURSQUARE_CALLBACK + "&code=" + uri.getQueryParameter("CODE"));
+								Log.v(TAG,"4sq:"+response);
+								JSONObject jobj = new JSONObject(response);
 								String token = jobj.getString("access_token");
+								Log.v(TAG, "4sq:"+token);
+								jobj = new JSONObject(get("https://api.foursquare.com/v2/users/self"));
+								Log.v(TAG, "4sq:"+jobj.toString());
 							} else if (FACEBOOK_CALLBACK.getHost().equals(uri.getHost())) {
-								Bundle b;
-						        try {
-						            URL u = new URL(url);
-						            b = decodeUrl(u.getQuery());
-						            b.putAll(decodeUrl(u.getRef()));
-						        } catch (MalformedURLException e) {
-						            b = new Bundle();
-						        }
-								String token = b.getString(TOKEN);
-								int expiry = (int) System.currentTimeMillis() + Integer.parseInt(b.getString(EXPIRES)) * 1000;
-								Bundle parameters = new Bundle();
-						        parameters.putString("format", "json");
-						        parameters.putString("sdk", "android");
-					            parameters.putString(TOKEN, token);
-					            url = GRAPH_BASE_URL + "me" + "?" + encodeUrl(parameters);
-					            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
-					            conn.setRequestProperty("User-Agent", System.getProperties().getProperty("http.agent") + " FacebookAndroidSDK");
-					            String response = "";
-					            try {
-					            	response = read(conn.getInputStream());
-					            } catch (FileNotFoundException e) {
-					                // Error Stream contains JSON that we can parse to a FB error
-					                response = read(conn.getErrorStream());
-					            }
-					            JSONObject jobj = new JSONObject(response);
+						        url = url.replace("fbconnect", "http");
+								URL u = new URL(url);
+								String token = "";
+								int expiry = 0;
+								String[] parameters = (u.getQuery() + "&" + u.getRef()).split("&");
+								for (String parameter : parameters) {
+									String[] param = parameter.split("=");
+									if (TOKEN.equals(param[0])) token = param[1];
+									else if (EXPIRES.equals(param[0])) expiry = param[1] == "0" ? 0 : (int) System.currentTimeMillis() + Integer.parseInt(param[1]) * 1000;
+								}
+					            JSONObject jobj = new JSONObject(get(GRAPH_BASE_URL + "me?format=json&sdk=android&" + TOKEN + "=" + token));
 					            addAccount(jobj.getString("name"), token, "", expiry, FACEBOOK, 0);
 							} else if (MYSPACE_CALLBACK.getHost().equals(uri.getHost())) {
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));

@@ -24,6 +24,7 @@ import static com.piusvelte.sonet.Sonet.FACEBOOK_PERMISSIONS;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE;
 
 import static com.piusvelte.sonet.Tokens.FACEBOOK_ID;
 
@@ -215,6 +216,9 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			startActivity(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, service));
 			break;
 		case SALESFORCE:
+			startActivity(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, service));
+			break;
+		case FOURSQUARE:
 			startActivity(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, service));
 			break;
 		}
