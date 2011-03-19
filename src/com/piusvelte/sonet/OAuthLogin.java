@@ -75,6 +75,10 @@ import static com.piusvelte.sonet.Sonet.FOURSQUARE;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Tokens.FOURSQUARE_KEY;
 
+import static com.piusvelte.sonet.Sonet.LINKEDIN;
+import static com.piusvelte.sonet.Tokens.LINKEDIN_KEY;
+import static com.piusvelte.sonet.Tokens.LINKEDIN_SECRET;
+
 import com.piusvelte.sonet.Sonet.Accounts;
 
 import android.app.Activity;
@@ -99,6 +103,7 @@ public class OAuthLogin extends Activity {
 	private static Uri SALESFORCE_CALLBACK = Uri.parse("sonet://salesforce");
 	private static Uri FACEBOOK_CALLBACK = Uri.parse("fbconnect://success");
 	private static Uri FOURSQUARE_CALLBACK = Uri.parse("sonet://foursquare");
+	private static Uri LINKEDIN_CALLBACK = Uri.parse("sonet://linkedin");
 	private SonetOAuth mSonetOAuth;
 
 	@Override
@@ -133,6 +138,8 @@ public class OAuthLogin extends Activity {
 					case SALESFORCE:
 						mSonetOAuth = new SonetOAuth(SALESFORCE_KEY, SALESFORCE_SECRET);
 						sonetWebView.open(mSonetOAuth.getAuthUrl(SALESFORCE_URL_REQUEST, SALESFORCE_URL_ACCESS, SALESFORCE_URL_AUTHORIZE, SALESFORCE_CALLBACK.toString(), true) + "&oauth_consumer_key=" + SALESFORCE_KEY);
+						break;
+					case LINKEDIN:
 						break;
 					default:
 						this.finish();
@@ -268,6 +275,8 @@ public class OAuthLogin extends Activity {
 								Log.v(TAG,"response:"+response);
 								//account info
 								//https://login.salesforce.com/ID/orgID/userID?Format=json
+							} else if (LINKEDIN_CALLBACK.getHost().equals(uri.getHost())) {
+								
 							} else if (uri.getHost().contains("salesforce.com") && (uri.getQueryParameter("oauth_consumer_key") == null)) {
 								Log.v(TAG,"load:"+url + "&oauth_consumer_key=" + SALESFORCE_KEY);
 								view.loadUrl(url + "&oauth_consumer_key=" + SALESFORCE_KEY);

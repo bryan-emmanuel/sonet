@@ -48,6 +48,7 @@ import static com.piusvelte.sonet.Sonet.SALESFORCE_FEED;
 import static com.piusvelte.sonet.Sonet.GRAPH_BASE_URL;
 
 import static com.piusvelte.sonet.Sonet.FOURSQUARE;
+import static com.piusvelte.sonet.Sonet.LINKEDIN;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -96,7 +97,7 @@ import android.widget.RemoteViews;
 public class SonetService extends Service implements Runnable {
 	private static final String TAG = "SonetService";
 	private Thread sThread;
-	private static int[] map_icons = new int[]{R.drawable.twitter, R.drawable.facebook, R.drawable.myspace, R.drawable.buzz};
+	private static int[] map_icons = new int[]{R.drawable.twitter, R.drawable.facebook, R.drawable.myspace, R.drawable.buzz, R.drawable.foursquare, R.drawable.linkedin, R.drawable.salesforce};
 
 	@Override
 	public void onStart(Intent intent, int startId) {
@@ -627,6 +628,8 @@ public class SonetService extends Service implements Runnable {
 								} catch (JSONException e) {
 									Log.e(TAG,e.toString());
 								}
+								break;
+							case LINKEDIN:
 								break;
 							}
 						}

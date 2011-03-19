@@ -24,13 +24,13 @@ import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE;
+import static com.piusvelte.sonet.Sonet.LINKEDIN;
+import static com.piusvelte.sonet.Sonet.BUZZ;
+import static com.piusvelte.sonet.Sonet.SALESFORCE;
 
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Widgets;
-
-import static com.piusvelte.sonet.Sonet.BUZZ;
-import static com.piusvelte.sonet.Sonet.SALESFORCE;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -172,6 +172,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 				+ Accounts.SERVICE + "='" + FACEBOOK + "' then 'Facebook: ' when "
 				+ Accounts.SERVICE + "='" + MYSPACE + "' then 'MySpace: ' when "
 				+ Accounts.SERVICE + "='" + BUZZ + "' then 'Buzz: ' when "
+				+ Accounts.SERVICE + "='" + LINKEDIN + "' then 'LinkedIn: ' when "
 				+ Accounts.SERVICE + "='" + SALESFORCE + "' then 'Salesforce: ' when "
 				+ Accounts.SERVICE + "='" + FOURSQUARE + "' then 'Foursquare: ' else '' end)||" + Accounts.USERNAME + " as " + Accounts.USERNAME, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(sAppWidgetId)}, null);
 		mHasAccounts = c.getCount() != 0;
@@ -196,6 +197,9 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			startActivity(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, service));
 			break;
 		case FOURSQUARE:
+			startActivity(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, service));
+			break;
+		case LINKEDIN:
 			startActivity(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, service));
 			break;
 		}

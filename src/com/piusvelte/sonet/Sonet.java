@@ -76,8 +76,13 @@ public class Sonet {
     protected static final int FOURSQUARE = 4;
     protected static final String FOURSQUARE_URL_ACCESS = "https://foursquare.com/oauth2/access_token";
     protected static final String FOURSQUARE_URL_AUTHORIZE = "https://foursquare.com/oauth2/authorize";
+    
+    protected static final int LINKEDIN = 5;
+    protected static final String LINKEDIN_URL_REQUEST = "";
+    protected static final String LINKEDIN_URL_AUTHORIZE = "";
+    protected static final String LINKEDIN_URL_ACCESS = "";
 	
-    protected static final int SALESFORCE = 5;
+    protected static final int SALESFORCE = 6;
     protected static final String SALESFORCE_URL_REQUEST = "https://login.salesforce.com/_nc_external/system/security/oauth/RequestTokenHandler";
     protected static final String SALESFORCE_URL_AUTHORIZE = "https://login.salesforce.com/setup/secur/RemoteAccessAuthorizationPage.apexp";
     protected static final String SALESFORCE_URL_ACCESS = "https://login.salesforce.com/_nc_external/system/security/oauth/AccessTokenHandler";
