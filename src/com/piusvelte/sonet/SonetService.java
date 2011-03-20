@@ -37,17 +37,18 @@ import static com.piusvelte.sonet.Tokens.BUZZ_KEY;
 import static com.piusvelte.sonet.Tokens.BUZZ_SECRET;
 
 import static com.piusvelte.sonet.Sonet.TWITTER_FEED;
-import static com.piusvelte.sonet.Sonet.MYSPACE_FEED;
-import static com.piusvelte.sonet.Sonet.BUZZ_FEED;
+import static com.piusvelte.sonet.Sonet.MYSPACE_BASE_URL;
+import static com.piusvelte.sonet.Sonet.BUZZ_BASE_URL;
 
 import static com.piusvelte.sonet.Sonet.SALESFORCE;
 import static com.piusvelte.sonet.Tokens.SALESFORCE_KEY;
 import static com.piusvelte.sonet.Tokens.SALESFORCE_SECRET;
 import static com.piusvelte.sonet.Sonet.SALESFORCE_FEED;
 
-import static com.piusvelte.sonet.Sonet.GRAPH_BASE_URL;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
 
 import static com.piusvelte.sonet.Sonet.FOURSQUARE;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE_BASE_URL;
 import static com.piusvelte.sonet.Sonet.LINKEDIN;
 
 import java.io.ByteArrayOutputStream;
@@ -175,14 +176,16 @@ public class SonetService extends Service implements Runnable {
 	private Date parseDate(String date, String format, double timezone) {
 		SimpleDateFormat msformat = new SimpleDateFormat(format);
 		Calendar cal = Calendar.getInstance();
-		Date created;
-		try {
-			created = msformat.parse(date);
-		} catch (ParseException e) {
-			created = new Date();
-			Log.e(TAG,e.toString()); //Sun Mar 13 01:34:20 +0000 2011
-		}
-		cal.setTime(created);
+		if (format != null) {
+			Date created;
+			try {
+				created = msformat.parse(date);
+			} catch (ParseException e) {
+				created = new Date();
+				Log.e(TAG,e.toString()); //Sun Mar 13 01:34:20 +0000 2011
+			}
+			cal.setTime(created);
+		} else cal.setTimeInMillis((long) Integer.parseInt(date) * 1000);
 		cal.add(Calendar.MILLISECOND, (int) (timezone * 3600000));
 		return cal.getTime();
 	}
@@ -369,7 +372,7 @@ public class SonetService extends Service implements Runnable {
 								String status_url = "http://twitter.com/%s/status/%s";
 								sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
-									String response = sonetOAuth.get(TWITTER_FEED);
+									String response = sonetOAuth.httpGet(TWITTER_FEED);
 									JSONArray entries = new JSONArray(response);
 									//									// if there are updates, clear the cache
 									if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
@@ -414,7 +417,7 @@ public class SonetService extends Service implements Runnable {
 								to = "to",
 								fburl = "http://www.facebook.com";
 								try {
-									JSONObject jobj = new JSONObject(Sonet.httpGet(GRAPH_BASE_URL + "me/home?format=json&sdk=android&" + TOKEN + "=" + accounts.getString(itoken) + "&fields=actions,link,type,from,message,created_time,to"));
+									JSONObject jobj = new JSONObject(Sonet.httpGet(FACEBOOK_BASE_URL + "me/home?format=json&sdk=android&" + TOKEN + "=" + accounts.getString(itoken) + "&fields=actions,link,type,from,message,created_time,to"));
 									JSONArray jarr = jobj.getJSONArray(data);
 									// if there are updates, clear the cache
 									if (jarr.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
@@ -472,7 +475,7 @@ public class SonetService extends Service implements Runnable {
 								author = "author";
 								sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
-									String response = sonetOAuth.get(MYSPACE_FEED);
+									String response = sonetOAuth.httpGet(MYSPACE_BASE_URL + "statusmood/@me/@friends/history?includeself=true&fields=author,source");
 									if (response != null) {
 										JSONObject jobj = new JSONObject(response);
 										JSONArray entries = jobj.getJSONArray("entry");
@@ -520,7 +523,7 @@ public class SonetService extends Service implements Runnable {
 							case BUZZ:
 								sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
-									String response = sonetOAuth.get(BUZZ_FEED);
+									String response = sonetOAuth.httpGet(BUZZ_BASE_URL + "activities/@me/@consumption?alt=json");
 									JSONArray entries = new JSONObject(response).getJSONObject("data").getJSONArray("items");
 									// if there are updates, clear the cache
 									if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
@@ -565,7 +568,7 @@ public class SonetService extends Service implements Runnable {
 							case SALESFORCE:
 								sonetOAuth = new SonetOAuth(SALESFORCE_KEY, SALESFORCE_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
-									String response = sonetOAuth.get(SALESFORCE_FEED);
+									String response = sonetOAuth.httpGet(SALESFORCE_FEED);
 									Log.d(TAG,"response:"+response);
 									JSONArray entries = new JSONObject(response).getJSONObject("data").getJSONArray("items");
 									// if there are updates, clear the cache
@@ -605,21 +608,23 @@ public class SonetService extends Service implements Runnable {
 								break;
 							case FOURSQUARE:
 								try {
-									String response = Sonet.httpGet("https://api.foursquare.com/v2/checkins/recent?limit=20&oauth_token=" + accounts.getString(itoken));
-									Log.d(TAG,"response:"+response);
+									String response = Sonet.httpGet(FOURSQUARE_BASE_URL + "checkins/recent?limit=20&oauth_token=" + accounts.getString(itoken));
 									JSONArray checkins = new JSONObject(response).getJSONObject("response").getJSONArray("recent");
 									// if there are updates, clear the cache
 									if (checkins.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
 									for (int e = 0; e < checkins.length(); e++) {
 										JSONObject checkin = checkins.getJSONObject(e);
 										JSONObject user = checkin.getJSONObject("user");
+										JSONObject venue = checkin.getJSONObject("venue");
+										String shout = checkin.getString("shout");
+										if (shout.length() > 0) shout += "\n";
+										shout += venue.getString("name");
 										Date created = parseDate(checkin.getString("createdAt"), null, 0);
-
 										this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
 												"http://www.foursquare.com",
 												user.getString("firstName") + " " + user.getString("lastName"),
 												getProfile(user.getString("photo")),
-												checkin.getString("shout"),
+												shout,
 												service,
 												getCreatedText(now, created, time24hr),
 												appWidgetId,

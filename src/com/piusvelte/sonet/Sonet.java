@@ -52,7 +52,7 @@ public class Sonet {
 	protected static final int FACEBOOK = 1;
 	protected static final String[] FACEBOOK_PERMISSIONS = new String[] {"offline_access"};
     protected static final String FACEBOOK_URL_AUTHORIZE = "https://graph.facebook.com/oauth/authorize";
-    protected static final String GRAPH_BASE_URL = "https://graph.facebook.com/";
+    protected static final String FACEBOOK_BASE_URL = "https://graph.facebook.com/";
 
     protected static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
     protected static final String ACTION_BUILD_SCROLL = "com.piusvelte.sonet.Sonet.BUILD_SCROLL";
@@ -64,23 +64,24 @@ public class Sonet {
     protected static final String MYSPACE_URL_REQUEST = "http://api.myspace.com/request_token";
     protected static final String MYSPACE_URL_AUTHORIZE = "http://api.myspace.com/authorize";
     protected static final String MYSPACE_URL_ACCESS = "http://api.myspace.com/access_token";
-    protected static final String MYSPACE_FEED = "http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?includeself=true&fields=author,source";
+    protected static final String MYSPACE_BASE_URL = "http://opensocial.myspace.com/1.0/";
 
     protected static final int BUZZ = 3;
     protected static final String BUZZ_URL_REQUEST = "https://www.google.com/accounts/OAuthGetRequestToken";
     protected static final String BUZZ_URL_AUTHORIZE = "https://www.google.com/buzz/api/auth/OAuthAuthorizeToken";
     protected static final String BUZZ_URL_ACCESS = "https://www.google.com/accounts/OAuthGetAccessToken";
     protected static final String BUZZ_SCOPE = "https://www.googleapis.com/auth/buzz.readonly";
-    protected static final String BUZZ_FEED = "https://www.googleapis.com/buzz/v1/activities/@me/@consumption?alt=json";
+    protected static final String BUZZ_BASE_URL = "https://www.googleapis.com/buzz/v1/";
     
     protected static final int FOURSQUARE = 4;
     protected static final String FOURSQUARE_URL_ACCESS = "https://foursquare.com/oauth2/access_token";
     protected static final String FOURSQUARE_URL_AUTHORIZE = "https://foursquare.com/oauth2/authorize";
+    protected static final String FOURSQUARE_BASE_URL = "https://api.foursquare.com/v2/";
     
     protected static final int LINKEDIN = 5;
-    protected static final String LINKEDIN_URL_REQUEST = "";
-    protected static final String LINKEDIN_URL_AUTHORIZE = "";
-    protected static final String LINKEDIN_URL_ACCESS = "";
+    protected static final String LINKEDIN_URL_REQUEST = "https://api.linkedin.com/uas/oauth/requestToken";
+    protected static final String LINKEDIN_URL_AUTHORIZE = "https://www.linkedin.com/uas/oauth/authorize";
+    protected static final String LINKEDIN_URL_ACCESS = "https://api.linkedin.com/uas/oauth/accessToken";
 	
     protected static final int SALESFORCE = 6;
     protected static final String SALESFORCE_URL_REQUEST = "https://login.salesforce.com/_nc_external/system/security/oauth/RequestTokenHandler";

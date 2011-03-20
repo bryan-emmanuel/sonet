@@ -110,11 +110,11 @@ public class SonetOAuth {
 		return response;		
 	}
 
-	public String get(String url) throws ClientProtocolException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException {
+	public String httpGet(String url) throws ClientProtocolException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException {
 		return httpResponse(new HttpGet(url));
 	}
 
-	public String post(String url) throws ClientProtocolException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException {
+	public String httpPost(String url) throws ClientProtocolException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException {
 		return httpResponse(new HttpPost(url));
 	}
 

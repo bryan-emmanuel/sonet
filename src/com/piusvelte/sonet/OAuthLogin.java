@@ -50,6 +50,7 @@ import static com.piusvelte.sonet.Sonet.BUZZ_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.BUZZ_URL_REQUEST;
 import static com.piusvelte.sonet.Tokens.BUZZ_KEY;
 import static com.piusvelte.sonet.Tokens.BUZZ_SECRET;
+import static com.piusvelte.sonet.Sonet.BUZZ_BASE_URL;
 
 import static com.piusvelte.sonet.Sonet.MYSPACE;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_ACCESS;
@@ -57,6 +58,7 @@ import static com.piusvelte.sonet.Sonet.MYSPACE_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_REQUEST;
 import static com.piusvelte.sonet.Tokens.MYSPACE_KEY;
 import static com.piusvelte.sonet.Tokens.MYSPACE_SECRET;
+import static com.piusvelte.sonet.Sonet.MYSPACE_BASE_URL;
 
 import static com.piusvelte.sonet.Sonet.SALESFORCE;
 import static com.piusvelte.sonet.Sonet.SALESFORCE_URL_ACCESS;
@@ -69,15 +71,21 @@ import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Tokens.FACEBOOK_ID;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_PERMISSIONS;
-import static com.piusvelte.sonet.Sonet.GRAPH_BASE_URL;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
 
 import static com.piusvelte.sonet.Sonet.FOURSQUARE;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Tokens.FOURSQUARE_KEY;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE_BASE_URL;
 
 import static com.piusvelte.sonet.Sonet.LINKEDIN;
 import static com.piusvelte.sonet.Tokens.LINKEDIN_KEY;
 import static com.piusvelte.sonet.Tokens.LINKEDIN_SECRET;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_ACCESS;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_AUTHORIZE;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_REQUEST;
+
+import static oauth.signpost.OAuth.OAUTH_VERIFIER;
 
 import com.piusvelte.sonet.Sonet.Accounts;
 
@@ -140,6 +148,8 @@ public class OAuthLogin extends Activity {
 						sonetWebView.open(mSonetOAuth.getAuthUrl(SALESFORCE_URL_REQUEST, SALESFORCE_URL_ACCESS, SALESFORCE_URL_AUTHORIZE, SALESFORCE_CALLBACK.toString(), true) + "&oauth_consumer_key=" + SALESFORCE_KEY);
 						break;
 					case LINKEDIN:
+						mSonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET);
+						sonetWebView.open(mSonetOAuth.getAuthUrl(LINKEDIN_URL_REQUEST, LINKEDIN_URL_ACCESS, LINKEDIN_URL_AUTHORIZE, LINKEDIN_CALLBACK.toString(), true));
 						break;
 					default:
 						this.finish();
@@ -198,8 +208,8 @@ public class OAuthLogin extends Activity {
 						Uri uri = Uri.parse(url);
 						try {
 							if (TWITTER_CALLBACK.getHost().equals(uri.getHost())) {
-								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
-								JSONObject jobj = new JSONObject(mSonetOAuth.get("http://api.twitter.com/1/account/verify_credentials.json"));
+								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER));
+								JSONObject jobj = new JSONObject(mSonetOAuth.httpGet("http://api.twitter.com/1/account/verify_credentials.json"));
 								addAccount(jobj.getString("screen_name"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, TWITTER, 0);
 							} else if (FOURSQUARE_CALLBACK.getHost().equals(uri.getHost())) {
 								// get the access_token
@@ -214,7 +224,7 @@ public class OAuthLogin extends Activity {
 										break;
 									}
 								}
-								JSONObject jobj = (new JSONObject(Sonet.httpGet("https://api.foursquare.com/v2/users/self?oauth_token=" + token))).getJSONObject("response").getJSONObject("user");
+								JSONObject jobj = (new JSONObject(Sonet.httpGet(FOURSQUARE_BASE_URL + "users/self?oauth_token=" + token))).getJSONObject("response").getJSONObject("user");
 								addAccount(jobj.getString("firstName") + " " + jobj.getString("lastName"), token, "", 0, FOURSQUARE, 0);
 							} else if (FACEBOOK_CALLBACK.getHost().equals(uri.getHost())) {
 						        url = url.replace("fbconnect", "http");
@@ -227,11 +237,11 @@ public class OAuthLogin extends Activity {
 									if (TOKEN.equals(param[0])) token = param[1];
 									else if (EXPIRES.equals(param[0])) expiry = param[1] == "0" ? 0 : (int) System.currentTimeMillis() + Integer.parseInt(param[1]) * 1000;
 								}
-					            JSONObject jobj = new JSONObject(Sonet.httpGet(GRAPH_BASE_URL + "me?format=json&sdk=android&" + TOKEN + "=" + token));
+					            JSONObject jobj = new JSONObject(Sonet.httpGet(FACEBOOK_BASE_URL + "me?format=json&sdk=android&" + TOKEN + "=" + token));
 					            addAccount(jobj.getString("name"), token, "", expiry, FACEBOOK, 0);
 							} else if (MYSPACE_CALLBACK.getHost().equals(uri.getHost())) {
-								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
-								String response = mSonetOAuth.get("http://opensocial.myspace.com/1.0/people/@me/@self");
+								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER));
+								String response = mSonetOAuth.httpGet(MYSPACE_BASE_URL + "people/@me/@self");
 								JSONObject jobj = new JSONObject(response);
 								final String accountId = addAccount(jobj.getJSONObject("person").getString("displayName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, MYSPACE, 0);
 								// get the timezone, index set to GMT
@@ -266,17 +276,18 @@ public class OAuthLogin extends Activity {
 								return true;
 							} else if (BUZZ_CALLBACK.getHost().equals(uri.getHost())) {
 								mWebView.setVisibility(View.INVISIBLE);
-								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
-								String username = new JSONObject(mSonetOAuth.get("https://www.googleapis.com/buzz/v1/people/@me/@self?alt=json")).getJSONObject("data").getString("displayName");
+								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER));
+								String username = new JSONObject(mSonetOAuth.httpGet(BUZZ_BASE_URL + "people/@me/@self?alt=json")).getJSONObject("data").getString("displayName");
 								if (username != null) addAccount(username, mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, BUZZ, 0);
 							} else if (SALESFORCE_CALLBACK.getHost().equals(uri.getHost())) {
-								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER));
-								String response = mSonetOAuth.post("https://login.salesforce.com/services/OAuth/u/21.0");
+								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER));
+								String response = mSonetOAuth.httpPost("https://login.salesforce.com/services/OAuth/u/21.0");
 								Log.v(TAG,"response:"+response);
 								//account info
 								//https://login.salesforce.com/ID/orgID/userID?Format=json
 							} else if (LINKEDIN_CALLBACK.getHost().equals(uri.getHost())) {
-								
+								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER));
+								String response = mSonetOAuth.httpGet("http://api.linkedin.com/v1/people/~");
 							} else if (uri.getHost().contains("salesforce.com") && (uri.getQueryParameter("oauth_consumer_key") == null)) {
 								Log.v(TAG,"load:"+url + "&oauth_consumer_key=" + SALESFORCE_KEY);
 								view.loadUrl(url + "&oauth_consumer_key=" + SALESFORCE_KEY);
