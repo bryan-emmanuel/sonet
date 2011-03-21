@@ -287,7 +287,8 @@ public class OAuthLogin extends Activity {
 								//https://login.salesforce.com/ID/orgID/userID?Format=json
 							} else if (LINKEDIN_CALLBACK.getHost().equals(uri.getHost())) {
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER));
-								String response = mSonetOAuth.httpGet("http://api.linkedin.com/v1/people/~");
+								String response = mSonetOAuth.httpGetWithHeaders("http://api.linkedin.com/v1/people/~", new String[][] {{"x-li-format", "json"}});
+								Log.v(TAG,"linkedin:"+response);
 							} else if (uri.getHost().contains("salesforce.com") && (uri.getQueryParameter("oauth_consumer_key") == null)) {
 								Log.v(TAG,"load:"+url + "&oauth_consumer_key=" + SALESFORCE_KEY);
 								view.loadUrl(url + "&oauth_consumer_key=" + SALESFORCE_KEY);

@@ -35,7 +35,7 @@
 		<item>MySpace</item>
 		<item>Buzz</item>
 		<item>Foursquare</item>
-<!--		<item>LinkedIn</item>-->
+		<item>LinkedIn</item>
 <!--		<item>Salesforce</item>-->
 	</string-array>
 	<string-array name="service_values">
@@ -44,7 +44,7 @@
 		<item>2</item>
 		<item>3</item>
 		<item>4</item>
-<!--		<item>5</item>-->
+		<item>5</item>
 <!--		<item>6</item>-->
 	</string-array>
 	<string-array name="textsize_entries">

@@ -117,6 +117,12 @@ public class SonetOAuth {
 	public String httpPost(String url) throws ClientProtocolException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException {
 		return httpResponse(new HttpPost(url));
 	}
+	
+	public String httpGetWithHeaders(String url, String[][] headers) throws OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, ClientProtocolException, IOException {
+		HttpGet httpGet = new HttpGet(url);
+		for (String[] header : headers) httpGet.setHeader(header[0], header[1]);
+		return httpResponse(new HttpGet(url));
+	}
 
 	public String getToken() {
 		return mOAuthConsumer.getToken();

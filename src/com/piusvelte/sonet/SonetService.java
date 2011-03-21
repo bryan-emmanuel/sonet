@@ -174,9 +174,9 @@ public class SonetService extends Service implements Runnable {
 	}
 
 	private Date parseDate(String date, String format, double timezone) {
-		SimpleDateFormat msformat = new SimpleDateFormat(format);
 		Calendar cal = Calendar.getInstance();
 		if (format != null) {
+			SimpleDateFormat msformat = new SimpleDateFormat(format);
 			Date created;
 			try {
 				created = msformat.parse(date);
@@ -274,6 +274,7 @@ public class SonetService extends Service implements Runnable {
 				values.put(Widgets.BUTTONS_COLOR, buttons_color);
 				values.put(Widgets.BUTTONS_TEXTSIZE, buttons_textsize);
 				values.put(Widgets.WIDGET, appWidgetId);
+				values.put(Widgets.ICON, true);
 				this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 			}
 			settings.close();
