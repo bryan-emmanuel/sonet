@@ -84,6 +84,8 @@ import static com.piusvelte.sonet.Tokens.LINKEDIN_SECRET;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_ACCESS;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_REQUEST;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_HEADERS;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_BASE_URL;
 
 import static oauth.signpost.OAuth.OAUTH_VERIFIER;
 
@@ -287,8 +289,8 @@ public class OAuthLogin extends Activity {
 								//https://login.salesforce.com/ID/orgID/userID?Format=json
 							} else if (LINKEDIN_CALLBACK.getHost().equals(uri.getHost())) {
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER));
-								String response = mSonetOAuth.httpGetWithHeaders("http://api.linkedin.com/v1/people/~", new String[][] {{"x-li-format", "json"}});
-								Log.v(TAG,"linkedin:"+response);
+								JSONObject response = new JSONObject(mSonetOAuth.httpGetWithHeaders(LINKEDIN_BASE_URL, LINKEDIN_HEADERS));
+								addAccount(response.getString("firstName") + " " + response.getString("lastName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, LINKEDIN, 0);
 							} else if (uri.getHost().contains("salesforce.com") && (uri.getQueryParameter("oauth_consumer_key") == null)) {
 								Log.v(TAG,"load:"+url + "&oauth_consumer_key=" + SALESFORCE_KEY);
 								view.loadUrl(url + "&oauth_consumer_key=" + SALESFORCE_KEY);

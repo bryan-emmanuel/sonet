@@ -23,6 +23,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -82,6 +83,26 @@ public class Sonet {
     protected static final String LINKEDIN_URL_REQUEST = "https://api.linkedin.com/uas/oauth/requestToken";
     protected static final String LINKEDIN_URL_AUTHORIZE = "https://www.linkedin.com/uas/oauth/authorize";
     protected static final String LINKEDIN_URL_ACCESS = "https://api.linkedin.com/uas/oauth/accessToken";
+    protected static final String LINKEDIN_BASE_URL = "https://api.linkedin.com/v1/people/~";
+    protected static final String[][] LINKEDIN_HEADERS = new String[][] {{"x-li-format", "json"}};
+    protected static final HashMap<String, String> LINKEDIN_UPDATETYPES;
+    
+    static {
+    	LINKEDIN_UPDATETYPES = new HashMap<String, String>();
+    	LINKEDIN_UPDATETYPES.put("ANSW", "updated the answer ");
+    	LINKEDIN_UPDATETYPES.put("APPS", "updated the application ");
+    	LINKEDIN_UPDATETYPES.put("CMPY", "is now following ");
+    	LINKEDIN_UPDATETYPES.put("CONN", "is now connected to ");
+    	LINKEDIN_UPDATETYPES.put("JOBS", "posted the job ");
+    	LINKEDIN_UPDATETYPES.put("JGRP", "joined the group ");
+    	LINKEDIN_UPDATETYPES.put("PICT", "changed the picture ");
+    	LINKEDIN_UPDATETYPES.put("PRFX", "extended the profile update ");
+    	LINKEDIN_UPDATETYPES.put("RECU", "recommendations ");
+    	LINKEDIN_UPDATETYPES.put("PRFU", "changed their profile ");
+    	LINKEDIN_UPDATETYPES.put("QSTN", "updated the question ");
+    	LINKEDIN_UPDATETYPES.put("SHAR", "shared ");
+    	LINKEDIN_UPDATETYPES.put("VIRL", "updated the viral ");
+    }
 	
     protected static final int SALESFORCE = 6;
     protected static final String SALESFORCE_URL_REQUEST = "https://login.salesforce.com/_nc_external/system/security/oauth/RequestTokenHandler";
