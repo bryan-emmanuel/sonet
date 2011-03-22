@@ -297,7 +297,8 @@ public class SonetService extends Service implements Runnable {
 				 */
 				Boolean time24hr,
 				icon;
-				int status_bg_color = -1;
+				int status_bg_color = -1,
+				status_count;
 				byte[] status_bg;
 				Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY, Accounts.TIMEZONE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
 				if (accounts.getCount() == 0) {
@@ -342,27 +343,31 @@ public class SonetService extends Service implements Runnable {
 						int accountId = accounts.getInt(iaccountid),
 						service = accounts.getInt(iservice);
 						// get the settings form time24hr and bg_color
-						Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(accountId)}, null);
+						Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(accountId)}, null);
 						if (c.moveToFirst()) {
 							time24hr = c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1;
 							status_bg_color = c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
 							icon = c.getInt(c.getColumnIndex(Widgets.ICON)) == 1;
+							status_count = c.getInt(c.getColumnIndex(Widgets.STATUSES_PER_ACCOUNT));
 						} else {
-							Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+							Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 							if (d.moveToFirst()) {
 								time24hr = d.getInt(d.getColumnIndex(Widgets.TIME24HR)) == 1;
 								status_bg_color = d.getInt(d.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
 								icon = d.getInt(d.getColumnIndex(Widgets.ICON)) == 1;
+								status_count = d.getInt(d.getColumnIndex(Widgets.STATUSES_PER_ACCOUNT));
 							} else {
-								Cursor e = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON}, Widgets.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
+								Cursor e = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT}, Widgets.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
 								if (e.moveToFirst()) {
 									time24hr = e.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1;
 									status_bg_color = e.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
 									icon = e.getInt(e.getColumnIndex(Widgets.ICON)) == 1;
+									status_count = e.getInt(e.getColumnIndex(Widgets.STATUSES_PER_ACCOUNT));
 								} else {
 									time24hr = false;
 									status_bg_color = Sonet.default_message_bg_color;
 									icon = true;
+									status_count = Sonet.default_statuses_per_account;
 								}
 								e.close();
 							}
@@ -385,10 +390,10 @@ public class SonetService extends Service implements Runnable {
 								String status_url = "http://twitter.com/%s/status/%s";
 								sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
-									response = sonetOAuth.httpGet(TWITTER_FEED);
+									response = sonetOAuth.httpGet(TWITTER_FEED + status_count);
 									if (response != null) {
 										JSONArray entries = new JSONArray(response);
-										//									// if there are updates, clear the cache
+										// if there are updates, clear the cache
 										if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
 										for (int e = 0; e < entries.length(); e++) {
 											JSONObject entry = entries.getJSONObject(e);
@@ -432,7 +437,7 @@ public class SonetService extends Service implements Runnable {
 								to = "to",
 								fburl = "http://www.facebook.com";
 								try {
-									response = Sonet.httpGet(FACEBOOK_BASE_URL + "me/home?format=json&sdk=android&" + TOKEN + "=" + accounts.getString(itoken) + "&fields=actions,link,type,from,message,created_time,to");
+									response = Sonet.httpGet(FACEBOOK_BASE_URL + "me/home?format=json&sdk=android&limit=" + status_count + "&" + TOKEN + "=" + accounts.getString(itoken) + "&fields=actions,link,type,from,message,created_time,to");
 									if (response != null) {
 										JSONObject jobj = new JSONObject(response);
 										JSONArray jarr = jobj.getJSONArray(data);
@@ -493,7 +498,7 @@ public class SonetService extends Service implements Runnable {
 								author = "author";
 								sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
-									response = sonetOAuth.httpGet(MYSPACE_BASE_URL + "statusmood/@me/@friends/history?includeself=true&fields=author,source");
+									response = sonetOAuth.httpGet(MYSPACE_BASE_URL + "statusmood/@me/@friends/history?count=" + status_count + "includeself=true&fields=author,source");
 									if (response != null) {
 										JSONObject jobj = new JSONObject(response);
 										JSONArray entries = jobj.getJSONArray("entry");
@@ -541,7 +546,7 @@ public class SonetService extends Service implements Runnable {
 							case BUZZ:
 								sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
-									response = sonetOAuth.httpGet(BUZZ_BASE_URL + "activities/@me/@consumption?alt=json");
+									response = sonetOAuth.httpGet(BUZZ_BASE_URL + "activities/@me/@consumption?alt=json&max-results=" + status_count);
 									if (response != null) {
 										JSONArray entries = new JSONObject(response).getJSONObject("data").getJSONArray("items");
 										// if there are updates, clear the cache
@@ -630,7 +635,7 @@ public class SonetService extends Service implements Runnable {
 								break;
 							case FOURSQUARE:
 								try {
-									response = Sonet.httpGet(FOURSQUARE_BASE_URL + "checkins/recent?limit=20&oauth_token=" + accounts.getString(itoken));
+									response = Sonet.httpGet(FOURSQUARE_BASE_URL + "checkins/recent?limit=" + status_count + "&oauth_token=" + accounts.getString(itoken));
 									if (response != null) {
 										JSONArray checkins = new JSONObject(response).getJSONObject("response").getJSONArray("recent");
 										// if there are updates, clear the cache
@@ -659,24 +664,24 @@ public class SonetService extends Service implements Runnable {
 							case LINKEDIN:
 								sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
-									response = sonetOAuth.httpGetWithHeaders(LINKEDIN_BASE_URL + "/network/updates?count=20", LINKEDIN_HEADERS);
-									Log.v(TAG,"LI:"+response);
+									response = sonetOAuth.httpGetWithHeaders(LINKEDIN_BASE_URL + "/network/updates?count=" + status_count, LINKEDIN_HEADERS);
 									JSONArray values = new JSONObject(response).getJSONArray("values");
 									// if there are updates, clear the cache
 									if (values.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
 									for (int e = 0; e < values.length(); e++) {
 										JSONObject value = values.getJSONObject(e);
 										String updateType = value.getString("updateType");
-										if (LINKEDIN_UPDATETYPES.containsKey(updateType)) {
+										JSONObject updateContent = value.getJSONObject("updateContent");
+										if (LINKEDIN_UPDATETYPES.containsKey(updateType) && updateContent.has("person")) {
 											Date created = parseDate(Long.parseLong(value.getString("timestamp")), 0);
-											JSONObject person = value.getJSONObject("updateContent").getJSONObject("person");
+											JSONObject person = updateContent.getJSONObject("person");
 											String update = LINKEDIN_UPDATETYPES.get(updateType);
 											Log.v(TAG,"type:"+updateType);
-											if (person.has("memberGroups")) Log.v(TAG,"memberGroups:"+person.getJSONObject("memberGroups").toString());
-											if (updateType == "JGRP") {
-												JSONArray updates = person.getJSONObject("memberGroups").getJSONArray("values");
+											Log.v(TAG,"person:"+person.toString());
+											if (updateType == "APPS") {
+												JSONArray updates = person.getJSONObject("personActivities").getJSONArray("activity");
 												for (int u = 0; u < updates.length(); u++) {
-													update += updates.getJSONObject(u).getString("name");
+													update += updates.getJSONObject(u).getString("body");
 													if (u < updates.length()) update += ", ";
 												}
 											} else if (updateType == "CONN") {
@@ -685,8 +690,25 @@ public class SonetService extends Service implements Runnable {
 													update += updates.getJSONObject(u).getString("firstName") + " " + updates.getJSONObject(u).getString("lastName");
 													if (u < updates.length()) update += ", ";
 												}
+											} else if (updateType == "JOBP") {
+												update += updateContent.getJSONObject("job").getJSONObject("position").getString("title");
+											} else if (updateType == "JGRP") {
+												JSONArray updates = person.getJSONObject("memberGroups").getJSONArray("values");
+												for (int u = 0; u < updates.length(); u++) {
+													update += updates.getJSONObject(u).getString("name");
+													if (u < updates.length()) update += ", ";
+												}
+											} else if (updateType == "PREC") {
+												JSONArray updates = person.getJSONArray("recommendations");
+												for (int u = 0; u < updates.length(); u++) {
+													JSONObject recommendation = updates.getJSONObject(u);
+													JSONObject recommendee = recommendation.getJSONObject("recommendee");
+													if (recommendee.has("firstName")) update += recommendee.getString("firstName");
+													if (recommendee.has("lastName")) update += recommendee.getString("lastName");
+													if (recommendation.has("recommendationSnippet")) update += ":" + recommendation.getString("recommendationSnippet");
+													if (u < updates.length()) update += ", ";
+												}
 											}
-											Log.v(TAG,"LI:"+person.toString());
 											this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
 													"http://www.linkedin.com",
 													person.getString("firstName") + " " + person.getString("lastName"),

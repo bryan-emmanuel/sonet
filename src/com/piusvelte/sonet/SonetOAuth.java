@@ -104,7 +104,7 @@ public class SonetOAuth {
 			}
 			break;
 		default:
-			Log.e(TAG,"get error:"+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
+			Log.e(TAG,"get error:"+httpRequest.getURI().toURL().toString()+"\n"+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
 			break;
 		}
 		return response;		

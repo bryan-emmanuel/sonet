@@ -47,7 +47,8 @@ public class Settings extends Activity implements View.OnClickListener {
 	mFriend_color_value,
 	mFriend_textsize_value,
 	mCreated_color_value,
-	mCreated_textsize_value;
+	mCreated_textsize_value,
+	mStatuses_per_account_value;
 	private Button mInterval;
 	private CheckBox mHasButtons;
 	private Button mButtons_bg_color;
@@ -62,6 +63,7 @@ public class Settings extends Activity implements View.OnClickListener {
 	private Button mCreated_textsize;
 	private CheckBox mTime24hr;
 	private CheckBox mIcon;
+	private Button mStatuses_per_account;
 	private boolean mUpdateWidget = false;
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 
@@ -85,8 +87,9 @@ public class Settings extends Activity implements View.OnClickListener {
 		mCreated_textsize = (Button) findViewById(R.id.created_textsize);
 		mTime24hr = (CheckBox) findViewById(R.id.time24hr);
 		mIcon = (CheckBox) findViewById(R.id.icon);
+		mStatuses_per_account = (Button) findViewById(R.id.statuses_per_account);
 
-		Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR, Widgets.ICON}, Widgets.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)}, null);
+		Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT}, Widgets.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)}, null);
 
 		if (c.moveToFirst()) {
 			mInterval_value = c.getInt(c.getColumnIndex(Widgets.INTERVAL));
@@ -103,8 +106,9 @@ public class Settings extends Activity implements View.OnClickListener {
 			mHasButtons.setChecked(c.getInt(c.getColumnIndex(Widgets.HASBUTTONS)) == 1);
 			mTime24hr.setChecked(c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1);
 			mIcon.setChecked(c.getInt(c.getColumnIndex(Widgets.ICON)) == 1);
+			mStatuses_per_account_value = c.getInt(c.getColumnIndex(Widgets.STATUSES_PER_ACCOUNT));
 		} else {
-			Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR, Widgets.ICON}, Widgets.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
+			Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT}, Widgets.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
 			if (d.moveToFirst()) {
 				mInterval_value = d.getInt(d.getColumnIndex(Widgets.INTERVAL));
 				mButtons_bg_color_value = d.getInt(d.getColumnIndex(Widgets.BUTTONS_BG_COLOR));
@@ -120,6 +124,7 @@ public class Settings extends Activity implements View.OnClickListener {
 				mHasButtons.setChecked(d.getInt(d.getColumnIndex(Widgets.HASBUTTONS)) == 1);
 				mTime24hr.setChecked(d.getInt(d.getColumnIndex(Widgets.TIME24HR)) == 1);
 				mIcon.setChecked(d.getInt(d.getColumnIndex(Widgets.ICON)) == 1);
+				mStatuses_per_account_value = d.getInt(d.getColumnIndex(Widgets.STATUSES_PER_ACCOUNT));
 			} else {
 				mInterval_value = Sonet.default_interval;
 				mButtons_bg_color_value = Sonet.default_buttons_bg_color;
@@ -132,6 +137,7 @@ public class Settings extends Activity implements View.OnClickListener {
 				mFriend_textsize_value = Sonet.default_friend_textsize;
 				mCreated_color_value = Sonet.default_created_color;
 				mCreated_textsize_value = Sonet.default_created_textsize;
+				mStatuses_per_account_value = Sonet.default_statuses_per_account;
 				// initialize default settings
 				ContentValues values = new ContentValues();
 				values.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
@@ -150,6 +156,7 @@ public class Settings extends Activity implements View.OnClickListener {
 				values.put(Widgets.HASBUTTONS, false);
 				values.put(Widgets.TIME24HR, false);
 				values.put(Widgets.ICON, true);
+				values.put(Widgets.STATUSES_PER_ACCOUNT, mStatuses_per_account_value);
 				this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 			}
 			d.close();
@@ -171,6 +178,7 @@ public class Settings extends Activity implements View.OnClickListener {
 			values.put(Widgets.HASBUTTONS, false);
 			values.put(Widgets.TIME24HR, false);
 			values.put(Widgets.ICON, true);
+			values.put(Widgets.STATUSES_PER_ACCOUNT, mStatuses_per_account_value);
 			this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 		}
 		c.close();
@@ -189,6 +197,7 @@ public class Settings extends Activity implements View.OnClickListener {
 		mHasButtons.setOnCheckedChangeListener(mHasButtonsListener);
 		mTime24hr.setOnCheckedChangeListener(mTime24hrListener);
 		mIcon.setOnCheckedChangeListener(mIconListener);
+		mStatuses_per_account.setOnClickListener(Settings.this);
 
 	}
 
@@ -369,7 +378,7 @@ public class Settings extends Activity implements View.OnClickListener {
 				}
 			})
 			.setCancelable(true)
-			.show();			
+			.show();
 		} else if (v == mFriend_color) {
 			ColorPickerDialog cp = new ColorPickerDialog(this, mFriendTextColorListener, this.mFriend_color_value);
 			cp.show();
@@ -392,7 +401,7 @@ public class Settings extends Activity implements View.OnClickListener {
 				}
 			})
 			.setCancelable(true)
-			.show();			
+			.show();
 		} else if (v == mCreated_color) {
 			ColorPickerDialog cp = new ColorPickerDialog(this, mCreatedTextColorListener, this.mCreated_color_value);
 			cp.show();
@@ -415,7 +424,27 @@ public class Settings extends Activity implements View.OnClickListener {
 				}
 			})
 			.setCancelable(true)
-			.show();			
+			.show();
+		} else if (v == mStatuses_per_account) {
+			int index = 0;
+			String[] values = getResources().getStringArray(R.array.status_count_values);
+			for (int i = 0; i < values.length; i++) {
+				if (Integer.parseInt(values[i]) == this.mStatuses_per_account_value) {
+					index = i;
+					break;
+				}
+			}
+			(new AlertDialog.Builder(this))
+			.setSingleChoiceItems(R.array.status_count_entries, index, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					Settings.this.mStatuses_per_account_value = Integer.parseInt(getResources().getStringArray(R.array.status_count_values)[which]);
+					updateDatabase(Widgets.STATUSES_PER_ACCOUNT, mStatuses_per_account_value);
+					dialog.cancel();
+				}
+			})
+			.setCancelable(true)
+			.show();
 		}
 	}
 }

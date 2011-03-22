@@ -49,7 +49,7 @@ public class SonetProvider extends ContentProvider {
 	private static final int STATUSES_STYLES = 3;
 
 	private static final String DATABASE_NAME = "sonet.db";
-	private static final int DATABASE_VERSION = 10;
+	private static final int DATABASE_VERSION = 11;
 
 	private static final String TABLE_ACCOUNTS = "accounts";
 	private static HashMap<String, String> accountsProjectionMap;
@@ -102,6 +102,7 @@ public class SonetProvider extends ContentProvider {
 		widgetsProjectionMap.put(Widgets.CREATED_TEXTSIZE, Widgets.CREATED_TEXTSIZE);
 		widgetsProjectionMap.put(Widgets.ACCOUNT, Widgets.ACCOUNT);
 		widgetsProjectionMap.put(Widgets.ICON, Widgets.ICON);
+		widgetsProjectionMap.put(Widgets.STATUSES_PER_ACCOUNT, Widgets.STATUSES_PER_ACCOUNT);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_STATUSES, STATUSES);
 		// backward compatibility for upgrading <=0.9.8
@@ -308,7 +309,8 @@ public class SonetProvider extends ContentProvider {
 					+ Widgets.FRIEND_TEXTSIZE + " integer, "
 					+ Widgets.CREATED_TEXTSIZE + " integer, "
 					+ Widgets.ACCOUNT + " integer, "
-					+ Widgets.ICON + " integer);");
+					+ Widgets.ICON + " integer, "
+					+ Widgets.STATUSES_PER_ACCOUNT + " integer);");
 			db.execSQL("create table if not exists " + TABLE_STATUSES
 					+ " (" + Statuses._ID + " integer primary key autoincrement, "
 					+ Statuses.CREATED + " integer, "
@@ -787,7 +789,54 @@ public class SonetProvider extends ContentProvider {
 						+ " is null) else "	+ Sonet.default_created_textsize + " end) as " + Statuses_styles.CREATED_TEXTSIZE + ","
 						+ Statuses.STATUS_BG + " as " + Statuses_styles.STATUS_BG + ","
 						+ Statuses.ICON + " as " + Statuses_styles.ICON
-						+ " from " + TABLE_STATUSES);				
+						+ " from " + TABLE_STATUSES);
+			}
+			if (oldVersion < 11) {
+				// add support for status limit
+				db.execSQL("drop table if exists " + TABLE_WIDGETS + "_bkp;");
+				db.execSQL("create temp table " + TABLE_WIDGETS + "_bkp as select * from " + TABLE_WIDGETS + ";");
+				db.execSQL("drop table if exists " + TABLE_WIDGETS + ";");
+				db.execSQL("create table if not exists " + TABLE_WIDGETS
+						+ " (" + Widgets._ID + " integer primary key autoincrement, "
+						+ Widgets.WIDGET + " integer, "
+						+ Widgets.INTERVAL + " integer, "
+						+ Widgets.HASBUTTONS + " integer, "
+						+ Widgets.BUTTONS_BG_COLOR + " integer, "
+						+ Widgets.BUTTONS_COLOR + " integer, "
+						+ Widgets.FRIEND_COLOR + " integer, "
+						+ Widgets.CREATED_COLOR + " integer, "
+						+ Widgets.MESSAGES_BG_COLOR + " integer, "
+						+ Widgets.MESSAGES_COLOR + " integer, "
+						+ Widgets.TIME24HR + " integer, "
+						+ Widgets.SCROLLABLE + " integer, "
+						+ Widgets.BUTTONS_TEXTSIZE + " integer, "
+						+ Widgets.MESSAGES_TEXTSIZE + " integer, "
+						+ Widgets.FRIEND_TEXTSIZE + " integer, "
+						+ Widgets.CREATED_TEXTSIZE + " integer, "
+						+ Widgets.ACCOUNT + " integer, "
+						+ Widgets.ICON + " integer, "
+						+ Widgets.STATUSES_PER_ACCOUNT + " integer);");
+				db.execSQL("insert into " + TABLE_WIDGETS
+						+ " select "
+						+ Widgets._ID + ","
+						+ Widgets.WIDGET + ","
+						+ Widgets.INTERVAL + ","
+						+ Widgets.HASBUTTONS + ","
+						+ Widgets.BUTTONS_BG_COLOR + ","
+						+ Widgets.BUTTONS_COLOR + ","
+						+ Widgets.FRIEND_COLOR + ","
+						+ Widgets.CREATED_COLOR + ","
+						+ Widgets.MESSAGES_BG_COLOR + ","
+						+ Widgets.MESSAGES_COLOR + ","
+						+ Widgets.TIME24HR + ","
+						+ Widgets.SCROLLABLE + ","
+						+ Widgets.BUTTONS_TEXTSIZE + ","
+						+ Widgets.MESSAGES_TEXTSIZE + ","
+						+ Widgets.FRIEND_TEXTSIZE + ","
+						+ Widgets.CREATED_TEXTSIZE + ","
+						+ Widgets.ACCOUNT + ","
+						+ Widgets.ICON + "," + Sonet.default_statuses_per_account + " from " + TABLE_WIDGETS + "_bkp;");
+				db.execSQL("drop table if exists " + TABLE_WIDGETS + "_bkp;");
 			}
 		}
 

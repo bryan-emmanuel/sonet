@@ -48,7 +48,7 @@ public class Sonet {
 	protected static final String TWITTER_URL_REQUEST = "http://api.twitter.com/oauth/request_token";
 	protected static final String TWITTER_URL_AUTHORIZE = "http://api.twitter.com/oauth/authorize";
 	protected static final String TWITTER_URL_ACCESS = "http://api.twitter.com/oauth/access_token";
-	protected static final String TWITTER_FEED = "http://api.twitter.com/1/statuses/home_timeline.json";
+	protected static final String TWITTER_FEED = "http://api.twitter.com/1/statuses/home_timeline.json?count=";
 
 	protected static final int FACEBOOK = 1;
 	protected static final String[] FACEBOOK_PERMISSIONS = new String[] {"offline_access"};
@@ -89,19 +89,19 @@ public class Sonet {
     
     static {
     	LINKEDIN_UPDATETYPES = new HashMap<String, String>();
-    	LINKEDIN_UPDATETYPES.put("ANSW", "updated the answer ");
+//    	LINKEDIN_UPDATETYPES.put("ANSW", "updated the answer ");
     	LINKEDIN_UPDATETYPES.put("APPS", "updated the application ");
-    	LINKEDIN_UPDATETYPES.put("CMPY", "is now following ");
+    	LINKEDIN_UPDATETYPES.put("CMPY", "company update");
     	LINKEDIN_UPDATETYPES.put("CONN", "is now connected to ");
-    	LINKEDIN_UPDATETYPES.put("JOBS", "posted the job ");
+    	LINKEDIN_UPDATETYPES.put("JOBP", "posted the job ");
     	LINKEDIN_UPDATETYPES.put("JGRP", "joined the group ");
-    	LINKEDIN_UPDATETYPES.put("PICT", "changed the picture ");
-    	LINKEDIN_UPDATETYPES.put("PRFX", "extended the profile update ");
-    	LINKEDIN_UPDATETYPES.put("RECU", "recommendations ");
-    	LINKEDIN_UPDATETYPES.put("PRFU", "changed their profile ");
-    	LINKEDIN_UPDATETYPES.put("QSTN", "updated the question ");
-    	LINKEDIN_UPDATETYPES.put("SHAR", "shared ");
-    	LINKEDIN_UPDATETYPES.put("VIRL", "updated the viral ");
+    	LINKEDIN_UPDATETYPES.put("PRFX", "updated their extended profile");
+    	LINKEDIN_UPDATETYPES.put("PREC", "recommends ");
+    	LINKEDIN_UPDATETYPES.put("PROF", "changed their profile");
+//    	LINKEDIN_UPDATETYPES.put("QSTN", "updated the question ");
+//    	LINKEDIN_UPDATETYPES.put("SHAR", "shared ");
+//    	LINKEDIN_UPDATETYPES.put("VIRL", "updated the viral ");
+    	LINKEDIN_UPDATETYPES.put("PICU", "updated their profile picture");
     }
 	
     protected static final int SALESFORCE = 6;
@@ -123,6 +123,7 @@ public class Sonet {
     protected static final int default_messages_textsize = 14;
     protected static final int default_friend_textsize = 14;
     protected static final int default_created_textsize = 14;
+    protected static final int default_statuses_per_account = 10;
 
 	public Sonet() {
 	}
@@ -173,6 +174,7 @@ public class Sonet {
 		public static final String FRIEND_TEXTSIZE = "friend_textsize";
 		public static final String CREATED_TEXTSIZE = "created_textsize";
 		public static final String ICON = "icon";
+		public static final String STATUSES_PER_ACCOUNT = "statuses_per_account";
 
 	}
 
@@ -265,7 +267,7 @@ public class Sonet {
 				}
 				break;
 			default:
-				Log.e(TAG,"get error:"+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
+				Log.e(TAG,"get error:"+url+"\n"+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
 				break;
 			}
 		} catch (ClientProtocolException e) {
