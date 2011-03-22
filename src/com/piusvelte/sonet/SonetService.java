@@ -64,6 +64,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -498,7 +499,7 @@ public class SonetService extends Service implements Runnable {
 								author = "author";
 								sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
-									response = sonetOAuth.httpGet(MYSPACE_BASE_URL + "statusmood/@me/@friends/history?count=" + status_count + "includeself=true&fields=author,source");
+									response = sonetOAuth.httpGet(MYSPACE_BASE_URL + "statusmood/@me/@friends/history?count=" + status_count + "&includeself=true&fields=author,source");
 									if (response != null) {
 										JSONObject jobj = new JSONObject(response);
 										JSONArray entries = jobj.getJSONArray("entry");
@@ -664,8 +665,12 @@ public class SonetService extends Service implements Runnable {
 							case LINKEDIN:
 								sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
-									response = sonetOAuth.httpGetWithHeaders(LINKEDIN_BASE_URL + "/network/updates?count=" + status_count, LINKEDIN_HEADERS);
-									JSONArray values = new JSONObject(response).getJSONArray("values");
+									String request = LINKEDIN_BASE_URL + "/network/updates?count=" + status_count;
+									Iterator<String> keys = LINKEDIN_UPDATETYPES.keySet().iterator();
+									while (keys.hasNext()) request += "&type=" + (String) keys.next();
+									response = sonetOAuth.httpGetWithHeaders(request, LINKEDIN_HEADERS);
+									JSONObject jobj = new JSONObject(response);
+									JSONArray values = jobj.getJSONArray("values");
 									// if there are updates, clear the cache
 									if (values.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
 									for (int e = 0; e < values.length(); e++) {
@@ -676,37 +681,42 @@ public class SonetService extends Service implements Runnable {
 											Date created = parseDate(Long.parseLong(value.getString("timestamp")), 0);
 											JSONObject person = updateContent.getJSONObject("person");
 											String update = LINKEDIN_UPDATETYPES.get(updateType);
-											Log.v(TAG,"type:"+updateType);
-											Log.v(TAG,"person:"+person.toString());
-											if (updateType == "APPS") {
-												JSONArray updates = person.getJSONObject("personActivities").getJSONArray("activity");
+											Log.v(TAG,"updateType:"+updateType);
+											if (updateType.equals("APPS")) {
+												Log.v(TAG,"updateContent:"+updateContent.toString());
+												Log.v(TAG,"person:"+person.toString());
+												JSONArray updates = person.getJSONObject("personActivities").getJSONArray("values");
 												for (int u = 0; u < updates.length(); u++) {
 													update += updates.getJSONObject(u).getString("body");
-													if (u < updates.length()) update += ", ";
+													if (u < (updates.length() - 1)) update += ", ";
 												}
-											} else if (updateType == "CONN") {
+											} else if (updateType.equals("CONN")) {
 												JSONArray updates = person.getJSONObject("connections").getJSONArray("values");
 												for (int u = 0; u < updates.length(); u++) {
 													update += updates.getJSONObject(u).getString("firstName") + " " + updates.getJSONObject(u).getString("lastName");
-													if (u < updates.length()) update += ", ";
+													if (u < (updates.length() - 1)) update += ", ";
 												}
-											} else if (updateType == "JOBP") {
+											} else if (updateType.equals("JOBP")) {
+												Log.v(TAG,"updateContent:"+updateContent.toString());
+												Log.v(TAG,"person:"+person.toString());
 												update += updateContent.getJSONObject("job").getJSONObject("position").getString("title");
-											} else if (updateType == "JGRP") {
+											} else if (updateType.equals("JGRP")) {
 												JSONArray updates = person.getJSONObject("memberGroups").getJSONArray("values");
 												for (int u = 0; u < updates.length(); u++) {
 													update += updates.getJSONObject(u).getString("name");
-													if (u < updates.length()) update += ", ";
+													if (u < (updates.length() - 1)) update += ", ";
 												}
-											} else if (updateType == "PREC") {
-												JSONArray updates = person.getJSONArray("recommendations");
+											} else if (updateType.equals("PREC")) {
+												Log.v(TAG,"updateContent:"+updateContent.toString());
+												Log.v(TAG,"person:"+person.toString());
+												JSONArray updates = person.getJSONObject("recommendationsGiven").getJSONArray("values");
 												for (int u = 0; u < updates.length(); u++) {
 													JSONObject recommendation = updates.getJSONObject(u);
 													JSONObject recommendee = recommendation.getJSONObject("recommendee");
 													if (recommendee.has("firstName")) update += recommendee.getString("firstName");
 													if (recommendee.has("lastName")) update += recommendee.getString("lastName");
 													if (recommendation.has("recommendationSnippet")) update += ":" + recommendation.getString("recommendationSnippet");
-													if (u < updates.length()) update += ", ";
+													if (u < (updates.length() - 1)) update += ", ";
 												}
 											}
 											this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),

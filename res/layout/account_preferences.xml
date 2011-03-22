@@ -49,6 +49,8 @@
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<CheckBox android:id="@+id/icon" android:text="@string/icon"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/statuses_per_account" android:text="@string/statuses_per_account"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 		</LinearLayout>
 	</ScrollView>
 </RelativeLayout>
