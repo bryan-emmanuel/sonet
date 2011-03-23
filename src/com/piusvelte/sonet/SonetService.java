@@ -64,7 +64,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -665,10 +664,7 @@ public class SonetService extends Service implements Runnable {
 							case LINKEDIN:
 								sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, accounts.getString(itoken), accounts.getString(isecret));
 								try {
-									String request = LINKEDIN_BASE_URL + "/network/updates?count=" + status_count;
-									Iterator<String> keys = LINKEDIN_UPDATETYPES.keySet().iterator();
-									while (keys.hasNext()) request += "&type=" + (String) keys.next();
-									response = sonetOAuth.httpGetWithHeaders(request, LINKEDIN_HEADERS);
+									response = sonetOAuth.httpGetWithHeaders(LINKEDIN_BASE_URL + "/network/updates?type=APPS&type=CMPY&type=CONN&type=JOBS&type=JGRP&type=PICT&type=PRFU&type=RECU&type=PRFX&type=ANSW&type=QSTN&type=SHAR&type=VIRL&count=" + status_count, LINKEDIN_HEADERS);
 									JSONObject jobj = new JSONObject(response);
 									JSONArray values = jobj.getJSONArray("values");
 									// if there are updates, clear the cache

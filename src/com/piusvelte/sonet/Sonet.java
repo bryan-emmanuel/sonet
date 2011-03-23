@@ -89,7 +89,7 @@ public class Sonet {
     
     static {
     	LINKEDIN_UPDATETYPES = new HashMap<String, String>();
-//    	LINKEDIN_UPDATETYPES.put("ANSW", "updated the answer ");
+    	LINKEDIN_UPDATETYPES.put("ANSW", "updated an answer");
     	LINKEDIN_UPDATETYPES.put("APPS", "updated the application ");
     	LINKEDIN_UPDATETYPES.put("CMPY", "company update");
     	LINKEDIN_UPDATETYPES.put("CONN", "is now connected to ");
@@ -98,9 +98,9 @@ public class Sonet {
     	LINKEDIN_UPDATETYPES.put("PRFX", "updated their extended profile");
     	LINKEDIN_UPDATETYPES.put("PREC", "recommends ");
     	LINKEDIN_UPDATETYPES.put("PROF", "changed their profile");
-//    	LINKEDIN_UPDATETYPES.put("QSTN", "updated the question ");
-//    	LINKEDIN_UPDATETYPES.put("SHAR", "shared ");
-//    	LINKEDIN_UPDATETYPES.put("VIRL", "updated the viral ");
+    	LINKEDIN_UPDATETYPES.put("QSTN", "updated a question");
+    	LINKEDIN_UPDATETYPES.put("SHAR", "shared something");
+    	LINKEDIN_UPDATETYPES.put("VIRL", "updated the viral ");
     	LINKEDIN_UPDATETYPES.put("PICU", "updated their profile picture");
     }
 	
