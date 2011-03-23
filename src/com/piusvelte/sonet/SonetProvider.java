@@ -78,7 +78,6 @@ public class SonetProvider extends ContentProvider {
 		accountsProjectionMap.put(Accounts.SECRET, Accounts.SECRET);
 		accountsProjectionMap.put(Accounts.SERVICE, Accounts.SERVICE);
 		accountsProjectionMap.put(Accounts.EXPIRY, Accounts.EXPIRY);
-		accountsProjectionMap.put(Accounts.TIMEZONE, Accounts.TIMEZONE);
 		accountsProjectionMap.put(Accounts.WIDGET, Accounts.WIDGET);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_WIDGETS, WIDGETS);
@@ -289,7 +288,6 @@ public class SonetProvider extends ContentProvider {
 					+ Accounts.SECRET + " text, "
 					+ Accounts.SERVICE + " integer, "
 					+ Accounts.EXPIRY + " integer, "
-					+ Accounts.TIMEZONE + " real, "
 					+ Accounts.WIDGET + " integer);");
 			db.execSQL("create table if not exists " + TABLE_WIDGETS
 					+ " (" + Widgets._ID + " integer primary key autoincrement, "
@@ -387,7 +385,7 @@ public class SonetProvider extends ContentProvider {
 						+ Accounts.SECRET + " text, "
 						+ Accounts.SERVICE + " integer, "
 						+ Accounts.EXPIRY + " integer, "
-						+ Accounts.TIMEZONE + " integer);");
+						+ "timezone integer);");
 				db.execSQL("insert into " + TABLE_ACCOUNTS + " select " + Accounts._ID + "," + Accounts.USERNAME + "," + Accounts.TOKEN + "," + Accounts.SECRET + "," + Accounts.SERVICE + "," + Accounts.EXPIRY + ",\"\" from " + TABLE_ACCOUNTS + "_bkp;");
 				db.execSQL("drop table if exists " + TABLE_ACCOUNTS + "_bkp;");
 			}
@@ -403,9 +401,9 @@ public class SonetProvider extends ContentProvider {
 						+ Accounts.SECRET + " text, "
 						+ Accounts.SERVICE + " integer, "
 						+ Accounts.EXPIRY + " integer, "
-						+ Accounts.TIMEZONE + " integer, "
+						+ "timezone integer, "
 						+ Accounts.WIDGET + " integer);");
-				db.execSQL("insert into " + TABLE_ACCOUNTS + " select " + Accounts._ID + "," + Accounts.USERNAME + "," + Accounts.TOKEN + "," + Accounts.SECRET + "," + Accounts.SERVICE + "," + Accounts.EXPIRY + "," + Accounts.TIMEZONE + ",\"\" from " + TABLE_ACCOUNTS + "_bkp;");
+				db.execSQL("insert into " + TABLE_ACCOUNTS + " select " + Accounts._ID + "," + Accounts.USERNAME + "," + Accounts.TOKEN + "," + Accounts.SECRET + "," + Accounts.SERVICE + "," + Accounts.EXPIRY + ",timezone,\"\" from " + TABLE_ACCOUNTS + "_bkp;");
 				db.execSQL("drop table if exists " + TABLE_ACCOUNTS + "_bkp;");
 				// move preferences to db
 				db.execSQL("create table if not exists " + TABLE_WIDGETS
@@ -669,7 +667,7 @@ public class SonetProvider extends ContentProvider {
 						+ Accounts.SECRET + " text, "
 						+ Accounts.SERVICE + " integer, "
 						+ Accounts.EXPIRY + " integer, "
-						+ Accounts.TIMEZONE + " real, "
+						+ "timezone real, "
 						+ Accounts.WIDGET + " integer);");
 				db.execSQL("insert into " + TABLE_ACCOUNTS
 						+ " select "
@@ -679,7 +677,7 @@ public class SonetProvider extends ContentProvider {
 						+ Accounts.SECRET + ","
 						+ Accounts.SERVICE + ","
 						+ Accounts.EXPIRY + ","
-						+ Accounts.TIMEZONE + ","
+						+ "timezone,"
 						+ Accounts.WIDGET + " from " + TABLE_ACCOUNTS + "_bkp;");
 				db.execSQL("drop table if exists " + TABLE_ACCOUNTS + "_bkp;");
 			}
@@ -837,6 +835,28 @@ public class SonetProvider extends ContentProvider {
 						+ Widgets.ACCOUNT + ","
 						+ Widgets.ICON + "," + Sonet.default_statuses_per_account + " from " + TABLE_WIDGETS + "_bkp;");
 				db.execSQL("drop table if exists " + TABLE_WIDGETS + "_bkp;");
+				// using device timezone, doesn't need to be stored now
+				db.execSQL("drop table if exists " + TABLE_ACCOUNTS + "_bkp;");
+				db.execSQL("create temp table " + TABLE_ACCOUNTS + "_bkp as select * from " + TABLE_ACCOUNTS + ";");
+				db.execSQL("drop table if exists " + TABLE_ACCOUNTS + ";");
+				db.execSQL("create table if not exists " + TABLE_ACCOUNTS
+						+ " (" + Accounts._ID + " integer primary key autoincrement, "
+						+ Accounts.USERNAME + " text, "
+						+ Accounts.TOKEN + " text, "
+						+ Accounts.SECRET + " text, "
+						+ Accounts.SERVICE + " integer, "
+						+ Accounts.EXPIRY + " integer, "
+						+ Accounts.WIDGET + " integer);");
+				db.execSQL("insert into " + TABLE_ACCOUNTS
+						+ " select "
+						+ Accounts._ID + ","
+						+ Accounts.USERNAME + ","
+						+ Accounts.TOKEN + ","
+						+ Accounts.SECRET + ","
+						+ Accounts.SERVICE + ","
+						+ Accounts.EXPIRY + ","
+						+ Accounts.WIDGET + " from " + TABLE_ACCOUNTS + "_bkp;");
+				db.execSQL("drop table if exists " + TABLE_ACCOUNTS + "_bkp;");
 			}
 		}
 

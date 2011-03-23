@@ -33,6 +33,8 @@
 			android:orientation="vertical">
 			<Button android:id="@+id/interval" android:text="@string/interval"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/statuses_per_account" android:text="@string/statuses_per_account"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<CheckBox android:id="@+id/hasbuttons" android:text="@string/hasbuttons"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<Button android:id="@+id/buttons_bg_color" android:text="@string/buttons_bg_color"
@@ -58,8 +60,6 @@
 			<CheckBox android:id="@+id/time24hr" android:text="@string/time24hr"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<CheckBox android:id="@+id/icon" android:text="@string/icon"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
-			<Button android:id="@+id/statuses_per_account" android:text="@string/statuses_per_account"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 		</LinearLayout>
 	</ScrollView>

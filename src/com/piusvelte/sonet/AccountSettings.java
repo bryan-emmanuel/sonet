@@ -58,6 +58,7 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 	private boolean mUpdateWidget = false;
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private long mAccountId = Sonet.INVALID_ACCOUNT_ID;
+	private String mWidgetAccountSettingsId;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -81,6 +82,7 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 		// get this account/widgets settings, falling back on the defaults...
 		Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(mAccountId)}, null);
 		if (c.moveToFirst()) {
+			mWidgetAccountSettingsId = Integer.toString(c.getInt(c.getColumnIndex(Widgets._ID)));
 			mMessages_bg_color_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
 			mMessages_color_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_COLOR));
 			mMessages_textsize_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_TEXTSIZE));
@@ -177,7 +179,7 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 			values.put(Widgets.TIME24HR, false);
 			values.put(Widgets.ICON, true);
 			values.put(Widgets.STATUSES_PER_ACCOUNT, mStatuses_per_account_value);
-			this.getContentResolver().insert(Widgets.CONTENT_URI, values);
+			mWidgetAccountSettingsId = this.getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
 		}
 		c.close();
 
@@ -203,7 +205,7 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 	private void updateDatabase(String column, int value) {
 		ContentValues values = new ContentValues();
 		values.put(column, value);
-		this.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets.WIDGET + "=" + mAppWidgetId + " and " + Widgets.ACCOUNT + "=?", new String[]{Long.toString(mAccountId)});
+		this.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets._ID + "=?", new String[]{mWidgetAccountSettingsId});
 		mUpdateWidget = true;
 	}
 

@@ -40,10 +40,10 @@ import static com.piusvelte.sonet.Sonet.TWITTER_FEED;
 import static com.piusvelte.sonet.Sonet.MYSPACE_BASE_URL;
 import static com.piusvelte.sonet.Sonet.BUZZ_BASE_URL;
 
-import static com.piusvelte.sonet.Sonet.SALESFORCE;
-import static com.piusvelte.sonet.Tokens.SALESFORCE_KEY;
-import static com.piusvelte.sonet.Tokens.SALESFORCE_SECRET;
-import static com.piusvelte.sonet.Sonet.SALESFORCE_FEED;
+//import static com.piusvelte.sonet.Sonet.SALESFORCE;
+//import static com.piusvelte.sonet.Tokens.SALESFORCE_KEY;
+//import static com.piusvelte.sonet.Tokens.SALESFORCE_SECRET;
+//import static com.piusvelte.sonet.Sonet.SALESFORCE_FEED;
 
 import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
 
@@ -66,6 +66,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.TimeZone;
 
 import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
@@ -118,9 +119,9 @@ public class SonetService extends Service implements Runnable {
 				} else SonetService.updateWidgets(new int[] {Integer.parseInt(intent.getAction())});
 			} else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
 			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) SonetService.updateWidgets(new int[]{intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)});
-		}
-		synchronized (sLock) {
-			if ((sThread == null) || !sThread.isAlive()) (sThread = new Thread(this)).start();
+			synchronized (sLock) {
+				if ((sThread == null) || !sThread.isAlive()) (sThread = new Thread(this)).start();
+			}
 		}
 	}
 
@@ -135,7 +136,9 @@ public class SonetService extends Service implements Runnable {
 
 	public static void updateWidgets(int[] appWidgetIds) {
 		synchronized (sLock) {
-			for (int appWidgetId : appWidgetIds) sAppWidgetIds.add(appWidgetId);
+			for (int appWidgetId : appWidgetIds) {
+				if (!sAppWidgetIds.contains(appWidgetId)) sAppWidgetIds.add(appWidgetId);
+			}
 		}
 	}
 
@@ -179,8 +182,7 @@ public class SonetService extends Service implements Runnable {
 		return null;
 	}
 
-	private Date parseDate(String date, String format, double timezone) {
-		Calendar cal = Calendar.getInstance();
+	private Date parseDate(String date, String format) {
 		SimpleDateFormat msformat = new SimpleDateFormat(format);
 		Date created;
 		try {
@@ -189,15 +191,13 @@ public class SonetService extends Service implements Runnable {
 			created = new Date();
 			Log.e(TAG,e.toString()); //Sun Mar 13 01:34:20 +0000 2011
 		}
-		cal.setTime(created);
-		cal.add(Calendar.MILLISECOND, (int) (timezone * 3600000));
-		return cal.getTime();
+		return parseDate(created.getTime());
 	}
 
-	private Date parseDate(long epoch, double timezone) {
+	private Date parseDate(long epoch) {
 		Calendar cal = Calendar.getInstance();
 		cal.setTimeInMillis(epoch);
-		cal.add(Calendar.MILLISECOND, (int) (timezone * 3600000));
+		cal.add(Calendar.MILLISECOND, (int) ((TimeZone.getDefault()).getOffset(System.currentTimeMillis()) * 3600000));
 		return cal.getTime();		
 	}
 
@@ -300,19 +300,18 @@ public class SonetService extends Service implements Runnable {
 				int status_bg_color = -1,
 				status_count;
 				byte[] status_bg;
-				Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY, Accounts.TIMEZONE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
+				Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
 				if (accounts.getCount() == 0) {
 					// check for old accounts without appwidgetid
 					accounts.close();
-					accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY, Accounts.TIMEZONE}, Accounts.WIDGET + "=?", new String[]{""}, null);
+					accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{""}, null);
 					if (accounts.moveToFirst()) {
 						// upgrade the accounts, adding the appwidgetid
 						int username = accounts.getColumnIndex(Accounts.USERNAME),
 						token = accounts.getColumnIndex(Accounts.TOKEN),
 						secret = accounts.getColumnIndex(Accounts.SECRET),
 						service = accounts.getColumnIndex(Accounts.SERVICE),
-						expiry = accounts.getColumnIndex(Accounts.EXPIRY),
-						timezone = accounts.getColumnIndex(Accounts.TIMEZONE);
+						expiry = accounts.getColumnIndex(Accounts.EXPIRY);
 						while (!accounts.isAfterLast()) {
 							ContentValues values = new ContentValues();
 							values.put(Accounts.USERNAME, accounts.getString(username));
@@ -320,7 +319,6 @@ public class SonetService extends Service implements Runnable {
 							values.put(Accounts.SECRET, accounts.getString(secret));
 							values.put(Accounts.SERVICE, accounts.getInt(service));
 							values.put(Accounts.EXPIRY, accounts.getInt(expiry));
-							values.put(Accounts.TIMEZONE, accounts.getInt(timezone));
 							values.put(Accounts.WIDGET, appWidgetId);
 							this.getContentResolver().insert(Accounts.CONTENT_URI, values);
 							accounts.moveToNext();
@@ -333,8 +331,7 @@ public class SonetService extends Service implements Runnable {
 					int iaccountid = accounts.getColumnIndex(Accounts._ID),
 					iservice = accounts.getColumnIndex(Accounts.SERVICE),
 					itoken = accounts.getColumnIndex(Accounts.TOKEN),
-					isecret = accounts.getColumnIndex(Accounts.SECRET),
-					itimezone = accounts.getColumnIndex(Accounts.TIMEZONE);
+					isecret = accounts.getColumnIndex(Accounts.SECRET);
 					String name = "name",
 					id = "id",
 					status = "status";
@@ -398,7 +395,7 @@ public class SonetService extends Service implements Runnable {
 										for (int e = 0; e < entries.length(); e++) {
 											JSONObject entry = entries.getJSONObject(e);
 											JSONObject user = entry.getJSONObject("user");
-											Date created = parseDate(entry.getString("created_at"), "EEE MMM dd HH:mm:ss z yyyy", accounts.getDouble(itimezone));
+											Date created = parseDate(entry.getString("created_at"), "EEE MMM dd HH:mm:ss z yyyy");
 											this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
 													String.format(status_url, user.getString("screen_name"), Long.toString(entry.getLong("id"))),
 													user.getString("name"),
@@ -437,7 +434,7 @@ public class SonetService extends Service implements Runnable {
 								to = "to",
 								fburl = "http://www.facebook.com";
 								try {
-									response = Sonet.httpGet(FACEBOOK_BASE_URL + "me/home?format=json&sdk=android&limit=" + status_count + "&" + TOKEN + "=" + accounts.getString(itoken) + "&fields=actions,link,type,from,message,created_time,to");
+									response = Sonet.httpGet(FACEBOOK_BASE_URL + "me/home?date_format=U&format=json&sdk=android&limit=" + status_count + "&" + TOKEN + "=" + accounts.getString(itoken) + "&fields=actions,link,type,from,message,created_time,to");
 									if (response != null) {
 										JSONObject jobj = new JSONObject(response);
 										JSONArray jarr = jobj.getJSONArray(data);
@@ -446,14 +443,14 @@ public class SonetService extends Service implements Runnable {
 										for (int d = 0; d < jarr.length(); d++) {
 											JSONObject o = jarr.getJSONObject(d);
 											// only parse status types, not photo, video or link
-											if (o.has(type) && o.getString(type).equals(status) && o.has(from) && o.has(message)) {
+											if (o.has(type) && o.has(from) && o.has(message)) {
 												// parse the link
 												String l = fburl;
 												if (o.has(actions)) {											
 													JSONArray action = o.getJSONArray(actions);
 													for (int a = 0; a < action.length(); a++) {
 														JSONObject n = action.getJSONObject(a);
-														if (n.getString(name) == comment) {
+														if (n.has(name) && n.getString(name) == comment) {
 															l = n.getString(link);
 															break;
 														}
@@ -470,7 +467,7 @@ public class SonetService extends Service implements Runnable {
 															if (n.has(name)) friend += " > " + n.getString(name);
 														}												
 													}
-													Date created = parseDate(o.getString(created_time), "yyyy-MM-dd'T'HH:mm:ss'+0000'", accounts.getDouble(itimezone));
+													Date created = parseDate(Long.parseLong(o.getString(created_time)) * 1000);
 													this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(
 															created.getTime(),
 															l,
@@ -507,7 +504,7 @@ public class SonetService extends Service implements Runnable {
 										for (int e = 0; e < entries.length(); e++) {
 											JSONObject entry = entries.getJSONObject(e);
 											JSONObject authorObj = entry.getJSONObject(author);
-											Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'", accounts.getDouble(itimezone));
+											Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'");
 											this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
 													entry.getJSONObject(source).getString(url),
 													authorObj.getString(displayName),
@@ -554,7 +551,7 @@ public class SonetService extends Service implements Runnable {
 										for (int e = 0; e < entries.length(); e++) {
 											JSONObject entry = entries.getJSONObject(e);
 											if (entry.has("published") && entry.has("actor") && entry.has("object")) {
-												Date created = parseDate(entry.getString("published"), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", accounts.getDouble(itimezone));
+												Date created = parseDate(entry.getString("published"), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 												JSONObject actor = entry.getJSONObject("actor");
 												JSONObject object = entry.getJSONObject("object");
 												if (actor.has("name") && actor.has("thumbnailUrl") && object.has("originalContent")) {
@@ -590,49 +587,49 @@ public class SonetService extends Service implements Runnable {
 									Log.e(TAG,e.toString());
 								}
 								break;
-							case SALESFORCE:
-								sonetOAuth = new SonetOAuth(SALESFORCE_KEY, SALESFORCE_SECRET, accounts.getString(itoken), accounts.getString(isecret));
-								try {
-									response = sonetOAuth.httpGet(SALESFORCE_FEED);
-									Log.d(TAG,"response:"+response);
-									if (response != null) {
-										JSONArray entries = new JSONObject(response).getJSONObject("data").getJSONArray("items");
-										// if there are updates, clear the cache
-										if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
-										for (int e = 0; e < entries.length(); e++) {
-											JSONObject entry = entries.getJSONObject(e);
-											if (entry.has("published") && entry.has("actor") && entry.has("object")) {
-												Date created = parseDate(entry.getString("published"), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", accounts.getDouble(itimezone));
-												JSONObject actor = entry.getJSONObject("actor");
-												JSONObject object = entry.getJSONObject("object");
-												if (actor.has("name") && actor.has("thumbnailUrl") && object.has("originalContent")) {
-													this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
-															object.has("links") && object.getJSONObject("links").has("alternate") ? object.getJSONObject("links").getString("alternate") : "",
-																	actor.getString("name"),
-																	getProfile(actor.getString("thumbnailUrl")),
-																	object.getString("originalContent"),
-																	service,
-																	getCreatedText(now, created, time24hr),
-																	appWidgetId,
-																	accountId));
-												}
-											}
-										}
-									}
-								} catch (ClientProtocolException e) {
-									Log.e(TAG,e.toString());
-								} catch (OAuthMessageSignerException e) {
-									Log.e(TAG,e.toString());
-								} catch (OAuthExpectationFailedException e) {
-									Log.e(TAG,e.toString());
-								} catch (OAuthCommunicationException e) {
-									Log.e(TAG,e.toString());
-								} catch (IOException e) {
-									Log.e(TAG,e.toString());
-								} catch (JSONException e) {
-									Log.e(TAG,e.toString());
-								}
-								break;
+								//							case SALESFORCE:
+								//								sonetOAuth = new SonetOAuth(SALESFORCE_KEY, SALESFORCE_SECRET, accounts.getString(itoken), accounts.getString(isecret));
+								//								try {
+								//									response = sonetOAuth.httpGet(SALESFORCE_FEED);
+								//									Log.d(TAG,"response:"+response);
+								//									if (response != null) {
+								//										JSONArray entries = new JSONObject(response).getJSONObject("data").getJSONArray("items");
+								//										// if there are updates, clear the cache
+								//										if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
+								//										for (int e = 0; e < entries.length(); e++) {
+								//											JSONObject entry = entries.getJSONObject(e);
+								//											if (entry.has("published") && entry.has("actor") && entry.has("object")) {
+								//												Date created = parseDate(entry.getString("published"), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", accounts.getDouble(itimezone));
+								//												JSONObject actor = entry.getJSONObject("actor");
+								//												JSONObject object = entry.getJSONObject("object");
+								//												if (actor.has("name") && actor.has("thumbnailUrl") && object.has("originalContent")) {
+								//													this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
+								//															object.has("links") && object.getJSONObject("links").has("alternate") ? object.getJSONObject("links").getString("alternate") : "",
+								//																	actor.getString("name"),
+								//																	getProfile(actor.getString("thumbnailUrl")),
+								//																	object.getString("originalContent"),
+								//																	service,
+								//																	getCreatedText(now, created, time24hr),
+								//																	appWidgetId,
+								//																	accountId));
+								//												}
+								//											}
+								//										}
+								//									}
+								//								} catch (ClientProtocolException e) {
+								//									Log.e(TAG,e.toString());
+								//								} catch (OAuthMessageSignerException e) {
+								//									Log.e(TAG,e.toString());
+								//								} catch (OAuthExpectationFailedException e) {
+								//									Log.e(TAG,e.toString());
+								//								} catch (OAuthCommunicationException e) {
+								//									Log.e(TAG,e.toString());
+								//								} catch (IOException e) {
+								//									Log.e(TAG,e.toString());
+								//								} catch (JSONException e) {
+								//									Log.e(TAG,e.toString());
+								//								}
+								//								break;
 							case FOURSQUARE:
 								try {
 									response = Sonet.httpGet(FOURSQUARE_BASE_URL + "checkins/recent?limit=" + status_count + "&oauth_token=" + accounts.getString(itoken));
@@ -644,8 +641,8 @@ public class SonetService extends Service implements Runnable {
 											JSONObject checkin = checkins.getJSONObject(e);
 											JSONObject user = checkin.getJSONObject("user");
 											JSONObject venue = checkin.getJSONObject("venue");
-											String shout = (checkin.has("shout") ? checkin.getString("shout") + "\n" : "") + venue.getString("name");
-											Date created = parseDate(Long.parseLong(checkin.getString("createdAt")) * 1000, 0);
+											String shout = (checkin.has("shout") ? checkin.getString("shout") + "\n" : "") + "@" + venue.getString("name");
+											Date created = parseDate(Long.parseLong(checkin.getString("createdAt")) * 1000);
 											this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
 													"http://www.foursquare.com",
 													user.getString("firstName") + " " + user.getString("lastName"),
@@ -674,56 +671,69 @@ public class SonetService extends Service implements Runnable {
 										String updateType = value.getString("updateType");
 										JSONObject updateContent = value.getJSONObject("updateContent");
 										if (LINKEDIN_UPDATETYPES.containsKey(updateType) && updateContent.has("person")) {
-											Date created = parseDate(Long.parseLong(value.getString("timestamp")), 0);
+											Date created = parseDate(Long.parseLong(value.getString("timestamp")));
 											JSONObject person = updateContent.getJSONObject("person");
 											String update = LINKEDIN_UPDATETYPES.get(updateType);
-											Log.v(TAG,"updateType:"+updateType);
 											if (updateType.equals("APPS")) {
-												Log.v(TAG,"updateContent:"+updateContent.toString());
-												Log.v(TAG,"person:"+person.toString());
-												JSONArray updates = person.getJSONObject("personActivities").getJSONArray("values");
-												for (int u = 0; u < updates.length(); u++) {
-													update += updates.getJSONObject(u).getString("body");
-													if (u < (updates.length() - 1)) update += ", ";
+												if (person.has("personActivities")) {
+													JSONObject personActivities = person.getJSONObject("personActivities");
+													if (personActivities.has("values")) {
+														JSONArray updates = personActivities.getJSONArray("values");
+														for (int u = 0; u < updates.length(); u++) {
+															update += updates.getJSONObject(u).getString("body");
+															if (u < (updates.length() - 1)) update += ", ";
+														}
+													}
 												}
 											} else if (updateType.equals("CONN")) {
-												JSONArray updates = person.getJSONObject("connections").getJSONArray("values");
-												for (int u = 0; u < updates.length(); u++) {
-													update += updates.getJSONObject(u).getString("firstName") + " " + updates.getJSONObject(u).getString("lastName");
-													if (u < (updates.length() - 1)) update += ", ";
+												if (person.has("connections")) {
+													JSONObject connections = person.getJSONObject("connections");
+													if (connections.has("values")) {
+														JSONArray updates = connections.getJSONArray("values");
+														for (int u = 0; u < updates.length(); u++) {
+															update += updates.getJSONObject(u).getString("firstName") + " " + updates.getJSONObject(u).getString("lastName");
+															if (u < (updates.length() - 1)) update += ", ";
+														}
+													}
 												}
 											} else if (updateType.equals("JOBP")) {
-												Log.v(TAG,"updateContent:"+updateContent.toString());
-												Log.v(TAG,"person:"+person.toString());
-												update += updateContent.getJSONObject("job").getJSONObject("position").getString("title");
+												if (updateContent.has("job") && updateContent.getJSONObject("job").has("position") && updateContent.getJSONObject("job").getJSONObject("position").has("title")) update += updateContent.getJSONObject("job").getJSONObject("position").getString("title");
 											} else if (updateType.equals("JGRP")) {
-												JSONArray updates = person.getJSONObject("memberGroups").getJSONArray("values");
-												for (int u = 0; u < updates.length(); u++) {
-													update += updates.getJSONObject(u).getString("name");
-													if (u < (updates.length() - 1)) update += ", ";
+												if (person.has("memberGroups")) {
+													JSONObject memberGroups = person.getJSONObject("memberGroups");
+													if (memberGroups.has("values")) {
+														JSONArray updates = memberGroups.getJSONArray("values");
+														for (int u = 0; u < updates.length(); u++) {
+															update += updates.getJSONObject(u).getString("name");
+															if (u < (updates.length() - 1)) update += ", ";
+														}
+													}
 												}
 											} else if (updateType.equals("PREC")) {
-												Log.v(TAG,"updateContent:"+updateContent.toString());
-												Log.v(TAG,"person:"+person.toString());
-												JSONArray updates = person.getJSONObject("recommendationsGiven").getJSONArray("values");
-												for (int u = 0; u < updates.length(); u++) {
-													JSONObject recommendation = updates.getJSONObject(u);
-													JSONObject recommendee = recommendation.getJSONObject("recommendee");
-													if (recommendee.has("firstName")) update += recommendee.getString("firstName");
-													if (recommendee.has("lastName")) update += recommendee.getString("lastName");
-													if (recommendation.has("recommendationSnippet")) update += ":" + recommendation.getString("recommendationSnippet");
-													if (u < (updates.length() - 1)) update += ", ";
+												if (person.has("recommendationsGiven")) {
+													JSONObject recommendationsGiven = person.getJSONObject("recommendationsGiven");
+													if (recommendationsGiven.has("values")) {
+														JSONArray updates = recommendationsGiven.getJSONArray("values");
+														for (int u = 0; u < updates.length(); u++) {
+															JSONObject recommendation = updates.getJSONObject(u);
+															JSONObject recommendee = recommendation.getJSONObject("recommendee");
+															if (recommendee.has("firstName")) update += recommendee.getString("firstName");
+															if (recommendee.has("lastName")) update += recommendee.getString("lastName");
+															if (recommendation.has("recommendationSnippet")) update += ":" + recommendation.getString("recommendationSnippet");
+															if (u < (updates.length() - 1)) update += ", ";
+														}
+													}
 												}
 											}
 											this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
 													"http://www.linkedin.com",
 													person.getString("firstName") + " " + person.getString("lastName"),
 													person.has("pictureUrl") ? getProfile(person.getString("pictureUrl")) : null,
-													update,
-													service,
-													getCreatedText(now, created, time24hr),
-													appWidgetId,
-													accountId));
+															update,
+															service,
+															getCreatedText(now, created, time24hr),
+															appWidgetId,
+															accountId));
 										}
 									}
 								} catch (ClientProtocolException e) {

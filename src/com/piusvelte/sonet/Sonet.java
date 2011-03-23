@@ -142,7 +142,6 @@ public class Sonet {
 		public static final String SECRET = "secret";
 		public static final String SERVICE = "service";
 		public static final String EXPIRY = "expiry";
-		public static final String TIMEZONE = "timezone";
 		public static final String WIDGET = "widget";
 
 	}

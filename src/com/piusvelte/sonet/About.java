@@ -121,8 +121,8 @@ DialogInterface.OnClickListener {
 						Toast.LENGTH_LONG).show();
 			break;
 		case R.id.refreshall:
-			startService(new Intent(this, SonetService.class).putExtra(
-					AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
+			startService(new Intent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
+			this.finish();
 			break;
 		}
 	}

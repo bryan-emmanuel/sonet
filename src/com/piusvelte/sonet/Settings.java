@@ -66,6 +66,7 @@ public class Settings extends Activity implements View.OnClickListener {
 	private Button mStatuses_per_account;
 	private boolean mUpdateWidget = false;
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
+	private String mWidgetSettingsId;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -89,9 +90,10 @@ public class Settings extends Activity implements View.OnClickListener {
 		mIcon = (CheckBox) findViewById(R.id.icon);
 		mStatuses_per_account = (Button) findViewById(R.id.statuses_per_account);
 
-		Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT}, Widgets.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)}, null);
+		Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 
 		if (c.moveToFirst()) {
+			mWidgetSettingsId = Integer.toString(c.getInt(c.getColumnIndex(Widgets._ID)));
 			mInterval_value = c.getInt(c.getColumnIndex(Widgets.INTERVAL));
 			mButtons_bg_color_value = c.getInt(c.getColumnIndex(Widgets.BUTTONS_BG_COLOR));
 			mButtons_color_value = c.getInt(c.getColumnIndex(Widgets.BUTTONS_COLOR));
@@ -179,7 +181,7 @@ public class Settings extends Activity implements View.OnClickListener {
 			values.put(Widgets.TIME24HR, false);
 			values.put(Widgets.ICON, true);
 			values.put(Widgets.STATUSES_PER_ACCOUNT, mStatuses_per_account_value);
-			this.getContentResolver().insert(Widgets.CONTENT_URI, values);
+			mWidgetSettingsId = this.getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
 		}
 		c.close();
 
@@ -210,7 +212,7 @@ public class Settings extends Activity implements View.OnClickListener {
 	private void updateDatabase(String column, int value) {
 		ContentValues values = new ContentValues();
 		values.put(column, value);
-		this.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)});
+		this.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets._ID + "=?", new String[]{mWidgetSettingsId});
 		mUpdateWidget = true;
 	}
 

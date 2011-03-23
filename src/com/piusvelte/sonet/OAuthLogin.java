@@ -60,12 +60,12 @@ import static com.piusvelte.sonet.Tokens.MYSPACE_KEY;
 import static com.piusvelte.sonet.Tokens.MYSPACE_SECRET;
 import static com.piusvelte.sonet.Sonet.MYSPACE_BASE_URL;
 
-import static com.piusvelte.sonet.Sonet.SALESFORCE;
-import static com.piusvelte.sonet.Sonet.SALESFORCE_URL_ACCESS;
-import static com.piusvelte.sonet.Sonet.SALESFORCE_URL_AUTHORIZE;
-import static com.piusvelte.sonet.Sonet.SALESFORCE_URL_REQUEST;
-import static com.piusvelte.sonet.Tokens.SALESFORCE_KEY;
-import static com.piusvelte.sonet.Tokens.SALESFORCE_SECRET;
+//import static com.piusvelte.sonet.Sonet.SALESFORCE;
+//import static com.piusvelte.sonet.Sonet.SALESFORCE_URL_ACCESS;
+//import static com.piusvelte.sonet.Sonet.SALESFORCE_URL_AUTHORIZE;
+//import static com.piusvelte.sonet.Sonet.SALESFORCE_URL_REQUEST;
+//import static com.piusvelte.sonet.Tokens.SALESFORCE_KEY;
+//import static com.piusvelte.sonet.Tokens.SALESFORCE_SECRET;
 
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_AUTHORIZE;
@@ -92,9 +92,7 @@ import static oauth.signpost.OAuth.OAUTH_VERIFIER;
 import com.piusvelte.sonet.Sonet.Accounts;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.ContentValues;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -110,7 +108,7 @@ public class OAuthLogin extends Activity {
 	private static Uri TWITTER_CALLBACK = Uri.parse("sonet://twitter");
 	private static Uri BUZZ_CALLBACK = Uri.parse("sonet://buzz");
 	private static Uri MYSPACE_CALLBACK = Uri.parse("sonet://myspace");
-	private static Uri SALESFORCE_CALLBACK = Uri.parse("sonet://salesforce");
+//	private static Uri SALESFORCE_CALLBACK = Uri.parse("sonet://salesforce");
 	private static Uri FACEBOOK_CALLBACK = Uri.parse("fbconnect://success");
 	private static Uri FOURSQUARE_CALLBACK = Uri.parse("sonet://foursquare");
 	private static Uri LINKEDIN_CALLBACK = Uri.parse("sonet://linkedin");
@@ -145,10 +143,10 @@ public class OAuthLogin extends Activity {
 						mSonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET);
 						sonetWebView.open(mSonetOAuth.getAuthUrl(BUZZ_URL_REQUEST + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + BUZZ_KEY, BUZZ_URL_ACCESS, BUZZ_URL_AUTHORIZE + "?scope=" + URLEncoder.encode(BUZZ_SCOPE, "utf-8") + "&xoauth_displayname=" + getString(R.string.app_name) + "&domain=" + BUZZ_KEY + "&btmpl=mobile", BUZZ_CALLBACK.toString(), true));
 						break;
-					case SALESFORCE:
-						mSonetOAuth = new SonetOAuth(SALESFORCE_KEY, SALESFORCE_SECRET);
-						sonetWebView.open(mSonetOAuth.getAuthUrl(SALESFORCE_URL_REQUEST, SALESFORCE_URL_ACCESS, SALESFORCE_URL_AUTHORIZE, SALESFORCE_CALLBACK.toString(), true) + "&oauth_consumer_key=" + SALESFORCE_KEY);
-						break;
+//					case SALESFORCE:
+//						mSonetOAuth = new SonetOAuth(SALESFORCE_KEY, SALESFORCE_SECRET);
+//						sonetWebView.open(mSonetOAuth.getAuthUrl(SALESFORCE_URL_REQUEST, SALESFORCE_URL_ACCESS, SALESFORCE_URL_AUTHORIZE, SALESFORCE_CALLBACK.toString(), true) + "&oauth_consumer_key=" + SALESFORCE_KEY);
+//						break;
 					case LINKEDIN:
 						mSonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET);
 						sonetWebView.open(mSonetOAuth.getAuthUrl(LINKEDIN_URL_REQUEST, LINKEDIN_URL_ACCESS, LINKEDIN_URL_AUTHORIZE, LINKEDIN_CALLBACK.toString(), true));
@@ -176,7 +174,7 @@ public class OAuthLogin extends Activity {
 		}
 	}
 	
-	private String addAccount(String username, String token, String secret, int expiry, int service, int timezone) {
+	private String addAccount(String username, String token, String secret, int expiry, int service) {
 		String accountId;
 		ContentValues values = new ContentValues();
 		values.put(Accounts.USERNAME, username);
@@ -184,7 +182,6 @@ public class OAuthLogin extends Activity {
 		values.put(Accounts.SECRET, secret);
 		values.put(Accounts.EXPIRY, expiry);
 		values.put(Accounts.SERVICE, service);
-		values.put(Accounts.TIMEZONE, timezone);
 		values.put(Accounts.WIDGET, ManageAccounts.sAppWidgetId);
 		if (ManageAccounts.sAccountId != Sonet.INVALID_ACCOUNT_ID) {
 			accountId = Long.toString(ManageAccounts.sAccountId);
@@ -212,7 +209,7 @@ public class OAuthLogin extends Activity {
 							if (TWITTER_CALLBACK.getHost().equals(uri.getHost())) {
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER));
 								JSONObject jobj = new JSONObject(mSonetOAuth.httpGet("http://api.twitter.com/1/account/verify_credentials.json"));
-								addAccount(jobj.getString("screen_name"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, TWITTER, 0);
+								addAccount(jobj.getString("screen_name"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, TWITTER);
 							} else if (FOURSQUARE_CALLBACK.getHost().equals(uri.getHost())) {
 								// get the access_token
 						        url = url.replace("sonet", "http");
@@ -227,7 +224,7 @@ public class OAuthLogin extends Activity {
 									}
 								}
 								JSONObject jobj = (new JSONObject(Sonet.httpGet(FOURSQUARE_BASE_URL + "users/self?oauth_token=" + token))).getJSONObject("response").getJSONObject("user");
-								addAccount(jobj.getString("firstName") + " " + jobj.getString("lastName"), token, "", 0, FOURSQUARE, 0);
+								addAccount(jobj.getString("firstName") + " " + jobj.getString("lastName"), token, "", 0, FOURSQUARE);
 							} else if (FACEBOOK_CALLBACK.getHost().equals(uri.getHost())) {
 						        url = url.replace("fbconnect", "http");
 								URL u = new URL(url);
@@ -240,61 +237,31 @@ public class OAuthLogin extends Activity {
 									else if (EXPIRES.equals(param[0])) expiry = param[1] == "0" ? 0 : (int) System.currentTimeMillis() + Integer.parseInt(param[1]) * 1000;
 								}
 					            JSONObject jobj = new JSONObject(Sonet.httpGet(FACEBOOK_BASE_URL + "me?format=json&sdk=android&" + TOKEN + "=" + token));
-					            addAccount(jobj.getString("name"), token, "", expiry, FACEBOOK, 0);
+					            addAccount(jobj.getString("name"), token, "", expiry, FACEBOOK);
 							} else if (MYSPACE_CALLBACK.getHost().equals(uri.getHost())) {
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER));
 								String response = mSonetOAuth.httpGet(MYSPACE_BASE_URL + "people/@me/@self");
 								JSONObject jobj = new JSONObject(response);
-								final String accountId = addAccount(jobj.getJSONObject("person").getString("displayName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, MYSPACE, 0);
-								// get the timezone, index set to GMT
-								OAuthLogin.this.runOnUiThread(new Runnable() {
-									@Override
-									public void run() {
-										(new AlertDialog.Builder(OAuthLogin.this))
-										.setTitle(R.string.timezone)
-										.setSingleChoiceItems(R.array.timezone_entries, 12, new DialogInterface.OnClickListener() {
-											@Override
-											public void onClick(DialogInterface dialog, int which) {
-												ContentValues values = new ContentValues();
-												values.put(Accounts.TIMEZONE, Integer.parseInt(getResources().getStringArray(R.array.timezone_values)[which]));
-												getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{accountId});
-												dialog.cancel();
-												// warn about new myspace permissions
-												(new AlertDialog.Builder(OAuthLogin.this))
-												.setTitle(R.string.myspace_permissions_title)
-												.setMessage(R.string.myspace_permissions_message)
-												.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-													public void onClick(DialogInterface dialog, int id) {
-														dialog.cancel();
-														OAuthLogin.this.finish();
-													}
-												})
-												.show();
-											}
-										})
-										.show();
-									}
-								});
-								return true;
+								addAccount(jobj.getJSONObject("person").getString("displayName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, MYSPACE);
 							} else if (BUZZ_CALLBACK.getHost().equals(uri.getHost())) {
 								mWebView.setVisibility(View.INVISIBLE);
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER));
 								String username = new JSONObject(mSonetOAuth.httpGet(BUZZ_BASE_URL + "people/@me/@self?alt=json")).getJSONObject("data").getString("displayName");
-								if (username != null) addAccount(username, mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, BUZZ, 0);
-							} else if (SALESFORCE_CALLBACK.getHost().equals(uri.getHost())) {
-								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER));
-								String response = mSonetOAuth.httpPost("https://login.salesforce.com/services/OAuth/u/21.0");
-								Log.v(TAG,"response:"+response);
-								//account info
-								//https://login.salesforce.com/ID/orgID/userID?Format=json
+								if (username != null) addAccount(username, mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, BUZZ);
+//							} else if (SALESFORCE_CALLBACK.getHost().equals(uri.getHost())) {
+//								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER));
+//								String response = mSonetOAuth.httpPost("https://login.salesforce.com/services/OAuth/u/21.0");
+//								Log.v(TAG,"response:"+response);
+//								//account info
+//								//https://login.salesforce.com/ID/orgID/userID?Format=json
 							} else if (LINKEDIN_CALLBACK.getHost().equals(uri.getHost())) {
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER));
 								JSONObject response = new JSONObject(mSonetOAuth.httpGetWithHeaders(LINKEDIN_BASE_URL, LINKEDIN_HEADERS));
-								addAccount(response.getString("firstName") + " " + response.getString("lastName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, LINKEDIN, 0);
-							} else if (uri.getHost().contains("salesforce.com") && (uri.getQueryParameter("oauth_consumer_key") == null)) {
-								Log.v(TAG,"load:"+url + "&oauth_consumer_key=" + SALESFORCE_KEY);
-								view.loadUrl(url + "&oauth_consumer_key=" + SALESFORCE_KEY);
-								return true;
+								addAccount(response.getString("firstName") + " " + response.getString("lastName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, LINKEDIN);
+//							} else if (uri.getHost().contains("salesforce.com") && (uri.getQueryParameter("oauth_consumer_key") == null)) {
+//								Log.v(TAG,"load:"+url + "&oauth_consumer_key=" + SALESFORCE_KEY);
+//								view.loadUrl(url + "&oauth_consumer_key=" + SALESFORCE_KEY);
+//								return true;
 							} else return false;// allow google to redirect
 						} catch (OAuthMessageSignerException e) {
 							Log.e(TAG, e.getMessage());
