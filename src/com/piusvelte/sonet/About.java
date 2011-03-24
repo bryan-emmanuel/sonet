@@ -65,7 +65,7 @@ DialogInterface.OnClickListener {
 			int iwidget = widgets.getColumnIndex(Widgets.WIDGET), appWidgetId;
 			while (!widgets.isAfterLast()) {
 				appWidgetId = widgets.getInt(iwidget);
-				if (!arrayContains(mAppWidgetIds, appWidgetId)) removeAppWidgets = arrayPush(removeAppWidgets, appWidgetId);
+				if ((appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) && !arrayContains(mAppWidgetIds, appWidgetId)) removeAppWidgets = arrayPush(removeAppWidgets, appWidgetId);
 				widgets.moveToNext();
 			}
 		}
