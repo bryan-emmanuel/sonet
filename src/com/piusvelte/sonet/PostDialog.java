@@ -22,6 +22,9 @@ package com.piusvelte.sonet;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
+import static com.piusvelte.sonet.Sonet.BUZZ;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE;
+import static com.piusvelte.sonet.Sonet.LINKEDIN;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -56,6 +59,15 @@ public class PostDialog extends Activity implements DialogInterface.OnClickListe
 			break;
 		case MYSPACE:
 			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.myspace.com")));
+			break;
+		case BUZZ:
+			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.google.com/buzz")));
+			break;
+		case FOURSQUARE:
+			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.foursquare.com")));
+			break;
+		case LINKEDIN:
+			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.linkedin.com")));
 			break;
 		}
 		dialog.cancel();
