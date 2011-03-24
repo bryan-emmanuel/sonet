@@ -106,6 +106,7 @@ public class SonetService extends Service implements Runnable {
 	private static final String TAG = "SonetService";
 	private Thread sThread;
 	private static int[] map_icons = new int[]{R.drawable.twitter, R.drawable.facebook, R.drawable.myspace, R.drawable.buzz, R.drawable.foursquare, R.drawable.linkedin, R.drawable.salesforce};
+	private int timezoneOffset = 0;
 
 	@Override
 	public void onStart(Intent intent, int startId) {
@@ -119,9 +120,9 @@ public class SonetService extends Service implements Runnable {
 				} else SonetService.updateWidgets(new int[] {Integer.parseInt(intent.getAction())});
 			} else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
 			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) SonetService.updateWidgets(new int[]{intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)});
-			synchronized (sLock) {
-				if ((sThread == null) || !sThread.isAlive()) (sThread = new Thread(this)).start();
-			}
+		}
+		synchronized (sLock) {
+			if ((sThread == null) || !sThread.isAlive()) (sThread = new Thread(this)).start();
 		}
 	}
 
@@ -197,7 +198,7 @@ public class SonetService extends Service implements Runnable {
 	private Date parseDate(long epoch) {
 		Calendar cal = Calendar.getInstance();
 		cal.setTimeInMillis(epoch);
-		cal.add(Calendar.MILLISECOND, (int) ((TimeZone.getDefault()).getOffset(System.currentTimeMillis()) * 3600000));
+		cal.add(Calendar.MILLISECOND, timezoneOffset);
 		return cal.getTime();		
 	}
 
@@ -336,6 +337,7 @@ public class SonetService extends Service implements Runnable {
 					id = "id",
 					status = "status";
 					long now = new Date().getTime();
+					timezoneOffset = (int) ((TimeZone.getDefault()).getOffset(System.currentTimeMillis()) * 3600000);
 					while (!accounts.isAfterLast()) {
 						int accountId = accounts.getInt(iaccountid),
 						service = accounts.getInt(iservice);

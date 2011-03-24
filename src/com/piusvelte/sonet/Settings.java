@@ -35,8 +35,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 
-public class Settings extends Activity implements View.OnClickListener {
+public class Settings extends Activity implements View.OnClickListener, OnCheckedChangeListener {
 	private int mInterval_value,
 	mButtons_bg_color_value,
 	mButtons_color_value,
@@ -140,6 +141,9 @@ public class Settings extends Activity implements View.OnClickListener {
 				mCreated_color_value = Sonet.default_created_color;
 				mCreated_textsize_value = Sonet.default_created_textsize;
 				mStatuses_per_account_value = Sonet.default_statuses_per_account;
+				mHasButtons.setChecked(false);
+				mTime24hr.setChecked(false);
+				mIcon.setChecked(true);
 				// initialize default settings
 				ContentValues values = new ContentValues();
 				values.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
@@ -196,9 +200,9 @@ public class Settings extends Activity implements View.OnClickListener {
 		mFriend_textsize.setOnClickListener(Settings.this);
 		mCreated_color.setOnClickListener(Settings.this);
 		mCreated_textsize.setOnClickListener(Settings.this);
-		mHasButtons.setOnCheckedChangeListener(mHasButtonsListener);
-		mTime24hr.setOnCheckedChangeListener(mTime24hrListener);
-		mIcon.setOnCheckedChangeListener(mIconListener);
+		mHasButtons.setOnCheckedChangeListener(Settings.this);
+		mTime24hr.setOnCheckedChangeListener(Settings.this);
+		mIcon.setOnCheckedChangeListener(Settings.this);
 		mStatuses_per_account.setOnClickListener(Settings.this);
 
 	}
@@ -280,30 +284,6 @@ public class Settings extends Activity implements View.OnClickListener {
 		}
 
 		public void colorUpdate(int color) {}
-	};
-
-	CompoundButton.OnCheckedChangeListener mHasButtonsListener =
-		new CompoundButton.OnCheckedChangeListener() {
-		@Override
-		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-			updateDatabase(Widgets.HASBUTTONS, isChecked ? 1 : 0);
-		}
-	};
-
-	CompoundButton.OnCheckedChangeListener mTime24hrListener =
-		new CompoundButton.OnCheckedChangeListener() {
-		@Override
-		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-			updateDatabase(Widgets.TIME24HR, isChecked ? 1 : 0);
-		}
-	};
-
-	CompoundButton.OnCheckedChangeListener mIconListener =
-		new CompoundButton.OnCheckedChangeListener() {
-		@Override
-		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-			updateDatabase(Widgets.ICON, isChecked ? 1 : 0);
-		}
 	};
 
 	@Override
@@ -448,5 +428,12 @@ public class Settings extends Activity implements View.OnClickListener {
 			.setCancelable(true)
 			.show();
 		}
+	}
+
+	@Override
+	public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+		if (buttonView == mHasButtons) updateDatabase(Widgets.HASBUTTONS, isChecked ? 1 : 0);
+		else if (buttonView == mTime24hr) updateDatabase(Widgets.TIME24HR, isChecked ? 1 : 0);
+		else if (buttonView == mIcon) updateDatabase(Widgets.ICON, isChecked ? 1 : 0);
 	}
 }

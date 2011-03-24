@@ -48,7 +48,7 @@ DialogInterface.OnClickListener {
 		mAppWidgetIds = new int[0];
 		// validate appwidgetids from appwidgetmanager
 		mAppWidgetManager = AppWidgetManager.getInstance(this);
-		int[] appWidgetManagerAppWidgetIds = arrayCat(
+		mAppWidgetIds = arrayCat(
 				arrayCat(mAppWidgetManager.getAppWidgetIds(new ComponentName(
 						this, SonetWidget_4x2.class)),
 						mAppWidgetManager.getAppWidgetIds(new ComponentName(
@@ -60,18 +60,12 @@ DialogInterface.OnClickListener {
 				Widgets.WIDGET + "=?", new String[] { "" });
 		this.getContentResolver().delete(Accounts.CONTENT_URI,
 				Accounts.WIDGET + "=?", new String[] { "" });
-		Cursor widgets = this.getContentResolver().query(Widgets.CONTENT_URI,
-				new String[] { Widgets._ID, Widgets.WIDGET },
-				Widgets.ACCOUNT + "=?",
-				new String[] { Long.toString(Sonet.INVALID_ACCOUNT_ID) }, null);
+		Cursor widgets = this.getContentResolver().query(Widgets.CONTENT_URI, new String[] {Widgets._ID, Widgets.WIDGET}, Widgets.ACCOUNT + "=?", new String[] { Long.toString(Sonet.INVALID_ACCOUNT_ID) }, null);
 		if (widgets.moveToFirst()) {
 			int iwidget = widgets.getColumnIndex(Widgets.WIDGET), appWidgetId;
 			while (!widgets.isAfterLast()) {
 				appWidgetId = widgets.getInt(iwidget);
-				if (arrayContains(appWidgetManagerAppWidgetIds, appWidgetId))
-					mAppWidgetIds = arrayPush(mAppWidgetIds, appWidgetId);
-				else
-					removeAppWidgets = arrayPush(removeAppWidgets, appWidgetId);
+				if (!arrayContains(mAppWidgetIds, appWidgetId)) removeAppWidgets = arrayPush(removeAppWidgets, appWidgetId);
 				widgets.moveToNext();
 			}
 		}
@@ -79,15 +73,9 @@ DialogInterface.OnClickListener {
 		if (removeAppWidgets.length > 0) {
 			// remove phantom widgets
 			for (int appWidgetId : removeAppWidgets) {
-				this.getContentResolver().delete(Widgets.CONTENT_URI,
-						Widgets.WIDGET + "=?",
-						new String[] { Integer.toString(appWidgetId) });
-				this.getContentResolver().delete(Accounts.CONTENT_URI,
-						Accounts.WIDGET + "=?",
-						new String[] { Integer.toString(appWidgetId) });
-				this.getContentResolver().delete(Statuses.CONTENT_URI,
-						Statuses.WIDGET + "=?",
-						new String[] { Integer.toString(appWidgetId) });
+				this.getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
+				this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
+				this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
 			}
 		}
 		((Button) findViewById(R.id.defaultsettings)).setOnClickListener(this);
@@ -105,8 +93,7 @@ DialogInterface.OnClickListener {
 			if (mAppWidgetIds.length > 0) {
 				String[] widgets = new String[mAppWidgetIds.length];
 				for (int i = 0; i < mAppWidgetIds.length; i++) {
-					AppWidgetProviderInfo info = mAppWidgetManager
-					.getAppWidgetInfo(mAppWidgetIds[i]);
+					AppWidgetProviderInfo info = mAppWidgetManager.getAppWidgetInfo(mAppWidgetIds[i]);
 					String providerName = info.provider.getClassName();
 					widgets[i] = Integer.toString(mAppWidgetIds[i])
 					+ " ("
