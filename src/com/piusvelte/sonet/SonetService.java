@@ -106,23 +106,27 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.RemoteViews;
 
-public class SonetService extends Service implements Runnable {
+public class SonetService extends Service {
 	private static final String TAG = "SonetService";
-	private Thread sThread;
 	private static int[] map_icons = new int[]{R.drawable.twitter, R.drawable.facebook, R.drawable.myspace, R.drawable.buzz, R.drawable.foursquare, R.drawable.linkedin, R.drawable.salesforce};
 	private long now;
 	private int timezoneOffset = 0;
-	private HashMap<Integer, ArrayList<GetStatusesTask>> mWidgetsMap = new HashMap<Integer, ArrayList<GetStatusesTask>>();
-	private AppWidgetManager appWidgetManager;
-	private AlarmManager alarmManager;
-	private ConnectivityManager cm;
+	private HashMap<Integer, ArrayList<GetStatusesTask>> mWidgetsTasks = new HashMap<Integer, ArrayList<GetStatusesTask>>();
+	private AppWidgetManager mAppWidgetManager;
+	private AlarmManager mAlarmManager;
+	private ConnectivityManager mConnectivityManager;
+
+	@Override
+	public void onCreate() {
+		super.onCreate();
+		mAppWidgetManager = AppWidgetManager.getInstance(this);
+		mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+		mConnectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+	}
 
 	@Override
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
-		appWidgetManager = AppWidgetManager.getInstance(this);
-		alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-		cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 		if (intent != null) {
 			if (intent.getAction() != null) {
 				if (intent.getAction().equals(ACTION_REFRESH)) {
@@ -134,7 +138,130 @@ public class SonetService extends Service implements Runnable {
 			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) SonetService.updateWidgets(new int[]{intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)});
 		}
 		synchronized (sLock) {
-			if ((sThread == null) || !sThread.isAlive()) (sThread = new Thread(this)).start();
+			boolean hasConnection = (mConnectivityManager.getActiveNetworkInfo() != null) && mConnectivityManager.getActiveNetworkInfo().isConnected(),
+			full_refresh = true;
+			while (updatesQueued() || updateSettingsQueued()) {
+				// first handle deletes, then scroll updates, finally regular updates
+				int appWidgetId;
+				if (updatesQueued()) appWidgetId = getNextUpdate();
+				else {
+					appWidgetId = getNextUpdateSettings();
+					full_refresh = false;
+				}
+				boolean hasAccount = false;
+				ArrayList<GetStatusesTask> statusesTasks = new ArrayList<GetStatusesTask>();
+				mWidgetsTasks.put(appWidgetId, statusesTasks);
+				if (full_refresh) mAlarmManager.cancel(PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
+				Cursor settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID}, Widgets.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
+				if (!settings.moveToFirst()) {
+					// upgrade, moving settings from sharedpreferences to db
+					SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
+					ContentValues values = new ContentValues();
+					values.put(Widgets.INTERVAL, Integer.parseInt((String) sp.getString(getString(R.string.key_interval), Integer.toString(Sonet.default_interval))));
+					values.put(Widgets.HASBUTTONS, sp.getBoolean(getString(R.string.key_display_buttons), true));
+					values.put(Widgets.BUTTONS_BG_COLOR, Integer.parseInt(sp.getString(getString(R.string.key_head_background), Integer.toString(Sonet.default_buttons_bg_color))));
+					values.put(Widgets.BUTTONS_COLOR, Integer.parseInt(sp.getString(getString(R.string.key_head_text), Integer.toString(Sonet.default_buttons_color))));
+					values.put(Widgets.BUTTONS_TEXTSIZE, Integer.parseInt(sp.getString(getString(R.string.key_buttons_textsize), Integer.toString(Sonet.default_buttons_textsize))));
+					values.put(Widgets.WIDGET, appWidgetId);
+					values.put(Widgets.ICON, true);
+					this.getContentResolver().insert(Widgets.CONTENT_URI, values);
+				}
+				settings.close();
+				// if not a full_refresh, connection is irrelevant
+				if (!full_refresh || hasConnection) {
+					// query accounts
+					/* get statuses for all accounts
+					 * then sort them by datetime, descending
+					 */
+					int status_bg_color = -1;
+					byte[] status_bg;
+					Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
+					if (!accounts.moveToFirst()) {
+						// check for old accounts without appwidgetid
+						accounts.close();
+						accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{""}, null);
+						if (accounts.moveToFirst()) {
+							// upgrade the accounts, adding the appwidgetid
+							int username = accounts.getColumnIndex(Accounts.USERNAME),
+							token = accounts.getColumnIndex(Accounts.TOKEN),
+							secret = accounts.getColumnIndex(Accounts.SECRET),
+							service = accounts.getColumnIndex(Accounts.SERVICE),
+							expiry = accounts.getColumnIndex(Accounts.EXPIRY);
+							while (!accounts.isAfterLast()) {
+								ContentValues values = new ContentValues();
+								values.put(Accounts.USERNAME, accounts.getString(username));
+								values.put(Accounts.TOKEN, accounts.getString(token));
+								values.put(Accounts.SECRET, accounts.getString(secret));
+								values.put(Accounts.SERVICE, accounts.getInt(service));
+								values.put(Accounts.EXPIRY, accounts.getInt(expiry));
+								values.put(Accounts.WIDGET, appWidgetId);
+								this.getContentResolver().insert(Accounts.CONTENT_URI, values);
+								accounts.moveToNext();
+							}
+						} else hasAccount = false;
+						this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=?", new String[]{""});
+					}
+					if (accounts.moveToFirst()) {
+						// load the updates
+						int iaccountid = accounts.getColumnIndex(Accounts._ID),
+						iservice = accounts.getColumnIndex(Accounts.SERVICE),
+						itoken = accounts.getColumnIndex(Accounts.TOKEN),
+						isecret = accounts.getColumnIndex(Accounts.SECRET);
+						now = new Date().getTime();
+						timezoneOffset = (int) ((TimeZone.getDefault()).getOffset(System.currentTimeMillis()) * 3600000);
+						while (!accounts.isAfterLast()) {
+							int accountId = accounts.getInt(iaccountid),
+							service = accounts.getInt(iservice);
+							// if not a full_refresh, only update the status_bg and icons
+							if (full_refresh) {
+								GetStatusesTask task = new GetStatusesTask(appWidgetId, accountId, service);
+								statusesTasks.add(task);
+								task.execute(accounts.getString(itoken), accounts.getString(isecret));
+							} else {
+								// update the bg and icon only
+								boolean icon = true;
+								Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_BG_COLOR, Widgets.ICON}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(accountId)}, null);
+								if (c.moveToFirst()) {
+									status_bg_color = c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
+									icon = c.getInt(c.getColumnIndex(Widgets.ICON)) == 1;
+								} else {
+									Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_BG_COLOR, Widgets.ICON}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+									if (d.moveToFirst()) {
+										status_bg_color = d.getInt(d.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
+										icon = d.getInt(d.getColumnIndex(Widgets.ICON)) == 1;
+									} else {
+										Cursor e = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_BG_COLOR, Widgets.ICON}, Widgets.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
+										if (e.moveToFirst()) {
+											status_bg_color = e.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
+											icon = e.getInt(e.getColumnIndex(Widgets.ICON)) == 1;
+										} else {
+											status_bg_color = Sonet.default_message_bg_color;
+											icon = true;
+										}
+										e.close();
+									}
+									d.close();
+								}
+								c.close();
+								// create the status_bg
+								Bitmap status_bg_bmp = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+								Canvas status_bg_canvas = new Canvas(status_bg_bmp);
+								status_bg_canvas.drawColor(status_bg_color);
+								ByteArrayOutputStream status_bg_blob = new ByteArrayOutputStream();
+								status_bg_bmp.compress(Bitmap.CompressFormat.PNG, 100, status_bg_blob);
+								status_bg = status_bg_blob.toByteArray();
+								ContentValues values = new ContentValues();
+								values.put(Statuses.STATUS_BG, status_bg);
+								values.put(Statuses.ICON, icon ? getBlob(BitmapFactory.decodeResource(getResources(), map_icons[service])) : null);
+								this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
+							}
+							accounts.moveToNext();
+						}
+					} else this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}); // no accounts, clear cache
+					accounts.close();
+				}
+				if (hasAccount) checkUpdateStatus(appWidgetId);
+			}
 		}
 	}
 
@@ -253,143 +380,16 @@ public class SonetService extends Service implements Runnable {
 		return getBlob(profile);
 	}
 
-	@Override
-	public void run() {
-		boolean hasConnection = (cm.getActiveNetworkInfo() != null) && cm.getActiveNetworkInfo().isConnected(),
-		full_refresh = true;
-		AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-		while (updatesQueued() || updateSettingsQueued()) {
-			// first handle deletes, then scroll updates, finally regular updates
-			int appWidgetId;
-			if (updatesQueued()) appWidgetId = getNextUpdate();
-			else {
-				appWidgetId = getNextUpdateSettings();
-				full_refresh = false;
-			}
-			boolean hasAccount = false;
-			ArrayList<GetStatusesTask> statusesTasks = new ArrayList<GetStatusesTask>();
-			mWidgetsMap.put(appWidgetId, statusesTasks);
-			if (full_refresh) alarmManager.cancel(PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
-			Cursor settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID}, Widgets.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
-			if (!settings.moveToFirst()) {
-				// upgrade, moving settings from sharedpreferences to db
-				SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
-				ContentValues values = new ContentValues();
-				values.put(Widgets.INTERVAL, Integer.parseInt((String) sp.getString(getString(R.string.key_interval), Integer.toString(Sonet.default_interval))));
-				values.put(Widgets.HASBUTTONS, sp.getBoolean(getString(R.string.key_display_buttons), true));
-				values.put(Widgets.BUTTONS_BG_COLOR, Integer.parseInt(sp.getString(getString(R.string.key_head_background), Integer.toString(Sonet.default_buttons_bg_color))));
-				values.put(Widgets.BUTTONS_COLOR, Integer.parseInt(sp.getString(getString(R.string.key_head_text), Integer.toString(Sonet.default_buttons_color))));
-				values.put(Widgets.BUTTONS_TEXTSIZE, Integer.parseInt(sp.getString(getString(R.string.key_buttons_textsize), Integer.toString(Sonet.default_buttons_textsize))));
-				values.put(Widgets.WIDGET, appWidgetId);
-				values.put(Widgets.ICON, true);
-				this.getContentResolver().insert(Widgets.CONTENT_URI, values);
-			}
-			settings.close();
-			// if not a full_refresh, connection is irrelevant
-			if (!full_refresh || hasConnection) {
-				// query accounts
-				/* get statuses for all accounts
-				 * then sort them by datetime, descending
-				 */
-				int status_bg_color = -1;
-				byte[] status_bg;
-				Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
-				if (!accounts.moveToFirst()) {
-					// check for old accounts without appwidgetid
-					accounts.close();
-					accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{""}, null);
-					if (accounts.moveToFirst()) {
-						// upgrade the accounts, adding the appwidgetid
-						int username = accounts.getColumnIndex(Accounts.USERNAME),
-						token = accounts.getColumnIndex(Accounts.TOKEN),
-						secret = accounts.getColumnIndex(Accounts.SECRET),
-						service = accounts.getColumnIndex(Accounts.SERVICE),
-						expiry = accounts.getColumnIndex(Accounts.EXPIRY);
-						while (!accounts.isAfterLast()) {
-							ContentValues values = new ContentValues();
-							values.put(Accounts.USERNAME, accounts.getString(username));
-							values.put(Accounts.TOKEN, accounts.getString(token));
-							values.put(Accounts.SECRET, accounts.getString(secret));
-							values.put(Accounts.SERVICE, accounts.getInt(service));
-							values.put(Accounts.EXPIRY, accounts.getInt(expiry));
-							values.put(Accounts.WIDGET, appWidgetId);
-							this.getContentResolver().insert(Accounts.CONTENT_URI, values);
-							accounts.moveToNext();
-						}
-					} else hasAccount = false;
-					this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=?", new String[]{""});
-				}
-				if (accounts.moveToFirst()) {
-					// load the updates
-					int iaccountid = accounts.getColumnIndex(Accounts._ID),
-					iservice = accounts.getColumnIndex(Accounts.SERVICE),
-					itoken = accounts.getColumnIndex(Accounts.TOKEN),
-					isecret = accounts.getColumnIndex(Accounts.SECRET);
-					now = new Date().getTime();
-					timezoneOffset = (int) ((TimeZone.getDefault()).getOffset(System.currentTimeMillis()) * 3600000);
-					while (!accounts.isAfterLast()) {
-						int accountId = accounts.getInt(iaccountid),
-						service = accounts.getInt(iservice);
-						// if not a full_refresh, only update the status_bg and icons
-						if (full_refresh) {
-							GetStatusesTask task = new GetStatusesTask(appWidgetId, accountId, service);
-							statusesTasks.add(task);
-							task.execute(accounts.getString(itoken), accounts.getString(isecret));
-						} else {
-							// update the bg and icon only
-							boolean icon = true;
-							Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_BG_COLOR, Widgets.ICON}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(accountId)}, null);
-							if (c.moveToFirst()) {
-								status_bg_color = c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
-								icon = c.getInt(c.getColumnIndex(Widgets.ICON)) == 1;
-							} else {
-								Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_BG_COLOR, Widgets.ICON}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
-								if (d.moveToFirst()) {
-									status_bg_color = d.getInt(d.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
-									icon = d.getInt(d.getColumnIndex(Widgets.ICON)) == 1;
-								} else {
-									Cursor e = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_BG_COLOR, Widgets.ICON}, Widgets.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
-									if (e.moveToFirst()) {
-										status_bg_color = e.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
-										icon = e.getInt(e.getColumnIndex(Widgets.ICON)) == 1;
-									} else {
-										status_bg_color = Sonet.default_message_bg_color;
-										icon = true;
-									}
-									e.close();
-								}
-								d.close();
-							}
-							c.close();
-							// create the status_bg
-							Bitmap status_bg_bmp = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-							Canvas status_bg_canvas = new Canvas(status_bg_bmp);
-							status_bg_canvas.drawColor(status_bg_color);
-							ByteArrayOutputStream status_bg_blob = new ByteArrayOutputStream();
-							status_bg_bmp.compress(Bitmap.CompressFormat.PNG, 100, status_bg_blob);
-							status_bg = status_bg_blob.toByteArray();
-							ContentValues values = new ContentValues();
-							values.put(Statuses.STATUS_BG, status_bg);
-							values.put(Statuses.ICON, icon ? getBlob(BitmapFactory.decodeResource(getResources(), map_icons[service])) : null);
-							this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
-						}
-						accounts.moveToNext();
-					}
-				} else this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}); // no accounts, clear cache
-				accounts.close();
-			}
-			if (hasAccount) checkUpdateStatus(appWidgetId);
-		}
-	}
-
 	private void checkUpdateStatus(int widget) {
 		// see if the tasks are finished
-		boolean updatesReady = mWidgetsMap.isEmpty();
-		if (mWidgetsMap.isEmpty()) updatesReady = true;
-		else {
-			ArrayList<GetStatusesTask> tasks = mWidgetsMap.get(widget);
-			Iterator<GetStatusesTask> itr = tasks.iterator();
-			while (itr.hasNext() && !updatesReady) updatesReady = itr.next().getStatus() == AsyncTask.Status.FINISHED;
+		boolean updatesReady = mWidgetsTasks.isEmpty() || !mWidgetsTasks.containsKey(widget);
+		if (!updatesReady) {
+			ArrayList<GetStatusesTask> tasks = mWidgetsTasks.get(widget);
+			if (tasks.isEmpty()) updatesReady = true;
+			else {
+				Iterator<GetStatusesTask> itr = tasks.iterator();
+				while (itr.hasNext() && !updatesReady) updatesReady = itr.next().getStatus() == AsyncTask.Status.FINISHED;
+			}
 		}
 		if (updatesReady) {
 			boolean hasbuttons = true;
@@ -487,15 +487,15 @@ public class SonetService extends Service implements Runnable {
 				}
 			} else {
 				// no connect or account
-				views.setTextViewText(map_message[0], getString(hasAccount ? (cm.getActiveNetworkInfo() != null) && cm.getActiveNetworkInfo().isConnected() ? R.string.no_updates : R.string.no_connection : R.string.no_accounts));
+				views.setTextViewText(map_message[0], getString(hasAccount ? (mConnectivityManager.getActiveNetworkInfo() != null) && mConnectivityManager.getActiveNetworkInfo().isConnected() ? R.string.no_updates : R.string.no_connection : R.string.no_accounts));
 				views.setTextColor(map_message[0], Sonet.default_message_color);
 				views.setFloat(map_message[0], "setTextSize", Sonet.default_messages_textsize);
 			}
 			statuses.close();
-			appWidgetManager.updateAppWidget(widget, views);
+			mAppWidgetManager.updateAppWidget(widget, views);
 			// replace with scrollable widget
 			if (scrollable) sendBroadcast(new Intent(this, SonetWidget.class).setAction(ACTION_BUILD_SCROLL).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widget));
-			if (hasAccount && (interval > 0)) alarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(widget)), 0));			
+			if (hasAccount && (interval > 0)) mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(widget)), 0));			
 		}		
 	}
 
@@ -918,6 +918,8 @@ public class SonetService extends Service implements Runnable {
 				values.put(Statuses.STATUS_BG, status_bg);
 				SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, values);
 			}
+			// remove self from queue
+			if (!mWidgetsTasks.isEmpty() && mWidgetsTasks.containsKey(widget)) mWidgetsTasks.get(widget).remove(this);
 			// see if the tasks are finished
 			checkUpdateStatus(widget);
 		}
