@@ -109,8 +109,8 @@ import android.widget.RemoteViews;
 public class SonetService extends Service {
 	private static final String TAG = "SonetService";
 	private static int[] map_icons = new int[]{R.drawable.twitter, R.drawable.facebook, R.drawable.myspace, R.drawable.buzz, R.drawable.foursquare, R.drawable.linkedin, R.drawable.salesforce};
-	private long now;
-	private int timezoneOffset = 0;
+	private long mCurrentTimeMillis;
+	private int mTimezoneOffset = 0;
 	private HashMap<Integer, ArrayList<GetStatusesTask>> mWidgetsTasks = new HashMap<Integer, ArrayList<GetStatusesTask>>();
 	private AppWidgetManager mAppWidgetManager;
 	private AlarmManager mAlarmManager;
@@ -122,6 +122,8 @@ public class SonetService extends Service {
 		mAppWidgetManager = AppWidgetManager.getInstance(this);
 		mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 		mConnectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+		mCurrentTimeMillis = System.currentTimeMillis();
+		mTimezoneOffset = (int) ((TimeZone.getDefault()).getOffset(mCurrentTimeMillis) * 3600000);
 	}
 
 	@Override
@@ -207,8 +209,6 @@ public class SonetService extends Service {
 						iservice = accounts.getColumnIndex(Accounts.SERVICE),
 						itoken = accounts.getColumnIndex(Accounts.TOKEN),
 						isecret = accounts.getColumnIndex(Accounts.SECRET);
-						now = new Date().getTime();
-						timezoneOffset = (int) ((TimeZone.getDefault()).getOffset(System.currentTimeMillis()) * 3600000);
 						while (!accounts.isAfterLast()) {
 							int accountId = accounts.getInt(iaccountid),
 							service = accounts.getInt(iservice);
@@ -337,7 +337,7 @@ public class SonetService extends Service {
 	private Date parseDate(long epoch) {
 		Calendar cal = Calendar.getInstance();
 		cal.setTimeInMillis(epoch);
-		cal.add(Calendar.MILLISECOND, timezoneOffset);
+		cal.add(Calendar.MILLISECOND, mTimezoneOffset);
 		return cal.getTime();		
 	}
 
@@ -355,8 +355,8 @@ public class SonetService extends Service {
 		return values;
 	}
 
-	private String getCreatedText(long now, Date created, boolean time24hr) {
-		return now - created.getTime() < 86400000 ?
+	private String getCreatedText(Date created, boolean time24hr) {
+		return mCurrentTimeMillis - created.getTime() < 86400000 ?
 				(time24hr ?
 						String.format("%d:%02d", created.getHours(), created.getMinutes())
 						: String.format("%d:%02d%s", created.getHours() < 13 ? created.getHours() : created.getHours() - 12, created.getMinutes(), getString(created.getHours() < 13 ? R.string.am : R.string.pm)))
@@ -618,7 +618,7 @@ public class SonetService extends Service {
 									getProfile(user.getString("profile_image_url")),
 									entry.getString("text"),
 									service,
-									getCreatedText(now, created, time24hr),
+									getCreatedText(created, time24hr),
 									widget,
 									account));
 						}
@@ -678,7 +678,7 @@ public class SonetService extends Service {
 											getProfile(String.format(profile, f.getString(id))),
 											o.getString(message),
 											service,
-											getCreatedText(now, created, time24hr),
+											getCreatedText(created, time24hr),
 											widget,
 											account));
 								}
@@ -710,7 +710,7 @@ public class SonetService extends Service {
 									getProfile(authorObj.getString(thumbnailUrl)),
 									entry.getString(status),
 									service,
-									getCreatedText(now, created, time24hr),
+									getCreatedText(created, time24hr),
 									widget,
 									account));
 						}
@@ -741,7 +741,7 @@ public class SonetService extends Service {
 											getProfile(actor.getString("thumbnailUrl")),
 											object.getString("originalContent"),
 											service,
-											getCreatedText(now, created, time24hr),
+											getCreatedText(created, time24hr),
 											widget,
 											account));
 								}
@@ -806,7 +806,7 @@ public class SonetService extends Service {
 									getProfile(user.getString("photo")),
 									shout,
 									service,
-									getCreatedText(now, created, time24hr),
+									getCreatedText(created, time24hr),
 									widget,
 									account));
 						}
@@ -885,7 +885,7 @@ public class SonetService extends Service {
 										person.has("pictureUrl") ? getProfile(person.getString("pictureUrl")) : null,
 												update,
 												service,
-												getCreatedText(now, created, time24hr),
+												getCreatedText(created, time24hr),
 												widget,
 												account));
 							}
