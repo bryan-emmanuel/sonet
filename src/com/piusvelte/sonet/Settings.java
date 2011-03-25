@@ -141,7 +141,7 @@ public class Settings extends Activity implements View.OnClickListener, OnChecke
 				mCreated_color_value = Sonet.default_created_color;
 				mCreated_textsize_value = Sonet.default_created_textsize;
 				mStatuses_per_account_value = Sonet.default_statuses_per_account;
-				mHasButtons.setChecked(false);
+				mHasButtons.setChecked(true);
 				mTime24hr.setChecked(false);
 				mIcon.setChecked(true);
 				// initialize default settings
@@ -159,7 +159,7 @@ public class Settings extends Activity implements View.OnClickListener, OnChecke
 				values.put(Widgets.FRIEND_TEXTSIZE, mFriend_textsize_value);
 				values.put(Widgets.CREATED_COLOR, mCreated_color_value);
 				values.put(Widgets.CREATED_TEXTSIZE, mCreated_textsize_value);
-				values.put(Widgets.HASBUTTONS, false);
+				values.put(Widgets.HASBUTTONS, true);
 				values.put(Widgets.TIME24HR, false);
 				values.put(Widgets.ICON, true);
 				values.put(Widgets.STATUSES_PER_ACCOUNT, mStatuses_per_account_value);

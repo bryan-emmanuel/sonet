@@ -69,7 +69,6 @@ public class SonetProvider extends ContentProvider {
 		sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_ACCOUNTS, ACCOUNTS);
-		sUriMatcher.addURI(AUTHORITY, TABLE_ACCOUNTS + "/*", WIDGETS);
 
 		accountsProjectionMap = new HashMap<String, String>();
 		accountsProjectionMap.put(Accounts._ID, Accounts._ID);
@@ -104,8 +103,6 @@ public class SonetProvider extends ContentProvider {
 		widgetsProjectionMap.put(Widgets.STATUSES_PER_ACCOUNT, Widgets.STATUSES_PER_ACCOUNT);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_STATUSES, STATUSES);
-		// backward compatibility for upgrading <=0.9.8
-		sUriMatcher.addURI(AUTHORITY, TABLE_STATUSES + "/*", STATUSES);
 
 		statusesProjectionMap = new HashMap<String, String>();
 		statusesProjectionMap.put(Statuses._ID, Statuses._ID);
@@ -119,7 +116,7 @@ public class SonetProvider extends ContentProvider {
 		statusesProjectionMap.put(Statuses.WIDGET, Statuses.WIDGET);
 		statusesProjectionMap.put(Widgets.ICON, Widgets.ICON);
 
-		sUriMatcher.addURI(AUTHORITY, VIEW_STATUSES_STYLES, STATUSES_STYLES);
+		sUriMatcher.addURI(AUTHORITY, VIEW_STATUSES_STYLES + "/*", STATUSES_STYLES);
 
 		statuses_stylesProjectionMap = new HashMap<String, String>();
 		statuses_stylesProjectionMap.put(Statuses_styles._ID, Statuses_styles._ID);
@@ -138,7 +135,7 @@ public class SonetProvider extends ContentProvider {
 		statuses_stylesProjectionMap.put(Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE);
 		statuses_stylesProjectionMap.put(Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE);
 		statuses_stylesProjectionMap.put(Statuses_styles.STATUS_BG, Statuses_styles.STATUS_BG);
-		statuses_stylesProjectionMap.put(Widgets.ICON, Widgets.ICON);
+		statuses_stylesProjectionMap.put(Statuses_styles.ICON, Statuses_styles.ICON);
 	}
 
 	public enum SonetProviderColumns {
@@ -240,11 +237,12 @@ public class SonetProvider extends ContentProvider {
 		case STATUSES_STYLES:
 			qb.setTables(VIEW_STATUSES_STYLES);
 			qb.setProjectionMap(statuses_stylesProjectionMap);
+			selection = Statuses_styles.WIDGET + "=?";
+			selectionArgs = new String[]{uri.getLastPathSegment()};
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
 		}
-		
 		SQLiteDatabase db = mDatabaseHelper.getReadableDatabase();
 		Cursor c = qb.query(db, projection, selection, selectionArgs, null, null, orderBy);
 		c.setNotificationUri(getContext().getContentResolver(), uri);

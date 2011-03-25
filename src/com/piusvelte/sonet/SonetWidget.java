@@ -63,18 +63,14 @@ public class SonetWidget extends AppWidgetProvider {
 			if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) onDeleted(context, new int[]{appWidgetId});
 			else super.onReceive(context, intent);
 		} else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_READY)) {
-			// LauncherPro doesn't support the required version
-			// testing launcherpro
 			if (intent.getExtras().getInt(LauncherIntent.Extra.EXTRA_API_VERSION, 1) >= 2)
 				appWidgetReady(context, intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
 		} else if (Sonet.ACTION_BUILD_SCROLL.equals(action)) 
 			appWidgetReady(context, intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
 		else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_FINISH)) {
 		} else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_VIEW_CLICK)) {
-			// onClickListener
 			onClick(context, intent);
 		} else if (TextUtils.equals(action, LauncherIntent.Error.ERROR_SCROLL_CURSOR)) {
-			// An error occured
 			Log.d(TAG, intent.getStringExtra(LauncherIntent.Extra.EXTRA_ERROR_MESSAGE) + "");
 		} else super.onReceive(context, intent);
 	}
@@ -84,9 +80,9 @@ public class SonetWidget extends AppWidgetProvider {
 		super.onDeleted(context, appWidgetIds);
 		for (int appWidgetId : appWidgetIds) {
 			((AlarmManager) context.getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getService(context, 0, new Intent(context, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
-			context.getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=" + appWidgetId, null);
-			context.getContentResolver().delete(Accounts.CONTENT_URI, Accounts.WIDGET + "=" + appWidgetId, null);
-			context.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=" + appWidgetId, null);
+			context.getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
+			context.getContentResolver().delete(Accounts.CONTENT_URI, Accounts.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
+			context.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
 		}
 	}
 
@@ -129,16 +125,15 @@ public class SonetWidget extends AppWidgetProvider {
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_CHILDREN_CLICKABLE, true);
 		replaceDummy.putExtra(LauncherIntent.Extra.EXTRA_VIEW_ID, R.id.messages);
 
-//		SimpleRemoteViews listView = new SimpleRemoteViews(R.layout.widget_listview);
-//		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_REMOTEVIEWS, listView);
-		// testing for launcherpro
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_LAYOUT_ID, R.layout.widget_listview);
 
 		BoundRemoteViews itemViews = new BoundRemoteViews(R.layout.widget_item);
+		
+		Uri uri = Uri.withAppendedPath(Statuses_styles.CONTENT_URI, widgetId);
 
 		Intent i = new Intent(context, this.getClass())
 		.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
-		.setData(Statuses_styles.CONTENT_URI)
+		.setData(uri)
 		.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
 		PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
 
@@ -169,22 +164,17 @@ public class SonetWidget extends AppWidgetProvider {
 
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_REMOTEVIEWS, itemViews);
 
-		putProvider(replaceDummy, appWidgetId);
-		context.sendBroadcast(replaceDummy);
-
-	}
-
-	public static void putProvider(Intent intent, int appWidgetId) {
-
-		// Put the data uri in as a string. Do not use setData, Home++ does not
-		// have a filter for that
-		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_URI, Statuses_styles.CONTENT_URI.toString());
+		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_URI, uri.toString());
+		
+		String[] projection = new String[]{Statuses_styles._ID, Statuses_styles.CREATED, Statuses_styles.LINK, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.SERVICE, Statuses_styles.CREATEDTEXT, Statuses_styles.WIDGET, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON};
+		String sortOrder = Statuses_styles.CREATED + " desc";
 
 		// Other arguments for managed query
-		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_PROJECTION, new String[]{Statuses_styles._ID, Statuses_styles.CREATED, Statuses_styles.LINK, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.SERVICE, Statuses_styles.CREATEDTEXT, Statuses_styles.WIDGET, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON});
-		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION, Statuses_styles.WIDGET + "=?");
-		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION_ARGUMENTS, new String[]{Integer.toString(appWidgetId)});
-		intent.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SORT_ORDER, Statuses_styles.CREATED + " desc");
+		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_PROJECTION, projection);
+		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SORT_ORDER, sortOrder);
+		
+		context.sendBroadcast(replaceDummy);
+
 	}
 
 }

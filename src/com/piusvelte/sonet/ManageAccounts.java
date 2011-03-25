@@ -93,7 +93,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 				case REAUTH_ID:
 					// need the account id if reauthenticating
 					sAccountId = item;
-					Cursor c = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SERVICE}, Accounts._ID + "=" + item, null, null);
+					Cursor c = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(item)}, null);
 					if (c.moveToFirst()) {
 						mAddingAccount = true;
 						startActivity(new Intent(ManageAccounts.this, OAuthLogin.class).putExtra(Accounts.SERVICE, c.getInt(c.getColumnIndex(Accounts.SERVICE))));
@@ -120,7 +120,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	public boolean onContextItemSelected(MenuItem item) {
 		if (item.getItemId() == DELETE_ID) {
 			sUpdateWidget = true;
-			getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=" + ((AdapterContextMenuInfo) item.getMenuInfo()).id, null);
+			getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=?", new String[]{Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
 			// need to delete the statuses and settings for this account
 			getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(sAppWidgetId), Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
 			getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(sAppWidgetId), Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
