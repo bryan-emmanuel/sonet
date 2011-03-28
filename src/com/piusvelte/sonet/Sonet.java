@@ -33,6 +33,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
+import android.content.Context;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.util.Log;
@@ -87,6 +88,10 @@ public class Sonet {
     protected static final String[][] LINKEDIN_HEADERS = new String[][] {{"x-li-format", "json"}};
     protected static final HashMap<String, String> LINKEDIN_UPDATETYPES;
     
+    protected static HashMap<Integer, Context> sWidgetsContext;
+    
+    protected static String[] sWebsites;
+    
     static {
     	LINKEDIN_UPDATETYPES = new HashMap<String, String>();
     	LINKEDIN_UPDATETYPES.put("ANSW", "updated an answer");
@@ -102,6 +107,11 @@ public class Sonet {
     	LINKEDIN_UPDATETYPES.put("SHAR", "shared something");
     	LINKEDIN_UPDATETYPES.put("VIRL", "updated the viral ");
     	LINKEDIN_UPDATETYPES.put("PICU", "updated their profile picture");
+    	
+    	sWidgetsContext = new HashMap<Integer, Context>();
+    	
+    	sWebsites = new String[]{"http://twitter.com", "http://www.facebook.com", "http://www.myspace.com", "http://www.google.com/buzz", "http://www.foursquare.com", "http://www.linkedin.com" /*, "http://www.salesforce.com"*/};
+    	
     }
 	
     protected static final int SALESFORCE = 6;

@@ -20,6 +20,7 @@
 package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.TOKEN;
+
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
@@ -56,6 +57,8 @@ import static com.piusvelte.sonet.Tokens.LINKEDIN_SECRET;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_HEADERS;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_BASE_URL;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATETYPES;
+
+import static com.piusvelte.sonet.Sonet.sWebsites;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -111,7 +114,7 @@ public class SonetService extends Service {
 	private static int[] map_icons = new int[]{R.drawable.twitter, R.drawable.facebook, R.drawable.myspace, R.drawable.buzz, R.drawable.foursquare, R.drawable.linkedin, R.drawable.salesforce};
 	private long mCurrentTimeMillis;
 	private int mTimezoneOffset = 0;
-	private HashMap<Integer, ArrayList<GetStatusesTask>> mWidgetsTasks = new HashMap<Integer, ArrayList<GetStatusesTask>>();
+	private static HashMap<Integer, ArrayList<GetStatusesTask>> sWidgetsTasks = new HashMap<Integer, ArrayList<GetStatusesTask>>();
 	private AppWidgetManager mAppWidgetManager;
 	private AlarmManager mAlarmManager;
 	private ConnectivityManager mConnectivityManager;
@@ -129,14 +132,18 @@ public class SonetService extends Service {
 	@Override
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
+		Log.v(TAG,"onStart");
 		if (intent != null) {
+			if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) Log.v(TAG,"has id");
+			if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) Log.v(TAG,"has ids");
 			if (intent.getAction() != null) {
 				if (intent.getAction().equals(ACTION_REFRESH)) {
 					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
 				} else if (intent.getAction().equals(ACTION_UPDATE_SETTINGS)) {
-					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateSettingsWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));					
-				} else SonetService.updateWidgets(new int[] {Integer.parseInt(intent.getAction())});
-			} else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
+					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateSettingsWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
+				}
+			} else if (intent.getData() != null) SonetService.updateWidgets(new int[] {Integer.parseInt(intent.getData().getLastPathSegment())});
+			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
 			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) SonetService.updateWidgets(new int[]{intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)});
 		}
 		synchronized (sLock) {
@@ -151,7 +158,7 @@ public class SonetService extends Service {
 					full_refresh = false;
 				}
 				ArrayList<GetStatusesTask> statusesTasks = new ArrayList<GetStatusesTask>();
-				mWidgetsTasks.put(appWidgetId, statusesTasks);
+				SonetService.sWidgetsTasks.put(appWidgetId, statusesTasks);
 				if (full_refresh) mAlarmManager.cancel(PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
 				Cursor settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID}, Widgets.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
 				if (!settings.moveToFirst()) {
@@ -270,6 +277,7 @@ public class SonetService extends Service {
 					} else this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}); // no accounts, clear cache
 					accounts.close();
 				}
+				Log.v(TAG,"root checking");
 				checkWidgetUpdateReady(appWidgetId);
 			}
 		}
@@ -287,7 +295,11 @@ public class SonetService extends Service {
 	public static void updateWidgets(int[] appWidgetIds) {
 		synchronized (sLock) {
 			for (int appWidgetId : appWidgetIds) {
-				if (!sAppWidgetIds.contains(appWidgetId)) sAppWidgetIds.add(appWidgetId);
+				if (!sAppWidgetIds.contains(appWidgetId)) {
+					sAppWidgetIds.add(appWidgetId);
+				} else {
+					for (Iterator<Integer> i = sAppWidgetIds.iterator(); i.hasNext();) Log.v(TAG,"next:"+i.next());
+				}
 			}
 		}
 	}
@@ -392,15 +404,16 @@ public class SonetService extends Service {
 
 	private void checkWidgetUpdateReady(int widget) {
 		// see if the tasks are finished
-		boolean widgetUpdateReady = mWidgetsTasks.isEmpty() || !mWidgetsTasks.containsKey(widget);
+		boolean widgetUpdateReady = SonetService.sWidgetsTasks.isEmpty() || !SonetService.sWidgetsTasks.containsKey(widget);
 		if (!widgetUpdateReady) {
-			ArrayList<GetStatusesTask> tasks = mWidgetsTasks.get(widget);
+			ArrayList<GetStatusesTask> tasks = SonetService.sWidgetsTasks.get(widget);
 			if (tasks.isEmpty()) widgetUpdateReady = true;
 			else {
 				Iterator<GetStatusesTask> itr = tasks.iterator();
 				while (itr.hasNext() && !widgetUpdateReady) widgetUpdateReady = itr.next().getStatus() == AsyncTask.Status.FINISHED;
 			}
 		}
+		Log.v(TAG,(widgetUpdateReady?"ready":"not ready"));
 		if (widgetUpdateReady) {
 			boolean hasbuttons = true;
 			int refreshInterval = Sonet.default_interval,
@@ -458,11 +471,11 @@ public class SonetService extends Service {
 					map_message_bg_clear = {R.id.message_bg_clear0, R.id.message_bg_clear1, R.id.message_bg_clear2, R.id.message_bg_clear3, R.id.message_bg_clear4, R.id.message_bg_clear5, R.id.message_bg_clear6, R.id.message_bg_clear7, R.id.message_bg_clear8, R.id.message_bg_clear9, R.id.message_bg_clear10, R.id.message_bg_clear11, R.id.message_bg_clear12, R.id.message_bg_clear13, R.id.message_bg_clear14, R.id.message_bg_clear15},
 					map_icon = {R.id.icon0, R.id.icon1, R.id.icon2, R.id.icon3, R.id.icon4, R.id.icon5, R.id.icon6, R.id.icon7, R.id.icon8, R.id.icon9, R.id.icon10, R.id.icon11, R.id.icon12, R.id.icon13, R.id.icon14, R.id.icon15};
 					int count_status = 0;
-					int ilink = statuses_styles.getColumnIndex(Statuses_styles.LINK),
+					int iid = statuses_styles.getColumnIndex(Statuses_styles._ID),
+					ilink = statuses_styles.getColumnIndex(Statuses_styles.LINK),
 					iprofile = statuses_styles.getColumnIndex(Statuses_styles.PROFILE),
 					ifriend = statuses_styles.getColumnIndex(Statuses_styles.FRIEND),
 					imessage = statuses_styles.getColumnIndex(Statuses_styles.MESSAGE),
-					iservice = statuses_styles.getColumnIndex(Statuses_styles.SERVICE),
 					icreatedText = statuses_styles.getColumnIndex(Statuses_styles.CREATEDTEXT),
 					istatus_bg = statuses_styles.getColumnIndex(Statuses_styles.STATUS_BG),
 					iicon = statuses_styles.getColumnIndex(Statuses_styles.ICON);
@@ -489,7 +502,7 @@ public class SonetService extends Service {
 						// if no buttons, use StatusDialog.java with options for Config and Refresh
 						String url = statuses_styles.getString(ilink);
 						if (hasbuttons && (url != null)) views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(Intent.ACTION_VIEW, Uri.parse(url)), 0));
-						else views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(this, StatusDialog.class).setAction(widget+"`"+statuses_styles.getInt(iservice)+"`"+statuses_styles.getString(ilink)), 0));
+						else views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(this, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, Integer.toString(statuses_styles.getInt(iid)))), 0));
 						views.setTextViewText(map_screenname[count_status], statuses_styles.getString(ifriend));
 						views.setTextColor(map_screenname[count_status], friend_color);
 						views.setFloat(map_screenname[count_status], "setTextSize", friend_textsize);
@@ -512,8 +525,11 @@ public class SonetService extends Service {
 			mAppWidgetManager.updateAppWidget(widget, views);
 			// replace with scrollable widget
 			if (scrollable) sendBroadcast(new Intent(this, SonetWidget.class).setAction(ACTION_BUILD_SCROLL).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widget));
-			if (hasAccount && (refreshInterval > 0)) mAlarmManager.set(AlarmManager.RTC_WAKEUP, mCurrentTimeMillis + refreshInterval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(widget)), 0));			
-		}		
+			// don't send updates when the device is asleep, as they'll stack up over time
+			Log.v(TAG,"setAlarm");
+			if (hasAccount && (refreshInterval > 0)) mAlarmManager.set(AlarmManager.RTC, mCurrentTimeMillis + 60000/*refreshInterval*/, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setData(Uri.withAppendedPath(Widgets.CONTENT_URI, Integer.toString(widget))), 0));			
+		}
+		if (SonetService.sWidgetsTasks.isEmpty()) this.stopSelf();
 	}
 
 	class GetStatusesTask extends AsyncTask<String, Void, String> {
@@ -620,7 +636,6 @@ public class SonetService extends Service {
 				// if not a full_refresh, only update the status_bg and icons
 				switch (service) {
 				case TWITTER:
-					String status_url = "http://twitter.com/%s/status/%s";
 					try {
 						JSONArray entries = new JSONArray(response);
 						// if there are updates, clear the cache
@@ -630,7 +645,7 @@ public class SonetService extends Service {
 							JSONObject user = entry.getJSONObject("user");
 							Date created = parseDate(entry.getString("created_at"), "EEE MMM dd HH:mm:ss z yyyy");
 							SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
-									String.format(status_url, user.getString("screen_name"), Long.toString(entry.getLong("id"))),
+									String.format("%s/%s/status/%s", sWebsites[service], user.getString("screen_name"), Long.toString(entry.getLong("id"))),
 									user.getString("name"),
 									getProfile(user.getString("profile_image_url")),
 									entry.getString("text"),
@@ -654,7 +669,7 @@ public class SonetService extends Service {
 					message = "message",
 					data = "data",
 					to = "to",
-					fburl = "http://www.facebook.com";
+					fburl = sWebsites[service];
 					try {
 						JSONObject jobj = new JSONObject(response);
 						JSONArray jarr = jobj.getJSONArray(data);
@@ -747,7 +762,7 @@ public class SonetService extends Service {
 								JSONObject actor = entry.getJSONObject("actor");
 								JSONObject object = entry.getJSONObject("object");
 								if (actor.has("name") && actor.has("thumbnailUrl") && object.has("originalContent")) {
-									link = "http://www.google.com/buzz";
+									link = sWebsites[service];
 									if (object.has("links") && object.getJSONObject("links").has("alternate")) {
 										JSONArray links = object.getJSONObject("links").getJSONArray("alternate");
 										if (links.length() > 0) link = links.getJSONObject(0).getString("href");
@@ -818,7 +833,7 @@ public class SonetService extends Service {
 							String shout = (checkin.has("shout") ? checkin.getString("shout") + "\n" : "") + "@" + venue.getString("name");
 							Date created = parseDate(Long.parseLong(checkin.getString("createdAt")) * 1000);
 							SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
-									"http://www.foursquare.com",
+									sWebsites[service],
 									user.getString("firstName") + " " + user.getString("lastName"),
 									getProfile(user.getString("photo")),
 									shout,
@@ -897,7 +912,7 @@ public class SonetService extends Service {
 									}
 								}
 								SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
-										"http://www.linkedin.com",
+										sWebsites[service],
 										person.getString("firstName") + " " + person.getString("lastName"),
 										person.has("pictureUrl") ? getProfile(person.getString("pictureUrl")) : null,
 												update,
@@ -936,8 +951,15 @@ public class SonetService extends Service {
 				SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, values);
 			}
 			// remove self from queue
-			if (!mWidgetsTasks.isEmpty() && mWidgetsTasks.containsKey(widget)) mWidgetsTasks.get(widget).remove(this);
+			if (!SonetService.sWidgetsTasks.isEmpty() && SonetService.sWidgetsTasks.containsKey(widget)) {
+				ArrayList<GetStatusesTask> tasks = SonetService.sWidgetsTasks.get(widget);
+				if (tasks != null) {
+					SonetService.sWidgetsTasks.get(widget).remove(this);
+					if (tasks.isEmpty()) SonetService.sWidgetsTasks.remove(tasks);
+				}				
+			}
 			// see if the tasks are finished
+			Log.v(TAG,"task checking");
 			checkWidgetUpdateReady(widget);
 		}
 

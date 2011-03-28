@@ -19,10 +19,10 @@
  */
 package com.piusvelte.sonet;
 
-import static com.piusvelte.sonet.Sonet.TWITTER;
-import static com.piusvelte.sonet.Sonet.FACEBOOK;
-import static com.piusvelte.sonet.Sonet.MYSPACE;
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
+import static com.piusvelte.sonet.Sonet.sWebsites;
+
+import com.piusvelte.sonet.Sonet.Statuses_styles;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -30,6 +30,7 @@ import android.appwidget.AppWidgetManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -47,12 +48,13 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 		super.onCreate(savedInstanceState);
 		Intent intent = getIntent();
 		if (intent != null) {
-			String action = intent.getAction();
-			int first = action.indexOf("`");
-			mAppWidgetId = Integer.parseInt(action.substring(0, first));
-			int second = action.indexOf("`", first + 1);
-			mService = Integer.parseInt(action.substring(first + 1, second));
-			mLink = action.substring(second + 1);
+			Cursor c = this.getContentResolver().query(intent.getData(), new String[]{Statuses_styles._ID, Statuses_styles.WIDGET, Statuses_styles.SERVICE, Statuses_styles.LINK}, null, null, null);
+			if (c.moveToFirst()) {
+				mAppWidgetId = c.getInt(c.getColumnIndex(Statuses_styles.WIDGET));
+				mService = c.getInt(c.getColumnIndex(Statuses_styles.SERVICE));
+				mLink = c.getString(c.getColumnIndex(Statuses_styles.LINK));
+			}
+			c.close();
 		}
 		Resources r = getResources();
 		CharSequence[] items = {r.getString(R.string.reply), "Post to " + r.getStringArray(R.array.service_entries)[mService], r.getString(R.string.settings), r.getString(R.string.button_refresh)};
@@ -70,17 +72,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(mLink)));
 			break;
 		case POST:
-			switch (mService) {
-			case TWITTER:
-				startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://twitter.com")));
-				break;
-			case FACEBOOK:
-				startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.facebook.com")));
-				break;
-			case MYSPACE:
-				startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.myspace.com")));
-				break;
-			}
+			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(sWebsites[mService])));
 			break;
 		case SETTINGS:
 			startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
