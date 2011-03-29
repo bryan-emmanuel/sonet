@@ -132,10 +132,7 @@ public class SonetService extends Service {
 	@Override
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
-		Log.v(TAG,"onStart");
 		if (intent != null) {
-			if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) Log.v(TAG,"has id");
-			if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) Log.v(TAG,"has ids");
 			if (intent.getAction() != null) {
 				if (intent.getAction().equals(ACTION_REFRESH)) {
 					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
@@ -277,7 +274,6 @@ public class SonetService extends Service {
 					} else this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}); // no accounts, clear cache
 					accounts.close();
 				}
-				Log.v(TAG,"root checking");
 				checkWidgetUpdateReady(appWidgetId);
 			}
 		}
@@ -413,7 +409,6 @@ public class SonetService extends Service {
 				while (itr.hasNext() && !widgetUpdateReady) widgetUpdateReady = itr.next().getStatus() == AsyncTask.Status.FINISHED;
 			}
 		}
-		Log.v(TAG,(widgetUpdateReady?"ready":"not ready"));
 		if (widgetUpdateReady) {
 			boolean hasbuttons = true;
 			int refreshInterval = Sonet.default_interval,
@@ -526,7 +521,6 @@ public class SonetService extends Service {
 			// replace with scrollable widget
 			if (scrollable) sendBroadcast(new Intent(this, SonetWidget.class).setAction(ACTION_BUILD_SCROLL).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widget));
 			// don't send updates when the device is asleep, as they'll stack up over time
-			Log.v(TAG,"setAlarm");
 			if (hasAccount && (refreshInterval > 0)) mAlarmManager.set(AlarmManager.RTC, mCurrentTimeMillis + 60000/*refreshInterval*/, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setData(Uri.withAppendedPath(Widgets.CONTENT_URI, Integer.toString(widget))), 0));			
 		}
 		if (SonetService.sWidgetsTasks.isEmpty()) this.stopSelf();
@@ -959,7 +953,6 @@ public class SonetService extends Service {
 				}				
 			}
 			// see if the tasks are finished
-			Log.v(TAG,"task checking");
 			checkWidgetUpdateReady(widget);
 		}
 
