@@ -45,12 +45,13 @@ public class SonetWidget extends AppWidgetProvider {
 
 	@Override
 	public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
+		Sonet.acquire(context);
 		context.startService(new Intent(context, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds));
 	}
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		final String action = intent.getAction();
+		String action = intent.getAction();
 		if (action.equals(ACTION_REFRESH)) {
 			int[] appWidgetIds;
 			if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) appWidgetIds = new int[]{intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)};
@@ -68,7 +69,6 @@ public class SonetWidget extends AppWidgetProvider {
 				context.startService(new Intent(context, SonetScrollableBuilder.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widget));
 			}
 		} else if (Sonet.ACTION_BUILD_SCROLL.equals(action)) {
-			Log.v(TAG,"BUILD_SCROLL");
 			int widget = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 			Sonet.sWidgetsContext.put(widget, context);
 			context.startService(new Intent(context, SonetScrollableBuilder.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widget));
@@ -101,10 +101,10 @@ public class SonetWidget extends AppWidgetProvider {
 		c.close();
 		if (hasbuttons) {
 			String link = null;
-			Cursor item = context.getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID, Statuses.LINK}, Statuses._ID + "=?", new String[]{id}, null);
+			Cursor item = context.getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.SERVICE, Statuses_styles.LINK}, Statuses_styles._ID + "=?", new String[]{id}, null);
 			if (item.moveToFirst()) {
-				int service = item.getInt(item.getColumnIndex(Statuses.SERVICE));
-				link = item.getString(item.getColumnIndex(Statuses.LINK));
+				int service = item.getInt(item.getColumnIndex(Statuses_styles.SERVICE));
+				link = item.getString(item.getColumnIndex(Statuses_styles.LINK));
 				if (link == null) link = sWebsites[service];
 			}
 			item.close();

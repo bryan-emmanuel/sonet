@@ -47,6 +47,7 @@ public class SonetProvider extends ContentProvider {
 	private static final int WIDGETS = 1;
 	private static final int STATUSES = 2;
 	private static final int STATUSES_STYLES = 3;
+	private static final int STATUSES_STYLES_WIDGET = 4;
 
 	private static final String DATABASE_NAME = "sonet.db";
 	private static final int DATABASE_VERSION = 11;
@@ -116,7 +117,8 @@ public class SonetProvider extends ContentProvider {
 		statusesProjectionMap.put(Statuses.WIDGET, Statuses.WIDGET);
 		statusesProjectionMap.put(Widgets.ICON, Widgets.ICON);
 
-		sUriMatcher.addURI(AUTHORITY, VIEW_STATUSES_STYLES + "/*", STATUSES_STYLES);
+		sUriMatcher.addURI(AUTHORITY, VIEW_STATUSES_STYLES, STATUSES_STYLES);
+		sUriMatcher.addURI(AUTHORITY, VIEW_STATUSES_STYLES + "/*", STATUSES_STYLES_WIDGET);
 
 		statuses_stylesProjectionMap = new HashMap<String, String>();
 		statuses_stylesProjectionMap.put(Statuses_styles._ID, Statuses_styles._ID);
@@ -162,6 +164,8 @@ public class SonetProvider extends ContentProvider {
 		case STATUSES:
 			return Statuses.CONTENT_TYPE;
 		case STATUSES_STYLES:
+			return Statuses_styles.CONTENT_TYPE;
+		case STATUSES_STYLES_WIDGET:
 			return Statuses_styles.CONTENT_TYPE;
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
@@ -235,6 +239,10 @@ public class SonetProvider extends ContentProvider {
 			qb.setProjectionMap(statusesProjectionMap);
 			break;
 		case STATUSES_STYLES:
+			qb.setTables(VIEW_STATUSES_STYLES);
+			qb.setProjectionMap(statuses_stylesProjectionMap);
+			break;
+		case STATUSES_STYLES_WIDGET:
 			qb.setTables(VIEW_STATUSES_STYLES);
 			qb.setProjectionMap(statuses_stylesProjectionMap);
 			selection = Statuses_styles.WIDGET + "=?";

@@ -35,105 +35,135 @@ import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.content.Context;
 import android.net.Uri;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
 import android.provider.BaseColumns;
 import android.util.Log;
 
 public class Sonet {
-	
+
 	private static final String TAG = "Sonet";
 
 	protected static final String TOKEN = "access_token";
 	protected static final String EXPIRES = "expires_in";
-    
+
 	protected static final int TWITTER = 0;
 	protected static final String TWITTER_URL_REQUEST = "http://api.twitter.com/oauth/request_token";
 	protected static final String TWITTER_URL_AUTHORIZE = "http://api.twitter.com/oauth/authorize";
 	protected static final String TWITTER_URL_ACCESS = "http://api.twitter.com/oauth/access_token";
-	protected static final String TWITTER_FEED = "http://api.twitter.com/1/statuses/home_timeline.json?count=";
+	protected static final String TWITTER_URL_FEED = "http://api.twitter.com/1/statuses/home_timeline.json?count=%s";
+	protected static final String TWITTER_TWEET = "http://api.twitter.com/1/statuses/update.json";
+	protected static final String TWITTER_RETWEET = "http://api.twitter.com/1/statuses/retweet/%s.json";
 
 	protected static final int FACEBOOK = 1;
-	protected static final String[] FACEBOOK_PERMISSIONS = new String[] {"offline_access"};
-    protected static final String FACEBOOK_URL_AUTHORIZE = "https://graph.facebook.com/oauth/authorize";
-    protected static final String FACEBOOK_BASE_URL = "https://graph.facebook.com/";
+	protected static final String FACEBOOK_URL_AUTHORIZE = "https://graph.facebook.com/oauth/authorize?client_id=%s&scope=offline_access,publish_stream&type=user_agent&redirect_uri=%s&display=touch&sdk=android";
+	protected static final String FACEBOOK_URL_ME = "https://graph.facebook.com/me?format=json&sdk=android&%s=%s";
+	protected static final String FACEBOOK_URL_FEED = "https://graph.facebook.com/me/home?date_format=U&format=json&sdk=android&limit=%s&%s=%s&fields=actions,link,type,from,message,created_time,to";
+	protected static final String FACEBOOK_POST = "https://graph.facebook.com/%s/feed";
+	protected static final String FACEBOOK_LIKE = "https://graph.facebook.com/%s/likes";
 
-    protected static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
-    protected static final String ACTION_BUILD_SCROLL = "com.piusvelte.sonet.Sonet.BUILD_SCROLL";
-    protected static final String EXTRA_ACCOUNT_ID = "com.piusvelte.sonet.Sonet.ACCOUNT_ID";
-    protected static final long INVALID_ACCOUNT_ID = -1;
-    protected static final String ACTION_UPDATE_SETTINGS = "com.piusvelte.sonet.Sonet.UPDATE_SETTINGS";
+	protected static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
+	protected static final String ACTION_BUILD_SCROLL = "com.piusvelte.sonet.Sonet.BUILD_SCROLL";
+	protected static final String EXTRA_ACCOUNT_ID = "com.piusvelte.sonet.Sonet.ACCOUNT_ID";
+	protected static final long INVALID_ACCOUNT_ID = -1;
+	protected static final int RESULT_REFRESH = 1;
 
 	protected static final int MYSPACE = 2;
-    protected static final String MYSPACE_URL_REQUEST = "http://api.myspace.com/request_token";
-    protected static final String MYSPACE_URL_AUTHORIZE = "http://api.myspace.com/authorize";
-    protected static final String MYSPACE_URL_ACCESS = "http://api.myspace.com/access_token";
-    protected static final String MYSPACE_BASE_URL = "http://opensocial.myspace.com/1.0/";
+	protected static final String MYSPACE_URL_REQUEST = "http://api.myspace.com/request_token";
+	protected static final String MYSPACE_URL_AUTHORIZE = "http://api.myspace.com/authorize";
+	protected static final String MYSPACE_URL_ACCESS = "http://api.myspace.com/access_token";
+	protected static final String MYSPACE_URL_ME = "http://opensocial.myspace.com/1.0/people/@me/@self";
+	protected static final String MYSPACE_URL_FEED = "http://opensocial.myspace.com/1.0/statusmood/@me/@friends/history?count=%s&includeself=true&fields=author,source";
 
-    protected static final int BUZZ = 3;
-    protected static final String BUZZ_URL_REQUEST = "https://www.google.com/accounts/OAuthGetRequestToken";
-    protected static final String BUZZ_URL_AUTHORIZE = "https://www.google.com/buzz/api/auth/OAuthAuthorizeToken";
-    protected static final String BUZZ_URL_ACCESS = "https://www.google.com/accounts/OAuthGetAccessToken";
-    protected static final String BUZZ_SCOPE = "https://www.googleapis.com/auth/buzz.readonly";
-    protected static final String BUZZ_BASE_URL = "https://www.googleapis.com/buzz/v1/";
-    
-    protected static final int FOURSQUARE = 4;
-    protected static final String FOURSQUARE_URL_ACCESS = "https://foursquare.com/oauth2/access_token";
-    protected static final String FOURSQUARE_URL_AUTHORIZE = "https://foursquare.com/oauth2/authorize";
-    protected static final String FOURSQUARE_BASE_URL = "https://api.foursquare.com/v2/";
-    
-    protected static final int LINKEDIN = 5;
-    protected static final String LINKEDIN_URL_REQUEST = "https://api.linkedin.com/uas/oauth/requestToken";
-    protected static final String LINKEDIN_URL_AUTHORIZE = "https://www.linkedin.com/uas/oauth/authorize";
-    protected static final String LINKEDIN_URL_ACCESS = "https://api.linkedin.com/uas/oauth/accessToken";
-    protected static final String LINKEDIN_BASE_URL = "https://api.linkedin.com/v1/people/~";
-    protected static final String[][] LINKEDIN_HEADERS = new String[][] {{"x-li-format", "json"}};
-    protected static final HashMap<String, String> LINKEDIN_UPDATETYPES;
-    
-    protected static HashMap<Integer, Context> sWidgetsContext;
-    
-    protected static String[] sWebsites;
-    
-    static {
-    	LINKEDIN_UPDATETYPES = new HashMap<String, String>();
-    	LINKEDIN_UPDATETYPES.put("ANSW", "updated an answer");
-    	LINKEDIN_UPDATETYPES.put("APPS", "updated the application ");
-    	LINKEDIN_UPDATETYPES.put("CMPY", "company update");
-    	LINKEDIN_UPDATETYPES.put("CONN", "is now connected to ");
-    	LINKEDIN_UPDATETYPES.put("JOBP", "posted the job ");
-    	LINKEDIN_UPDATETYPES.put("JGRP", "joined the group ");
-    	LINKEDIN_UPDATETYPES.put("PRFX", "updated their extended profile");
-    	LINKEDIN_UPDATETYPES.put("PREC", "recommends ");
-    	LINKEDIN_UPDATETYPES.put("PROF", "changed their profile");
-    	LINKEDIN_UPDATETYPES.put("QSTN", "updated a question");
-    	LINKEDIN_UPDATETYPES.put("SHAR", "shared something");
-    	LINKEDIN_UPDATETYPES.put("VIRL", "updated the viral ");
-    	LINKEDIN_UPDATETYPES.put("PICU", "updated their profile picture");
-    	
-    	sWidgetsContext = new HashMap<Integer, Context>();
-    	
-    	sWebsites = new String[]{"http://twitter.com", "http://www.facebook.com", "http://www.myspace.com", "http://www.google.com/buzz", "http://www.foursquare.com", "http://www.linkedin.com" /*, "http://www.salesforce.com"*/};
-    	
-    }
-	
-    protected static final int SALESFORCE = 6;
-    protected static final String SALESFORCE_URL_REQUEST = "https://login.salesforce.com/_nc_external/system/security/oauth/RequestTokenHandler";
-    protected static final String SALESFORCE_URL_AUTHORIZE = "https://login.salesforce.com/setup/secur/RemoteAccessAuthorizationPage.apexp";
-    protected static final String SALESFORCE_URL_ACCESS = "https://login.salesforce.com/_nc_external/system/security/oauth/AccessTokenHandler";
-    protected static final String SALESFORCE_FEED = "";
+	protected static final int BUZZ = 3;
+	protected static final String BUZZ_URL_REQUEST = "https://www.google.com/accounts/OAuthGetRequestToken?scope=%s&xoauth_displayname=%s&domain=%s";
+	protected static final String BUZZ_URL_AUTHORIZE = "https://www.google.com/buzz/api/auth/OAuthAuthorizeToken?scope=%s&xoauth_displayname=%s&domain=%s&btmpl=mobile";
+	protected static final String BUZZ_URL_ACCESS = "https://www.google.com/accounts/OAuthGetAccessToken";
+	protected static final String BUZZ_SCOPE = "https://www.googleapis.com/auth/buzz.readonly";
+	protected static final String BUZZ_URL_ME = "https://www.googleapis.com/buzz/v1/people/@me/@self?alt=json";
+	protected static final String BUZZ_URL_FEED = "https://www.googleapis.com/buzz/v1/activities/@me/@consumption?alt=json&max-results=%s";
 
-    protected static final int INVALID_SERVICE = -1;
+	protected static final int FOURSQUARE = 4;
+	protected static final String FOURSQUARE_URL_ACCESS = "https://foursquare.com/oauth2/access_token";
+	protected static final String FOURSQUARE_URL_AUTHORIZE = "https://foursquare.com/oauth2/authorize?client_id=%s&response_type=token&redirect_uri=%s&display=touch";
+	protected static final String FOURSQUARE_URL_ME = "https://api.foursquare.com/v2/users/self?oauth_token=%s";
+	protected static final String FOURSQUARE_URL_FEED = "https://api.foursquare.com/v2/checkins/recent?limit=%s&oauth_token=%s";
 
-    protected static final int default_interval = 3600000;
-    protected static final int default_buttons_bg_color = -16777216;
-    protected static final int default_buttons_color = -1;
-    protected static final int default_message_bg_color = -16777216;
-    protected static final int default_message_color = -1;
-    protected static final int default_friend_color = -1;
-    protected static final int default_created_color = -1;
-    protected static final int default_buttons_textsize = 14;
-    protected static final int default_messages_textsize = 14;
-    protected static final int default_friend_textsize = 14;
-    protected static final int default_created_textsize = 14;
-    protected static final int default_statuses_per_account = 10;
+	protected static final int LINKEDIN = 5;
+	protected static final String LINKEDIN_URL_REQUEST = "https://api.linkedin.com/uas/oauth/requestToken";
+	protected static final String LINKEDIN_URL_AUTHORIZE = "https://www.linkedin.com/uas/oauth/authorize";
+	protected static final String LINKEDIN_URL_ACCESS = "https://api.linkedin.com/uas/oauth/accessToken";
+	protected static final String LINKEDIN_URL_ME = "https://api.linkedin.com/v1/people/~";
+	protected static final String LINKEDIN_URL_FEED = "https://api.linkedin.com/v1/people/~/network/updates?type=APPS&type=CMPY&type=CONN&type=JOBS&type=JGRP&type=PICT&type=PRFU&type=RECU&type=PRFX&type=ANSW&type=QSTN&type=SHAR&type=VIRL&count=%s";
+	protected static final String[][] LINKEDIN_HEADERS = new String[][] {{"x-li-format", "json"}};
+	protected static final HashMap<String, String> LINKEDIN_UPDATETYPES;
+
+	protected static HashMap<Integer, Context> sWidgetsContext;
+
+	protected static String[] sWebsites;
+
+	private static final String POWER_SERVICE = Context.POWER_SERVICE;
+	private static WakeLock sWakeLock;
+	static boolean hasLock() {
+		return (sWakeLock != null);
+	}
+
+	static void acquire(Context context) {
+		if (hasLock()) sWakeLock.release();
+		PowerManager pm = (PowerManager) context.getSystemService(POWER_SERVICE);
+		sWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
+		sWakeLock.acquire();
+	}
+
+	static void release() {
+		if (hasLock()) {
+			sWakeLock.release();
+			sWakeLock = null;
+		}
+	}
+
+	static {
+		LINKEDIN_UPDATETYPES = new HashMap<String, String>();
+		LINKEDIN_UPDATETYPES.put("ANSW", "updated an answer");
+		LINKEDIN_UPDATETYPES.put("APPS", "updated the application ");
+		LINKEDIN_UPDATETYPES.put("CMPY", "company update");
+		LINKEDIN_UPDATETYPES.put("CONN", "is now connected to ");
+		LINKEDIN_UPDATETYPES.put("JOBP", "posted the job ");
+		LINKEDIN_UPDATETYPES.put("JGRP", "joined the group ");
+		LINKEDIN_UPDATETYPES.put("PRFX", "updated their extended profile");
+		LINKEDIN_UPDATETYPES.put("PREC", "recommends ");
+		LINKEDIN_UPDATETYPES.put("PROF", "changed their profile");
+		LINKEDIN_UPDATETYPES.put("QSTN", "updated a question");
+		LINKEDIN_UPDATETYPES.put("SHAR", "shared something");
+		LINKEDIN_UPDATETYPES.put("VIRL", "updated the viral ");
+		LINKEDIN_UPDATETYPES.put("PICU", "updated their profile picture");
+
+		sWidgetsContext = new HashMap<Integer, Context>();
+
+		sWebsites = new String[]{"http://twitter.com", "http://www.facebook.com", "http://www.myspace.com", "http://www.google.com/buzz", "http://www.foursquare.com", "http://www.linkedin.com" /*, "http://www.salesforce.com"*/};
+
+	}
+
+	protected static final int SALESFORCE = 6;
+	protected static final String SALESFORCE_URL_REQUEST = "https://login.salesforce.com/_nc_external/system/security/oauth/RequestTokenHandler";
+	protected static final String SALESFORCE_URL_AUTHORIZE = "https://login.salesforce.com/setup/secur/RemoteAccessAuthorizationPage.apexp";
+	protected static final String SALESFORCE_URL_ACCESS = "https://login.salesforce.com/_nc_external/system/security/oauth/AccessTokenHandler";
+	protected static final String SALESFORCE_FEED = "";
+
+	protected static final int INVALID_SERVICE = -1;
+
+	protected static final int default_interval = 3600000;
+	protected static final int default_buttons_bg_color = -16777216;
+	protected static final int default_buttons_color = -1;
+	protected static final int default_message_bg_color = -16777216;
+	protected static final int default_message_color = -1;
+	protected static final int default_friend_color = -1;
+	protected static final int default_created_color = -1;
+	protected static final int default_buttons_textsize = 14;
+	protected static final int default_messages_textsize = 14;
+	protected static final int default_friend_textsize = 14;
+	protected static final int default_created_textsize = 14;
+	protected static final int default_statuses_per_account = 10;
 
 	public Sonet() {
 	}

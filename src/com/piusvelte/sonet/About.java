@@ -19,6 +19,8 @@
  */
 package com.piusvelte.sonet;
 
+import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
+
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Widgets;
@@ -40,6 +42,7 @@ public class About extends Activity implements View.OnClickListener,
 DialogInterface.OnClickListener {
 	private int[] mAppWidgetIds;
 	private AppWidgetManager mAppWidgetManager;
+	private boolean mUpdateWidget = false;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -87,7 +90,7 @@ DialogInterface.OnClickListener {
 	public void onClick(View v) {
 		switch (v.getId()) {
 		case R.id.defaultsettings:
-			startActivity(new Intent(this, Settings.class));
+			startActivityForResult(new Intent(this, Settings.class), RESULT_REFRESH);
 			break;
 		case R.id.widgets:
 			if (mAppWidgetIds.length > 0) {
@@ -112,6 +115,18 @@ DialogInterface.OnClickListener {
 			this.finish();
 			break;
 		}
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		if (mUpdateWidget) startService(new Intent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
+	}
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if ((requestCode == RESULT_REFRESH) && (resultCode == RESULT_OK)) mUpdateWidget = true;
 	}
 
 	private int[] arrayCat(int[] a, int[] b) {

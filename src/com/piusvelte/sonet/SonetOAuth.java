@@ -104,7 +104,7 @@ public class SonetOAuth {
 			}
 			break;
 		default:
-			Log.e(TAG,"get error:"+httpRequest.getURI().toURL().toString()+"\n"+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
+			Log.e(TAG,"get error:"+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
 			break;
 		}
 		return response;		
@@ -118,7 +118,7 @@ public class SonetOAuth {
 		return httpResponse(new HttpPost(url));
 	}
 	
-	public String httpGetWithHeaders(String url, String[][] headers) throws OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, ClientProtocolException, IOException {
+	public String httpGet(String url, String[][] headers) throws OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, ClientProtocolException, IOException {
 		HttpGet httpGet = new HttpGet(url);
 		for (String[] header : headers) httpGet.setHeader(header[0], header[1]);
 		return httpResponse(httpGet);

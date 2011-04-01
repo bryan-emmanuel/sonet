@@ -20,6 +20,7 @@
 package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
+import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
@@ -54,10 +55,10 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	private static final int REAUTH_ID = Menu.FIRST;
 	private static final int SETTINGS_ID = Menu.FIRST + 1;
 	private static final int DELETE_ID = Menu.FIRST + 2;
-	protected static int sAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
-	protected static boolean sUpdateWidget = false;
-	private boolean mHasAccounts = false, mAddingAccount;
-	protected static long sAccountId = Sonet.INVALID_ACCOUNT_ID;
+	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
+	private boolean mHasAccounts = false,
+	mAddingAccount,
+	mUpdateWidget = false;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -68,15 +69,17 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		Intent intent = getIntent();
 		if (intent != null) {
 			Bundle extras = intent.getExtras();
-			if (extras != null) sAppWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+			if (extras != null) mAppWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 			// if called from widget, the id is set in the action, as pendingintents must have a unique action
-			else if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH)) && (!intent.getAction().equals(Intent.ACTION_VIEW))) sAppWidgetId = Integer.parseInt(intent.getAction());
+			else if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH)) && (!intent.getAction().equals(Intent.ACTION_VIEW))) mAppWidgetId = Integer.parseInt(intent.getAction());
 		}
 
 		setContentView(R.layout.accounts);
 		registerForContextMenu(getListView());
 		((Button) findViewById(R.id.default_widget_settings)).setOnClickListener(this);
 		((Button) findViewById(R.id.button_add_account)).setOnClickListener(this);
+		
+		if (mAppWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) finish();
 	}
 
 	@Override
@@ -92,17 +95,16 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 				switch (which) {
 				case REAUTH_ID:
 					// need the account id if reauthenticating
-					sAccountId = item;
 					Cursor c = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(item)}, null);
 					if (c.moveToFirst()) {
 						mAddingAccount = true;
-						startActivity(new Intent(ManageAccounts.this, OAuthLogin.class).putExtra(Accounts.SERVICE, c.getInt(c.getColumnIndex(Accounts.SERVICE))));
+						startActivityForResult(new Intent(ManageAccounts.this, OAuthLogin.class).putExtra(Accounts.SERVICE, c.getInt(c.getColumnIndex(Accounts.SERVICE))).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, item), RESULT_REFRESH);
 					}
 					c.close();
 					break;
 				case SETTINGS_ID:
 					mAddingAccount = true;
-					startActivity(new Intent(ManageAccounts.this, AccountSettings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, sAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, item));
+					startActivityForResult(new Intent(ManageAccounts.this, AccountSettings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, item), RESULT_REFRESH);
 					break;
 				}
 				dialog.cancel();
@@ -119,11 +121,11 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
 		if (item.getItemId() == DELETE_ID) {
-			sUpdateWidget = true;
+			mUpdateWidget = true;
 			getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=?", new String[]{Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
 			// need to delete the statuses and settings for this account
-			getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(sAppWidgetId), Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
-			getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(sAppWidgetId), Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
+			getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
+			getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
 		}
 		return super.onContextItemSelected(item);
 	}
@@ -139,7 +141,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			break;
 		case R.id.default_widget_settings:
 			mAddingAccount = true;
-			startActivity(new Intent(this, Settings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, sAppWidgetId));
+			startActivityForResult(new Intent(this, Settings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId), RESULT_REFRESH);
 			break;
 		}
 	}
@@ -149,25 +151,28 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		super.onResume();
 		listAccounts();
 		mAddingAccount = false;
-		if (sUpdateWidget && mHasAccounts) setResultOK();
+		if (mUpdateWidget && mHasAccounts) {
+			Intent resultValue = new Intent();
+			resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
+			setResult(RESULT_OK, resultValue);
+		}
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
-		if (!mAddingAccount && sUpdateWidget) startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{sAppWidgetId}));
+		if (!mAddingAccount && mUpdateWidget) startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
 		else if (!mHasAccounts) {
 			// clean up any setup for this widget
-			getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=" + sAppWidgetId, null);
-			getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=" + sAppWidgetId, null);
+			getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=" + mAppWidgetId, null);
+			getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=" + mAppWidgetId, null);
 		}
 	}
-
-	// convenience method
-	private void setResultOK() {
-		Intent resultValue = new Intent();
-		resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, sAppWidgetId);
-		setResult(RESULT_OK, resultValue);		
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if ((requestCode == RESULT_REFRESH) && (resultCode == RESULT_OK)) mUpdateWidget = true;
 	}
 
 	private void listAccounts() {
@@ -179,7 +184,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 				+ Accounts.SERVICE + "='" + BUZZ + "' then 'Buzz: ' when "
 				+ Accounts.SERVICE + "='" + LINKEDIN + "' then 'LinkedIn: ' when "
 				+ Accounts.SERVICE + "='" + SALESFORCE + "' then 'Salesforce: ' when "
-				+ Accounts.SERVICE + "='" + FOURSQUARE + "' then 'Foursquare: ' else '' end)||" + Accounts.USERNAME + " as " + Accounts.USERNAME, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(sAppWidgetId)}, null);
+				+ Accounts.SERVICE + "='" + FOURSQUARE + "' then 'Foursquare: ' else '' end)||" + Accounts.USERNAME + " as " + Accounts.USERNAME, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)}, null);
 		mHasAccounts = c.getCount() != 0;
 		setListAdapter(new SimpleCursorAdapter(ManageAccounts.this, R.layout.accounts_row, c, new String[] {Accounts.USERNAME}, new int[] {R.id.account_username}));
 	}
@@ -187,7 +192,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 
 	public void onClick(DialogInterface dialog, int which) {
 		mAddingAccount = true;
-		startActivity(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, which));
+		startActivityForResult(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, which).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID), RESULT_REFRESH);
 		dialog.cancel();
 	}
 

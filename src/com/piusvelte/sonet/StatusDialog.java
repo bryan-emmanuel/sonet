@@ -48,7 +48,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 		super.onCreate(savedInstanceState);
 		Intent intent = getIntent();
 		if (intent != null) {
-			Cursor c = this.getContentResolver().query(intent.getData(), new String[]{Statuses_styles._ID, Statuses_styles.WIDGET, Statuses_styles.SERVICE, Statuses_styles.LINK}, null, null, null);
+			Cursor c = this.getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.WIDGET, Statuses_styles.SERVICE, Statuses_styles.LINK}, Statuses_styles._ID + "=?", new String[] {intent.getData().getLastPathSegment()}, null);
 			if (c.moveToFirst()) {
 				mAppWidgetId = c.getInt(c.getColumnIndex(Statuses_styles.WIDGET));
 				mService = c.getInt(c.getColumnIndex(Statuses_styles.SERVICE));

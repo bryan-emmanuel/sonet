@@ -19,8 +19,6 @@
  */
 package com.piusvelte.sonet;
 
-import static com.piusvelte.sonet.Sonet.ACTION_UPDATE_SETTINGS;
-
 import com.piusvelte.sonet.Sonet.Widgets;
 
 import android.app.Activity;
@@ -56,7 +54,6 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 	private CheckBox mTime24hr;
 	private CheckBox mIcon;
 	private Button mStatuses_per_account;
-	private boolean mUpdateWidget = false;
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private long mAccountId = Sonet.INVALID_ACCOUNT_ID;
 	private String mWidgetAccountSettingsId;
@@ -64,6 +61,7 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		setResult(RESULT_CANCELED);
 		setContentView(R.layout.account_preferences);
 		Intent i = getIntent();
 		if (i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
@@ -199,17 +197,11 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 
 	}
 
-	@Override
-	protected void onPause() {
-		super.onPause();
-		if (mUpdateWidget) startService(new Intent(this, SonetService.class).setAction(ACTION_UPDATE_SETTINGS).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
-	}
-
 	private void updateDatabase(String column, int value) {
 		ContentValues values = new ContentValues();
 		values.put(column, value);
 		this.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets._ID + "=?", new String[]{mWidgetAccountSettingsId});
-		mUpdateWidget = true;
+		setResult(RESULT_OK);
 	}
 
 	ColorPickerDialog.OnColorChangedListener mBodyBackgroundColorListener =
