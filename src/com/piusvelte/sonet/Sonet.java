@@ -183,6 +183,8 @@ public class Sonet {
 		public static final String SERVICE = "service";
 		public static final String EXPIRY = "expiry";
 		public static final String WIDGET = "widget";
+		// service id for posting and linking
+		public static final String SID = "sid";
 
 	}
 
@@ -238,6 +240,8 @@ public class Sonet {
 		public static final String ACCOUNT = "account";
 		public static final String STATUS_BG = "status_bg";
 		public static final String ICON = "icon";
+		// service id for posting and linking
+		public static final String SID = "sid";
 
 	}
 
@@ -270,6 +274,8 @@ public class Sonet {
 		public static final String ACCOUNT = "account";
 		public static final String STATUS_BG = "status_bg";
 		public static final String ICON = "icon";
+		// service id, for posting and linking
+		public static final String SID = "sid";
 
 	}
 

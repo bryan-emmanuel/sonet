@@ -22,17 +22,19 @@
 	xmlns:app="http://schemas.android.com/apk/res/com.piusvelte.sonet"
 	android:layout_width="fill_parent" android:layout_height="fill_parent"
 	android:orientation="vertical">
-	<com.admob.android.ads.AdView android:id="@+id/ad"
-		android:visibility="gone" android:layout_width="fill_parent"
-		android:layout_height="wrap_content" android:layout_alignParentTop="true"
-		app:backgroundColor="@color/tertiary" app:primaryTextColor="@color/primary"
-		app:secondaryTextColor="@color/secondary" />
 	<Button android:id="@+id/default_widget_settings"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
 		android:text="@string/default_widget_settings"
-		android:layout_below="@id/ad" />
+		android:layout_alignParentTop="true" />
 	<Button android:id="@+id/button_add_account" android:text="@string/button_add_account"
-		android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_below="@id/default_widget_settings" />
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:layout_below="@id/default_widget_settings" />
+	<com.admob.android.ads.AdView android:id="@+id/ad"
+		android:visibility="gone" android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:layout_alignParentBottom="true"
+		app:backgroundColor="@color/tertiary" app:primaryTextColor="@color/primary"
+		app:secondaryTextColor="@color/secondary" />
 	<ListView android:id="@android:id/list" android:layout_width="fill_parent"
-		android:layout_height="fill_parent" android:layout_below="@id/button_add_account" />
+		android:layout_height="fill_parent" android:layout_below="@id/button_add_account"
+		android:layout_above="@id/ad" />
 </RelativeLayout>

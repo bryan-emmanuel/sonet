@@ -325,7 +325,7 @@ public class SonetService extends Service {
 		return cal.getTime();		
 	}
 
-	private ContentValues statusItem(long created, String link, String friend, byte[] profile, String message, int service, String createdText, int appWidgetId, int accountId) {
+	private ContentValues statusItem(long created, String link, String friend, byte[] profile, String message, int service, String createdText, int appWidgetId, int accountId, String sid) {
 		ContentValues values = new ContentValues();
 		values.put(Statuses.CREATED, created);
 		values.put(Statuses.LINK, link);
@@ -336,6 +336,7 @@ public class SonetService extends Service {
 		values.put(Statuses.CREATEDTEXT, createdText);
 		values.put(Statuses.WIDGET, appWidgetId);
 		values.put(Statuses.ACCOUNT, accountId);
+		values.put(Statuses.SID, sid);
 		return values;
 	}
 
@@ -615,7 +616,8 @@ public class SonetService extends Service {
 									service,
 									getCreatedText(created, time24hr),
 									widget,
-									account));
+									account,
+									entry.getString(id)));
 						}
 					} catch (JSONException e) {
 						Log.e(TAG,e.toString());
@@ -641,7 +643,7 @@ public class SonetService extends Service {
 						for (int d = 0; d < jarr.length(); d++) {
 							JSONObject o = jarr.getJSONObject(d);
 							// only parse status types, not photo, video or link
-							if (o.has(type) && o.has(from) && o.has(message)) {
+							if (o.has(type) && o.has(from) && o.has(message) && o.has(id)) {
 								// parse the link
 								String l = fburl;
 								if (o.has(actions)) {											
@@ -675,7 +677,8 @@ public class SonetService extends Service {
 											service,
 											getCreatedText(created, time24hr),
 											widget,
-											account));
+											account,
+											o.getString(id)));
 								}
 							}
 						}
@@ -707,7 +710,8 @@ public class SonetService extends Service {
 									service,
 									getCreatedText(created, time24hr),
 									widget,
-									account));
+									account,
+									entry.getString(id)));
 						}
 					} catch (JSONException e) {
 						Log.e(TAG, e.toString());
@@ -738,7 +742,8 @@ public class SonetService extends Service {
 											service,
 											getCreatedText(created, time24hr),
 											widget,
-											account));
+											account,
+											entry.getString(id)));
 								}
 							}
 						}
@@ -803,7 +808,8 @@ public class SonetService extends Service {
 									service,
 									getCreatedText(created, time24hr),
 									widget,
-									account));
+									account,
+									checkin.getString(id)));
 						}
 					} catch (JSONException e) {
 						Log.e(TAG,e.toString());
@@ -882,7 +888,8 @@ public class SonetService extends Service {
 												service,
 												getCreatedText(created, time24hr),
 												widget,
-												account));
+												account,
+												value.getString(id)));
 							}
 						}
 					} catch (JSONException e) {

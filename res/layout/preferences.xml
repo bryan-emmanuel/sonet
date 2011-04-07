@@ -24,10 +24,10 @@
 	android:orientation="vertical">
 	<com.admob.android.ads.AdView android:id="@+id/ad"
 		android:visibility="gone" android:layout_width="fill_parent"
-		android:layout_height="wrap_content" android:layout_alignParentTop="true"
+		android:layout_height="wrap_content" android:layout_alignParentBottom="true"
 		app:backgroundColor="@color/tertiary" app:primaryTextColor="@color/primary"
 		app:secondaryTextColor="@color/secondary" />
-	<ScrollView android:layout_below="@id/ad" android:layout_width="fill_parent" android:layout_height="wrap_content">
+	<ScrollView android:layout_above="@id/ad" android:layout_width="fill_parent" android:layout_height="wrap_content">
 		<LinearLayout
 			android:layout_width="fill_parent" android:layout_height="fill_parent"
 			android:orientation="vertical">
