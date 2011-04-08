@@ -35,9 +35,8 @@
 		</activity>
 		<activity android:name=".Settings" />
 		<activity android:name=".AccountSettings" />
-		<activity android:name=".OAuthLogin">
-		</activity>
-		<activity android:name=".PostDialog" android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+		<activity android:name=".OAuthLogin" />
+		<activity android:name=".SonetCreatePost" />
 		<activity android:name=".StatusDialog" android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 		<activity android:name="com.myspace.sdk.MSLoginActivity" />
         <activity android:name="com.admob.android.ads.AdMobActivity" 

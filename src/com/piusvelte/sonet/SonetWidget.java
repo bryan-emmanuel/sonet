@@ -20,7 +20,6 @@
 package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
-import static com.piusvelte.sonet.Sonet.sWebsites;
 
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
@@ -35,7 +34,6 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
@@ -92,24 +90,8 @@ public class SonetWidget extends AppWidgetProvider {
 	}
 
 	private void onClick(Context context, Intent intent) {
-		boolean hasbuttons = false;
-		String appWidgetId = Integer.toString(intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
-		String id = intent.getStringExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS);
-		Uri uri = Widgets.CONTENT_URI;
-		Cursor c = context.getContentResolver().query(uri, new String[]{Widgets._ID, Widgets.HASBUTTONS}, Widgets.WIDGET + "=?", new String[]{appWidgetId}, null);
-		if (c.moveToFirst()) hasbuttons = c.getInt(c.getColumnIndex(Widgets.HASBUTTONS)) == 1;
-		c.close();
-		if (hasbuttons) {
-			String link = null;
-			Cursor item = context.getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.SERVICE, Statuses_styles.LINK}, Statuses_styles._ID + "=?", new String[]{id}, null);
-			if (item.moveToFirst()) {
-				int service = item.getInt(item.getColumnIndex(Statuses_styles.SERVICE));
-				link = item.getString(item.getColumnIndex(Statuses_styles.LINK));
-				if (link == null) link = sWebsites[service];
-			}
-			item.close();
-			if (link != null) context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-		} else context.startActivity(new Intent(context, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, id)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+		// send all onClick events to StatusDialog
+		context.startActivity(new Intent(context, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, intent.getStringExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 	}
 
 }

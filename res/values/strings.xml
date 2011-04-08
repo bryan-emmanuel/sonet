@@ -32,7 +32,6 @@
     <string name="button_post">Post</string>
     <string name="button_refresh">Refresh</string>
     <string name="button_add_account">Add Account</string>
-    <string name="reply">Reply</string>
     <string name="delete_account">Delete Account</string>
     <string name="key_preferences">sonet</string>
     <string name="category_update">Update</string>
@@ -84,4 +83,6 @@
 	<string name="myspace_permissions_message">To get MySpaces statuses, you must log into the MySpace website, go to My Stuff, Privacy Settings, External Apps, edit Sonet and enable \"Access my stream and my friends\' stream.\"</string>
 	<string name="icon">Include service icon</string>
 	<string name="statuses_per_account">Statuses per account</string>
+	<string name="background_update">Update when the screen is off</string>
+	<string name="like">Like</string>
 </resources>

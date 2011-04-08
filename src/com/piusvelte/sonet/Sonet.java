@@ -100,8 +100,6 @@ public class Sonet {
 
 	protected static HashMap<Integer, Context> sWidgetsContext;
 
-	protected static String[] sWebsites;
-
 	private static final String POWER_SERVICE = Context.POWER_SERVICE;
 	private static WakeLock sWakeLock;
 	static boolean hasLock() {
@@ -139,8 +137,6 @@ public class Sonet {
 		LINKEDIN_UPDATETYPES.put("PICU", "updated their profile picture");
 
 		sWidgetsContext = new HashMap<Integer, Context>();
-
-		sWebsites = new String[]{"http://twitter.com", "http://www.facebook.com", "http://www.myspace.com", "http://www.google.com/buzz", "http://www.foursquare.com", "http://www.linkedin.com" /*, "http://www.salesforce.com"*/};
 
 	}
 
@@ -216,6 +212,8 @@ public class Sonet {
 		public static final String CREATED_TEXTSIZE = "created_textsize";
 		public static final String ICON = "icon";
 		public static final String STATUSES_PER_ACCOUNT = "statuses_per_account";
+		// make background updating optional
+		public static final String BACKGROUND_UPDATE = "background_update";
 
 	}
 
@@ -229,7 +227,6 @@ public class Sonet {
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.statuses";
 
 		public static final String CREATED = "created";
-		public static final String LINK = "link";
 		public static final String FRIEND = "friend";
 		public static final String PROFILE = "profile";
 		public static final String MESSAGE = "message";
@@ -257,7 +254,6 @@ public class Sonet {
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.statuses_styles";
 
 		public static final String CREATED = "created";
-		public static final String LINK = "link";
 		public static final String FRIEND = "friend";
 		public static final String PROFILE = "profile";
 		public static final String MESSAGE = "message";

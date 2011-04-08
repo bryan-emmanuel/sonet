@@ -57,8 +57,6 @@ import static com.piusvelte.sonet.Sonet.LINKEDIN_HEADERS;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_FEED;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATETYPES;
 
-import static com.piusvelte.sonet.Sonet.sWebsites;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -113,7 +111,7 @@ public class SonetService extends Service {
 	private static int[] map_icons = new int[]{R.drawable.twitter, R.drawable.facebook, R.drawable.myspace, R.drawable.buzz, R.drawable.foursquare, R.drawable.linkedin, R.drawable.salesforce};
 	private long mCurrentTimeMillis;
 	private int mTimezoneOffset = 0;
-	private static HashMap<Integer, ArrayList<GetStatusesTask>> sWidgetsTasks = new HashMap<Integer, ArrayList<GetStatusesTask>>();
+	private static HashMap<String, ArrayList<GetStatusesTask>> sWidgetsTasks = new HashMap<String, ArrayList<GetStatusesTask>>();
 	private AppWidgetManager mAppWidgetManager;
 	private AlarmManager mAlarmManager;
 	private ConnectivityManager mConnectivityManager;
@@ -136,31 +134,31 @@ public class SonetService extends Service {
 				if (intent.getAction().equals(ACTION_REFRESH)) {
 					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
 				}
-			} else if (intent.getData() != null) SonetService.updateWidgets(new int[] {Integer.parseInt(intent.getData().getLastPathSegment())});
+			} else if (intent.getData() != null) SonetService.updateWidgets(new String[] {intent.getData().getLastPathSegment()});
 			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
-			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) SonetService.updateWidgets(new int[]{intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)});
+			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) SonetService.updateWidgets(new String[]{Integer.toString(intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID))});
 		}
 		synchronized (sLock) {
 			boolean hasConnection = (mConnectivityManager.getActiveNetworkInfo() != null) && mConnectivityManager.getActiveNetworkInfo().isConnected();
 			while (updatesQueued()) {
 				// first handle deletes, then scroll updates, finally regular updates
-				int appWidgetId = getNextUpdate();
+				String appWidgetId = getNextUpdate();
 				ArrayList<GetStatusesTask> statusesTasks = new ArrayList<GetStatusesTask>();
 				SonetService.sWidgetsTasks.put(appWidgetId, statusesTasks);
-				mAlarmManager.cancel(PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
-				Cursor settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID}, Widgets.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
+				mAlarmManager.cancel(PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(appWidgetId), 0));
+				Cursor settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID}, Widgets.WIDGET + "=?", new String[]{appWidgetId}, null);
 				if (!settings.moveToFirst()) {
 					// upgrade, moving settings from sharedpreferences to db, or initialize settings
 					SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
 					ContentValues values = new ContentValues();
 					values.put(Widgets.INTERVAL, Integer.parseInt((String) sp.getString(getString(R.string.key_interval), Integer.toString(Sonet.default_interval))));
 					values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-					values.put(Widgets.HASBUTTONS, sp.getBoolean(getString(R.string.key_display_buttons), true));
+					values.put(Widgets.HASBUTTONS, sp.getBoolean(getString(R.string.key_display_buttons), true) ? 1 : 0);
 					values.put(Widgets.BUTTONS_BG_COLOR, Integer.parseInt(sp.getString(getString(R.string.key_head_background), Integer.toString(Sonet.default_buttons_bg_color))));
 					values.put(Widgets.BUTTONS_COLOR, Integer.parseInt(sp.getString(getString(R.string.key_head_text), Integer.toString(Sonet.default_buttons_color))));
 					values.put(Widgets.BUTTONS_TEXTSIZE, Integer.parseInt(sp.getString(getString(R.string.key_buttons_textsize), Integer.toString(Sonet.default_buttons_textsize))));
 					values.put(Widgets.WIDGET, appWidgetId);
-					values.put(Widgets.ICON, true);
+					values.put(Widgets.ICON, 1);
 					values.put(Widgets.MESSAGES_BG_COLOR, Sonet.default_message_bg_color);
 					values.put(Widgets.MESSAGES_COLOR, Sonet.default_message_color);
 					values.put(Widgets.MESSAGES_TEXTSIZE, Sonet.default_messages_textsize);
@@ -168,8 +166,9 @@ public class SonetService extends Service {
 					values.put(Widgets.FRIEND_TEXTSIZE, Sonet.default_friend_textsize);
 					values.put(Widgets.CREATED_COLOR, Sonet.default_created_color);
 					values.put(Widgets.CREATED_TEXTSIZE, Sonet.default_created_textsize);
-					values.put(Widgets.TIME24HR, false);
+					values.put(Widgets.TIME24HR, 0);
 					values.put(Widgets.STATUSES_PER_ACCOUNT, Sonet.default_statuses_per_account);
+					values.put(Widgets.BACKGROUND_UPDATE, 1);
 					this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 				}
 				settings.close();
@@ -177,9 +176,7 @@ public class SonetService extends Service {
 				/* get statuses for all accounts
 				 * then sort them by datetime, descending
 				 */
-				int status_bg_color = -1;
-				byte[] status_bg;
-				Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
+				Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{appWidgetId}, null);
 				if (!accounts.moveToFirst()) {
 					// check for old accounts without appwidgetid
 					accounts.close();
@@ -212,8 +209,8 @@ public class SonetService extends Service {
 					itoken = accounts.getColumnIndex(Accounts.TOKEN),
 					isecret = accounts.getColumnIndex(Accounts.SECRET);
 					while (!accounts.isAfterLast()) {
-						int accountId = accounts.getInt(iaccountid),
-						service = accounts.getInt(iservice);
+						String accountId = Integer.toString(accounts.getInt(iaccountid)),
+						service = Integer.toString(accounts.getInt(iservice));
 						// if no connection, only update the status_bg and icons
 						if (hasConnection) {
 							GetStatusesTask task = new GetStatusesTask(appWidgetId, accountId, service);
@@ -222,24 +219,27 @@ public class SonetService extends Service {
 						} else {
 							// update the bg and icon only
 							// no tasks will be created, and the widget will be updated below
-							boolean icon = true;
-							Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_BG_COLOR, Widgets.ICON}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(accountId)}, null);
+							boolean icon = true,
+							time24hr = false;
+							int status_bg_color = Sonet.default_message_bg_color;
+							byte[] status_bg;
+							Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{appWidgetId, accountId}, null);
 							if (c.moveToFirst()) {
 								status_bg_color = c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
 								icon = c.getInt(c.getColumnIndex(Widgets.ICON)) == 1;
+								time24hr = c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1;
 							} else {
-								Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_BG_COLOR, Widgets.ICON}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+								Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{appWidgetId, Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 								if (d.moveToFirst()) {
 									status_bg_color = d.getInt(d.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
 									icon = d.getInt(d.getColumnIndex(Widgets.ICON)) == 1;
+									time24hr = d.getInt(d.getColumnIndex(Widgets.TIME24HR)) == 1;
 								} else {
-									Cursor e = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_BG_COLOR, Widgets.ICON}, Widgets.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
+									Cursor e = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.TIME24HR}, Widgets.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
 									if (e.moveToFirst()) {
 										status_bg_color = e.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
 										icon = e.getInt(e.getColumnIndex(Widgets.ICON)) == 1;
-									} else {
-										status_bg_color = Sonet.default_message_bg_color;
-										icon = true;
+										time24hr = e.getInt(e.getColumnIndex(Widgets.TIME24HR)) == 1;
 									}
 									e.close();
 								}
@@ -255,12 +255,24 @@ public class SonetService extends Service {
 							status_bg = status_bg_blob.toByteArray();
 							ContentValues values = new ContentValues();
 							values.put(Statuses.STATUS_BG, status_bg);
-							values.put(Statuses.ICON, icon ? getBlob(BitmapFactory.decodeResource(getResources(), map_icons[service])) : null);
-							this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Integer.toString(service), Integer.toString(accountId)});
+							values.put(Statuses.ICON, icon ? getBlob(BitmapFactory.decodeResource(getResources(), map_icons[Integer.parseInt(service)])) : null);
+							this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{appWidgetId, service, accountId});
+							Cursor statuses = this.getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID, Statuses.CREATED}, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{appWidgetId, service, accountId}, null);
+							if (statuses.moveToFirst()) {
+								int iid = statuses.getColumnIndex(Statuses._ID),
+								icreated = statuses.getColumnIndex(Statuses.CREATED);
+								while (!statuses.isAfterLast()) {
+									values = new ContentValues();
+									values.put(Statuses.CREATEDTEXT, getCreatedText(statuses.getInt(icreated), time24hr));
+									this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses._ID + "=?", new String[]{Integer.toString(statuses.getInt(iid))});
+									statuses.moveToNext();
+								}
+							}
+							statuses.close();
 						}
 						accounts.moveToNext();
 					}
-				} else this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}); // no accounts, clear cache
+				} else this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[]{appWidgetId}); // no accounts, clear cache
 				accounts.close();
 				checkWidgetUpdateReady(appWidgetId);
 			}
@@ -274,15 +286,21 @@ public class SonetService extends Service {
 	}
 
 	private static Object sLock = new Object();
-	private static Queue<Integer> sAppWidgetIds = new LinkedList<Integer>();
-
+	private static Queue<String> sAppWidgetIds = new LinkedList<String>();
+	
 	public static void updateWidgets(int[] appWidgetIds) {
+		String[] widgetIds = new String[appWidgetIds.length];
+		for (int i = 0; i < widgetIds.length; i++) widgetIds[i] = Integer.toString(appWidgetIds[i]);
+		SonetService.updateWidgets(widgetIds);
+	}
+
+	public static void updateWidgets(String[] appWidgetIds) {
 		synchronized (sLock) {
-			for (int appWidgetId : appWidgetIds) {
+			for (String appWidgetId : appWidgetIds) {
 				if (!sAppWidgetIds.contains(appWidgetId)) {
 					sAppWidgetIds.add(appWidgetId);
 				} else {
-					for (Iterator<Integer> i = sAppWidgetIds.iterator(); i.hasNext();) Log.v(TAG,"next:"+i.next());
+					for (Iterator<String> i = sAppWidgetIds.iterator(); i.hasNext();) Log.v(TAG,"next:"+i.next());
 				}
 			}
 		}
@@ -294,9 +312,9 @@ public class SonetService extends Service {
 		}
 	}
 
-	private static int getNextUpdate() {
+	private static String getNextUpdate() {
 		synchronized (sLock) {
-			if (sAppWidgetIds.peek() == null) return AppWidgetManager.INVALID_APPWIDGET_ID;
+			if (sAppWidgetIds.peek() == null) return Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID);
 			else return sAppWidgetIds.poll();
 		}
 	}
@@ -322,20 +340,19 @@ public class SonetService extends Service {
 		Calendar cal = Calendar.getInstance();
 		cal.setTimeInMillis(epoch);
 		cal.add(Calendar.MILLISECOND, mTimezoneOffset);
-		return cal.getTime();		
+		return cal.getTime();
 	}
 
-	private ContentValues statusItem(long created, String link, String friend, byte[] profile, String message, int service, String createdText, int appWidgetId, int accountId, String sid) {
+	private ContentValues statusItem(long created, String friend, byte[] profile, String message, String service, String createdText, String appWidgetId, String accountId, String sid) {
 		ContentValues values = new ContentValues();
 		values.put(Statuses.CREATED, created);
-		values.put(Statuses.LINK, link);
 		values.put(Statuses.FRIEND, friend);
 		values.put(Statuses.PROFILE, profile);
 		values.put(Statuses.MESSAGE, message);
-		values.put(Statuses.SERVICE, service);
+		values.put(Statuses.SERVICE, Integer.parseInt(service));
 		values.put(Statuses.CREATEDTEXT, createdText);
-		values.put(Statuses.WIDGET, appWidgetId);
-		values.put(Statuses.ACCOUNT, accountId);
+		values.put(Statuses.WIDGET, Integer.parseInt(appWidgetId));
+		values.put(Statuses.ACCOUNT, Integer.parseInt(accountId));
 		values.put(Statuses.SID, sid);
 		return values;
 	}
@@ -346,6 +363,12 @@ public class SonetService extends Service {
 						String.format("%d:%02d", created.getHours(), created.getMinutes())
 						: String.format("%d:%02d%s", created.getHours() < 13 ? created.getHours() : created.getHours() - 12, created.getMinutes(), getString(created.getHours() < 13 ? R.string.am : R.string.pm)))
 						: String.format("%s %d", getResources().getStringArray(R.array.months)[created.getMonth()], created.getDate());
+	}
+	
+	private String getCreatedText(int epoch, boolean time24hr) {
+		Date created = new Date();
+		created.setTime(epoch);
+		return getCreatedText(created, time24hr);
 	}
 
 	private byte[] getBlob(Bitmap bmp) {
@@ -365,7 +388,7 @@ public class SonetService extends Service {
 		return getBlob(profile);
 	}
 
-	private void checkWidgetUpdateReady(int widget) {
+	private void checkWidgetUpdateReady(String widget) {
 		// see if the tasks are finished
 		boolean widgetUpdateReady = SonetService.sWidgetsTasks.isEmpty() || !SonetService.sWidgetsTasks.containsKey(widget);
 		if (!widgetUpdateReady) {
@@ -377,29 +400,24 @@ public class SonetService extends Service {
 			}
 		}
 		if (widgetUpdateReady) {
-			boolean hasbuttons = true;
+			boolean hasbuttons = true,
+			backgroundUpdate = true,
+			scrollable = false,
+			hasAccount = false;
 			int refreshInterval = Sonet.default_interval,
 			buttons_bg_color = Sonet.default_buttons_bg_color,
 			buttons_color = Sonet.default_buttons_color,
 			buttons_textsize = Sonet.default_buttons_textsize;
-			Cursor settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.HASBUTTONS, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_TEXTSIZE}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(widget), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+			Cursor settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.HASBUTTONS, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.BACKGROUND_UPDATE, Widgets.SCROLLABLE}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{widget, Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 			if (settings.moveToFirst()) {
 				refreshInterval = settings.getInt(settings.getColumnIndex(Widgets.INTERVAL));
 				hasbuttons = settings.getInt(settings.getColumnIndex(Widgets.HASBUTTONS)) == 1;
 				buttons_bg_color = settings.getInt(settings.getColumnIndex(Widgets.BUTTONS_BG_COLOR));
 				buttons_color = settings.getInt(settings.getColumnIndex(Widgets.BUTTONS_COLOR));
 				buttons_textsize = settings.getInt(settings.getColumnIndex(Widgets.BUTTONS_TEXTSIZE));
+				backgroundUpdate = settings.getInt(settings.getColumnIndex(Widgets.BACKGROUND_UPDATE)) == 1;
+				scrollable = settings.getInt(settings.getColumnIndex(Widgets.SCROLLABLE)) == 1;
 			}
-			settings.close();
-			Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID}, Accounts.WIDGET + "=?", new String[]{Integer.toString(widget)}, null);
-			boolean hasAccount = accounts.moveToFirst();
-			accounts.close();
-			// race condition when finished configuring, the service starts.
-			// meanwhile, the launcher broadcasts READY and the listview is created. it's at this point that the widget is marked scrollable
-			// this run finishes after the listview is created, but is not flagged as scrollable and replaces the listview with the regular widget
-			boolean scrollable = false;
-			settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.SCROLLABLE}, Widgets.WIDGET + "=?", new String[]{Integer.toString(widget)}, null);
-			if (settings.moveToFirst()) scrollable = settings.getInt(settings.getColumnIndex(Widgets.SCROLLABLE)) == 1;
 			settings.close();
 			// Push update for this widget to the home screen
 			RemoteViews views = new RemoteViews(getPackageName(), hasbuttons ? R.layout.widget : R.layout.widget_nobuttons);
@@ -410,85 +428,106 @@ public class SonetService extends Service {
 				views.setImageViewBitmap(R.id.buttons_bg, buttons_bg);
 				views.setTextColor(R.id.buttons_bg_clear, buttons_bg_color);
 				views.setFloat(R.id.buttons_bg_clear, "setTextSize", buttons_textsize);
-				views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, new Intent(this, PostDialog.class), 0));
+				views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, new Intent(this, SonetCreatePost.class), 0));
 				views.setTextColor(R.id.button_post, buttons_color);
 				views.setFloat(R.id.button_post, "setTextSize", buttons_textsize);
-				views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, new Intent(this, ManageAccounts.class).setAction(Integer.toString(widget)), 0));
+				views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, new Intent(this, ManageAccounts.class).setAction(widget), 0));
 				views.setTextColor(R.id.button_configure, buttons_color);
 				views.setFloat(R.id.button_configure, "setTextSize", buttons_textsize);
-				views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(Integer.toString(widget)), 0));
+				views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(widget), 0));
 				views.setTextColor(R.id.button_refresh, buttons_color);
 				views.setFloat(R.id.button_refresh, "setTextSize", buttons_textsize);
 			}
-			int[] map_message = {R.id.message0, R.id.message1, R.id.message2, R.id.message3, R.id.message4, R.id.message5, R.id.message6, R.id.message7, R.id.message8, R.id.message9, R.id.message10, R.id.message11, R.id.message12, R.id.message13, R.id.message14, R.id.message15};
-			Cursor statuses_styles = this.getContentResolver().query(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, Integer.toString(widget)), new String[]{Statuses_styles._ID, Statuses_styles.CREATED, Statuses_styles.LINK, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.SERVICE, Statuses_styles.CREATEDTEXT, Statuses_styles.WIDGET, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON}, null, null, Statuses_styles.CREATED + " desc");
-			if (statuses_styles.moveToFirst()) {
-				if (!scrollable) {
-					int[] map_item = {R.id.item0, R.id.item1, R.id.item2, R.id.item3, R.id.item4, R.id.item5, R.id.item6, R.id.item7, R.id.item8, R.id.item9, R.id.item10, R.id.item11, R.id.item12, R.id.item13, R.id.item14, R.id.item15},
-					map_profile = {R.id.profile0, R.id.profile1, R.id.profile2, R.id.profile3, R.id.profile4, R.id.profile5, R.id.profile6, R.id.profile7, R.id.profile8, R.id.profile9, R.id.profile10, R.id.profile11, R.id.profile12, R.id.profile13, R.id.profile14, R.id.profile15},
-					map_screenname = {R.id.friend0, R.id.friend1, R.id.friend2, R.id.friend3, R.id.friend4, R.id.friend5, R.id.friend6, R.id.friend7, R.id.friend8, R.id.friend9, R.id.friend10, R.id.friend11, R.id.friend12, R.id.friend13, R.id.friend14, R.id.friend15},
-					map_created = {R.id.created0, R.id.created1, R.id.created2, R.id.created3, R.id.created4, R.id.created5, R.id.created6, R.id.created7, R.id.created8, R.id.created9, R.id.created10, R.id.created11, R.id.created12, R.id.created13, R.id.created14, R.id.created15},
-					map_status_bg = {R.id.status_bg0, R.id.status_bg1, R.id.status_bg2, R.id.status_bg3, R.id.status_bg4, R.id.status_bg5, R.id.status_bg6, R.id.status_bg7, R.id.status_bg8, R.id.status_bg9, R.id.status_bg10, R.id.status_bg11, R.id.status_bg12, R.id.status_bg13, R.id.status_bg14, R.id.status_bg15},
-					map_friend_bg_clear = {R.id.friend_bg_clear0, R.id.friend_bg_clear1, R.id.friend_bg_clear2, R.id.friend_bg_clear3, R.id.friend_bg_clear4, R.id.friend_bg_clear5, R.id.friend_bg_clear6, R.id.friend_bg_clear7, R.id.friend_bg_clear8, R.id.friend_bg_clear9, R.id.friend_bg_clear10, R.id.friend_bg_clear11, R.id.friend_bg_clear12, R.id.friend_bg_clear13, R.id.friend_bg_clear14, R.id.friend_bg_clear15},
-					map_message_bg_clear = {R.id.message_bg_clear0, R.id.message_bg_clear1, R.id.message_bg_clear2, R.id.message_bg_clear3, R.id.message_bg_clear4, R.id.message_bg_clear5, R.id.message_bg_clear6, R.id.message_bg_clear7, R.id.message_bg_clear8, R.id.message_bg_clear9, R.id.message_bg_clear10, R.id.message_bg_clear11, R.id.message_bg_clear12, R.id.message_bg_clear13, R.id.message_bg_clear14, R.id.message_bg_clear15},
-					map_icon = {R.id.icon0, R.id.icon1, R.id.icon2, R.id.icon3, R.id.icon4, R.id.icon5, R.id.icon6, R.id.icon7, R.id.icon8, R.id.icon9, R.id.icon10, R.id.icon11, R.id.icon12, R.id.icon13, R.id.icon14, R.id.icon15};
-					int count_status = 0;
-					int iid = statuses_styles.getColumnIndex(Statuses_styles._ID),
-					ilink = statuses_styles.getColumnIndex(Statuses_styles.LINK),
-					iprofile = statuses_styles.getColumnIndex(Statuses_styles.PROFILE),
-					ifriend = statuses_styles.getColumnIndex(Statuses_styles.FRIEND),
-					imessage = statuses_styles.getColumnIndex(Statuses_styles.MESSAGE),
-					icreatedText = statuses_styles.getColumnIndex(Statuses_styles.CREATEDTEXT),
-					istatus_bg = statuses_styles.getColumnIndex(Statuses_styles.STATUS_BG),
-					iicon = statuses_styles.getColumnIndex(Statuses_styles.ICON);
-					while (!statuses_styles.isAfterLast() && (count_status < map_item.length)) {
-						int friend_color = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.FRIEND_COLOR)),
-						created_color = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.CREATED_COLOR)),
-						friend_textsize = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.FRIEND_TEXTSIZE)),
-						created_textsize = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.CREATED_TEXTSIZE)),
-						messages_color = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.MESSAGES_COLOR)),
-						messages_textsize = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.MESSAGES_TEXTSIZE));
-						// set icons
-						byte[] icon = statuses_styles.getBlob(iicon);
-						views.setImageViewBitmap(map_icon[count_status], BitmapFactory.decodeByteArray(icon, 0, icon.length));
-						views.setTextViewText(map_friend_bg_clear[count_status], statuses_styles.getString(ifriend));
-						views.setFloat(map_friend_bg_clear[count_status], "setTextSize", friend_textsize);
-						views.setTextViewText(map_message_bg_clear[count_status], statuses_styles.getString(imessage));
-						views.setFloat(map_message_bg_clear[count_status], "setTextSize", messages_textsize);
-						// set messages background
-						byte[] status_bg = statuses_styles.getBlob(istatus_bg);
-						views.setImageViewBitmap(map_status_bg[count_status], BitmapFactory.decodeByteArray(status_bg, 0, status_bg.length));
-						views.setTextViewText(map_message[count_status], statuses_styles.getString(imessage));
-						views.setTextColor(map_message[count_status], messages_color);
-						views.setFloat(map_message[count_status], "setTextSize", messages_textsize);
-						// if no buttons, use StatusDialog.java with options for Config and Refresh
-						String url = statuses_styles.getString(ilink);
-						if (hasbuttons && (url != null)) views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(Intent.ACTION_VIEW, Uri.parse(url)), 0));
-						else views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(this, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, Integer.toString(statuses_styles.getInt(iid)))), 0));
-						views.setTextViewText(map_screenname[count_status], statuses_styles.getString(ifriend));
-						views.setTextColor(map_screenname[count_status], friend_color);
-						views.setFloat(map_screenname[count_status], "setTextSize", friend_textsize);
-						views.setTextViewText(map_created[count_status], statuses_styles.getString(icreatedText));
-						views.setTextColor(map_created[count_status], created_color);
-						views.setFloat(map_created[count_status], "setTextSize", created_textsize);
-						byte[] profile = statuses_styles.getBlob(iprofile);
-						if (profile != null) views.setImageViewBitmap(map_profile[count_status], BitmapFactory.decodeByteArray(profile, 0, profile.length));						
-						count_status++;
-						statuses_styles.moveToNext();
+			int[] map_message = {R.id.message0, R.id.message1, R.id.message2, R.id.message3, R.id.message4, R.id.message5, R.id.message6, R.id.message7, R.id.message8, R.id.message9, R.id.message10, R.id.message11, R.id.message12, R.id.message13, R.id.message14, R.id.message15},
+			map_item = {R.id.item0, R.id.item1, R.id.item2, R.id.item3, R.id.item4, R.id.item5, R.id.item6, R.id.item7, R.id.item8, R.id.item9, R.id.item10, R.id.item11, R.id.item12, R.id.item13, R.id.item14, R.id.item15},
+			map_profile = {R.id.profile0, R.id.profile1, R.id.profile2, R.id.profile3, R.id.profile4, R.id.profile5, R.id.profile6, R.id.profile7, R.id.profile8, R.id.profile9, R.id.profile10, R.id.profile11, R.id.profile12, R.id.profile13, R.id.profile14, R.id.profile15},
+			map_screenname = {R.id.friend0, R.id.friend1, R.id.friend2, R.id.friend3, R.id.friend4, R.id.friend5, R.id.friend6, R.id.friend7, R.id.friend8, R.id.friend9, R.id.friend10, R.id.friend11, R.id.friend12, R.id.friend13, R.id.friend14, R.id.friend15},
+			map_created = {R.id.created0, R.id.created1, R.id.created2, R.id.created3, R.id.created4, R.id.created5, R.id.created6, R.id.created7, R.id.created8, R.id.created9, R.id.created10, R.id.created11, R.id.created12, R.id.created13, R.id.created14, R.id.created15},
+			map_status_bg = {R.id.status_bg0, R.id.status_bg1, R.id.status_bg2, R.id.status_bg3, R.id.status_bg4, R.id.status_bg5, R.id.status_bg6, R.id.status_bg7, R.id.status_bg8, R.id.status_bg9, R.id.status_bg10, R.id.status_bg11, R.id.status_bg12, R.id.status_bg13, R.id.status_bg14, R.id.status_bg15},
+			map_friend_bg_clear = {R.id.friend_bg_clear0, R.id.friend_bg_clear1, R.id.friend_bg_clear2, R.id.friend_bg_clear3, R.id.friend_bg_clear4, R.id.friend_bg_clear5, R.id.friend_bg_clear6, R.id.friend_bg_clear7, R.id.friend_bg_clear8, R.id.friend_bg_clear9, R.id.friend_bg_clear10, R.id.friend_bg_clear11, R.id.friend_bg_clear12, R.id.friend_bg_clear13, R.id.friend_bg_clear14, R.id.friend_bg_clear15},
+			map_message_bg_clear = {R.id.message_bg_clear0, R.id.message_bg_clear1, R.id.message_bg_clear2, R.id.message_bg_clear3, R.id.message_bg_clear4, R.id.message_bg_clear5, R.id.message_bg_clear6, R.id.message_bg_clear7, R.id.message_bg_clear8, R.id.message_bg_clear9, R.id.message_bg_clear10, R.id.message_bg_clear11, R.id.message_bg_clear12, R.id.message_bg_clear13, R.id.message_bg_clear14, R.id.message_bg_clear15},
+			map_icon = {R.id.icon0, R.id.icon1, R.id.icon2, R.id.icon3, R.id.icon4, R.id.icon5, R.id.icon6, R.id.icon7, R.id.icon8, R.id.icon9, R.id.icon10, R.id.icon11, R.id.icon12, R.id.icon13, R.id.icon14, R.id.icon15};
+			Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID}, Accounts.WIDGET + "=?", new String[]{widget}, null);
+			if (accounts.moveToFirst()) {
+				hasAccount = true;
+				Cursor statuses_styles = this.getContentResolver().query(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, widget), new String[]{Statuses_styles._ID, Statuses_styles.CREATED, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.SERVICE, Statuses_styles.CREATEDTEXT, Statuses_styles.WIDGET, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON}, null, null, Statuses_styles.CREATED + " desc");
+				if (statuses_styles.moveToFirst()) {
+					if (!scrollable) {
+						int iid = statuses_styles.getColumnIndex(Statuses_styles._ID),
+						iprofile = statuses_styles.getColumnIndex(Statuses_styles.PROFILE),
+						ifriend = statuses_styles.getColumnIndex(Statuses_styles.FRIEND),
+						imessage = statuses_styles.getColumnIndex(Statuses_styles.MESSAGE),
+						icreatedText = statuses_styles.getColumnIndex(Statuses_styles.CREATEDTEXT),
+						istatus_bg = statuses_styles.getColumnIndex(Statuses_styles.STATUS_BG),
+						iicon = statuses_styles.getColumnIndex(Statuses_styles.ICON),
+						count_status = 0;
+						while (!statuses_styles.isAfterLast() && (count_status < map_item.length)) {
+							int friend_color = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.FRIEND_COLOR)),
+							created_color = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.CREATED_COLOR)),
+							friend_textsize = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.FRIEND_TEXTSIZE)),
+							created_textsize = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.CREATED_TEXTSIZE)),
+							messages_color = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.MESSAGES_COLOR)),
+							messages_textsize = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.MESSAGES_TEXTSIZE));
+							// set icons
+							byte[] icon = statuses_styles.getBlob(iicon);
+							views.setImageViewBitmap(map_icon[count_status], BitmapFactory.decodeByteArray(icon, 0, icon.length));
+							views.setTextViewText(map_friend_bg_clear[count_status], statuses_styles.getString(ifriend));
+							views.setFloat(map_friend_bg_clear[count_status], "setTextSize", friend_textsize);
+							views.setTextViewText(map_message_bg_clear[count_status], statuses_styles.getString(imessage));
+							views.setFloat(map_message_bg_clear[count_status], "setTextSize", messages_textsize);
+							// set messages background
+							byte[] status_bg = statuses_styles.getBlob(istatus_bg);
+							views.setImageViewBitmap(map_status_bg[count_status], BitmapFactory.decodeByteArray(status_bg, 0, status_bg.length));
+							views.setTextViewText(map_message[count_status], statuses_styles.getString(imessage));
+							views.setTextColor(map_message[count_status], messages_color);
+							views.setFloat(map_message[count_status], "setTextSize", messages_textsize);
+							// if no buttons, use StatusDialog.java with options for Config and Refresh
+							views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(this, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, Integer.toString(statuses_styles.getInt(iid)))), 0));
+							views.setTextViewText(map_screenname[count_status], statuses_styles.getString(ifriend));
+							views.setTextColor(map_screenname[count_status], friend_color);
+							views.setFloat(map_screenname[count_status], "setTextSize", friend_textsize);
+							views.setTextViewText(map_created[count_status], statuses_styles.getString(icreatedText));
+							views.setTextColor(map_created[count_status], created_color);
+							views.setFloat(map_created[count_status], "setTextSize", created_textsize);
+							byte[] profile = statuses_styles.getBlob(iprofile);
+							if (profile != null) views.setImageViewBitmap(map_profile[count_status], BitmapFactory.decodeByteArray(profile, 0, profile.length));						
+							count_status++;
+							statuses_styles.moveToNext();
+						}
+					}
+				} else {
+					// no connection or updates
+					for (int count_status = 0; count_status < map_item.length; count_status++) {
+						views.setImageViewBitmap(map_icon[count_status], null);
+						views.setTextViewText(map_friend_bg_clear[count_status], "");
+						views.setTextViewText(map_message_bg_clear[count_status], "");
+						views.setImageViewBitmap(map_status_bg[count_status], null);
+						views.setTextViewText(map_message[count_status], (count_status == 0 ? getString((mConnectivityManager.getActiveNetworkInfo() != null) && mConnectivityManager.getActiveNetworkInfo().isConnected() ? R.string.no_updates : R.string.no_connection) : ""));
+						views.setTextViewText(map_screenname[count_status], "");
+						views.setTextViewText(map_created[count_status], "");
+						views.setImageViewBitmap(map_profile[count_status], null);
 					}
 				}
+				statuses_styles.close();
 			} else {
-				// no connect or account
-				views.setTextViewText(map_message[0], getString(hasAccount ? (mConnectivityManager.getActiveNetworkInfo() != null) && mConnectivityManager.getActiveNetworkInfo().isConnected() ? R.string.no_updates : R.string.no_connection : R.string.no_accounts));
-				views.setTextColor(map_message[0], Sonet.default_message_color);
-				views.setFloat(map_message[0], "setTextSize", Sonet.default_messages_textsize);
+				// no accounts
+				for (int count_status = 0; count_status < map_item.length; count_status++) {
+					views.setImageViewBitmap(map_icon[count_status], null);
+					views.setTextViewText(map_friend_bg_clear[count_status], "");
+					views.setTextViewText(map_message_bg_clear[count_status], "");
+					views.setImageViewBitmap(map_status_bg[count_status], null);
+					views.setTextViewText(map_message[count_status], (count_status == 0 ? getString(R.string.no_accounts) : ""));
+					views.setTextViewText(map_screenname[count_status], "");
+					views.setTextViewText(map_created[count_status], "");
+					views.setImageViewBitmap(map_profile[count_status], null);
+				}
 			}
-			statuses_styles.close();
-			mAppWidgetManager.updateAppWidget(widget, views);
+			accounts.close();
+			mAppWidgetManager.updateAppWidget(Integer.parseInt(widget), views);
 			// replace with scrollable widget
 			if (scrollable) sendBroadcast(new Intent(this, SonetWidget.class).setAction(ACTION_BUILD_SCROLL).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widget));
 			// don't send updates when the device is asleep, as they'll stack up over time
-			if (hasAccount && (refreshInterval > 0)) mAlarmManager.set(AlarmManager.RTC_WAKEUP, mCurrentTimeMillis + refreshInterval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setData(Uri.withAppendedPath(Widgets.CONTENT_URI, Integer.toString(widget))), 0));			
+			if (hasAccount && (refreshInterval > 0)) mAlarmManager.set(backgroundUpdate ? AlarmManager.RTC_WAKEUP : AlarmManager.RTC, mCurrentTimeMillis + refreshInterval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setData(Uri.withAppendedPath(Widgets.CONTENT_URI, widget)), 0));			
 		}
 		if (SonetService.sWidgetsTasks.isEmpty()) {
 			Sonet.release();
@@ -497,28 +536,28 @@ public class SonetService extends Service {
 	}
 
 	class GetStatusesTask extends AsyncTask<String, Void, String> {
-		private int widget;
-		private int account;
-		private int service;
+		private String widget;
+		private String account;
+		private String service;
 		private boolean time24hr,
 		icon;
 		private int status_bg_color = -1,
 		status_count;
 
-		public GetStatusesTask(int widget, int account, int service) {
+		public GetStatusesTask(String widget, String account, String service) {
 			// get this account's statuses
 			// get the settings form time24hr and bg_color
 			this.widget = widget;
 			this.account = account;
 			this.service = service;
-			Cursor c = SonetService.this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(widget), Integer.toString(account)}, null);
+			Cursor c = SonetService.this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{widget, account}, null);
 			if (c.moveToFirst()) {
 				time24hr = c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1;
 				status_bg_color = c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
 				icon = c.getInt(c.getColumnIndex(Widgets.ICON)) == 1;
 				status_count = c.getInt(c.getColumnIndex(Widgets.STATUSES_PER_ACCOUNT));
 			} else {
-				Cursor d = SonetService.this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(widget), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+				Cursor d = SonetService.this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{widget, Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 				if (d.moveToFirst()) {
 					time24hr = d.getInt(d.getColumnIndex(Widgets.TIME24HR)) == 1;
 					status_bg_color = d.getInt(d.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
@@ -548,7 +587,7 @@ public class SonetService extends Service {
 		protected String doInBackground(String... params) {
 			SonetOAuth sonetOAuth;
 			try {
-				switch (service) {
+				switch (Integer.parseInt(service)) {
 				case TWITTER:
 					sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, params[0], params[1]);
 					return sonetOAuth.httpGet(String.format(TWITTER_URL_FEED, status_count));
@@ -586,6 +625,7 @@ public class SonetService extends Service {
 		@Override
 		protected void onPostExecute(String response) {
 			// parse the response
+			boolean updateCreatedText = false;
 			if (response != null) {
 				String name = "name",
 				id = "id",
@@ -598,90 +638,76 @@ public class SonetService extends Service {
 				status_bg_bmp.compress(Bitmap.CompressFormat.PNG, 100, status_bg_blob);
 				byte[] status_bg = status_bg_blob.toByteArray();
 				// if not a full_refresh, only update the status_bg and icons
-				switch (service) {
+				switch (Integer.parseInt(service)) {
 				case TWITTER:
 					try {
 						JSONArray entries = new JSONArray(response);
 						// if there are updates, clear the cache
-						if (entries.length() > 0) SonetService.this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(widget), Integer.toString(service), Integer.toString(account)});
-						for (int e = 0; e < entries.length(); e++) {
-							JSONObject entry = entries.getJSONObject(e);
-							JSONObject user = entry.getJSONObject("user");
-							Date created = parseDate(entry.getString("created_at"), "EEE MMM dd HH:mm:ss z yyyy");
-							SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
-									String.format("%s/%s/status/%s", sWebsites[service], user.getString("screen_name"), Long.toString(entry.getLong("id"))),
-									user.getString("name"),
-									getProfile(user.getString("profile_image_url")),
-									entry.getString("text"),
-									service,
-									getCreatedText(created, time24hr),
-									widget,
-									account,
-									entry.getString(id)));
-						}
+						if (entries.length() > 0) {
+							SonetService.this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
+							for (int e = 0; e < entries.length(); e++) {
+								JSONObject entry = entries.getJSONObject(e);
+								JSONObject user = entry.getJSONObject("user");
+								Date created = parseDate(entry.getString("created_at"), "EEE MMM dd HH:mm:ss z yyyy");
+								SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
+										user.getString("name"),
+										getProfile(user.getString("profile_image_url")),
+										entry.getString("text"),
+										service,
+										getCreatedText(created, time24hr),
+										widget,
+										account,
+										entry.getString(id)));
+							}
+						} else updateCreatedText = true;
 					} catch (JSONException e) {
 						Log.e(TAG,e.toString());
 					}
 					break;
 				case FACEBOOK:
 					String created_time = "created_time",
-					actions = "actions",
-					link = "link",
-					comment = "Comment",
 					from = "from",
 					type = "type",
 					profile = "http://graph.facebook.com/%s/picture",
 					message = "message",
 					data = "data",
-					to = "to",
-					fburl = sWebsites[service];
+					to = "to";
 					try {
 						JSONObject jobj = new JSONObject(response);
 						JSONArray jarr = jobj.getJSONArray(data);
 						// if there are updates, clear the cache
-						if (jarr.length() > 0) SonetService.this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(widget), Integer.toString(service), Integer.toString(account)});
-						for (int d = 0; d < jarr.length(); d++) {
-							JSONObject o = jarr.getJSONObject(d);
-							// only parse status types, not photo, video or link
-							if (o.has(type) && o.has(from) && o.has(message) && o.has(id)) {
-								// parse the link
-								String l = fburl;
-								if (o.has(actions)) {											
-									JSONArray action = o.getJSONArray(actions);
-									for (int a = 0; a < action.length(); a++) {
-										JSONObject n = action.getJSONObject(a);
-										if (n.has(name) && n.getString(name) == comment) {
-											l = n.getString(link);
-											break;
+						if (jarr.length() > 0) {
+							SonetService.this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
+							for (int d = 0; d < jarr.length(); d++) {
+								JSONObject o = jarr.getJSONObject(d);
+								// only parse status types, not photo, video or link
+								if (o.has(type) && o.has(from) && o.has(message) && o.has(id)) {
+									JSONObject f = o.getJSONObject(from);
+									if (f.has(name) && f.has(id)) {
+										String friend = f.getString(name);
+										if (o.has(to)) {
+											// handle wall messages from one friend to another
+											JSONObject t = o.getJSONObject(to);
+											if (t.has(data)) {
+												JSONObject n = t.getJSONArray(data).getJSONObject(0);
+												if (n.has(name)) friend += " > " + n.getString(name);
+											}												
 										}
+										Date created = parseDate(Long.parseLong(o.getString(created_time)) * 1000);
+										SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(
+												created.getTime(),
+												friend,
+												getProfile(String.format(profile, f.getString(id))),
+												o.getString(message),
+												service,
+												getCreatedText(created, time24hr),
+												widget,
+												account,
+												o.getString(id)));
 									}
-								}
-								JSONObject f = o.getJSONObject(from);
-								if (f.has(name) && f.has(id)) {
-									String friend = f.getString(name);
-									if (o.has(to)) {
-										// handle wall messages from one friend to another
-										JSONObject t = o.getJSONObject(to);
-										if (t.has(data)) {
-											JSONObject n = t.getJSONArray(data).getJSONObject(0);
-											if (n.has(name)) friend += " > " + n.getString(name);
-										}												
-									}
-									Date created = parseDate(Long.parseLong(o.getString(created_time)) * 1000);
-									SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(
-											created.getTime(),
-											l,
-											friend,
-											getProfile(String.format(profile, f.getString(id))),
-											o.getString(message),
-											service,
-											getCreatedText(created, time24hr),
-											widget,
-											account,
-											o.getString(id)));
 								}
 							}
-						}
+						} else updateCreatedText = true;
 					} catch (JSONException e) {
 						Log.e(TAG, e.toString());
 					}
@@ -690,29 +716,28 @@ public class SonetService extends Service {
 					String displayName = "displayName",
 					moodStatusLastUpdated = "moodStatusLastUpdated",
 					thumbnailUrl = "thumbnailUrl",
-					source = "source",
-					url = "url",
 					author = "author";
 					try {
 						JSONObject jobj = new JSONObject(response);
 						JSONArray entries = jobj.getJSONArray("entry");
 						// if there are updates, clear the cache
-						if (entries.length() > 0) SonetService.this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(widget), Integer.toString(service), Integer.toString(account)});
-						for (int e = 0; e < entries.length(); e++) {
-							JSONObject entry = entries.getJSONObject(e);
-							JSONObject authorObj = entry.getJSONObject(author);
-							Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'");
-							SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
-									entry.getJSONObject(source).getString(url),
-									authorObj.getString(displayName),
-									getProfile(authorObj.getString(thumbnailUrl)),
-									entry.getString(status),
-									service,
-									getCreatedText(created, time24hr),
-									widget,
-									account,
-									entry.getString(id)));
-						}
+						if (entries.length() > 0) {
+							SonetService.this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
+							for (int e = 0; e < entries.length(); e++) {
+								JSONObject entry = entries.getJSONObject(e);
+								JSONObject authorObj = entry.getJSONObject(author);
+								Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'");
+								SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
+										authorObj.getString(displayName),
+										getProfile(authorObj.getString(thumbnailUrl)),
+										entry.getString(status),
+										service,
+										getCreatedText(created, time24hr),
+										widget,
+										account,
+										entry.getString(id)));
+							}
+						} else updateCreatedText = true;
 					} catch (JSONException e) {
 						Log.e(TAG, e.toString());
 					}
@@ -721,32 +746,28 @@ public class SonetService extends Service {
 					try {
 						JSONArray entries = new JSONObject(response).getJSONObject("data").getJSONArray("items");
 						// if there are updates, clear the cache
-						if (entries.length() > 0) SonetService.this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(widget), Integer.toString(service), Integer.toString(account)});
-						for (int e = 0; e < entries.length(); e++) {
-							JSONObject entry = entries.getJSONObject(e);
-							if (entry.has("published") && entry.has("actor") && entry.has("object")) {
-								Date created = parseDate(entry.getString("published"), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-								JSONObject actor = entry.getJSONObject("actor");
-								JSONObject object = entry.getJSONObject("object");
-								if (actor.has("name") && actor.has("thumbnailUrl") && object.has("originalContent")) {
-									link = sWebsites[service];
-									if (object.has("links") && object.getJSONObject("links").has("alternate")) {
-										JSONArray links = object.getJSONObject("links").getJSONArray("alternate");
-										if (links.length() > 0) link = links.getJSONObject(0).getString("href");
+						if (entries.length() > 0) {
+							SonetService.this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
+							for (int e = 0; e < entries.length(); e++) {
+								JSONObject entry = entries.getJSONObject(e);
+								if (entry.has("published") && entry.has("actor") && entry.has("object")) {
+									Date created = parseDate(entry.getString("published"), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+									JSONObject actor = entry.getJSONObject("actor");
+									JSONObject object = entry.getJSONObject("object");
+									if (actor.has("name") && actor.has("thumbnailUrl") && object.has("originalContent")) {
+										SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
+												actor.getString("name"),
+												getProfile(actor.getString("thumbnailUrl")),
+												object.getString("originalContent"),
+												service,
+												getCreatedText(created, time24hr),
+												widget,
+												account,
+												entry.getString(id)));
 									}
-									SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
-											link,
-											actor.getString("name"),
-											getProfile(actor.getString("thumbnailUrl")),
-											object.getString("originalContent"),
-											service,
-											getCreatedText(created, time24hr),
-											widget,
-											account,
-											entry.getString(id)));
 								}
 							}
-						}
+						} else updateCreatedText = true;
 					} catch (JSONException e) {
 						Log.e(TAG,e.toString());
 					}
@@ -755,7 +776,7 @@ public class SonetService extends Service {
 					//								try {
 					//										JSONArray entries = new JSONObject(response).getJSONObject("data").getJSONArray("items");
 					//										// if there are updates, clear the cache
-					//										if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(widget), Integer.toString(service), Integer.toString(account)});
+					//										if (entries.length() > 0) this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
 					//										for (int e = 0; e < entries.length(); e++) {
 					//											JSONObject entry = entries.getJSONObject(e);
 					//											if (entry.has("published") && entry.has("actor") && entry.has("object")) {
@@ -793,24 +814,25 @@ public class SonetService extends Service {
 					try {
 						JSONArray checkins = new JSONObject(response).getJSONObject("response").getJSONArray("recent");
 						// if there are updates, clear the cache
-						if (checkins.length() > 0) SonetService.this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(widget), Integer.toString(service), Integer.toString(account)});
-						for (int e = 0; e < checkins.length(); e++) {
-							JSONObject checkin = checkins.getJSONObject(e);
-							JSONObject user = checkin.getJSONObject("user");
-							JSONObject venue = checkin.getJSONObject("venue");
-							String shout = (checkin.has("shout") ? checkin.getString("shout") + "\n" : "") + "@" + venue.getString("name");
-							Date created = parseDate(Long.parseLong(checkin.getString("createdAt")) * 1000);
-							SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
-									sWebsites[service],
-									user.getString("firstName") + " " + user.getString("lastName"),
-									getProfile(user.getString("photo")),
-									shout,
-									service,
-									getCreatedText(created, time24hr),
-									widget,
-									account,
-									checkin.getString(id)));
-						}
+						if (checkins.length() > 0) {
+							SonetService.this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
+							for (int e = 0; e < checkins.length(); e++) {
+								JSONObject checkin = checkins.getJSONObject(e);
+								JSONObject user = checkin.getJSONObject("user");
+								JSONObject venue = checkin.getJSONObject("venue");
+								String shout = (checkin.has("shout") ? checkin.getString("shout") + "\n" : "") + "@" + venue.getString("name");
+								Date created = parseDate(Long.parseLong(checkin.getString("createdAt")) * 1000);
+								SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
+										user.getString("firstName") + " " + user.getString("lastName"),
+										getProfile(user.getString("photo")),
+										shout,
+										service,
+										getCreatedText(created, time24hr),
+										widget,
+										account,
+										checkin.getString(id)));
+							}
+						} else updateCreatedText = true;
 					} catch (JSONException e) {
 						Log.e(TAG,e.toString());
 					}
@@ -820,78 +842,79 @@ public class SonetService extends Service {
 						JSONObject jobj = new JSONObject(response);
 						JSONArray values = jobj.getJSONArray("values");
 						// if there are updates, clear the cache
-						if (values.length() > 0) SonetService.this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(widget), Integer.toString(service), Integer.toString(account)});
-						for (int e = 0; e < values.length(); e++) {
-							JSONObject value = values.getJSONObject(e);
-							String updateType = value.getString("updateType");
-							JSONObject updateContent = value.getJSONObject("updateContent");
-							if (LINKEDIN_UPDATETYPES.containsKey(updateType) && updateContent.has("person")) {
-								Date created = parseDate(Long.parseLong(value.getString("timestamp")));
-								JSONObject person = updateContent.getJSONObject("person");
-								String update = LINKEDIN_UPDATETYPES.get(updateType);
-								if (updateType.equals("APPS")) {
-									if (person.has("personActivities")) {
-										JSONObject personActivities = person.getJSONObject("personActivities");
-										if (personActivities.has("values")) {
-											JSONArray updates = personActivities.getJSONArray("values");
-											for (int u = 0; u < updates.length(); u++) {
-												update += updates.getJSONObject(u).getString("body");
-												if (u < (updates.length() - 1)) update += ", ";
+						if (values.length() > 0) {
+							SonetService.this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
+							for (int e = 0; e < values.length(); e++) {
+								JSONObject value = values.getJSONObject(e);
+								String updateType = value.getString("updateType");
+								JSONObject updateContent = value.getJSONObject("updateContent");
+								if (LINKEDIN_UPDATETYPES.containsKey(updateType) && updateContent.has("person")) {
+									Date created = parseDate(Long.parseLong(value.getString("timestamp")));
+									JSONObject person = updateContent.getJSONObject("person");
+									String update = LINKEDIN_UPDATETYPES.get(updateType);
+									if (updateType.equals("APPS")) {
+										if (person.has("personActivities")) {
+											JSONObject personActivities = person.getJSONObject("personActivities");
+											if (personActivities.has("values")) {
+												JSONArray updates = personActivities.getJSONArray("values");
+												for (int u = 0; u < updates.length(); u++) {
+													update += updates.getJSONObject(u).getString("body");
+													if (u < (updates.length() - 1)) update += ", ";
+												}
+											}
+										}
+									} else if (updateType.equals("CONN")) {
+										if (person.has("connections")) {
+											JSONObject connections = person.getJSONObject("connections");
+											if (connections.has("values")) {
+												JSONArray updates = connections.getJSONArray("values");
+												for (int u = 0; u < updates.length(); u++) {
+													update += updates.getJSONObject(u).getString("firstName") + " " + updates.getJSONObject(u).getString("lastName");
+													if (u < (updates.length() - 1)) update += ", ";
+												}
+											}
+										}
+									} else if (updateType.equals("JOBP")) {
+										if (updateContent.has("job") && updateContent.getJSONObject("job").has("position") && updateContent.getJSONObject("job").getJSONObject("position").has("title")) update += updateContent.getJSONObject("job").getJSONObject("position").getString("title");
+									} else if (updateType.equals("JGRP")) {
+										if (person.has("memberGroups")) {
+											JSONObject memberGroups = person.getJSONObject("memberGroups");
+											if (memberGroups.has("values")) {
+												JSONArray updates = memberGroups.getJSONArray("values");
+												for (int u = 0; u < updates.length(); u++) {
+													update += updates.getJSONObject(u).getString("name");
+													if (u < (updates.length() - 1)) update += ", ";
+												}
+											}
+										}
+									} else if (updateType.equals("PREC")) {
+										if (person.has("recommendationsGiven")) {
+											JSONObject recommendationsGiven = person.getJSONObject("recommendationsGiven");
+											if (recommendationsGiven.has("values")) {
+												JSONArray updates = recommendationsGiven.getJSONArray("values");
+												for (int u = 0; u < updates.length(); u++) {
+													JSONObject recommendation = updates.getJSONObject(u);
+													JSONObject recommendee = recommendation.getJSONObject("recommendee");
+													if (recommendee.has("firstName")) update += recommendee.getString("firstName");
+													if (recommendee.has("lastName")) update += recommendee.getString("lastName");
+													if (recommendation.has("recommendationSnippet")) update += ":" + recommendation.getString("recommendationSnippet");
+													if (u < (updates.length() - 1)) update += ", ";
+												}
 											}
 										}
 									}
-								} else if (updateType.equals("CONN")) {
-									if (person.has("connections")) {
-										JSONObject connections = person.getJSONObject("connections");
-										if (connections.has("values")) {
-											JSONArray updates = connections.getJSONArray("values");
-											for (int u = 0; u < updates.length(); u++) {
-												update += updates.getJSONObject(u).getString("firstName") + " " + updates.getJSONObject(u).getString("lastName");
-												if (u < (updates.length() - 1)) update += ", ";
-											}
-										}
-									}
-								} else if (updateType.equals("JOBP")) {
-									if (updateContent.has("job") && updateContent.getJSONObject("job").has("position") && updateContent.getJSONObject("job").getJSONObject("position").has("title")) update += updateContent.getJSONObject("job").getJSONObject("position").getString("title");
-								} else if (updateType.equals("JGRP")) {
-									if (person.has("memberGroups")) {
-										JSONObject memberGroups = person.getJSONObject("memberGroups");
-										if (memberGroups.has("values")) {
-											JSONArray updates = memberGroups.getJSONArray("values");
-											for (int u = 0; u < updates.length(); u++) {
-												update += updates.getJSONObject(u).getString("name");
-												if (u < (updates.length() - 1)) update += ", ";
-											}
-										}
-									}
-								} else if (updateType.equals("PREC")) {
-									if (person.has("recommendationsGiven")) {
-										JSONObject recommendationsGiven = person.getJSONObject("recommendationsGiven");
-										if (recommendationsGiven.has("values")) {
-											JSONArray updates = recommendationsGiven.getJSONArray("values");
-											for (int u = 0; u < updates.length(); u++) {
-												JSONObject recommendation = updates.getJSONObject(u);
-												JSONObject recommendee = recommendation.getJSONObject("recommendee");
-												if (recommendee.has("firstName")) update += recommendee.getString("firstName");
-												if (recommendee.has("lastName")) update += recommendee.getString("lastName");
-												if (recommendation.has("recommendationSnippet")) update += ":" + recommendation.getString("recommendationSnippet");
-												if (u < (updates.length() - 1)) update += ", ";
-											}
-										}
-									}
+									SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
+											person.getString("firstName") + " " + person.getString("lastName"),
+											person.has("pictureUrl") ? getProfile(person.getString("pictureUrl")) : null,
+													update,
+													service,
+													getCreatedText(created, time24hr),
+													widget,
+													account,
+													value.getString(id)));
 								}
-								SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
-										sWebsites[service],
-										person.getString("firstName") + " " + person.getString("lastName"),
-										person.has("pictureUrl") ? getProfile(person.getString("pictureUrl")) : null,
-												update,
-												service,
-												getCreatedText(created, time24hr),
-												widget,
-												account,
-												value.getString(id)));
 							}
-						}
+						} else updateCreatedText = true;
 					} catch (JSONException e) {
 						Log.e(TAG,e.toString());
 					}
@@ -900,25 +923,38 @@ public class SonetService extends Service {
 				// update the bg and icon
 				ContentValues values = new ContentValues();
 				values.put(Statuses.STATUS_BG, status_bg);
-				values.put(Statuses.ICON, icon ? getBlob(BitmapFactory.decodeResource(getResources(), map_icons[service])) : null);
-				SonetService.this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(widget), Integer.toString(service), Integer.toString(account)});
-			} else if (service == MYSPACE) {
-				// warn about myspace permissions
-				// create the status_bg
-				Bitmap status_bg_bmp = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-				Canvas status_bg_canvas = new Canvas(status_bg_bmp);
-				status_bg_canvas.drawColor(status_bg_color);
-				ByteArrayOutputStream status_bg_blob = new ByteArrayOutputStream();
-				status_bg_bmp.compress(Bitmap.CompressFormat.PNG, 100, status_bg_blob);
-				byte[] status_bg = status_bg_blob.toByteArray();
-				ContentValues values = new ContentValues();
-				values.put(Statuses.FRIEND, getString(R.string.myspace_permissions_title));
-				values.put(Statuses.MESSAGE, getString(R.string.myspace_permissions_message));
-				values.put(Statuses.SERVICE, service);
-				values.put(Statuses.WIDGET, widget);
-				values.put(Statuses.ACCOUNT, account);
-				values.put(Statuses.STATUS_BG, status_bg);
-				SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, values);
+				values.put(Statuses.ICON, icon ? getBlob(BitmapFactory.decodeResource(getResources(), map_icons[Integer.parseInt(service)])) : null);
+				SonetService.this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
+			} else updateCreatedText = true;
+			if (updateCreatedText) {
+				Cursor statuses = SonetService.this.getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID, Statuses.CREATED},Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account}, null);
+				if (statuses.moveToFirst()) {
+					int icreated = statuses.getColumnIndex(Statuses.CREATED);
+					while (!statuses.isAfterLast()) {
+						ContentValues values = new ContentValues();
+						values.put(Statuses.CREATEDTEXT, getCreatedText(statuses.getInt(icreated), time24hr));
+						SonetService.this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
+						statuses.moveToNext();
+					}
+				} else if (Integer.parseInt(service) == MYSPACE) {
+					// warn about myspace permissions
+					// create the status_bg
+					Bitmap status_bg_bmp = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+					Canvas status_bg_canvas = new Canvas(status_bg_bmp);
+					status_bg_canvas.drawColor(status_bg_color);
+					ByteArrayOutputStream status_bg_blob = new ByteArrayOutputStream();
+					status_bg_bmp.compress(Bitmap.CompressFormat.PNG, 100, status_bg_blob);
+					byte[] status_bg = status_bg_blob.toByteArray();
+					ContentValues values = new ContentValues();
+					values.put(Statuses.FRIEND, getString(R.string.myspace_permissions_title));
+					values.put(Statuses.MESSAGE, getString(R.string.myspace_permissions_message));
+					values.put(Statuses.SERVICE, service);
+					values.put(Statuses.WIDGET, widget);
+					values.put(Statuses.ACCOUNT, account);
+					values.put(Statuses.STATUS_BG, status_bg);
+					SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, values);
+				}
+				statuses.close();
 			}
 			// remove self from queue
 			if (!SonetService.sWidgetsTasks.isEmpty() && SonetService.sWidgetsTasks.containsKey(widget)) {
