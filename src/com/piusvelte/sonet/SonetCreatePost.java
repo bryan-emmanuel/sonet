@@ -27,9 +27,10 @@ public class SonetCreatePost extends Activity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		//TODO: if Uri sent, then this is a retweet or comment, else a new post
+		//TODO: if Uri sent, then this is a reply or comment, else a new post
 		// allow posting to multiple services if an account is defined
 		// allow selecting which accounts to use
+		// get existing comments, allow liking|unliking those comments
 	}
 
 }

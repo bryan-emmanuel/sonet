@@ -85,4 +85,9 @@
 	<string name="statuses_per_account">Statuses per account</string>
 	<string name="background_update">Update when the screen is off</string>
 	<string name="like">Like</string>
+	<string name="unlike">Unlike</string>
+	<string name="tweet">Tweet</string>
+	<string name="retweet">Retweet</string>
+	<string name="reply">Reply</string>
+	<string name="comment">Comment</string>
 </resources>

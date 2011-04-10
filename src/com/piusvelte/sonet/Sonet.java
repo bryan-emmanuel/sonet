@@ -30,7 +30,10 @@ import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.content.Context;
@@ -59,8 +62,8 @@ public class Sonet {
 	protected static final String FACEBOOK_URL_AUTHORIZE = "https://graph.facebook.com/oauth/authorize?client_id=%s&scope=offline_access,publish_stream&type=user_agent&redirect_uri=%s&display=touch&sdk=android";
 	protected static final String FACEBOOK_URL_ME = "https://graph.facebook.com/me?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_URL_FEED = "https://graph.facebook.com/me/home?date_format=U&format=json&sdk=android&limit=%s&%s=%s&fields=actions,link,type,from,message,created_time,to";
-	protected static final String FACEBOOK_POST = "https://graph.facebook.com/%s/feed";
-	protected static final String FACEBOOK_LIKE = "https://graph.facebook.com/%s/likes";
+	protected static final String FACEBOOK_POST = "https://graph.facebook.com/%s/feed?%s=%s";
+	protected static final String FACEBOOK_LIKES = "https://graph.facebook.com/%s/likes?%s=%s";
 
 	protected static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
 	protected static final String ACTION_BUILD_SCROLL = "com.piusvelte.sonet.Sonet.BUILD_SCROLL";
@@ -275,12 +278,12 @@ public class Sonet {
 
 	}
 
-	protected static String httpGet(String url) {
+	protected static String httpResponse(HttpUriRequest httpRequest) {
 		HttpClient httpClient = new DefaultHttpClient();
 		HttpResponse httpResponse;
 		String response = null;
 		try {
-			httpResponse = httpClient.execute(new HttpGet(url));
+			httpResponse = httpClient.execute(httpRequest);
 			StatusLine statusLine = httpResponse.getStatusLine();
 			HttpEntity entity = httpResponse.getEntity();
 
@@ -308,7 +311,7 @@ public class Sonet {
 				}
 				break;
 			default:
-				Log.e(TAG,"get error:"+url+"\n"+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
+				Log.e(TAG,"http error:"+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
 				break;
 			}
 		} catch (ClientProtocolException e) {
@@ -317,6 +320,18 @@ public class Sonet {
 			Log.e(TAG,"error:" + e);
 		}
 		return response;
+	}
+	
+	protected static String httpGet(String url) {
+		return httpResponse(new HttpGet(url));
+	}
+	
+	protected static String httpPost(String url) {
+		return httpResponse(new HttpPost(url));
+	}
+	
+	protected static String httpDelete(String url) {
+		return httpResponse(new HttpDelete(url));
 	}
 
 }

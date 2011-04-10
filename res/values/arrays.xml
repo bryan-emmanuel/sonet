@@ -47,22 +47,6 @@
 		<item>5</item>
 <!--		<item>6</item>-->
 	</string-array>
-	<string-array name="service_comment">
-		<item>Retweet</item>
-		<item>Comment</item>
-		<item>Comment</item>
-		<item>Comment</item>
-		<item>Comment</item>
-		<item>Comment</item>
-	</string-array>
-	<string-array name="service_post">
-		<item>Tweet</item>
-		<item>Update Status</item>
-		<item>Update Status</item>
-		<item>Update Status</item>
-		<item>Update Status</item>
-		<item>Update Status</item>
-	</string-array>
 	<string-array name="textsize_entries">
 		<item>10</item>
 		<item>11</item>
