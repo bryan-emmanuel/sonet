@@ -21,6 +21,11 @@ package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.TOKEN;
 
+import static com.piusvelte.sonet.Sonet.BUZZ_URL_ME;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_ME;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_ME;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_ME;
+import static com.piusvelte.sonet.Sonet.MYSPACE_URL_ME;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
@@ -172,6 +177,144 @@ public class SonetService extends Service {
 					this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 				}
 				settings.close();
+				Cursor account_updates = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE}, Accounts.SID + " is null or " + Accounts.SID + "=\"\"", null, null);
+				if (account_updates.moveToFirst()) {
+					int iid = account_updates.getColumnIndex(Accounts._ID),
+					itoken = account_updates.getColumnIndex(Accounts.TOKEN),
+					isecret = account_updates.getColumnIndex(Accounts.SECRET),
+					iservice = account_updates.getColumnIndex(Accounts.SERVICE);
+					while (!account_updates.isAfterLast()) {
+						int service = account_updates.getInt(iservice);
+						SonetOAuth sonetOAuth;
+						String response;
+						switch (service) {
+						case TWITTER:
+							sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, account_updates.getString(itoken), account_updates.getString(isecret));
+							try {
+								response = sonetOAuth.httpGet("http://api.twitter.com/1/account/verify_credentials.json");
+								if (response != null) {
+									JSONObject jobj = new JSONObject(response);
+									ContentValues values = new ContentValues();
+									values.put(Accounts.SID, jobj.getString("id"));
+									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
+								}
+							} catch (ClientProtocolException e) {
+								Log.e(TAG,e.toString());
+							} catch (OAuthMessageSignerException e) {
+								Log.e(TAG,e.toString());
+							} catch (OAuthExpectationFailedException e) {
+								Log.e(TAG,e.toString());
+							} catch (OAuthCommunicationException e) {
+								Log.e(TAG,e.toString());
+							} catch (IOException e) {
+								Log.e(TAG,e.toString());
+							} catch (JSONException e) {
+								Log.e(TAG,e.toString());
+							}
+							break;
+						case FACEBOOK:
+							response = Sonet.httpGet(String.format(FACEBOOK_URL_ME, TOKEN, account_updates.getString(itoken)));
+							if (response != null) {
+								try {
+									JSONObject jobj = new JSONObject(response);
+									ContentValues values = new ContentValues();
+									values.put(Accounts.SID, jobj.getString("id"));
+									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
+								} catch (JSONException e) {
+									Log.e(TAG,e.toString());
+								}
+							}
+							break;
+						case MYSPACE:
+							sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, account_updates.getString(itoken), account_updates.getString(isecret));
+							try {
+								response = sonetOAuth.httpGet(MYSPACE_URL_ME);
+								if (response != null) {
+									JSONObject jobj = (new JSONObject(response)).getJSONObject("person");
+									ContentValues values = new ContentValues();
+									values.put(Accounts.SID, jobj.getString("id"));
+									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
+								}
+							} catch (ClientProtocolException e) {
+								Log.e(TAG,e.toString());
+							} catch (OAuthMessageSignerException e) {
+								Log.e(TAG,e.toString());
+							} catch (OAuthExpectationFailedException e) {
+								Log.e(TAG,e.toString());
+							} catch (OAuthCommunicationException e) {
+								Log.e(TAG,e.toString());
+							} catch (IOException e) {
+								Log.e(TAG,e.toString());
+							} catch (JSONException e) {
+								Log.e(TAG,e.toString());
+							}
+							break;
+						case BUZZ:
+							sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, account_updates.getString(itoken), account_updates.getString(isecret));
+							try {
+								response = sonetOAuth.httpGet(BUZZ_URL_ME);
+								if (response != null) {
+									JSONObject jobj = (new JSONObject(response)).getJSONObject("data");
+									ContentValues values = new ContentValues();
+									values.put(Accounts.SID, jobj.getString("id"));
+									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
+								}
+							} catch (ClientProtocolException e) {
+								Log.e(TAG,e.toString());
+							} catch (OAuthMessageSignerException e) {
+								Log.e(TAG,e.toString());
+							} catch (OAuthExpectationFailedException e) {
+								Log.e(TAG,e.toString());
+							} catch (OAuthCommunicationException e) {
+								Log.e(TAG,e.toString());
+							} catch (IOException e) {
+								Log.e(TAG,e.toString());
+							} catch (JSONException e) {
+								Log.e(TAG,e.toString());
+							}
+							break;
+						case FOURSQUARE:
+							response = Sonet.httpGet(String.format(FOURSQUARE_URL_ME, account_updates.getString(itoken)));
+							if (response != null) {
+								try {
+									JSONObject jobj = (new JSONObject(response)).getJSONObject("response").getJSONObject("user");
+									ContentValues values = new ContentValues();
+									values.put(Accounts.SID, jobj.getString("id"));
+									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
+								} catch (JSONException e) {
+									Log.e(TAG,e.toString());
+								}
+							}
+							break;
+						case LINKEDIN:
+							sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, account_updates.getString(itoken), account_updates.getString(isecret));
+							try {
+								response = sonetOAuth.httpGet(LINKEDIN_URL_ME, LINKEDIN_HEADERS);
+								if (response != null) {
+									JSONObject jobj = new JSONObject(response);
+									ContentValues values = new ContentValues();
+									values.put(Accounts.SID, jobj.getString("id"));
+									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
+								}
+							} catch (ClientProtocolException e) {
+								Log.e(TAG,e.toString());
+							} catch (OAuthMessageSignerException e) {
+								Log.e(TAG,e.toString());
+							} catch (OAuthExpectationFailedException e) {
+								Log.e(TAG,e.toString());
+							} catch (OAuthCommunicationException e) {
+								Log.e(TAG,e.toString());
+							} catch (IOException e) {
+								Log.e(TAG,e.toString());
+							} catch (JSONException e) {
+								Log.e(TAG,e.toString());
+							}
+							break;
+						}
+						account_updates.moveToNext();
+					}
+				}
+				account_updates.close();
 				// query accounts
 				/* get statuses for all accounts
 				 * then sort them by datetime, descending
@@ -196,11 +339,14 @@ public class SonetService extends Service {
 							values.put(Accounts.SERVICE, accounts.getInt(service));
 							values.put(Accounts.EXPIRY, accounts.getInt(expiry));
 							values.put(Accounts.WIDGET, appWidgetId);
+							values.put(Accounts.SID, "");
 							this.getContentResolver().insert(Accounts.CONTENT_URI, values);
 							accounts.moveToNext();
 						}
 					}
+					accounts.close();
 					this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=?", new String[]{""});
+					accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{appWidgetId}, null);
 				}
 				if (accounts.moveToFirst()) {
 					// load the updates

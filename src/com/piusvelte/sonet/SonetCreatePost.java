@@ -19,18 +19,50 @@
  */
 package com.piusvelte.sonet;
 
+import com.piusvelte.sonet.Sonet.Accounts;
+import com.piusvelte.sonet.Sonet.Statuses_styles;
+
 import android.app.Activity;
+import android.appwidget.AppWidgetManager;
+import android.content.Intent;
+import android.content.UriMatcher;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 
 public class SonetCreatePost extends Activity {
+	private static final String TAG = "SonetCreatePost";
+	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
+	private int mService = 0;
+	private long mAccount = Sonet.INVALID_ACCOUNT_ID;
+	private String mSid;
+	private Uri mData;
+	private static final int COMMENT = 0;
+	private static final int POST = 1;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		//TODO: if Uri sent, then this is a reply or comment, else a new post
 		// allow posting to multiple services if an account is defined
 		// allow selecting which accounts to use
 		// get existing comments, allow liking|unliking those comments
+		Intent intent = getIntent();
+		if (intent != null) {
+			mData = intent.getData();
+			// if the uri is Statuses_styles, then this is a comment or reply
+			// if the uri is Accounts, then this is a post or tweet
+			UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+			uriMatcher.addURI(SonetProvider.AUTHORITY, Statuses_styles.CONTENT_URI.toString() + "/*", COMMENT);
+			uriMatcher.addURI(SonetProvider.AUTHORITY, Accounts.CONTENT_URI.toString() + "/*", POST);
+			switch (uriMatcher.match(mData)) {
+			case COMMENT:
+				// get any comments for this comment
+				break;
+			case POST:
+				// default to the account passed in, but allow selecting additional accounts
+				break;
+			}
+		}
 	}
 
 }

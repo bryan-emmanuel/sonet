@@ -28,22 +28,18 @@ import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
 
 import org.apache.http.client.ClientProtocolException;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import static com.piusvelte.sonet.Sonet.TOKEN;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_LIKES;
-import static com.piusvelte.sonet.Sonet.MYSPACE;
 
 import static com.piusvelte.sonet.Tokens.TWITTER_KEY;
 import static com.piusvelte.sonet.Tokens.TWITTER_SECRET;
 import static com.piusvelte.sonet.Sonet.TWITTER_RETWEET;
-
-import static com.piusvelte.sonet.Sonet.BUZZ;
-
-import static com.piusvelte.sonet.Sonet.FOURSQUARE;
-
-import static com.piusvelte.sonet.Sonet.LINKEDIN;
 
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
@@ -62,7 +58,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 	private static final String TAG = "StatusDialog";
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	// options are:
-	// Like|Unlike|Retweet
+	// [[Like|Unlike]|Retweet]
 	// Comment|Reply
 	// Post|Tweet
 	// Settings
@@ -76,6 +72,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 	private long mAccount = Sonet.INVALID_ACCOUNT_ID;
 	private String mSid;
 	private Uri mData;
+	private boolean mLike = true;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -98,8 +95,25 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 			items = new String[]{getString(R.string.retweet), getString(R.string.reply), getString(R.string.tweet), getString(R.string.settings), getString(R.string.button_refresh)};
 			break;
 		case FACEBOOK:
-			//TODO: check if user has liked this comment
-			items = new String[]{getString(R.string.like), getString(R.string.comment), getString(R.string.button_post), getString(R.string.settings), getString(R.string.button_refresh)};
+			Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+			if (account.moveToFirst()) {
+				String response = Sonet.httpGet(String.format(FACEBOOK_LIKES, TOKEN, account.getString(account.getColumnIndex(Accounts.TOKEN))));
+				if (response != null) {
+					try {
+						JSONArray likes = new JSONObject(response).getJSONArray("data");
+						for (int i = 0; i < likes.length(); i++) {
+							JSONObject like = likes.getJSONObject(i);
+							if (like.getString("id") == account.getString(account.getColumnIndex(Accounts.SID))) {
+								mLike = false;
+								break;
+							}
+						}
+					} catch (JSONException e) {
+						Log.e(TAG,e.toString());
+					}
+				}
+			}
+			items = new String[]{getString(mLike ? R.string.like : R.string.unlike), getString(R.string.comment), getString(R.string.button_post), getString(R.string.settings), getString(R.string.button_refresh)};
 			break;
 		default:
 			items = new String[]{getString(R.string.comment), getString(R.string.button_post), getString(R.string.settings), getString(R.string.button_refresh)};
@@ -124,29 +138,30 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 						SonetOAuth sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, c.getString(c.getColumnIndex(Accounts.TOKEN)), c.getString(c.getColumnIndex(Accounts.SECRET)));
 						try {
 							String response = sonetOAuth.httpGet(String.format(TWITTER_RETWEET, mSid));
+							//TODO:
+							Log.v(TAG,"retweet:"+response);
 						} catch (ClientProtocolException e) {
-							Log.e(TAG, "unexpected:" + e);
+							Log.e(TAG,e.toString());
 						} catch (OAuthMessageSignerException e) {
-							Log.e(TAG, "unexpected:" + e);
+							Log.e(TAG,e.toString());
 						} catch (OAuthExpectationFailedException e) {
-							Log.e(TAG, "unexpected:" + e);
+							Log.e(TAG,e.toString());
 						} catch (OAuthCommunicationException e) {
-							Log.e(TAG, "unexpected:" + e);
+							Log.e(TAG,e.toString());
 						} catch (IOException e) {
-							Log.e(TAG, "unexpected:" + e);
+							Log.e(TAG,e.toString());
 						}
 					}
 					c.close();
 				}
 				break;
 			case FACEBOOK:
-				//TODO: FB Like
-				// Like POST https://graph.facebook.com/[COMMENT ID]/likes
-				// Unlike DELETE https://graph.facebook.com/[COMMENT ID]/likes
 				if (mSid != null) {
 					Cursor c = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 					if (c.moveToFirst()) {
-						String response = Sonet.httpPost(String.format(FACEBOOK_LIKES, mSid, TOKEN, c.getString(c.getColumnIndex(Accounts.TOKEN))));
+						String response = mLike ? Sonet.httpPost(String.format(FACEBOOK_LIKES, mSid, TOKEN, c.getString(c.getColumnIndex(Accounts.TOKEN)))) : Sonet.httpDelete(String.format(FACEBOOK_LIKES, mSid, TOKEN, c.getString(c.getColumnIndex(Accounts.TOKEN))));
+						//TODO:
+						Log.v(TAG,"like:"+response);
 					}
 					c.close();
 				}
@@ -165,17 +180,17 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 				startActivity(new Intent(this, SonetCreatePost.class).setData(mData));
 				break;
 			default:
-				startActivity(new Intent(this, SonetCreatePost.class));
+				startActivity(new Intent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.CONTENT_URI, Long.toString(mAccount))));
 				break;
 			}
 			break;
 		case POST:
 			switch (mService) {
 			case TWITTER:
-				startActivity(new Intent(this, SonetCreatePost.class));
+				startActivity(new Intent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.CONTENT_URI, Long.toString(mAccount))));
 				break;
 			case FACEBOOK:
-				startActivity(new Intent(this, SonetCreatePost.class));
+				startActivity(new Intent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.CONTENT_URI, Long.toString(mAccount))));
 				break;
 			default:
 				startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
