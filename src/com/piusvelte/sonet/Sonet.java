@@ -85,6 +85,8 @@ public class Sonet {
 	protected static final String BUZZ_SCOPE = "https://www.googleapis.com/auth/buzz.readonly";
 	protected static final String BUZZ_URL_ME = "https://www.googleapis.com/buzz/v1/people/@me/@self?alt=json";
 	protected static final String BUZZ_URL_FEED = "https://www.googleapis.com/buzz/v1/activities/@me/@consumption?alt=json&max-results=%s";
+	protected static final String BUZZ_LIKE = "https://www.googleapis.com/buzz/v1/activities/%s/@liked/%s?key=%s";
+	protected static final String BUZZ_COMMENT = "https://www.googleapis.com/buzz/v1/activities/%s/@self/%s/@comments";
 
 	protected static final int FOURSQUARE = 4;
 	protected static final String FOURSQUARE_URL_ACCESS = "https://foursquare.com/oauth2/access_token";

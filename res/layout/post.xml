@@ -21,29 +21,27 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res/com.piusvelte.sonet"
 	android:layout_width="fill_parent" android:layout_height="fill_parent">
-	<TextView android:id="@+id/about" android:layout_width="fill_parent"
-		android:layout_height="wrap_content" android:text="@string/about"
-		android:layout_alignParentTop="true" android:padding="8dip"
-		android:textSize="16dip" />
 	<com.admob.android.ads.AdView android:id="@+id/ad"
 		android:visibility="gone" android:layout_width="fill_parent"
 		android:layout_height="wrap_content" android:layout_alignParentBottom="true"
 		app:backgroundColor="@color/tertiary" app:primaryTextColor="@color/primary"
 		app:secondaryTextColor="@color/secondary" />
-	<ScrollView android:layout_below="@id/about"
-		android:layout_above="@id/ad" android:layout_width="fill_parent"
-		android:layout_height="wrap_content">
-		<LinearLayout android:layout_width="fill_parent"
-			android:layout_height="fill_parent" android:orientation="vertical">
-			<Button android:id="@+id/defaultsettings"
-				android:layout_width="fill_parent" android:layout_height="wrap_content"
-				android:text="@string/defaultsettings" android:layout_below="@id/about" />
-			<Button android:id="@+id/widgets" android:layout_width="fill_parent"
-				android:layout_height="wrap_content" android:text="@string/widgets"
-				android:layout_below="@id/defaultsettings" />
-			<Button android:id="@+id/refreshall" android:layout_width="fill_parent"
-				android:layout_height="wrap_content" android:text="@string/refreshall"
-				android:layout_below="@id/widgets" />
-		</LinearLayout>
-	</ScrollView>
+	<RelativeLayout android:id="@+id/buttons"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:layout_above="@id/ad">
+		<Button android:id="@+id/submit" android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:text="@string/submit"
+			android:layout_alignParentRight="true" />
+		<Button android:id="@+id/location" android:layout_width="fill_parent"
+			android:layout_height="wrap_content" android:text="@string/location"
+			android:layout_alignParentLeft="true" android:layout_toLeftOf="@id/submit" />
+	</RelativeLayout>
+	<LinearLayout android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:layout_alignParentTop="true"
+		android:orientation="vertical" android:layout_above="@id/buttons">
+		<ListView android:id="@android:id/list" android:layout_width="fill_parent"
+			android:layout_height="fill_parent" android:layout_weight="1" />
+		<EditText android:id="@+id/post" android:layout_width="fill_parent"
+			android:layout_height="fill_parent" android:layout_weight="1" />
+	</LinearLayout>
 </RelativeLayout>

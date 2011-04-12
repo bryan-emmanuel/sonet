@@ -90,4 +90,6 @@
 	<string name="retweet">Retweet</string>
 	<string name="reply">Reply</string>
 	<string name="comment">Comment</string>
+	<string name="location">Location</string>
+	<string name="submit">Submit</string>
 </resources>

@@ -20,8 +20,7 @@
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res/com.piusvelte.sonet"
-	android:layout_width="fill_parent" android:layout_height="fill_parent"
-	android:orientation="vertical">
+	android:layout_width="fill_parent" android:layout_height="fill_parent">
 	<Button android:id="@+id/default_widget_settings"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
 		android:text="@string/default_widget_settings"
@@ -37,4 +36,7 @@
 	<ListView android:id="@android:id/list" android:layout_width="fill_parent"
 		android:layout_height="fill_parent" android:layout_below="@id/button_add_account"
 		android:layout_above="@id/ad" />
+	<TextView android:id="@android:id/empty" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:layout_below="@id/button_add_account"
+		android:layout_above="@id/ad" android:text="@string/no_accounts" />
 </RelativeLayout>

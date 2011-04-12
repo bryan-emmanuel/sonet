@@ -148,11 +148,16 @@ public class SonetService extends Service {
 			while (updatesQueued()) {
 				// first handle deletes, then scroll updates, finally regular updates
 				String appWidgetId = getNextUpdate();
+				boolean backgroundUpdate = true;
+				int refreshInterval = Sonet.default_interval;
 				ArrayList<GetStatusesTask> statusesTasks = new ArrayList<GetStatusesTask>();
 				SonetService.sWidgetsTasks.put(appWidgetId, statusesTasks);
 				mAlarmManager.cancel(PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(appWidgetId), 0));
-				Cursor settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID}, Widgets.WIDGET + "=?", new String[]{appWidgetId}, null);
-				if (!settings.moveToFirst()) {
+				Cursor settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BACKGROUND_UPDATE}, Widgets.WIDGET + "=?", new String[]{appWidgetId}, null);
+				if (settings.moveToFirst()) {
+					refreshInterval = settings.getInt(settings.getColumnIndex(Widgets.INTERVAL));
+					backgroundUpdate = settings.getInt(settings.getColumnIndex(Widgets.BACKGROUND_UPDATE)) == 1;
+				} else {
 					// upgrade, moving settings from sharedpreferences to db, or initialize settings
 					SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), SonetService.MODE_PRIVATE);
 					ContentValues values = new ContentValues();
@@ -420,6 +425,8 @@ public class SonetService extends Service {
 					}
 				} else this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[]{appWidgetId}); // no accounts, clear cache
 				accounts.close();
+				// the alarm should always be set, rather than depend on the tasks to complete
+				if (refreshInterval > 0) mAlarmManager.set(backgroundUpdate ? AlarmManager.RTC_WAKEUP : AlarmManager.RTC, mCurrentTimeMillis + refreshInterval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setData(Uri.withAppendedPath(Widgets.CONTENT_URI, appWidgetId)), 0));
 				checkWidgetUpdateReady(appWidgetId);
 			}
 		}
@@ -547,21 +554,16 @@ public class SonetService extends Service {
 		}
 		if (widgetUpdateReady) {
 			boolean hasbuttons = true,
-			backgroundUpdate = true,
-			scrollable = false,
-			hasAccount = false;
-			int refreshInterval = Sonet.default_interval,
-			buttons_bg_color = Sonet.default_buttons_bg_color,
+			scrollable = false;
+			int buttons_bg_color = Sonet.default_buttons_bg_color,
 			buttons_color = Sonet.default_buttons_color,
 			buttons_textsize = Sonet.default_buttons_textsize;
 			Cursor settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.HASBUTTONS, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.BACKGROUND_UPDATE, Widgets.SCROLLABLE}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{widget, Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 			if (settings.moveToFirst()) {
-				refreshInterval = settings.getInt(settings.getColumnIndex(Widgets.INTERVAL));
 				hasbuttons = settings.getInt(settings.getColumnIndex(Widgets.HASBUTTONS)) == 1;
 				buttons_bg_color = settings.getInt(settings.getColumnIndex(Widgets.BUTTONS_BG_COLOR));
 				buttons_color = settings.getInt(settings.getColumnIndex(Widgets.BUTTONS_COLOR));
 				buttons_textsize = settings.getInt(settings.getColumnIndex(Widgets.BUTTONS_TEXTSIZE));
-				backgroundUpdate = settings.getInt(settings.getColumnIndex(Widgets.BACKGROUND_UPDATE)) == 1;
 				scrollable = settings.getInt(settings.getColumnIndex(Widgets.SCROLLABLE)) == 1;
 			}
 			settings.close();
@@ -595,7 +597,6 @@ public class SonetService extends Service {
 			map_icon = {R.id.icon0, R.id.icon1, R.id.icon2, R.id.icon3, R.id.icon4, R.id.icon5, R.id.icon6, R.id.icon7, R.id.icon8, R.id.icon9, R.id.icon10, R.id.icon11, R.id.icon12, R.id.icon13, R.id.icon14, R.id.icon15};
 			Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID}, Accounts.WIDGET + "=?", new String[]{widget}, null);
 			if (accounts.moveToFirst()) {
-				hasAccount = true;
 				Cursor statuses_styles = this.getContentResolver().query(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, widget), new String[]{Statuses_styles._ID, Statuses_styles.CREATED, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.SERVICE, Statuses_styles.CREATEDTEXT, Statuses_styles.WIDGET, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON}, null, null, Statuses_styles.CREATED + " desc");
 				if (statuses_styles.moveToFirst()) {
 					if (!scrollable) {
@@ -671,9 +672,7 @@ public class SonetService extends Service {
 			accounts.close();
 			mAppWidgetManager.updateAppWidget(Integer.parseInt(widget), views);
 			// replace with scrollable widget
-			if (scrollable) sendBroadcast(new Intent(this, SonetWidget.class).setAction(ACTION_BUILD_SCROLL).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widget));
-			// don't send updates when the device is asleep, as they'll stack up over time
-			if (hasAccount && (refreshInterval > 0)) mAlarmManager.set(backgroundUpdate ? AlarmManager.RTC_WAKEUP : AlarmManager.RTC, mCurrentTimeMillis + refreshInterval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setData(Uri.withAppendedPath(Widgets.CONTENT_URI, widget)), 0));			
+			if (scrollable) sendBroadcast(new Intent(this, SonetWidget.class).setAction(ACTION_BUILD_SCROLL).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widget));			
 		}
 		if (SonetService.sWidgetsTasks.isEmpty()) {
 			Sonet.release();
@@ -897,7 +896,9 @@ public class SonetService extends Service {
 							for (int e = 0; e < entries.length(); e++) {
 								JSONObject entry = entries.getJSONObject(e);
 								if (entry.has("published") && entry.has("actor") && entry.has("object")) {
+									Log.v(TAG,"buzz date:"+entry.getString("published"));
 									Date created = parseDate(entry.getString("published"), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+									Log.v(TAG,"buzz date:"+entry.getString("published")+"->"+created.getTime());
 									JSONObject actor = entry.getJSONObject("actor");
 									JSONObject object = entry.getJSONObject("object");
 									if (actor.has("name") && actor.has("thumbnailUrl") && object.has("originalContent")) {

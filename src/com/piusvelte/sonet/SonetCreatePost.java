@@ -20,6 +20,7 @@
 package com.piusvelte.sonet;
 
 import com.piusvelte.sonet.Sonet.Accounts;
+import static com.piusvelte.sonet.Sonet.TWITTER;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
 
 import android.app.Activity;
@@ -29,8 +30,14 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.KeyEvent;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.View.OnKeyListener;
+import android.widget.Button;
+import android.widget.EditText;
 
-public class SonetCreatePost extends Activity {
+public class SonetCreatePost extends Activity implements OnKeyListener, OnClickListener {
 	private static final String TAG = "SonetCreatePost";
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private int mService = 0;
@@ -39,6 +46,34 @@ public class SonetCreatePost extends Activity {
 	private Uri mData;
 	private static final int COMMENT = 0;
 	private static final int POST = 1;
+	private EditText mPost;
+	private Button mSubmit;
+	private Button mLocation;
+	/* buzz
+POST https://www.googleapis.com/buzz/v1/activities/@me/@self?key=INSERT-YOUR-KEY&alt=json
+Authorization: /* auth token here *\/
+Content-Type: application/json
+
+{
+  "data": {
+    "object": {
+      "type": "note",
+      "content": "Hey, this is my first Buzz Post!"
+    }
+  }
+}
+	 */
+	/* buzz comment
+POST https://www.googleapis.com/buzz/v1/activities/ted/@self/tag:google.com,2009:buzz:z13wx3b/@comments?key=INSERT-YOUR-KEY&alt=json
+Authorization: /* auth token here *\/
+Content-Type: application/json
+
+{
+  "data": {
+    "content": "Now the whole gang is here"
+  }
+} 
+	 */
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -57,10 +92,59 @@ public class SonetCreatePost extends Activity {
 			switch (uriMatcher.match(mData)) {
 			case COMMENT:
 				// get any comments for this comment
+				Cursor status = this.getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.SERVICE}, Statuses_styles._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
+				if (status.moveToFirst()) {
+					mService = status.getInt(status.getColumnIndex(Statuses_styles.SERVICE));
+				}
+				status.close();
 				break;
 			case POST:
 				// default to the account passed in, but allow selecting additional accounts
+				Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
+				if (account.moveToFirst()) {
+					mService = account.getInt(account.getColumnIndex(Statuses_styles.SERVICE));					
+				}
+				account.close();
 				break;
+			}
+		}
+
+		setContentView(R.layout.post);
+		
+		mPost = (EditText) findViewById(R.id.post);
+		mSubmit = (Button) findViewById(R.id.submit);
+		mLocation = (Button) findViewById(R.id.location);
+		
+		mPost.setOnKeyListener(this);
+		mSubmit.setOnClickListener(this);
+		mLocation.setOnClickListener(this);
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		// load the list of comments
+		// check and allow like|unlike options for Facebook & Buzz
+	}
+
+	@Override
+	public boolean onKey(View v, int keyCode, KeyEvent event) {
+		// track the post length, if TWITTER and >140, truncate
+		String text = mPost.getText().toString();
+		if ((mService == TWITTER) && (text.length() > 140)) {
+			mPost.setText(text.substring(0, 140));
+		}
+		return false;
+	}
+
+	@Override
+	public void onClick(View v) {
+		if (v == mLocation) {
+			// set the location
+		} else if (v == mSubmit) {
+			String text = mPost.getText().toString();
+			if ((text != null) && (text != "")) {
+				// post or comment!
 			}
 		}
 	}
