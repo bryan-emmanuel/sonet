@@ -22,6 +22,7 @@ package com.piusvelte.sonet;
 import java.util.HashMap;
 
 import com.piusvelte.sonet.Sonet.Accounts;
+import com.piusvelte.sonet.Sonet.Entities;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
 import com.piusvelte.sonet.Sonet.Widgets;
 import com.piusvelte.sonet.Sonet.Statuses;
@@ -48,6 +49,7 @@ public class SonetProvider extends ContentProvider {
 	private static final int STATUSES = 2;
 	private static final int STATUSES_STYLES = 3;
 	private static final int STATUSES_STYLES_WIDGET = 4;
+	private static final int ENTITIES = 5;
 
 	private static final String DATABASE_NAME = "sonet.db";
 	private static final int DATABASE_VERSION = 12;
@@ -63,6 +65,9 @@ public class SonetProvider extends ContentProvider {
 	
 	private static final String VIEW_STATUSES_STYLES = "statuses_styles";
 	private static HashMap<String, String> statuses_stylesProjectionMap;
+	
+	private static final String TABLE_ENTITIES = "entities";
+	private static HashMap<String, String> entitiesProjectionMap;
 
 	private DatabaseHelper mDatabaseHelper;
 
@@ -110,14 +115,15 @@ public class SonetProvider extends ContentProvider {
 		statusesProjectionMap = new HashMap<String, String>();
 		statusesProjectionMap.put(Statuses._ID, Statuses._ID);
 		statusesProjectionMap.put(Statuses.CREATED, Statuses.CREATED);
-		statusesProjectionMap.put(Statuses.FRIEND, Statuses.FRIEND);
-		statusesProjectionMap.put(Statuses.PROFILE, Statuses.PROFILE);
+//		statusesProjectionMap.put(Statuses.FRIEND, Statuses.FRIEND);
+//		statusesProjectionMap.put(Statuses.PROFILE, Statuses.PROFILE);
 		statusesProjectionMap.put(Statuses.MESSAGE, Statuses.MESSAGE);
 		statusesProjectionMap.put(Statuses.SERVICE, Statuses.SERVICE);
 		statusesProjectionMap.put(Statuses.CREATEDTEXT, Statuses.CREATEDTEXT);
 		statusesProjectionMap.put(Statuses.WIDGET, Statuses.WIDGET);
 		statusesProjectionMap.put(Statuses.ICON, Statuses.ICON);
 		statusesProjectionMap.put(Statuses.SID, Statuses.SID);
+		statusesProjectionMap.put(Statuses.ENTITY, Statuses.ENTITY);
 
 		sUriMatcher.addURI(AUTHORITY, VIEW_STATUSES_STYLES, STATUSES_STYLES);
 		sUriMatcher.addURI(AUTHORITY, VIEW_STATUSES_STYLES + "/*", STATUSES_STYLES_WIDGET);
@@ -140,10 +146,18 @@ public class SonetProvider extends ContentProvider {
 		statuses_stylesProjectionMap.put(Statuses_styles.STATUS_BG, Statuses_styles.STATUS_BG);
 		statuses_stylesProjectionMap.put(Statuses_styles.ICON, Statuses_styles.ICON);
 		statuses_stylesProjectionMap.put(Statuses_styles.SID, Statuses_styles.SID);
+		
+		sUriMatcher.addURI(AUTHORITY, TABLE_ENTITIES, ENTITIES);
+		
+		entitiesProjectionMap.put(Entities._ID, Entities._ID);
+		entitiesProjectionMap.put(Entities.SID, Entities.SID);
+		entitiesProjectionMap.put(Entities.FRIEND, Entities.FRIEND);
+		entitiesProjectionMap.put(Entities.PROFILE, Entities.PROFILE);
+		entitiesProjectionMap.put(Entities.ACCOUNT, Entities.ACCOUNT);
 	}
 	
 	public enum StatusesStylesColumns {
-		_id, created, friend, profile, message, service, createdtext, widget, messages_color, friend_color, created_color, messages_textsize, friend_textsize, created_textsize, status_bg, icon, sid
+		_id, created, friend, profile, message, service, createdtext, widget, messages_color, friend_color, created_color, messages_textsize, friend_textsize, created_textsize, status_bg, icon, sid, entity
 	}
 
 	@Override
@@ -165,6 +179,8 @@ public class SonetProvider extends ContentProvider {
 			return Statuses_styles.CONTENT_TYPE;
 		case STATUSES_STYLES_WIDGET:
 			return Statuses_styles.CONTENT_TYPE;
+		case ENTITIES:
+			return Entities.CONTENT_TYPE;
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
 		}
@@ -183,6 +199,9 @@ public class SonetProvider extends ContentProvider {
 			break;
 		case STATUSES:
 			count = db.delete(TABLE_STATUSES, whereClause, whereArgs);
+			break;
+		case ENTITIES:
+			count = db.delete(TABLE_ENTITIES, whereClause, whereArgs);
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
@@ -213,6 +232,9 @@ public class SonetProvider extends ContentProvider {
 			// many statuses will be inserted at once, so don't trigger a refresh for each one
 //			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
+		case ENTITIES:
+			rowId = db.insert(TABLE_ENTITIES, Entities._ID, values);
+			returnUri = ContentUris.withAppendedId(Entities.CONTENT_URI, rowId);
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
 		}
@@ -246,6 +268,10 @@ public class SonetProvider extends ContentProvider {
 			selection = Statuses_styles.WIDGET + "=?";
 			selectionArgs = new String[]{uri.getLastPathSegment()};
 			break;
+		case ENTITIES:
+			qb.setTables(TABLE_ENTITIES);
+			qb.setProjectionMap(entitiesProjectionMap);
+			break;
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
 		}
@@ -269,6 +295,9 @@ public class SonetProvider extends ContentProvider {
 			break;
 		case STATUSES:
 			count = db.update(TABLE_STATUSES, values, selection, selectionArgs);
+			break;
+		case ENTITIES:
+			count = db.update(TABLE_ENTITIES, values, selection, selectionArgs);
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
@@ -318,8 +347,6 @@ public class SonetProvider extends ContentProvider {
 			db.execSQL("create table if not exists " + TABLE_STATUSES
 					+ " (" + Statuses._ID + " integer primary key autoincrement, "
 					+ Statuses.CREATED + " integer, "
-					+ Statuses.FRIEND + " text, "
-					+ Statuses.PROFILE + " blob, "
 					+ Statuses.MESSAGE + " text, "
 					+ Statuses.SERVICE + " integer, "
 					+ Statuses.CREATEDTEXT + " text, "
@@ -327,12 +354,19 @@ public class SonetProvider extends ContentProvider {
 					+ Statuses.ACCOUNT + " integer, "
 					+ Statuses.STATUS_BG + " blob, "
 					+ Statuses.ICON + " blob, "
-					+ Statuses.SID + " text);");
+					+ Statuses.SID + " text, "
+					+ Statuses.ENTITY + " integer);");
+			db.execSQL("create table if not exists " + TABLE_ENTITIES
+					+ " (" + Entities._ID + " integer primary key autoincrement, "
+					+ Entities.FRIEND + " text, "
+					+ Entities.PROFILE + " blob, "
+					+ Entities.ACCOUNT + " integer, "
+					+ Entities.SID + " text);");
 			db.execSQL("create view if not exists " + VIEW_STATUSES_STYLES + " as select " +
 					TABLE_STATUSES + "." + Statuses._ID + ","
 					+ Statuses.CREATED + " as " + Statuses_styles.CREATED + ","
-					+ Statuses.FRIEND + " as " + Statuses_styles.FRIEND + ","
-					+ Statuses.PROFILE + " as " + Statuses_styles.PROFILE + ","
+					+ Entities.FRIEND + " as " + Statuses_styles.FRIEND + ","
+					+ Entities.PROFILE + " as " + Statuses_styles.PROFILE + ","
 					+ Statuses.MESSAGE + " as " + Statuses_styles.MESSAGE + ","
 					+ Statuses.SERVICE + " as " + Statuses_styles.SERVICE + ","
 					+ Statuses.CREATEDTEXT + " as " + Statuses_styles.CREATEDTEXT + ","
@@ -359,7 +393,8 @@ public class SonetProvider extends ContentProvider {
 					+ Statuses.STATUS_BG + " as " + Statuses_styles.STATUS_BG + ","
 					+ Statuses.ICON + " as " + Statuses_styles.ICON + ","
 					+ Statuses.SID + " as " + Statuses_styles.SID
-					+ " from " + TABLE_STATUSES);
+					+ " from " + TABLE_STATUSES + "," + TABLE_ENTITIES
+					+ " where " + Entities._ID + "=" + Statuses.ENTITY);
 		}
 
 		@Override
@@ -431,8 +466,8 @@ public class SonetProvider extends ContentProvider {
 						+ " (" + Statuses._ID + " integer primary key autoincrement, "
 						+ Statuses.CREATED + " integer, "
 						+ "link text, "
-						+ Statuses.FRIEND + " text, "
-						+ Statuses.PROFILE + " blob, "
+						+ "friend text, "
+						+ "profile blob, "
 						+ Statuses.MESSAGE + " text, "
 						+ Statuses.SERVICE + " integer, "
 						+ Statuses.CREATEDTEXT + " text, "
@@ -559,8 +594,8 @@ public class SonetProvider extends ContentProvider {
 						+ " (" + Statuses._ID + " integer primary key autoincrement, "
 						+ Statuses.CREATED + " integer, "
 						+ "link text, "
-						+ Statuses.FRIEND + " text, "
-						+ Statuses.PROFILE + " blob, "
+						+ "friend text, "
+						+ "profile blob, "
 						+ Statuses.MESSAGE + " text, "
 						+ Statuses.SERVICE + " integer, "
 						+ Statuses.CREATEDTEXT + " text, "
@@ -572,8 +607,7 @@ public class SonetProvider extends ContentProvider {
 						+ Statuses._ID + ","
 						+ Statuses.CREATED + ","
 						+ "link,"
-						+ Statuses.FRIEND + ","
-						+ Statuses.PROFILE + ","
+						+ "profile,"
 						+ Statuses.MESSAGE + ","
 						+ Statuses.SERVICE + ","
 						+ "createdText,"
@@ -585,8 +619,8 @@ public class SonetProvider extends ContentProvider {
 						TABLE_STATUSES + "." + Statuses._ID + " as " + Statuses_styles._ID + ","
 						+ Statuses.CREATED + ","
 						+ "link,"
-						+ Statuses.FRIEND + ","
-						+ Statuses.PROFILE + ","
+						+ "friend,"
+						+ "profile,"
 						+ Statuses.MESSAGE + ","
 						+ Statuses.SERVICE + ","
 						+ Statuses.CREATEDTEXT + ","
@@ -632,8 +666,8 @@ public class SonetProvider extends ContentProvider {
 						TABLE_STATUSES + "." + Statuses._ID + ","
 						+ Statuses.CREATED + " as " + Statuses_styles.CREATED + ","
 						+ "link as link,"
-						+ Statuses.FRIEND + " as " + Statuses_styles.FRIEND + ","
-						+ Statuses.PROFILE + " as " + Statuses_styles.PROFILE + ","
+						+ "friend as " + Statuses_styles.FRIEND + ","
+						+ "profile as " + Statuses_styles.PROFILE + ","
 						+ Statuses.MESSAGE + " as " + Statuses_styles.MESSAGE + ","
 						+ Statuses.SERVICE + " as " + Statuses_styles.SERVICE + ","
 						+ Statuses.CREATEDTEXT + " as " + Statuses_styles.CREATEDTEXT + ","
@@ -738,8 +772,8 @@ public class SonetProvider extends ContentProvider {
 						+ " (" + Statuses._ID + " integer primary key autoincrement, "
 						+ Statuses.CREATED + " integer, "
 						+ "link text, "
-						+ Statuses.FRIEND + " text, "
-						+ Statuses.PROFILE + " blob, "
+						+ "friend text, "
+						+ "profile blob, "
 						+ Statuses.MESSAGE + " text, "
 						+ Statuses.SERVICE + " integer, "
 						+ Statuses.CREATEDTEXT + " text, "
@@ -752,8 +786,8 @@ public class SonetProvider extends ContentProvider {
 						+ Statuses._ID + ","
 						+ Statuses.CREATED + ","
 						+ "link,"
-						+ Statuses.FRIEND + ","
-						+ Statuses.PROFILE + ","
+						+ "friend,"
+						+ "profile,"
 						+ Statuses.MESSAGE + ","
 						+ Statuses.SERVICE + ","
 						+ Statuses.CREATEDTEXT + ","
@@ -766,8 +800,8 @@ public class SonetProvider extends ContentProvider {
 						TABLE_STATUSES + "." + Statuses._ID + ","
 						+ Statuses.CREATED + " as " + Statuses_styles.CREATED + ","
 						+ "link as link,"
-						+ Statuses.FRIEND + " as " + Statuses_styles.FRIEND + ","
-						+ Statuses.PROFILE + " as " + Statuses_styles.PROFILE + ","
+						+ "friend as " + Statuses_styles.FRIEND + ","
+						+ "profile as " + Statuses_styles.PROFILE + ","
 						+ Statuses.MESSAGE + " as " + Statuses_styles.MESSAGE + ","
 						+ Statuses.SERVICE + " as " + Statuses_styles.SERVICE + ","
 						+ Statuses.CREATEDTEXT + " as " + Statuses_styles.CREATEDTEXT + ","
@@ -894,8 +928,6 @@ public class SonetProvider extends ContentProvider {
 				db.execSQL("create table if not exists " + TABLE_STATUSES
 						+ " (" + Statuses._ID + " integer primary key autoincrement, "
 						+ Statuses.CREATED + " integer, "
-						+ Statuses.FRIEND + " text, "
-						+ Statuses.PROFILE + " blob, "
 						+ Statuses.MESSAGE + " text, "
 						+ Statuses.SERVICE + " integer, "
 						+ Statuses.CREATEDTEXT + " text, "
@@ -903,27 +935,49 @@ public class SonetProvider extends ContentProvider {
 						+ Statuses.ACCOUNT + " integer, "
 						+ Statuses.STATUS_BG + " blob, "
 						+ Statuses.ICON + " blob, "
-						+ Statuses.SID + " integer);");
+						+ Statuses.SID + " integer, "
+						+ Statuses.ENTITY + "integer);");
 				db.execSQL("insert into " + TABLE_STATUSES
 						+ " select "
 						+ Statuses._ID + ","
 						+ Statuses.CREATED + ","
-						+ Statuses.FRIEND + ","
-						+ Statuses.PROFILE + ","
 						+ Statuses.MESSAGE + ","
 						+ Statuses.SERVICE + ","
 						+ Statuses.CREATEDTEXT + ","
 						+ Statuses.WIDGET + ","
 						+ Statuses.ACCOUNT + ","
 						+ Statuses.STATUS_BG + ","
-						+ Statuses.ICON + ",\"\" from " + TABLE_STATUSES + "_bkp;");
+						+ Statuses.ICON + ",\"\",\"\" from " + TABLE_STATUSES + "_bkp;");
+				db.execSQL("create table if not exists " + TABLE_ENTITIES
+						+ " (" + Entities._ID + " integer primary key autoincrement, "
+						+ Entities.FRIEND + " text, "
+						+ Entities.PROFILE + " blob, "
+						+ Entities.ACCOUNT + " integer, "
+						+ Entities.SID + " text);");
+				Cursor from_bkp =  db.query(TABLE_STATUSES + "_bkp", new String[]{Statuses._ID, "friend", "profile"}, null, null, null, null, null);
+				if (from_bkp.moveToFirst()) {
+					int iid = from_bkp.getColumnIndex(Statuses._ID),
+					ifriend = from_bkp.getColumnIndex("friend"),
+					iprofile = from_bkp.getColumnIndex("profile");
+					while (!from_bkp.isAfterLast()) {
+						ContentValues values = new ContentValues();
+						values.put(Entities.FRIEND, from_bkp.getString(ifriend));
+						values.put(Entities.PROFILE, from_bkp.getBlob(iprofile));
+						int id = (int) db.insert(TABLE_ENTITIES, Entities._ID, values);
+						values = new ContentValues();
+						values.put(Statuses.ENTITY, id);
+						db.update(TABLE_STATUSES, values, Statuses._ID + "=?", new String[]{Integer.toString(from_bkp.getInt(iid))});
+						from_bkp.moveToNext();
+					}
+				}
+				from_bkp.close();
 				db.execSQL("drop table if exists " + TABLE_STATUSES + "_bkp;");
 				db.execSQL("drop view if exists " + VIEW_STATUSES_STYLES + ";");
 				db.execSQL("create view if not exists " + VIEW_STATUSES_STYLES + " as select " +
 						TABLE_STATUSES + "." + Statuses._ID + ","
 						+ Statuses.CREATED + " as " + Statuses_styles.CREATED + ","
-						+ Statuses.FRIEND + " as " + Statuses_styles.FRIEND + ","
-						+ Statuses.PROFILE + " as " + Statuses_styles.PROFILE + ","
+						+ Entities.FRIEND + " as " + Statuses_styles.FRIEND + ","
+						+ Entities.PROFILE + " as " + Statuses_styles.PROFILE + ","
 						+ Statuses.MESSAGE + " as " + Statuses_styles.MESSAGE + ","
 						+ Statuses.SERVICE + " as " + Statuses_styles.SERVICE + ","
 						+ Statuses.CREATEDTEXT + " as " + Statuses_styles.CREATEDTEXT + ","
@@ -949,8 +1003,10 @@ public class SonetProvider extends ContentProvider {
 						+ " is null) else "	+ Sonet.default_created_textsize + " end) as " + Statuses_styles.CREATED_TEXTSIZE + ","
 						+ Statuses.STATUS_BG + " as " + Statuses_styles.STATUS_BG + ","
 						+ Statuses.ICON + " as " + Statuses_styles.ICON + ","
-						+ Statuses.SID + " as " + Statuses_styles.SID
-						+ " from " + TABLE_STATUSES);
+						+ Statuses.SID + " as " + Statuses_styles.SID + ","
+						+ Entities._ID + " as " + Statuses_styles.ENTITY
+						+ " from " + TABLE_STATUSES + "," + TABLE_ENTITIES
+						+ " where " + Entities._ID + "=" + Statuses.ENTITY);
 				// background updating option
 				db.execSQL("drop table if exists " + TABLE_WIDGETS + "_bkp;");
 				db.execSQL("create temp table " + TABLE_WIDGETS + "_bkp as select * from " + TABLE_WIDGETS + ";");

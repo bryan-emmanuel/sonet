@@ -98,7 +98,7 @@ public class Sonet {
 	protected static final String LINKEDIN_URL_REQUEST = "https://api.linkedin.com/uas/oauth/requestToken";
 	protected static final String LINKEDIN_URL_AUTHORIZE = "https://www.linkedin.com/uas/oauth/authorize";
 	protected static final String LINKEDIN_URL_ACCESS = "https://api.linkedin.com/uas/oauth/accessToken";
-	protected static final String LINKEDIN_URL_ME = "https://api.linkedin.com/v1/people/~";
+	protected static final String LINKEDIN_URL_ME = "https://api.linkedin.com/v1/people/~:(id,first-name,last-name)";
 	protected static final String LINKEDIN_URL_FEED = "https://api.linkedin.com/v1/people/~/network/updates?type=APPS&type=CMPY&type=CONN&type=JOBS&type=JGRP&type=PICT&type=PRFU&type=RECU&type=PRFX&type=ANSW&type=QSTN&type=SHAR&type=VIRL&count=%s";
 	protected static final String[][] LINKEDIN_HEADERS = new String[][] {{"x-li-format", "json"}};
 	protected static final HashMap<String, String> LINKEDIN_UPDATETYPES;
@@ -232,8 +232,6 @@ public class Sonet {
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.statuses";
 
 		public static final String CREATED = "created";
-		public static final String FRIEND = "friend";
-		public static final String PROFILE = "profile";
 		public static final String MESSAGE = "message";
 		public static final String SERVICE = "service";
 		public static final String WIDGET = "widget";
@@ -244,6 +242,8 @@ public class Sonet {
 		public static final String ICON = "icon";
 		// service id for posting and linking
 		public static final String SID = "sid";
+		// store friend and profile data in a separate table
+		public static final String ENTITY = "entity";
 
 	}
 
@@ -277,7 +277,25 @@ public class Sonet {
 		public static final String ICON = "icon";
 		// service id, for posting and linking
 		public static final String SID = "sid";
+		// store friend and profile data in a separate table
+		public static final String ENTITY = "entity";
 
+	}
+	
+	public static final class Entities implements BaseColumns {
+		
+		private Entities() {
+		}
+		
+		public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/entities");
+		
+		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.entities";
+		
+		public static final String SID = "sid";
+		public static final String FRIEND = "friend";
+		public static final String PROFILE = "profile";
+		public static final String ACCOUNT = "account";
+		
 	}
 
 	protected static String httpResponse(HttpUriRequest httpRequest) {

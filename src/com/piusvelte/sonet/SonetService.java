@@ -87,6 +87,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.piusvelte.sonet.Sonet.Accounts;
+import com.piusvelte.sonet.Sonet.Entities;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
 import com.piusvelte.sonet.Sonet.Widgets;
@@ -296,6 +297,7 @@ public class SonetService extends Service {
 							try {
 								response = sonetOAuth.httpGet(LINKEDIN_URL_ME, LINKEDIN_HEADERS);
 								if (response != null) {
+									Log.v(TAG,response);
 									JSONObject jobj = new JSONObject(response);
 									ContentValues values = new ContentValues();
 									values.put(Accounts.SID, jobj.getString("id"));
@@ -440,7 +442,7 @@ public class SonetService extends Service {
 
 	private static Object sLock = new Object();
 	private static Queue<String> sAppWidgetIds = new LinkedList<String>();
-	
+
 	public static void updateWidgets(int[] appWidgetIds) {
 		String[] widgetIds = new String[appWidgetIds.length];
 		for (int i = 0; i < widgetIds.length; i++) widgetIds[i] = Integer.toString(appWidgetIds[i]);
@@ -477,7 +479,7 @@ public class SonetService extends Service {
 		return null;
 	}
 
-	private Date parseDate(String date, String format) {
+	private long parseDate(String date, String format) {
 		SimpleDateFormat msformat = new SimpleDateFormat(format);
 		Date created;
 		try {
@@ -486,59 +488,60 @@ public class SonetService extends Service {
 			created = new Date();
 			Log.e(TAG,e.toString()); //Sun Mar 13 01:34:20 +0000 2011
 		}
-		return parseDate(created.getTime());
+		return created.getTime();
 	}
 
-	private Date parseDate(long epoch) {
+	private String getCreatedText(long epoch, boolean time24hr) {
 		Calendar cal = Calendar.getInstance();
 		cal.setTimeInMillis(epoch);
 		cal.add(Calendar.MILLISECOND, mTimezoneOffset);
-		return cal.getTime();
-	}
-
-	private ContentValues statusItem(long created, String friend, byte[] profile, String message, String service, String createdText, String appWidgetId, String accountId, String sid) {
-		ContentValues values = new ContentValues();
-		values.put(Statuses.CREATED, created);
-		values.put(Statuses.FRIEND, friend);
-		values.put(Statuses.PROFILE, profile);
-		values.put(Statuses.MESSAGE, message);
-		values.put(Statuses.SERVICE, Integer.parseInt(service));
-		values.put(Statuses.CREATEDTEXT, createdText);
-		values.put(Statuses.WIDGET, Integer.parseInt(appWidgetId));
-		values.put(Statuses.ACCOUNT, Integer.parseInt(accountId));
-		values.put(Statuses.SID, sid);
-		return values;
-	}
-
-	private String getCreatedText(Date created, boolean time24hr) {
+		Date created = cal.getTime();
 		return mCurrentTimeMillis - created.getTime() < 86400000 ?
 				(time24hr ?
 						String.format("%d:%02d", created.getHours(), created.getMinutes())
 						: String.format("%d:%02d%s", created.getHours() < 13 ? created.getHours() : created.getHours() - 12, created.getMinutes(), getString(created.getHours() < 13 ? R.string.am : R.string.pm)))
 						: String.format("%s %d", getResources().getStringArray(R.array.months)[created.getMonth()], created.getDate());
 	}
-	
-	private String getCreatedText(int epoch, boolean time24hr) {
-		Date created = new Date();
-		created.setTime(epoch);
-		return getCreatedText(created, time24hr);
+
+	private void addStatusItem(long created, String friend, String url, String message, String service, String createdText, String appWidgetId, String accountId, String sid, String esid) {
+		long id;
+		byte[] profile = null;
+		if (url != null) {
+			// get profile
+			Bitmap bmp = null;
+			try {
+				bmp = BitmapFactory.decodeStream(new URL(url).openConnection().getInputStream());
+			} catch (IOException e) {
+				Log.e(TAG,e.getMessage());
+			}
+			profile = getBlob(bmp);
+		}
+		Cursor entity = this.getContentResolver().query(Entities.CONTENT_URI, new String[]{Entities._ID}, Entities.ACCOUNT + "=? and " + Entities.SID + "=?", new String[]{accountId, sid}, null);
+		if (entity.moveToFirst()) id = entity.getInt(entity.getColumnIndex(Entities._ID));
+		else {
+			ContentValues values = new ContentValues();
+			values.put(Entities.SID, esid);
+			values.put(Entities.FRIEND, friend);
+			values.put(Entities.PROFILE, profile);
+			values.put(Entities.ACCOUNT, accountId);
+			id = Long.parseLong(this.getContentResolver().insert(Entities.CONTENT_URI, values).getLastPathSegment());
+		}
+		ContentValues values = new ContentValues();
+		values.put(Statuses.CREATED, created);
+		values.put(Statuses.ENTITY, id);
+		values.put(Statuses.MESSAGE, message);
+		values.put(Statuses.SERVICE, Integer.parseInt(service));
+		values.put(Statuses.CREATEDTEXT, createdText);
+		values.put(Statuses.WIDGET, Integer.parseInt(appWidgetId));
+		values.put(Statuses.ACCOUNT, Integer.parseInt(accountId));
+		values.put(Statuses.SID, sid);
+		this.getContentResolver().insert(Statuses.CONTENT_URI, values);
 	}
 
 	private byte[] getBlob(Bitmap bmp) {
 		ByteArrayOutputStream blob = new ByteArrayOutputStream();
 		if (bmp != null) bmp.compress(Bitmap.CompressFormat.PNG, 100, blob);
 		return blob.toByteArray();		
-	}
-
-	private byte[] getProfile(String url) {
-		Bitmap profile = null;
-		// get profile
-		try {
-			profile = BitmapFactory.decodeStream(new URL(url).openConnection().getInputStream());
-		} catch (IOException e) {
-			Log.e(TAG,e.getMessage());
-		}
-		return getBlob(profile);
 	}
 
 	private void checkWidgetUpdateReady(String widget) {
@@ -670,7 +673,7 @@ public class SonetService extends Service {
 				}
 			}
 			accounts.close();
-			mAppWidgetManager.updateAppWidget(Integer.parseInt(widget), views);
+			if ((widget != null) && (views != null)) mAppWidgetManager.updateAppWidget(Integer.parseInt(widget), views);
 			// replace with scrollable widget
 			if (scrollable) sendBroadcast(new Intent(this, SonetWidget.class).setAction(ACTION_BUILD_SCROLL).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widget));			
 		}
@@ -789,20 +792,22 @@ public class SonetService extends Service {
 						JSONArray entries = new JSONArray(response);
 						// if there are updates, clear the cache
 						if (entries.length() > 0) {
+							SonetService.this.getContentResolver().delete(Entities.CONTENT_URI, Entities.ACCOUNT + "=?", new String[]{account});
 							SonetService.this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
 							for (int e = 0; e < entries.length(); e++) {
 								JSONObject entry = entries.getJSONObject(e);
 								JSONObject user = entry.getJSONObject("user");
-								Date created = parseDate(entry.getString("created_at"), "EEE MMM dd HH:mm:ss z yyyy");
-								SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
+								long epoch = parseDate(entry.getString("created_at"), "EEE MMM dd HH:mm:ss z yyyy");
+								addStatusItem(epoch,
 										user.getString("name"),
-										getProfile(user.getString("profile_image_url")),
+										user.getString("profile_image_url"),
 										entry.getString("text"),
 										service,
-										getCreatedText(created, time24hr),
+										getCreatedText(epoch, time24hr),
 										widget,
 										account,
-										entry.getString(id)));
+										entry.getString(id),
+										user.getString(id));
 							}
 						} else updateCreatedText = true;
 					} catch (JSONException e) {
@@ -822,6 +827,7 @@ public class SonetService extends Service {
 						JSONArray jarr = jobj.getJSONArray(data);
 						// if there are updates, clear the cache
 						if (jarr.length() > 0) {
+							SonetService.this.getContentResolver().delete(Entities.CONTENT_URI, Entities.ACCOUNT + "=?", new String[]{account});
 							SonetService.this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
 							for (int d = 0; d < jarr.length(); d++) {
 								JSONObject o = jarr.getJSONObject(d);
@@ -838,17 +844,19 @@ public class SonetService extends Service {
 												if (n.has(name)) friend += " > " + n.getString(name);
 											}												
 										}
-										Date created = parseDate(Long.parseLong(o.getString(created_time)) * 1000);
-										SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(
-												created.getTime(),
+										String esid = f.getString(id);
+										long epoch = Long.parseLong(o.getString(created_time)) * 1000;
+										addStatusItem(
+												epoch,
 												friend,
-												getProfile(String.format(profile, f.getString(id))),
+												String.format(profile, esid),
 												o.getString(message),
 												service,
-												getCreatedText(created, time24hr),
+												getCreatedText(epoch, time24hr),
 												widget,
 												account,
-												o.getString(id)));
+												o.getString(id),
+												esid);
 									}
 								}
 							}
@@ -867,20 +875,22 @@ public class SonetService extends Service {
 						JSONArray entries = jobj.getJSONArray("entry");
 						// if there are updates, clear the cache
 						if (entries.length() > 0) {
+							SonetService.this.getContentResolver().delete(Entities.CONTENT_URI, Entities.ACCOUNT + "=? or " + Entities.SID + "\"\"", new String[]{account});
 							SonetService.this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
 							for (int e = 0; e < entries.length(); e++) {
 								JSONObject entry = entries.getJSONObject(e);
 								JSONObject authorObj = entry.getJSONObject(author);
-								Date created = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'");
-								SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
+								long epoch = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'");
+								addStatusItem(epoch,
 										authorObj.getString(displayName),
-										getProfile(authorObj.getString(thumbnailUrl)),
+										authorObj.getString(thumbnailUrl),
 										entry.getString(status),
 										service,
-										getCreatedText(created, time24hr),
+										getCreatedText(epoch, time24hr),
 										widget,
 										account,
-										entry.getString(id)));
+										entry.getString(id),
+										authorObj.getString(id));
 							}
 						} else updateCreatedText = true;
 					} catch (JSONException e) {
@@ -892,25 +902,27 @@ public class SonetService extends Service {
 						JSONArray entries = new JSONObject(response).getJSONObject("data").getJSONArray("items");
 						// if there are updates, clear the cache
 						if (entries.length() > 0) {
+							SonetService.this.getContentResolver().delete(Entities.CONTENT_URI, Entities.ACCOUNT + "=?", new String[]{account});
 							SonetService.this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
 							for (int e = 0; e < entries.length(); e++) {
 								JSONObject entry = entries.getJSONObject(e);
 								if (entry.has("published") && entry.has("actor") && entry.has("object")) {
 									Log.v(TAG,"buzz date:"+entry.getString("published"));
-									Date created = parseDate(entry.getString("published"), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-									Log.v(TAG,"buzz date:"+entry.getString("published")+"->"+created.getTime());
+									long epoch = parseDate(entry.getString("published"), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+									Log.v(TAG,"buzz date:"+entry.getString("published")+"->"+epoch);
 									JSONObject actor = entry.getJSONObject("actor");
 									JSONObject object = entry.getJSONObject("object");
 									if (actor.has("name") && actor.has("thumbnailUrl") && object.has("originalContent")) {
-										SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
+										addStatusItem(epoch,
 												actor.getString("name"),
-												getProfile(actor.getString("thumbnailUrl")),
+												actor.getString("thumbnailUrl"),
 												object.getString("originalContent"),
 												service,
-												getCreatedText(created, time24hr),
+												getCreatedText(epoch, time24hr),
 												widget,
 												account,
-												entry.getString(id)));
+												entry.getString(id),
+												actor.getString(id));
 									}
 								}
 							}
@@ -962,22 +974,24 @@ public class SonetService extends Service {
 						JSONArray checkins = new JSONObject(response).getJSONObject("response").getJSONArray("recent");
 						// if there are updates, clear the cache
 						if (checkins.length() > 0) {
+							SonetService.this.getContentResolver().delete(Entities.CONTENT_URI, Entities.ACCOUNT + "=?", new String[]{account});
 							SonetService.this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
 							for (int e = 0; e < checkins.length(); e++) {
 								JSONObject checkin = checkins.getJSONObject(e);
 								JSONObject user = checkin.getJSONObject("user");
 								JSONObject venue = checkin.getJSONObject("venue");
 								String shout = (checkin.has("shout") ? checkin.getString("shout") + "\n" : "") + "@" + venue.getString("name");
-								Date created = parseDate(Long.parseLong(checkin.getString("createdAt")) * 1000);
-								SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
+								long epoch = Long.parseLong(checkin.getString("createdAt")) * 1000;
+								addStatusItem(epoch,
 										user.getString("firstName") + " " + user.getString("lastName"),
-										getProfile(user.getString("photo")),
+										user.getString("photo"),
 										shout,
 										service,
-										getCreatedText(created, time24hr),
+										getCreatedText(epoch, time24hr),
 										widget,
 										account,
-										checkin.getString(id)));
+										checkin.getString(id),
+										user.getString(id));
 							}
 						} else updateCreatedText = true;
 					} catch (JSONException e) {
@@ -990,13 +1004,14 @@ public class SonetService extends Service {
 						JSONArray values = jobj.getJSONArray("values");
 						// if there are updates, clear the cache
 						if (values.length() > 0) {
+							SonetService.this.getContentResolver().delete(Entities.CONTENT_URI, Entities.ACCOUNT + "=?", new String[]{account});
 							SonetService.this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
 							for (int e = 0; e < values.length(); e++) {
 								JSONObject value = values.getJSONObject(e);
 								String updateType = value.getString("updateType");
 								JSONObject updateContent = value.getJSONObject("updateContent");
 								if (LINKEDIN_UPDATETYPES.containsKey(updateType) && updateContent.has("person")) {
-									Date created = parseDate(Long.parseLong(value.getString("timestamp")));
+									long epoch = Long.parseLong(value.getString("timestamp"));
 									JSONObject person = updateContent.getJSONObject("person");
 									String update = LINKEDIN_UPDATETYPES.get(updateType);
 									if (updateType.equals("APPS")) {
@@ -1050,15 +1065,16 @@ public class SonetService extends Service {
 											}
 										}
 									}
-									SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, statusItem(created.getTime(),
+									addStatusItem(epoch,
 											person.getString("firstName") + " " + person.getString("lastName"),
-											person.has("pictureUrl") ? getProfile(person.getString("pictureUrl")) : null,
+											person.has("pictureUrl") ? person.getString("pictureUrl") : null,
 													update,
 													service,
-													getCreatedText(created, time24hr),
+													getCreatedText(epoch, time24hr),
 													widget,
 													account,
-													value.getString(id)));
+													value.getString("updateKey"),
+													person.getString(id));
 								}
 							}
 						} else updateCreatedText = true;
@@ -1092,12 +1108,17 @@ public class SonetService extends Service {
 					ByteArrayOutputStream status_bg_blob = new ByteArrayOutputStream();
 					status_bg_bmp.compress(Bitmap.CompressFormat.PNG, 100, status_bg_blob);
 					byte[] status_bg = status_bg_blob.toByteArray();
+					addStatusItem(0,
+							getString(R.string.myspace_permissions_title),
+							null,
+							getString(R.string.myspace_permissions_message),
+							service,
+							null,
+							widget,
+							account,
+							"",
+					"");
 					ContentValues values = new ContentValues();
-					values.put(Statuses.FRIEND, getString(R.string.myspace_permissions_title));
-					values.put(Statuses.MESSAGE, getString(R.string.myspace_permissions_message));
-					values.put(Statuses.SERVICE, service);
-					values.put(Statuses.WIDGET, widget);
-					values.put(Statuses.ACCOUNT, account);
 					values.put(Statuses.STATUS_BG, status_bg);
 					SonetService.this.getContentResolver().insert(Statuses.CONTENT_URI, values);
 				}
