@@ -82,7 +82,7 @@ public class Sonet {
 	protected static final String BUZZ_URL_REQUEST = "https://www.google.com/accounts/OAuthGetRequestToken?scope=%s&xoauth_displayname=%s&domain=%s";
 	protected static final String BUZZ_URL_AUTHORIZE = "https://www.google.com/buzz/api/auth/OAuthAuthorizeToken?scope=%s&xoauth_displayname=%s&domain=%s&btmpl=mobile";
 	protected static final String BUZZ_URL_ACCESS = "https://www.google.com/accounts/OAuthGetAccessToken";
-	protected static final String BUZZ_SCOPE = "https://www.googleapis.com/auth/buzz.readonly";
+	protected static final String BUZZ_SCOPE = "https://www.googleapis.com/auth/buzz";
 	protected static final String BUZZ_URL_ME = "https://www.googleapis.com/buzz/v1/people/@me/@self?alt=json";
 	protected static final String BUZZ_URL_FEED = "https://www.googleapis.com/buzz/v1/activities/@me/@consumption?alt=json&max-results=%s";
 	protected static final String BUZZ_LIKE = "https://www.googleapis.com/buzz/v1/activities/%s/@liked/%s?key=%s";

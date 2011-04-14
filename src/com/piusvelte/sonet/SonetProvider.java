@@ -115,8 +115,6 @@ public class SonetProvider extends ContentProvider {
 		statusesProjectionMap = new HashMap<String, String>();
 		statusesProjectionMap.put(Statuses._ID, Statuses._ID);
 		statusesProjectionMap.put(Statuses.CREATED, Statuses.CREATED);
-//		statusesProjectionMap.put(Statuses.FRIEND, Statuses.FRIEND);
-//		statusesProjectionMap.put(Statuses.PROFILE, Statuses.PROFILE);
 		statusesProjectionMap.put(Statuses.MESSAGE, Statuses.MESSAGE);
 		statusesProjectionMap.put(Statuses.SERVICE, Statuses.SERVICE);
 		statusesProjectionMap.put(Statuses.CREATEDTEXT, Statuses.CREATEDTEXT);
@@ -149,6 +147,7 @@ public class SonetProvider extends ContentProvider {
 		
 		sUriMatcher.addURI(AUTHORITY, TABLE_ENTITIES, ENTITIES);
 		
+		entitiesProjectionMap = new HashMap<String, String>();
 		entitiesProjectionMap.put(Entities._ID, Entities._ID);
 		entitiesProjectionMap.put(Entities.SID, Entities.SID);
 		entitiesProjectionMap.put(Entities.FRIEND, Entities.FRIEND);
