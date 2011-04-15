@@ -279,6 +279,7 @@ public class Sonet {
 		public static final String SID = "sid";
 		// store friend and profile data in a separate table
 		public static final String ENTITY = "entity";
+		public static final String ESID = "esid";
 
 	}
 	
@@ -291,7 +292,7 @@ public class Sonet {
 		
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.entities";
 		
-		public static final String SID = "sid";
+		public static final String ESID = "esid";
 		public static final String FRIEND = "friend";
 		public static final String PROFILE = "profile";
 		public static final String ACCOUNT = "account";

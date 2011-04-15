@@ -299,7 +299,6 @@ public class SonetService extends Service {
 							try {
 								response = sonetOAuth.httpGet(LINKEDIN_URL_ME, LINKEDIN_HEADERS);
 								if (response != null) {
-									Log.v(TAG,response);
 									JSONObject jobj = new JSONObject(response);
 									ContentValues values = new ContentValues();
 									values.put(Accounts.SID, jobj.getString("id"));
@@ -518,11 +517,11 @@ public class SonetService extends Service {
 			}
 			profile = getBlob(bmp);
 		}
-		Cursor entity = this.getContentResolver().query(Entities.CONTENT_URI, new String[]{Entities._ID}, Entities.ACCOUNT + "=? and " + Entities.SID + "=?", new String[]{accountId, sid}, null);
+		Cursor entity = this.getContentResolver().query(Entities.CONTENT_URI, new String[]{Entities._ID}, Entities.ACCOUNT + "=? and " + Entities.ESID + "=?", new String[]{accountId, sid}, null);
 		if (entity.moveToFirst()) id = entity.getInt(entity.getColumnIndex(Entities._ID));
 		else {
 			ContentValues values = new ContentValues();
-			values.put(Entities.SID, esid);
+			values.put(Entities.ESID, esid);
 			values.put(Entities.FRIEND, friend);
 			values.put(Entities.PROFILE, profile);
 			values.put(Entities.ACCOUNT, accountId);
@@ -877,7 +876,7 @@ public class SonetService extends Service {
 						JSONArray entries = jobj.getJSONArray("entry");
 						// if there are updates, clear the cache
 						if (entries.length() > 0) {
-							SonetService.this.getContentResolver().delete(Entities.CONTENT_URI, Entities.ACCOUNT + "=? or " + Entities.SID + "\"\"", new String[]{account});
+							SonetService.this.getContentResolver().delete(Entities.CONTENT_URI, Entities.ACCOUNT + "=? or " + Entities.ESID + "=\"\"", new String[]{account});
 							SonetService.this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
 							for (int e = 0; e < entries.length(); e++) {
 								JSONObject entry = entries.getJSONObject(e);

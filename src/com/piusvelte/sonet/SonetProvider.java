@@ -144,19 +144,21 @@ public class SonetProvider extends ContentProvider {
 		statuses_stylesProjectionMap.put(Statuses_styles.STATUS_BG, Statuses_styles.STATUS_BG);
 		statuses_stylesProjectionMap.put(Statuses_styles.ICON, Statuses_styles.ICON);
 		statuses_stylesProjectionMap.put(Statuses_styles.SID, Statuses_styles.SID);
+		statuses_stylesProjectionMap.put(Statuses_styles.ENTITY, Statuses_styles.ENTITY);
+		statuses_stylesProjectionMap.put(Statuses_styles.ESID, Statuses_styles.ESID);
 		
 		sUriMatcher.addURI(AUTHORITY, TABLE_ENTITIES, ENTITIES);
 		
 		entitiesProjectionMap = new HashMap<String, String>();
 		entitiesProjectionMap.put(Entities._ID, Entities._ID);
-		entitiesProjectionMap.put(Entities.SID, Entities.SID);
+		entitiesProjectionMap.put(Entities.ESID, Entities.ESID);
 		entitiesProjectionMap.put(Entities.FRIEND, Entities.FRIEND);
 		entitiesProjectionMap.put(Entities.PROFILE, Entities.PROFILE);
 		entitiesProjectionMap.put(Entities.ACCOUNT, Entities.ACCOUNT);
 	}
 	
 	public enum StatusesStylesColumns {
-		_id, created, friend, profile, message, service, createdtext, widget, messages_color, friend_color, created_color, messages_textsize, friend_textsize, created_textsize, status_bg, icon, sid, entity
+		_id, created, friend, profile, message, service, createdtext, widget, messages_color, friend_color, created_color, messages_textsize, friend_textsize, created_textsize, status_bg, icon, sid, entity, esid
 	}
 
 	@Override
@@ -360,7 +362,7 @@ public class SonetProvider extends ContentProvider {
 					+ Entities.FRIEND + " text, "
 					+ Entities.PROFILE + " blob, "
 					+ Entities.ACCOUNT + " integer, "
-					+ Entities.SID + " text);");
+					+ Entities.ESID + " text);");
 			db.execSQL("create view if not exists " + VIEW_STATUSES_STYLES + " as select " +
 					TABLE_STATUSES + "." + Statuses._ID + ","
 					+ Statuses.CREATED + " as " + Statuses_styles.CREATED + ","
@@ -370,7 +372,7 @@ public class SonetProvider extends ContentProvider {
 					+ Statuses.SERVICE + " as " + Statuses_styles.SERVICE + ","
 					+ Statuses.CREATEDTEXT + " as " + Statuses_styles.CREATEDTEXT + ","
 					+ Statuses.WIDGET + " as " + Statuses_styles.WIDGET + ","
-					+ Statuses.ACCOUNT + " as " + Statuses_styles.ACCOUNT + ","
+					+ TABLE_STATUSES + "." + Statuses.ACCOUNT + " as " + Statuses_styles.ACCOUNT + ","
 					+ "(case when (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT + "=" + TABLE_STATUSES + "." + Statuses.ACCOUNT + ") is not null then (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT + "=" + TABLE_STATUSES + "." + Statuses.ACCOUNT
 					+ ") when (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT + " is null) is not null then (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT
 					+ " is null) else "	+ Sonet.default_friend_color + " end) as " + Statuses_styles.FRIEND_COLOR + ","
@@ -391,9 +393,11 @@ public class SonetProvider extends ContentProvider {
 					+ " is null) else "	+ Sonet.default_created_textsize + " end) as " + Statuses_styles.CREATED_TEXTSIZE + ","
 					+ Statuses.STATUS_BG + " as " + Statuses_styles.STATUS_BG + ","
 					+ Statuses.ICON + " as " + Statuses_styles.ICON + ","
-					+ Statuses.SID + " as " + Statuses_styles.SID
+					+ Statuses.SID + " as " + Statuses_styles.SID + ","
+					+ TABLE_ENTITIES + "." + Entities._ID + " as " + Statuses_styles.ENTITY + ","
+					+ Entities.ESID + " as " + Statuses_styles.ESID
 					+ " from " + TABLE_STATUSES + "," + TABLE_ENTITIES
-					+ " where " + Entities._ID + "=" + Statuses.ENTITY);
+					+ " where " + TABLE_ENTITIES + "." + Entities._ID + "=" + Statuses.ENTITY);
 		}
 
 		@Override
@@ -935,7 +939,7 @@ public class SonetProvider extends ContentProvider {
 						+ Statuses.STATUS_BG + " blob, "
 						+ Statuses.ICON + " blob, "
 						+ Statuses.SID + " integer, "
-						+ Statuses.ENTITY + "integer);");
+						+ Statuses.ENTITY + " integer);");
 				db.execSQL("insert into " + TABLE_STATUSES
 						+ " select "
 						+ Statuses._ID + ","
@@ -952,7 +956,7 @@ public class SonetProvider extends ContentProvider {
 						+ Entities.FRIEND + " text, "
 						+ Entities.PROFILE + " blob, "
 						+ Entities.ACCOUNT + " integer, "
-						+ Entities.SID + " text);");
+						+ Entities.ESID + " text);");
 				Cursor from_bkp =  db.query(TABLE_STATUSES + "_bkp", new String[]{Statuses._ID, "friend", "profile"}, null, null, null, null, null);
 				if (from_bkp.moveToFirst()) {
 					int iid = from_bkp.getColumnIndex(Statuses._ID),
@@ -981,7 +985,7 @@ public class SonetProvider extends ContentProvider {
 						+ Statuses.SERVICE + " as " + Statuses_styles.SERVICE + ","
 						+ Statuses.CREATEDTEXT + " as " + Statuses_styles.CREATEDTEXT + ","
 						+ Statuses.WIDGET + " as " + Statuses_styles.WIDGET + ","
-						+ Statuses.ACCOUNT + " as " + Statuses_styles.ACCOUNT + ","
+						+ TABLE_STATUSES + "." + Statuses.ACCOUNT + " as " + Statuses_styles.ACCOUNT + ","
 						+ "(case when (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT + "=" + TABLE_STATUSES + "." + Statuses.ACCOUNT + ") is not null then (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT + "=" + TABLE_STATUSES + "." + Statuses.ACCOUNT
 						+ ") when (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT + " is null) is not null then (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + TABLE_WIDGETS + "." + Widgets.WIDGET + "=" + TABLE_STATUSES + "." + Statuses.WIDGET + " and " + TABLE_WIDGETS + "." + Widgets.ACCOUNT
 						+ " is null) else "	+ Sonet.default_friend_color + " end) as " + Statuses_styles.FRIEND_COLOR + ","
@@ -1003,9 +1007,10 @@ public class SonetProvider extends ContentProvider {
 						+ Statuses.STATUS_BG + " as " + Statuses_styles.STATUS_BG + ","
 						+ Statuses.ICON + " as " + Statuses_styles.ICON + ","
 						+ Statuses.SID + " as " + Statuses_styles.SID + ","
-						+ Entities._ID + " as " + Statuses_styles.ENTITY
+						+ TABLE_ENTITIES + "." + Entities._ID + " as " + Statuses_styles.ENTITY + ","
+						+ Entities.ESID + " as " + Statuses_styles.ESID
 						+ " from " + TABLE_STATUSES + "," + TABLE_ENTITIES
-						+ " where " + Entities._ID + "=" + Statuses.ENTITY);
+						+ " where " + TABLE_ENTITIES + "." + Entities._ID + "=" + Statuses.ENTITY);
 				// background updating option
 				db.execSQL("drop table if exists " + TABLE_WIDGETS + "_bkp;");
 				db.execSQL("create temp table " + TABLE_WIDGETS + "_bkp as select * from " + TABLE_WIDGETS + ";");
