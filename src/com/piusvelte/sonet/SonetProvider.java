@@ -236,6 +236,7 @@ public class SonetProvider extends ContentProvider {
 		case ENTITIES:
 			rowId = db.insert(TABLE_ENTITIES, Entities._ID, values);
 			returnUri = ContentUris.withAppendedId(Entities.CONTENT_URI, rowId);
+			break;
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
 		}

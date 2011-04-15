@@ -332,13 +332,13 @@ public class Sonet {
 				}
 				break;
 			default:
-				Log.e(TAG,"http error:"+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
+				Log.e(TAG,"http error: "+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
 				break;
 			}
 		} catch (ClientProtocolException e) {
-			Log.e(TAG,"error:" + e);
+			Log.e(TAG, e.toString());
 		} catch (IOException e) {
-			Log.e(TAG,"error:" + e);
+			Log.e(TAG, e.toString());
 		}
 		return response;
 	}
