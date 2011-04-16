@@ -135,6 +135,7 @@ public class SonetProvider extends ContentProvider {
 		statuses_stylesProjectionMap.put(Statuses_styles.SERVICE, Statuses_styles.SERVICE);
 		statuses_stylesProjectionMap.put(Statuses_styles.CREATEDTEXT, Statuses_styles.CREATEDTEXT);
 		statuses_stylesProjectionMap.put(Statuses_styles.WIDGET, Statuses_styles.WIDGET);
+		statuses_stylesProjectionMap.put(Statuses_styles.ACCOUNT, Statuses_styles.ACCOUNT);
 		statuses_stylesProjectionMap.put(Statuses_styles.MESSAGES_COLOR, Statuses_styles.MESSAGES_COLOR);
 		statuses_stylesProjectionMap.put(Statuses_styles.FRIEND_COLOR, Statuses_styles.FRIEND_COLOR);
 		statuses_stylesProjectionMap.put(Statuses_styles.CREATED_COLOR, Statuses_styles.CREATED_COLOR);
@@ -158,7 +159,7 @@ public class SonetProvider extends ContentProvider {
 	}
 	
 	public enum StatusesStylesColumns {
-		_id, created, friend, profile, message, service, createdtext, widget, messages_color, friend_color, created_color, messages_textsize, friend_textsize, created_textsize, status_bg, icon, sid, entity, esid
+		_id, friend, profile, message, createdtext, messages_color, friend_color, created_color, messages_textsize, friend_textsize, created_textsize, status_bg, icon
 	}
 
 	@Override

@@ -74,7 +74,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.TimeZone;
 
 import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
@@ -116,14 +115,15 @@ public class SonetService extends Service {
 	private static final String TAG = "SonetService";
 	private static int[] map_icons = new int[]{R.drawable.twitter, R.drawable.facebook, R.drawable.myspace, R.drawable.buzz, R.drawable.foursquare, R.drawable.linkedin, R.drawable.salesforce};
 	private long mCurrentTimeMillis;
-	private int mTimezoneOffset = 0;
 	private static HashMap<String, ArrayList<GetStatusesTask>> sWidgetsTasks = new HashMap<String, ArrayList<GetStatusesTask>>();
 	private AlarmManager mAlarmManager;
 	private ConnectivityManager mConnectivityManager;
+	private Calendar mCalendar;
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
+		mCalendar = Calendar.getInstance();
 		mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 		mConnectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 	}
@@ -132,7 +132,6 @@ public class SonetService extends Service {
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
 		mCurrentTimeMillis = System.currentTimeMillis();
-		mTimezoneOffset = (TimeZone.getDefault()).getOffset(mCurrentTimeMillis);
 		if (intent != null) {
 			if (intent.getAction() != null) {
 				if (intent.getAction().equals(ACTION_REFRESH)) {
@@ -485,19 +484,18 @@ public class SonetService extends Service {
 	}
 
 	private String getCreatedText(long epoch, boolean time24hr) {
-		Calendar cal = Calendar.getInstance();
-		cal.setTimeInMillis(epoch);
-		cal.add(Calendar.MILLISECOND, mTimezoneOffset);
-		int hours = cal.get(Calendar.HOUR_OF_DAY);
-		Log.v(TAG,"set:"+epoch+",add:"+cal.getTimeInMillis()+","+hours+":"+cal.get(Calendar.MINUTE));
-		return mCurrentTimeMillis - cal.getTimeInMillis() < 86400000 ?
-				(time24hr ?
-						String.format("%d:%02d", hours, cal.get(Calendar.MINUTE))
-						: String.format("%d:%02d%s", hours < 13 ? hours : hours - 12, cal.get(Calendar.MINUTE), getString(hours < 13 ? R.string.am : R.string.pm)))
-						: String.format("%s %d", getResources().getStringArray(R.array.months)[cal.get(Calendar.MONTH)], cal.get(Calendar.DATE));
+		mCalendar.setTimeInMillis(epoch);
+		int hours = mCalendar.get(Calendar.HOUR_OF_DAY);
+		if (mCurrentTimeMillis - mCalendar.getTimeInMillis() < 86400000) {
+			if (time24hr) return String.format("%d:%02d", hours, mCalendar.get(Calendar.MINUTE));
+			else {
+				if (hours < 13) return String.format("%d:%02d%s", hours, mCalendar.get(Calendar.MINUTE), getString(R.string.am));
+				else return String.format("%d:%02d%s", hours - 12, mCalendar.get(Calendar.MINUTE), getString(R.string.pm));
+			}
+		} else return String.format("%s %d", getResources().getStringArray(R.array.months)[mCalendar.get(Calendar.MONTH)], mCalendar.get(Calendar.DATE));
 	}
 
-	private void addStatusItem(long created, String friend, String url, String message, String service, String createdText, String appWidgetId, String accountId, String sid, String esid) {
+	private void addStatusItem(long created, String friend, String url, String message, String service, boolean time24hr, String appWidgetId, String accountId, String sid, String esid) {
 		long id;
 		byte[] profile = null;
 		if (url != null) {
@@ -525,7 +523,7 @@ public class SonetService extends Service {
 		values.put(Statuses.ENTITY, id);
 		values.put(Statuses.MESSAGE, message);
 		values.put(Statuses.SERVICE, Integer.parseInt(service));
-		values.put(Statuses.CREATEDTEXT, createdText);
+		values.put(Statuses.CREATEDTEXT, getCreatedText(created, time24hr));
 		values.put(Statuses.WIDGET, Integer.parseInt(appWidgetId));
 		values.put(Statuses.ACCOUNT, Integer.parseInt(accountId));
 		values.put(Statuses.SID, sid);
@@ -776,7 +774,7 @@ public class SonetService extends Service {
 										user.getString("profile_image_url"),
 										entry.getString("text"),
 										service,
-										getCreatedText(epoch, time24hr),
+										time24hr,
 										widget,
 										account,
 										entry.getString(id),
@@ -825,7 +823,7 @@ public class SonetService extends Service {
 												String.format(profile, esid),
 												o.getString(message),
 												service,
-												getCreatedText(epoch, time24hr),
+												time24hr,
 												widget,
 												account,
 												o.getString(id),
@@ -859,7 +857,7 @@ public class SonetService extends Service {
 										authorObj.getString(thumbnailUrl),
 										entry.getString(status),
 										service,
-										getCreatedText(epoch, time24hr),
+										time24hr,
 										widget,
 										account,
 										entry.getString("statusId"),
@@ -889,7 +887,7 @@ public class SonetService extends Service {
 												actor.getString("thumbnailUrl"),
 												object.getString("originalContent"),
 												service,
-												getCreatedText(epoch, time24hr),
+												time24hr,
 												widget,
 												account,
 												entry.getString(id),
@@ -958,7 +956,7 @@ public class SonetService extends Service {
 										user.getString("photo"),
 										shout,
 										service,
-										getCreatedText(epoch, time24hr),
+										time24hr,
 										widget,
 										account,
 										checkin.getString(id),
@@ -1041,7 +1039,7 @@ public class SonetService extends Service {
 											person.has("pictureUrl") ? person.getString("pictureUrl") : null,
 													update,
 													service,
-													getCreatedText(epoch, time24hr),
+													time24hr,
 													widget,
 													account,
 													value.has("updateKey") ? value.getString("updateKey") : "",
@@ -1084,7 +1082,7 @@ public class SonetService extends Service {
 							null,
 							getString(R.string.myspace_permissions_message),
 							service,
-							null,
+							time24hr,
 							widget,
 							account,
 							"",

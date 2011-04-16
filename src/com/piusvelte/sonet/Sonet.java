@@ -264,6 +264,8 @@ public class Sonet {
 		public static final String MESSAGE = "message";
 		public static final String SERVICE = "service";
 		public static final String WIDGET = "widget";
+		// account specific settings per widget
+		public static final String ACCOUNT = "account";
 		public static final String CREATEDTEXT = "createdtext";
 		public static final String MESSAGES_COLOR = "messages_color";
 		public static final String FRIEND_COLOR = "friend_color";
@@ -271,8 +273,6 @@ public class Sonet {
 		public static final String MESSAGES_TEXTSIZE = "messages_textsize";
 		public static final String FRIEND_TEXTSIZE = "friend_textsize";
 		public static final String CREATED_TEXTSIZE = "created_textsize";
-		// account specific settings per widget
-		public static final String ACCOUNT = "account";
 		public static final String STATUS_BG = "status_bg";
 		public static final String ICON = "icon";
 		// service id, for posting and linking
