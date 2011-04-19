@@ -21,27 +21,30 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res/com.piusvelte.sonet"
 	android:layout_width="fill_parent" android:layout_height="fill_parent">
-	<com.admob.android.ads.AdView android:id="@+id/ad"
-		android:visibility="gone" android:layout_width="fill_parent"
-		android:layout_height="wrap_content" android:layout_alignParentBottom="true"
-		app:backgroundColor="@color/tertiary" app:primaryTextColor="@color/primary"
-		app:secondaryTextColor="@color/secondary" />
+	<Button android:id="@+id/comments" android:layout_width="wrap_content"
+		android:layout_height="wrap_content" android:text="@string/comments"
+		android:layout_alignParentTop="true" android:enabled="false"
+		android:layout_alignParentRight="true" />
+	<Button android:id="@+id/accounts" android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:text="@string/accounts"
+		android:layout_toLeftOf="@id/comments" android:layout_alignParentLeft="true" />
 	<RelativeLayout android:id="@+id/buttons"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
-		android:layout_above="@id/ad">
-		<Button android:id="@+id/submit" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:text="@string/submit"
+		android:layout_alignParentBottom="true">
+		<com.admob.android.ads.AdView android:id="@+id/ad"
+			android:visibility="gone" android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:layout_alignParentBottom="true" app:backgroundColor="@color/tertiary"
+			app:primaryTextColor="@color/primary" app:secondaryTextColor="@color/secondary" />
+		<Button android:id="@+id/send" android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:text="@string/send"
 			android:layout_alignParentRight="true" />
 		<Button android:id="@+id/location" android:layout_width="fill_parent"
 			android:layout_height="wrap_content" android:text="@string/location"
-			android:layout_alignParentLeft="true" android:layout_toLeftOf="@id/submit" />
+			android:layout_alignParentLeft="true" android:layout_toLeftOf="@id/send"
+			android:layout_above="@id/ad" />
 	</RelativeLayout>
-	<LinearLayout android:layout_width="fill_parent"
-		android:layout_height="fill_parent" android:layout_alignParentTop="true"
-		android:orientation="vertical" android:layout_above="@id/buttons">
-		<ListView android:id="@android:id/list" android:layout_width="fill_parent"
-			android:layout_height="fill_parent" android:layout_weight="1" />
-		<EditText android:id="@+id/post" android:layout_width="fill_parent"
-			android:layout_height="fill_parent" android:layout_weight="1" />
-	</LinearLayout>
+	<EditText android:id="@+id/post" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:layout_below="@id/accounts"
+		android:layout_above="@id/buttons" />
 </RelativeLayout>

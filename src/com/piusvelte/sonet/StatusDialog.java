@@ -73,6 +73,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 	private int mService = 0;
 	private long mAccount = Sonet.INVALID_ACCOUNT_ID;
 	private String mSid;
+	private String mEsid;
 	private Uri mData;
 	private boolean mLike = true;
 
@@ -82,12 +83,13 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 		Intent intent = getIntent();
 		if (intent != null) {
 			mData = intent.getData();
-			Cursor c = this.getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.WIDGET, Statuses_styles.SERVICE, Statuses_styles.ACCOUNT, Statuses_styles.SID}, Statuses_styles._ID + "=?", new String[] {mData.getLastPathSegment()}, null);
+			Cursor c = this.getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.WIDGET, Statuses_styles.SERVICE, Statuses_styles.ACCOUNT, Statuses_styles.SID, Statuses_styles.ESID}, Statuses_styles._ID + "=?", new String[] {mData.getLastPathSegment()}, null);
 			if (c.moveToFirst()) {
 				mAppWidgetId = c.getInt(c.getColumnIndex(Statuses_styles.WIDGET));
 				mService = c.getInt(c.getColumnIndex(Statuses_styles.SERVICE));
 				mAccount = c.getLong(c.getColumnIndex(Statuses_styles.ACCOUNT));
 				mSid = c.getString(c.getColumnIndex(Statuses_styles.SID));
+				mEsid = c.getString(c.getColumnIndex(Statuses_styles.ESID));
 			}
 			c.close();
 		}
@@ -99,7 +101,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 		case FACEBOOK:
 			Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 			if (account.moveToFirst()) {
-				String response = Sonet.httpGet(String.format(FACEBOOK_LIKES, TOKEN, account.getString(account.getColumnIndex(Accounts.TOKEN))));
+				String response = Sonet.httpGet(String.format(FACEBOOK_LIKES, mEsid, TOKEN, account.getString(account.getColumnIndex(Accounts.TOKEN))));
 				if (response != null) {
 					try {
 						JSONArray likes = new JSONObject(response).getJSONArray("data");
