@@ -65,8 +65,6 @@
     <string name="friend_color">Name Color</string>
     <string name="key_created_text">createdText</string>
     <string name="created_color">Time Color</string>
-    <string name="am">a.m.</string>
-    <string name="pm">p.m.</string>
     <string name="key_time_12_24">time1224</string>
     <string name="time24hr">Use 24-hour format</string>
     <string name="category_time">Time</string>

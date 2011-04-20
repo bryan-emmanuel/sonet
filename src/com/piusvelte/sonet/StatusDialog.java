@@ -37,10 +37,13 @@ import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.BUZZ;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_LIKES;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
+import static com.piusvelte.sonet.Sonet.BUZZ_BASE_URL;
 import static com.piusvelte.sonet.Sonet.BUZZ_LIKE;
 
 import static com.piusvelte.sonet.Tokens.TWITTER_KEY;
 import static com.piusvelte.sonet.Tokens.TWITTER_SECRET;
+import static com.piusvelte.sonet.Sonet.TWITTER_BASE_URL;
 import static com.piusvelte.sonet.Sonet.TWITTER_RETWEET;
 
 import com.piusvelte.sonet.Sonet.Accounts;
@@ -101,7 +104,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 		case FACEBOOK:
 			Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 			if (account.moveToFirst()) {
-				String response = Sonet.httpGet(String.format(FACEBOOK_LIKES, mEsid, TOKEN, account.getString(account.getColumnIndex(Accounts.TOKEN))));
+				String response = Sonet.httpGet(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mEsid, TOKEN, account.getString(account.getColumnIndex(Accounts.TOKEN))));
 				if (response != null) {
 					try {
 						JSONArray likes = new JSONObject(response).getJSONArray("data");
@@ -117,6 +120,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 					}
 				}
 			}
+			account.close();
 			items = new String[]{getString(mLike ? R.string.like : R.string.unlike), getString(R.string.comment), getString(R.string.button_post), getString(R.string.settings), getString(R.string.button_refresh)};
 			break;
 		case BUZZ:
@@ -145,8 +149,8 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 					if (c.moveToFirst()) {
 						SonetOAuth sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, c.getString(c.getColumnIndex(Accounts.TOKEN)), c.getString(c.getColumnIndex(Accounts.SECRET)));
 						try {
-							String response = sonetOAuth.httpGet(String.format(TWITTER_RETWEET, mSid));
-							//TODO:
+							String response = sonetOAuth.httpGet(String.format(TWITTER_RETWEET, TWITTER_BASE_URL, mSid));
+							//TODO: check response
 							Log.v(TAG,"retweet:"+response);
 						} catch (ClientProtocolException e) {
 							Log.e(TAG,e.toString());
@@ -167,8 +171,8 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 				if (mSid != null) {
 					Cursor c = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 					if (c.moveToFirst()) {
-						String response = mLike ? Sonet.httpPost(String.format(FACEBOOK_LIKES, mSid, TOKEN, c.getString(c.getColumnIndex(Accounts.TOKEN)))) : Sonet.httpDelete(String.format(FACEBOOK_LIKES, mSid, TOKEN, c.getString(c.getColumnIndex(Accounts.TOKEN))));
-						//TODO:
+						String response = mLike ? Sonet.httpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mSid, TOKEN, c.getString(c.getColumnIndex(Accounts.TOKEN)))) : Sonet.httpDelete(String.format(FACEBOOK_LIKES, mSid, TOKEN, c.getString(c.getColumnIndex(Accounts.TOKEN))));
+						//TODO: check response
 						Log.v(TAG,"like:"+response);
 					}
 					c.close();

@@ -21,10 +21,15 @@ package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.TOKEN;
 
+import static com.piusvelte.sonet.Sonet.BUZZ_BASE_URL;
 import static com.piusvelte.sonet.Sonet.BUZZ_URL_ME;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_ME;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE_BASE_URL;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_ME;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_BASE_URL;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_ME;
+import static com.piusvelte.sonet.Sonet.MYSPACE_BASE_URL;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_ME;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
@@ -41,6 +46,7 @@ import static com.piusvelte.sonet.Sonet.BUZZ;
 import static com.piusvelte.sonet.Tokens.BUZZ_KEY;
 import static com.piusvelte.sonet.Tokens.BUZZ_SECRET;
 
+import static com.piusvelte.sonet.Sonet.TWITTER_BASE_URL;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_FEED;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_FEED;
 import static com.piusvelte.sonet.Sonet.BUZZ_URL_FEED;
@@ -65,11 +71,7 @@ import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATETYPES;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -114,16 +116,13 @@ import android.widget.RemoteViews;
 public class SonetService extends Service {
 	private static final String TAG = "SonetService";
 	private static int[] map_icons = new int[]{R.drawable.twitter, R.drawable.facebook, R.drawable.myspace, R.drawable.buzz, R.drawable.foursquare, R.drawable.linkedin, R.drawable.salesforce};
-	private long mCurrentTimeMillis;
 	private static HashMap<String, ArrayList<GetStatusesTask>> sWidgetsTasks = new HashMap<String, ArrayList<GetStatusesTask>>();
 	private AlarmManager mAlarmManager;
 	private ConnectivityManager mConnectivityManager;
-	private Calendar mCalendar;
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		mCalendar = Calendar.getInstance();
 		mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 		mConnectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 	}
@@ -131,7 +130,6 @@ public class SonetService extends Service {
 	@Override
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
-		mCurrentTimeMillis = System.currentTimeMillis();
 		if (intent != null) {
 			if (intent.getAction() != null) {
 				if (intent.getAction().equals(ACTION_REFRESH)) {
@@ -216,7 +214,7 @@ public class SonetService extends Service {
 							}
 							break;
 						case FACEBOOK:
-							response = Sonet.httpGet(String.format(FACEBOOK_URL_ME, TOKEN, account_updates.getString(itoken)));
+							response = Sonet.httpGet(String.format(FACEBOOK_URL_ME, FACEBOOK_BASE_URL, TOKEN, account_updates.getString(itoken)));
 							if (response != null) {
 								try {
 									JSONObject jobj = new JSONObject(response);
@@ -231,7 +229,7 @@ public class SonetService extends Service {
 						case MYSPACE:
 							sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, account_updates.getString(itoken), account_updates.getString(isecret));
 							try {
-								response = sonetOAuth.httpGet(MYSPACE_URL_ME);
+								response = sonetOAuth.httpGet(String.format(MYSPACE_URL_ME, MYSPACE_BASE_URL));
 								if (response != null) {
 									JSONObject jobj = (new JSONObject(response)).getJSONObject("person");
 									ContentValues values = new ContentValues();
@@ -255,7 +253,7 @@ public class SonetService extends Service {
 						case BUZZ:
 							sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, account_updates.getString(itoken), account_updates.getString(isecret));
 							try {
-								response = sonetOAuth.httpGet(BUZZ_URL_ME);
+								response = sonetOAuth.httpGet(String.format(BUZZ_URL_ME, BUZZ_BASE_URL));
 								if (response != null) {
 									JSONObject jobj = (new JSONObject(response)).getJSONObject("data");
 									ContentValues values = new ContentValues();
@@ -277,7 +275,7 @@ public class SonetService extends Service {
 							}
 							break;
 						case FOURSQUARE:
-							response = Sonet.httpGet(String.format(FOURSQUARE_URL_ME, account_updates.getString(itoken)));
+							response = Sonet.httpGet(String.format(FOURSQUARE_URL_ME, FOURSQUARE_BASE_URL, account_updates.getString(itoken)));
 							if (response != null) {
 								try {
 									JSONObject jobj = (new JSONObject(response)).getJSONObject("response").getJSONObject("user");
@@ -292,7 +290,7 @@ public class SonetService extends Service {
 						case LINKEDIN:
 							sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, account_updates.getString(itoken), account_updates.getString(isecret));
 							try {
-								response = sonetOAuth.httpGet(LINKEDIN_URL_ME, LINKEDIN_HEADERS);
+								response = sonetOAuth.httpGet(String.format(LINKEDIN_URL_ME, LINKEDIN_BASE_URL), LINKEDIN_HEADERS);
 								if (response != null) {
 									JSONObject jobj = new JSONObject(response);
 									ContentValues values = new ContentValues();
@@ -412,7 +410,7 @@ public class SonetService extends Service {
 								icreated = statuses.getColumnIndex(Statuses.CREATED);
 								while (!statuses.isAfterLast()) {
 									values = new ContentValues();
-									values.put(Statuses.CREATEDTEXT, getCreatedText(statuses.getInt(icreated), time24hr));
+									values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(statuses.getInt(icreated), time24hr));
 									this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses._ID + "=?", new String[]{Integer.toString(statuses.getInt(iid))});
 									statuses.moveToNext();
 								}
@@ -424,7 +422,7 @@ public class SonetService extends Service {
 				} else this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[]{appWidgetId}); // no accounts, clear cache
 				accounts.close();
 				// the alarm should always be set, rather than depend on the tasks to complete
-				if (refreshInterval > 0) mAlarmManager.set(backgroundUpdate ? AlarmManager.RTC_WAKEUP : AlarmManager.RTC, mCurrentTimeMillis + refreshInterval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setData(Uri.withAppendedPath(Widgets.CONTENT_URI, appWidgetId)), 0));
+				if (refreshInterval > 0) mAlarmManager.set(backgroundUpdate ? AlarmManager.RTC_WAKEUP : AlarmManager.RTC, System.currentTimeMillis() + refreshInterval, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setData(Uri.withAppendedPath(Widgets.CONTENT_URI, appWidgetId)), 0));
 				checkWidgetUpdateReady(appWidgetId);
 			}
 		}
@@ -471,30 +469,6 @@ public class SonetService extends Service {
 		return null;
 	}
 
-	private long parseDate(String date, String format) {
-		SimpleDateFormat msformat = new SimpleDateFormat(format);
-		Date created;
-		try {
-			created = msformat.parse(date);
-		} catch (ParseException e) {
-			created = new Date();
-			Log.e(TAG,e.toString()); //Sun Mar 13 01:34:20 +0000 2011
-		}
-		return created.getTime();
-	}
-
-	private String getCreatedText(long epoch, boolean time24hr) {
-		mCalendar.setTimeInMillis(epoch);
-		int hours = mCalendar.get(Calendar.HOUR_OF_DAY);
-		if (mCurrentTimeMillis - mCalendar.getTimeInMillis() < 86400000) {
-			if (time24hr) return String.format("%d:%02d", hours, mCalendar.get(Calendar.MINUTE));
-			else {
-				if (hours < 13) return String.format("%d:%02d%s", hours, mCalendar.get(Calendar.MINUTE), getString(R.string.am));
-				else return String.format("%d:%02d%s", hours - 12, mCalendar.get(Calendar.MINUTE), getString(R.string.pm));
-			}
-		} else return String.format("%s %d", getResources().getStringArray(R.array.months)[mCalendar.get(Calendar.MONTH)], mCalendar.get(Calendar.DATE));
-	}
-
 	private void addStatusItem(long created, String friend, String url, String message, String service, boolean time24hr, String appWidgetId, String accountId, String sid, String esid) {
 		long id;
 		byte[] profile = null;
@@ -523,7 +497,7 @@ public class SonetService extends Service {
 		values.put(Statuses.ENTITY, id);
 		values.put(Statuses.MESSAGE, message);
 		values.put(Statuses.SERVICE, Integer.parseInt(service));
-		values.put(Statuses.CREATEDTEXT, getCreatedText(created, time24hr));
+		values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(created, time24hr));
 		values.put(Statuses.WIDGET, Integer.parseInt(appWidgetId));
 		values.put(Statuses.ACCOUNT, Integer.parseInt(accountId));
 		values.put(Statuses.SID, sid);
@@ -709,23 +683,23 @@ public class SonetService extends Service {
 				switch (Integer.parseInt(service)) {
 				case TWITTER:
 					sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, params[0], params[1]);
-					return sonetOAuth.httpGet(String.format(TWITTER_URL_FEED, status_count));
+					return sonetOAuth.httpGet(String.format(TWITTER_URL_FEED, TWITTER_BASE_URL, status_count));
 				case FACEBOOK:
-					return Sonet.httpGet(String.format(FACEBOOK_URL_FEED, status_count, TOKEN, params[0]));
+					return Sonet.httpGet(String.format(FACEBOOK_URL_FEED, FACEBOOK_BASE_URL, status_count, TOKEN, params[0]));
 				case MYSPACE:
 					sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, params[0], params[1]);
-					return sonetOAuth.httpGet(String.format(MYSPACE_URL_FEED, status_count));
+					return sonetOAuth.httpGet(String.format(MYSPACE_URL_FEED, MYSPACE_BASE_URL, status_count));
 				case BUZZ:
 					sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, params[0], params[1]);
-					return sonetOAuth.httpGet(String.format(BUZZ_URL_FEED, status_count));
+					return sonetOAuth.httpGet(String.format(BUZZ_URL_FEED, BUZZ_BASE_URL, status_count));
 					//							case SALESFORCE:
 					//								sonetOAuth = new SonetOAuth(SALESFORCE_KEY, SALESFORCE_SECRET, token, secret);
 					//								return sonetOAuth.httpGet(SALESFORCE_FEED);
 				case FOURSQUARE:
-					return Sonet.httpGet(String.format(FOURSQUARE_URL_FEED, status_count, params[0]));
+					return Sonet.httpGet(String.format(FOURSQUARE_URL_FEED, FOURSQUARE_BASE_URL, status_count, params[0]));
 				case LINKEDIN:
 					sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, params[0], params[1]);
-					return sonetOAuth.httpGet(String.format(LINKEDIN_URL_FEED, status_count), LINKEDIN_HEADERS);
+					return sonetOAuth.httpGet(String.format(LINKEDIN_URL_FEED, LINKEDIN_BASE_URL, status_count), LINKEDIN_HEADERS);
 				}
 			} catch (ClientProtocolException e) {
 				Log.e(TAG,e.toString());
@@ -768,7 +742,7 @@ public class SonetService extends Service {
 							for (int e = 0; e < entries.length(); e++) {
 								JSONObject entry = entries.getJSONObject(e);
 								JSONObject user = entry.getJSONObject("user");
-								long epoch = parseDate(entry.getString("created_at"), "EEE MMM dd HH:mm:ss z yyyy");
+								long epoch = Sonet.parseDate(entry.getString("created_at"), "EEE MMM dd HH:mm:ss z yyyy");
 								addStatusItem(epoch,
 										user.getString("name"),
 										user.getString("profile_image_url"),
@@ -816,9 +790,8 @@ public class SonetService extends Service {
 											}												
 										}
 										String esid = f.getString(id);
-										long epoch = Long.parseLong(o.getString(created_time)) * 1000;
 										addStatusItem(
-												epoch,
+												Long.parseLong(o.getString(created_time)) * 1000,
 												friend,
 												String.format(profile, esid),
 												o.getString(message),
@@ -851,7 +824,7 @@ public class SonetService extends Service {
 							for (int e = 0; e < entries.length(); e++) {
 								JSONObject entry = entries.getJSONObject(e);
 								JSONObject authorObj = entry.getJSONObject(author);
-								long epoch = parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'");
+								long epoch = Sonet.parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'");
 								addStatusItem(epoch,
 										authorObj.getString(displayName),
 										authorObj.getString(thumbnailUrl),
@@ -878,7 +851,7 @@ public class SonetService extends Service {
 							for (int e = 0; e < entries.length(); e++) {
 								JSONObject entry = entries.getJSONObject(e);
 								if (entry.has("published") && entry.has("actor") && entry.has("object")) {
-									long epoch = parseDate(entry.getString("published"), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+									long epoch = Sonet.parseDate(entry.getString("published"), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 									JSONObject actor = entry.getJSONObject("actor");
 									JSONObject object = entry.getJSONObject("object");
 									if (actor.has("name") && actor.has("thumbnailUrl") && object.has("originalContent")) {
@@ -1064,7 +1037,7 @@ public class SonetService extends Service {
 					int icreated = statuses.getColumnIndex(Statuses.CREATED);
 					while (!statuses.isAfterLast()) {
 						ContentValues values = new ContentValues();
-						values.put(Statuses.CREATEDTEXT, getCreatedText(statuses.getInt(icreated), time24hr));
+						values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(statuses.getInt(icreated), time24hr));
 						SonetService.this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
 						statuses.moveToNext();
 					}
