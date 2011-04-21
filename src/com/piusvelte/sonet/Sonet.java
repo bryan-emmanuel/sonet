@@ -96,15 +96,16 @@ public class Sonet {
 	protected static final String BUZZ_URL_FEED = "%sactivities/@me/@consumption?alt=json&max-results=%s&key=%s";
 	protected static final String BUZZ_LIKE = "%sactivities/@me/@liked/%s?alt=json&key=%s";
 	protected static final String BUZZ_COMMENT = "%sactivities/%s/@self/%s/@comments?alt=json&key=%s";
+	protected static final String BUZZ_ACTIVITY = "%sactivities/@me/@self%s?alt=json&key=%s";
 
 	protected static final int FOURSQUARE = 4;
 	protected static final String FOURSQUARE_BASE_URL = "https://foursquare.com/v2/";
 	protected static final String FOURSQUARE_URL_ACCESS = "https://foursquare.com/oauth2/access_token";
 	protected static final String FOURSQUARE_URL_AUTHORIZE = "https://foursquare.com/oauth2/authorize?client_id=%s&response_type=token&redirect_uri=%s&display=touch";
-	protected static final String FOURSQUARE_URL_ME = "%susers/self?oauth_token=%s";
-	protected static final String FOURSQUARE_URL_FEED = "%scheckins/recent?limit=%s&oauth_token=%s";
+	protected static final String FOURSQUARE_URL_ME = "%susers/self.json?oauth_token=%s";
+	protected static final String FOURSQUARE_URL_FEED = "%scheckins/recent.json?limit=%s&oauth_token=%s";
 	protected static final String FOURSQUARE_CHECKIN = "%scheckins/add?oauth_token=%s";
-	protected static final String FOURSQUARE_ADDCOMMENT = "%scheckins/%s/addcomment/&text=%s&oauth_token=%s";
+	protected static final String FOURSQUARE_ADDCOMMENT = "%scheckins/%s/addcomment?text=%s&oauth_token=%s";
 
 	protected static final int LINKEDIN = 5;
 	protected static final String LINKEDIN_BASE_URL = "https://api.linkedin.com/v1/people/~";
@@ -336,7 +337,9 @@ public class Sonet {
 
 					String line = null;
 					try {
-						while ((line = reader.readLine()) != null) sb.append(line + "\n");
+						while ((line = reader.readLine()) != null) {
+							sb.append(line + "\n");
+						}
 					} catch (IOException e) {
 						e.printStackTrace();
 					} finally {
@@ -390,12 +393,67 @@ public class Sonet {
 		mCalendar.setTimeInMillis(epoch);
 		int hours = mCalendar.get(Calendar.HOUR_OF_DAY);
 		if (System.currentTimeMillis() - mCalendar.getTimeInMillis() < 86400000) {
-			if (time24hr) return String.format("%d:%02d", hours, mCalendar.get(Calendar.MINUTE));
-			else {
-				if (hours < 13) return String.format("%d:%02d%s", hours, mCalendar.get(Calendar.MINUTE), Sonet.AM);
-				else return String.format("%d:%02d%s", hours - 12, mCalendar.get(Calendar.MINUTE), Sonet.PM);
+			if (time24hr) {
+				return String.format("%d:%02d", hours, mCalendar.get(Calendar.MINUTE));
+			} else {
+				if (hours < 13) {
+					return String.format("%d:%02d%s", hours, mCalendar.get(Calendar.MINUTE), Sonet.AM);
+				} else {
+					return String.format("%d:%02d%s", hours - 12, mCalendar.get(Calendar.MINUTE), Sonet.PM);
+				}
 			}
 		} else return String.format("%s %d", Sonet.MONTHS[mCalendar.get(Calendar.MONTH)], mCalendar.get(Calendar.DATE));
+	}
+
+	protected static int[] arrayCat(int[] a, int[] b) {
+		int[] c;
+		for (int i = 0; i < b.length; i++) {
+			c = new int[a.length];
+			for (int n = 0; n < c.length; n++) {
+				c[n] = a[n];
+			}
+			a = new int[c.length + 1];
+			for (int n = 0; n < c.length; n++) {
+				a[n] = c[n];
+			}
+			a[c.length] = b[i];
+		}
+		return a;
+	}
+
+	protected static int[] arrayPush(int[] a, int b) {
+		int[] c = new int[a.length];
+		for (int i = 0; i < a.length; i++) {
+			c[i] = a[i];
+		}
+		a = new int[c.length + 1];
+		for (int i = 0; i < c.length; i++) {
+			a[i] = c[i];
+		}
+		a[a.length - 1] = b;
+		return a;
+	}
+	
+	protected static int[] arrayRemove(int[] a, int b) {
+		int[] c = new int[a.length - 1];
+		int n = 0;
+		for (int i = 0; n < c.length; i++) {
+			if ((n != i) || (a[i] != b)) {
+				c[n++] = a[i];
+			}
+		}
+		return c;
+	}
+
+	protected static boolean arrayContains(int[] a, int b) {
+		boolean contains = false;
+		for (int c : a) {
+			if (c == b) {
+				contains = true;
+				break;
+			}
+		}
+		return contains;
 	}
 
 }

@@ -51,8 +51,8 @@ DialogInterface.OnClickListener {
 		mAppWidgetIds = new int[0];
 		// validate appwidgetids from appwidgetmanager
 		mAppWidgetManager = AppWidgetManager.getInstance(this);
-		mAppWidgetIds = arrayCat(
-				arrayCat(mAppWidgetManager.getAppWidgetIds(new ComponentName(
+		mAppWidgetIds = Sonet.arrayCat(
+				Sonet.arrayCat(mAppWidgetManager.getAppWidgetIds(new ComponentName(
 						this, SonetWidget_4x2.class)),
 						mAppWidgetManager.getAppWidgetIds(new ComponentName(
 								this, SonetWidget_4x3.class))),
@@ -68,7 +68,7 @@ DialogInterface.OnClickListener {
 			int iwidget = widgets.getColumnIndex(Widgets.WIDGET), appWidgetId;
 			while (!widgets.isAfterLast()) {
 				appWidgetId = widgets.getInt(iwidget);
-				if ((appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) && !arrayContains(mAppWidgetIds, appWidgetId)) removeAppWidgets = arrayPush(removeAppWidgets, appWidgetId);
+				if ((appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) && !Sonet.arrayContains(mAppWidgetIds, appWidgetId)) removeAppWidgets = Sonet.arrayPush(removeAppWidgets, appWidgetId);
 				widgets.moveToNext();
 			}
 		}
@@ -127,42 +127,6 @@ DialogInterface.OnClickListener {
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 		if ((requestCode == RESULT_REFRESH) && (resultCode == RESULT_OK)) mUpdateWidget = true;
-	}
-
-	private int[] arrayCat(int[] a, int[] b) {
-		int[] c;
-		for (int i = 0; i < b.length; i++) {
-			c = new int[a.length];
-			for (int n = 0; n < c.length; n++)
-				c[n] = a[n];
-			a = new int[c.length + 1];
-			for (int n = 0; n < c.length; n++)
-				a[n] = c[n];
-			a[c.length] = b[i];
-		}
-		return a;
-	}
-
-	private int[] arrayPush(int[] a, int b) {
-		int[] c = new int[a.length];
-		for (int i = 0; i < a.length; i++)
-			c[i] = a[i];
-		a = new int[c.length + 1];
-		for (int i = 0; i < c.length; i++)
-			a[i] = c[i];
-		a[a.length - 1] = b;
-		return a;
-	}
-
-	private boolean arrayContains(int[] a, int b) {
-		boolean contains = false;
-		for (int c : a) {
-			if (c == b) {
-				contains = true;
-				break;
-			}
-		}
-		return contains;
 	}
 
 	@Override

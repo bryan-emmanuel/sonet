@@ -27,7 +27,8 @@
 		android:layout_alignParentRight="true" />
 	<Button android:id="@+id/accounts" android:layout_width="fill_parent"
 		android:layout_height="wrap_content" android:text="@string/accounts"
-		android:layout_toLeftOf="@id/comments" android:layout_alignParentLeft="true" />
+		android:enabled="false" android:layout_toLeftOf="@id/comments"
+		android:layout_alignParentLeft="true" />
 	<RelativeLayout android:id="@+id/buttons"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
 		android:layout_alignParentBottom="true">

@@ -36,12 +36,10 @@ import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.BUZZ;
 import static com.piusvelte.sonet.Sonet.LINKEDIN;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_COMMENTS;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_LIKES;
 import static com.piusvelte.sonet.Sonet.TOKEN;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.ListActivity;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
@@ -61,6 +59,7 @@ public class SonetComments extends ListActivity implements OnClickListener {
 	private String mEsid;
 	private Uri mData;
 	private List<HashMap<String, String>> mComments = new ArrayList<HashMap<String, String>>();
+	protected static final String FACEBOOK_COMMENTS = "%s%s/comments?date_format=U&format=json&sdk=android&%s=%s";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -144,8 +143,6 @@ public class SonetComments extends ListActivity implements OnClickListener {
 	@Override
 	protected void onListItemClick(ListView list, View view, int position, long id) {
 		super.onListItemClick(list, view, position, id);
-		//TODO: should display a dialog confirming the like/unlike
-		final int which = position;
 		switch (mService) {
 		case FACEBOOK:
 			AlertDialog.Builder dialog = new AlertDialog.Builder(this);

@@ -41,11 +41,15 @@ import static com.piusvelte.sonet.Sonet.FACEBOOK_LIKES;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
 import static com.piusvelte.sonet.Sonet.BUZZ_BASE_URL;
 import static com.piusvelte.sonet.Sonet.BUZZ_LIKE;
+import static com.piusvelte.sonet.Sonet.BUZZ_ACTIVITY;
 
 import static com.piusvelte.sonet.SonetTokens.TWITTER_KEY;
 import static com.piusvelte.sonet.SonetTokens.TWITTER_SECRET;
 import static com.piusvelte.sonet.Sonet.TWITTER_BASE_URL;
 import static com.piusvelte.sonet.Sonet.TWITTER_RETWEET;
+import static com.piusvelte.sonet.SonetTokens.BUZZ_KEY;
+import static com.piusvelte.sonet.SonetTokens.BUZZ_SECRET;
+import static com.piusvelte.sonet.SonetTokens.BUZZ_API_KEY;
 
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
@@ -63,17 +67,6 @@ import android.util.Log;
 public class StatusDialog extends Activity implements DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
 	private static final String TAG = "StatusDialog";
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
-	// options are:
-	// [[Like|Unlike]|Retweet]
-	// Comment|Reply
-	// Post|Tweet
-	// Settings
-	// Refresh
-	private static final int LIKE = 0;
-	private static final int COMMENT = 1;
-	private static final int POST = 2;
-	private static final int SETTINGS = 3;
-	private static final int REFRESH = 4;
 	private int mService = 0;
 	private long mAccount = Sonet.INVALID_ACCOUNT_ID;
 	private String mSid;
@@ -98,12 +91,13 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 			c.close();
 		}
 		String[] items;
+		Cursor account;
 		switch (mService) {
 		case TWITTER:
 			items = new String[]{getString(R.string.retweet), getString(R.string.reply), getString(R.string.tweet), getString(R.string.settings), getString(R.string.button_refresh)};
 			break;
 		case FACEBOOK:
-			Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+			account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 			if (account.moveToFirst()) {
 				String response = Sonet.httpGet(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mEsid, TOKEN, account.getString(account.getColumnIndex(Accounts.TOKEN))));
 				if (response != null) {
@@ -126,6 +120,37 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 			break;
 		case BUZZ:
 			//TODO: like
+			account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+			if (account.moveToFirst()) {
+				SonetOAuth sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));				
+				try {
+					String response = sonetOAuth.httpGet(String.format(BUZZ_ACTIVITY, BUZZ_BASE_URL, mEsid, BUZZ_API_KEY));
+					if (response != null) {
+						Log.v(TAG,"response:"+response);
+						JSONArray likes = new JSONObject(response).getJSONArray("data");
+						for (int i = 0; i < likes.length(); i++) {
+							JSONObject like = likes.getJSONObject(i);
+							if (like.getString("id") == account.getString(account.getColumnIndex(Accounts.SID))) {
+								mLike = false;
+								break;
+							}
+						}
+					}
+				} catch (ClientProtocolException e) {
+					Log.e(TAG, e.toString());
+				} catch (OAuthMessageSignerException e) {
+					Log.e(TAG, e.toString());
+				} catch (OAuthExpectationFailedException e) {
+					Log.e(TAG, e.toString());
+				} catch (OAuthCommunicationException e) {
+					Log.e(TAG, e.toString());
+				} catch (IOException e) {
+					Log.e(TAG, e.toString());
+				} catch (JSONException e) {
+					Log.e(TAG, e.toString());
+				}
+			}
+			account.close();
 			items = new String[]{getString(mLike ? R.string.like : R.string.unlike), getString(R.string.comment), getString(R.string.button_post), getString(R.string.settings), getString(R.string.button_refresh)};
 			break;
 		case LINKEDIN:
@@ -133,7 +158,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 			items = new String[]{getString(mLike ? R.string.like : R.string.unlike), getString(R.string.comment), getString(R.string.button_post), getString(R.string.settings), getString(R.string.button_refresh)};
 			break;
 		default:
-			items = new String[]{getString(R.string.comment), getString(R.string.button_post), getString(R.string.settings), getString(R.string.button_refresh)};
+			items = new String[]{getString(R.string.settings), getString(R.string.button_refresh)};
 			break;
 		}
 		(new AlertDialog.Builder(this))
@@ -146,7 +171,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 	@Override
 	public void onClick(DialogInterface dialog, int which) {
 		switch (which) {
-		case LIKE:
+		case 0:
 			switch (mService) {
 			case TWITTER:
 				if (mSid != null) {
@@ -194,7 +219,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 				break;
 			}
 			break;
-		case COMMENT:
+		case 1:
 			switch (mService) {
 			case TWITTER:
 				startActivity(new Intent(this, SonetCreatePost.class).setData(mData));
@@ -210,7 +235,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 				break;
 			}
 			break;
-		case POST:
+		case 2:
 			switch (mService) {
 			case TWITTER:
 				startActivity(new Intent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.CONTENT_URI, Long.toString(mAccount))));
@@ -229,7 +254,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 				break;
 			}
 			break;
-		case SETTINGS:
+		case 3:
 			switch (mService) {
 			case TWITTER:
 				startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
@@ -248,7 +273,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 				break;
 			} 
 			break;
-		case REFRESH:
+		case 4:
 			startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
 			break;
 		}

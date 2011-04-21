@@ -201,17 +201,17 @@ public class SonetService extends Service {
 									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
 								}
 							} catch (ClientProtocolException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							} catch (OAuthMessageSignerException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							} catch (OAuthExpectationFailedException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							} catch (OAuthCommunicationException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							} catch (IOException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							} catch (JSONException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							}
 							break;
 						case FACEBOOK:
@@ -223,7 +223,7 @@ public class SonetService extends Service {
 									values.put(Accounts.SID, jobj.getString("id"));
 									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
 								} catch (JSONException e) {
-									Log.e(TAG,e.toString());
+									Log.e(TAG, service + ":" + e.toString());
 								}
 							}
 							break;
@@ -238,17 +238,17 @@ public class SonetService extends Service {
 									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
 								}
 							} catch (ClientProtocolException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							} catch (OAuthMessageSignerException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							} catch (OAuthExpectationFailedException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							} catch (OAuthCommunicationException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							} catch (IOException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							} catch (JSONException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							}
 							break;
 						case BUZZ:
@@ -262,17 +262,17 @@ public class SonetService extends Service {
 									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
 								}
 							} catch (ClientProtocolException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							} catch (OAuthMessageSignerException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							} catch (OAuthExpectationFailedException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							} catch (OAuthCommunicationException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							} catch (IOException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							} catch (JSONException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							}
 							break;
 						case FOURSQUARE:
@@ -284,7 +284,8 @@ public class SonetService extends Service {
 									values.put(Accounts.SID, jobj.getString("id"));
 									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
 								} catch (JSONException e) {
-									Log.e(TAG,e.toString());
+									Log.e(TAG, service + ":" + e.toString());
+									Log.e(TAG, response);
 								}
 							}
 							break;
@@ -299,17 +300,17 @@ public class SonetService extends Service {
 									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
 								}
 							} catch (ClientProtocolException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							} catch (OAuthMessageSignerException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							} catch (OAuthExpectationFailedException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							} catch (OAuthCommunicationException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							} catch (IOException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							} catch (JSONException e) {
-								Log.e(TAG,e.toString());
+								Log.e(TAG, service + ":" + e.toString());
 							}
 							break;
 						}
@@ -609,7 +610,8 @@ public class SonetService extends Service {
 							views.setTextColor(map_created[count_status], created_color);
 							views.setFloat(map_created[count_status], "setTextSize", created_textsize);
 							byte[] profile = statuses_styles.getBlob(iprofile);
-							Bitmap profilebmp = BitmapFactory.decodeByteArray(profile, 0, profile.length);
+							Bitmap profilebmp = null;
+							if (profile != null) profilebmp = BitmapFactory.decodeByteArray(profile, 0, profile.length);
 							if (profilebmp != null) views.setImageViewBitmap(map_profile[count_status], profilebmp);						
 							count_status++;
 							statuses_styles.moveToNext();
@@ -703,15 +705,15 @@ public class SonetService extends Service {
 					return sonetOAuth.httpGet(String.format(LINKEDIN_URL_FEED, LINKEDIN_BASE_URL, status_count), LINKEDIN_HEADERS);
 				}
 			} catch (ClientProtocolException e) {
-				Log.e(TAG,e.toString());
+				Log.e(TAG, service + ":" + e.toString());
 			} catch (OAuthMessageSignerException e) {
-				Log.e(TAG,e.toString());
+				Log.e(TAG, service + ":" + e.toString());
 			} catch (OAuthExpectationFailedException e) {
-				Log.e(TAG,e.toString());
+				Log.e(TAG, service + ":" + e.toString());
 			} catch (OAuthCommunicationException e) {
-				Log.e(TAG,e.toString());
+				Log.e(TAG, service + ":" + e.toString());
 			} catch (IOException e) {
-				Log.e(TAG,e.toString());
+				Log.e(TAG, service + ":" + e.toString());
 			}
 			return null;
 		}
@@ -757,7 +759,7 @@ public class SonetService extends Service {
 							}
 						} else updateCreatedText = true;
 					} catch (JSONException e) {
-						Log.e(TAG,e.toString());
+						Log.e(TAG, service + ":" + e.toString());
 					}
 					break;
 				case FACEBOOK:
@@ -807,7 +809,7 @@ public class SonetService extends Service {
 							}
 						} else updateCreatedText = true;
 					} catch (JSONException e) {
-						Log.e(TAG, e.toString());
+						Log.e(TAG, service + ":" + e.toString());
 					}
 					break;
 				case MYSPACE:
@@ -839,7 +841,7 @@ public class SonetService extends Service {
 							}
 						} else updateCreatedText = true;
 					} catch (JSONException e) {
-						Log.e(TAG, e.toString());
+						Log.e(TAG, service + ":" + e.toString());
 					}
 					break;
 				case BUZZ:
@@ -871,7 +873,7 @@ public class SonetService extends Service {
 							}
 						} else updateCreatedText = true;
 					} catch (JSONException e) {
-						Log.e(TAG,e.toString());
+						Log.e(TAG, service + ":" + e.toString());
 					}
 					break;
 					//							case SALESFORCE:
@@ -938,7 +940,8 @@ public class SonetService extends Service {
 							}
 						} else updateCreatedText = true;
 					} catch (JSONException e) {
-						Log.e(TAG,e.toString());
+						Log.e(TAG, service + ":" + e.toString());
+						Log.e(TAG, response);
 					}
 					break;
 				case LINKEDIN:
@@ -1022,7 +1025,7 @@ public class SonetService extends Service {
 							}
 						} else updateCreatedText = true;
 					} catch (JSONException e) {
-						Log.e(TAG,e.toString());
+						Log.e(TAG, service + ":" + e.toString());
 					}
 					break;
 				}

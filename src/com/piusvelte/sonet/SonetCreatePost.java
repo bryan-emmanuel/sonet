@@ -20,14 +20,23 @@
 package com.piusvelte.sonet;
 
 import com.piusvelte.sonet.Sonet.Accounts;
+
+import static com.piusvelte.sonet.Sonet.BUZZ;
+import static com.piusvelte.sonet.Sonet.FACEBOOK;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE;
+import static com.piusvelte.sonet.Sonet.LINKEDIN;
+import static com.piusvelte.sonet.Sonet.MYSPACE;
+import static com.piusvelte.sonet.Sonet.SALESFORCE;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.appwidget.AppWidgetManager;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
+import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.Intent;
 import android.content.UriMatcher;
 import android.database.Cursor;
@@ -44,7 +53,8 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 	private static final String TAG = "SonetCreatePost";
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private int mService = 0;
-	private long mAccount = Sonet.INVALID_ACCOUNT_ID;
+	private int mAccount = (int) Sonet.INVALID_ACCOUNT_ID;
+	private int[] mAccountsToPost;
 	private String mSid;
 	private Uri mData;
 	private static final int COMMENT = 0;
@@ -128,17 +138,19 @@ Content-Type: application/json
 				// default to the account passed in, but allow selecting additional accounts
 				Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
 				if (account.moveToFirst()) {
-					mService = account.getInt(account.getColumnIndex(Statuses_styles.SERVICE));					
+					mAccount = account.getInt(account.getColumnIndex(Accounts._ID));
+					mService = account.getInt(account.getColumnIndex(Accounts.SERVICE));
+					this.mAccountsToPost = Sonet.arrayPush(mAccountsToPost, mAccount);
 				}
 				account.close();
+				mAccounts.setEnabled(true);
+				mAccounts.setOnClickListener(this);
 				break;
 			}
 		}
-		
 		mPost.setOnKeyListener(this);
 		mSend.setOnClickListener(this);
 		mLocation.setOnClickListener(this);
-		mAccounts.setOnClickListener(this);
 	}
 	
 	@Override
@@ -169,6 +181,44 @@ Content-Type: application/json
 		} else if (v == mComments) this.startActivity(new Intent(this, SonetComments.class).setData(mData));
 		else if (v == mAccounts) {
 			//TODO: dialog to allow selection of accounts to post to, defaulting the replying/commenting account if this is a reply/comment
+			Cursor c = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID,
+					"(case when " + Accounts.SERVICE + "='" + TWITTER + "' then 'Twitter: ' when "
+					+ Accounts.SERVICE + "='" + FACEBOOK + "' then 'Facebook: ' when "
+					+ Accounts.SERVICE + "='" + MYSPACE + "' then 'MySpace: ' when "
+					+ Accounts.SERVICE + "='" + BUZZ + "' then 'Buzz: ' when "
+					+ Accounts.SERVICE + "='" + LINKEDIN + "' then 'LinkedIn: ' when "
+					+ Accounts.SERVICE + "='" + SALESFORCE + "' then 'Salesforce: ' when "
+					+ Accounts.SERVICE + "='" + FOURSQUARE + "' then 'Foursquare: ' else '' end)||" + Accounts.USERNAME + " as " + Accounts.USERNAME, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)}, null);
+			if (c.moveToFirst()) {
+				int iid = c.getColumnIndex(Accounts._ID),
+				iusername = c.getColumnIndex(Accounts.USERNAME),
+				i = -1;
+				final int[] accountIndexes = new int[c.getCount()];
+				final String[] accounts = new String[c.getCount()];
+				final boolean[] defaults = new boolean[c.getCount()];
+				while (!c.isAfterLast()) {
+					accountIndexes[i++] = c.getInt(iid);
+					accounts[i] = c.getString(iusername);
+					defaults[i] = c.getInt(iid) == mAccount;
+					c.moveToNext();
+				}
+				AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+				dialog.setTitle(R.string.accounts)
+				.setMultiChoiceItems(accounts, defaults, new DialogInterface.OnMultiChoiceClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+						mAccountsToPost = isChecked ? Sonet.arrayPush(mAccountsToPost, accountIndexes[which]) : Sonet.arrayRemove(mAccountsToPost, accountIndexes[which]);
+					}
+				})
+				.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+				})
+				.show();
+			}
+			c.close();
 		}
 	}
 
