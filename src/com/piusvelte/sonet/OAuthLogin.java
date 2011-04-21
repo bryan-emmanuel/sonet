@@ -27,8 +27,8 @@ import static com.piusvelte.sonet.Sonet.TWITTER_BASE_URL;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_ACCESS;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_REQUEST;
-import static com.piusvelte.sonet.Tokens.TWITTER_KEY;
-import static com.piusvelte.sonet.Tokens.TWITTER_SECRET;
+import static com.piusvelte.sonet.SonetTokens.TWITTER_KEY;
+import static com.piusvelte.sonet.SonetTokens.TWITTER_SECRET;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -49,8 +49,9 @@ import static com.piusvelte.sonet.Sonet.BUZZ_SCOPE;
 import static com.piusvelte.sonet.Sonet.BUZZ_URL_ACCESS;
 import static com.piusvelte.sonet.Sonet.BUZZ_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.BUZZ_URL_REQUEST;
-import static com.piusvelte.sonet.Tokens.BUZZ_KEY;
-import static com.piusvelte.sonet.Tokens.BUZZ_SECRET;
+import static com.piusvelte.sonet.SonetTokens.BUZZ_KEY;
+import static com.piusvelte.sonet.SonetTokens.BUZZ_SECRET;
+import static com.piusvelte.sonet.SonetTokens.BUZZ_API_KEY;
 import static com.piusvelte.sonet.Sonet.BUZZ_BASE_URL;
 import static com.piusvelte.sonet.Sonet.BUZZ_URL_ME;
 
@@ -58,8 +59,8 @@ import static com.piusvelte.sonet.Sonet.MYSPACE;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_ACCESS;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_REQUEST;
-import static com.piusvelte.sonet.Tokens.MYSPACE_KEY;
-import static com.piusvelte.sonet.Tokens.MYSPACE_SECRET;
+import static com.piusvelte.sonet.SonetTokens.MYSPACE_KEY;
+import static com.piusvelte.sonet.SonetTokens.MYSPACE_SECRET;
 import static com.piusvelte.sonet.Sonet.MYSPACE_BASE_URL;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_ME;
 
@@ -72,19 +73,19 @@ import static com.piusvelte.sonet.Sonet.MYSPACE_URL_ME;
 
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_AUTHORIZE;
-import static com.piusvelte.sonet.Tokens.FACEBOOK_ID;
+import static com.piusvelte.sonet.SonetTokens.FACEBOOK_ID;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_ME;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
 
 import static com.piusvelte.sonet.Sonet.FOURSQUARE;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_AUTHORIZE;
-import static com.piusvelte.sonet.Tokens.FOURSQUARE_KEY;
+import static com.piusvelte.sonet.SonetTokens.FOURSQUARE_KEY;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_BASE_URL;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_ME;
 
 import static com.piusvelte.sonet.Sonet.LINKEDIN;
-import static com.piusvelte.sonet.Tokens.LINKEDIN_KEY;
-import static com.piusvelte.sonet.Tokens.LINKEDIN_SECRET;
+import static com.piusvelte.sonet.SonetTokens.LINKEDIN_KEY;
+import static com.piusvelte.sonet.SonetTokens.LINKEDIN_SECRET;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_ACCESS;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_REQUEST;
@@ -283,7 +284,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 							} else if (BUZZ_CALLBACK.getHost().equals(uri.getHost())) {
 								mWebView.setVisibility(View.INVISIBLE);
 								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER));
-								String response = mSonetOAuth.httpGet(String.format(BUZZ_URL_ME, BUZZ_BASE_URL));
+								String response = mSonetOAuth.httpGet(String.format(BUZZ_URL_ME, BUZZ_BASE_URL, BUZZ_API_KEY));
 								if (response != null) {
 									JSONObject data = new JSONObject(response).getJSONObject("data");
 									if (data.has("displayName") && data.has("id")) addAccount(data.getString("displayName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, BUZZ, data.getString("id"));

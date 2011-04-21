@@ -34,6 +34,7 @@ import com.piusvelte.sonet.Sonet.Statuses_styles;
 
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.BUZZ;
+import static com.piusvelte.sonet.Sonet.LINKEDIN;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_COMMENTS;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_LIKES;
@@ -133,6 +134,9 @@ public class SonetComments extends ListActivity implements OnClickListener {
 			break;
 		case BUZZ:
 			//TODO:
+			break;
+		case LINKEDIN:
+			//TODO:
 		}
 		this.setListAdapter(new SimpleAdapter(this, mComments, R.layout.comment, new String[]{Entities.FRIEND, Statuses.MESSAGE, Statuses.CREATEDTEXT, getString(R.string.like)}, new int[]{R.id.friend, R.id.message, R.id.created, R.id.like}));
 	}
@@ -163,6 +167,9 @@ public class SonetComments extends ListActivity implements OnClickListener {
 			.show();
 			break;
 		case BUZZ:
+			//TODO:
+			break;
+		case LINKEDIN:
 			//TODO:
 		}
 	}

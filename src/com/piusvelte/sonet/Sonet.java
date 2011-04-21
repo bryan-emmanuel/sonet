@@ -92,10 +92,10 @@ public class Sonet {
 	protected static final String BUZZ_URL_AUTHORIZE = "https://www.google.com/buzz/api/auth/OAuthAuthorizeToken?scope=%s&xoauth_displayname=%s&domain=%s&btmpl=mobile";
 	protected static final String BUZZ_URL_ACCESS = "https://www.google.com/accounts/OAuthGetAccessToken";
 	protected static final String BUZZ_SCOPE = "https://www.googleapis.com/auth/buzz";
-	protected static final String BUZZ_URL_ME = "%speople/@me/@self?alt=json";
-	protected static final String BUZZ_URL_FEED = "%sactivities/@me/@consumption?alt=json&max-results=%s";
-	protected static final String BUZZ_LIKE = "%sactivities/%s/@liked/%s?key=%s";
-	protected static final String BUZZ_COMMENT = "%sactivities/%s/@self/%s/@comments";
+	protected static final String BUZZ_URL_ME = "%speople/@me/@self?alt=json&key=%s";
+	protected static final String BUZZ_URL_FEED = "%sactivities/@me/@consumption?alt=json&max-results=%s&key=%s";
+	protected static final String BUZZ_LIKE = "%sactivities/@me/@liked/%s?alt=json&key=%s";
+	protected static final String BUZZ_COMMENT = "%sactivities/%s/@self/%s/@comments?alt=json&key=%s";
 
 	protected static final int FOURSQUARE = 4;
 	protected static final String FOURSQUARE_BASE_URL = "https://foursquare.com/v2/";
@@ -103,16 +103,21 @@ public class Sonet {
 	protected static final String FOURSQUARE_URL_AUTHORIZE = "https://foursquare.com/oauth2/authorize?client_id=%s&response_type=token&redirect_uri=%s&display=touch";
 	protected static final String FOURSQUARE_URL_ME = "%susers/self?oauth_token=%s";
 	protected static final String FOURSQUARE_URL_FEED = "%scheckins/recent?limit=%s&oauth_token=%s";
+	protected static final String FOURSQUARE_CHECKIN = "%scheckins/add?oauth_token=%s";
+	protected static final String FOURSQUARE_ADDCOMMENT = "%scheckins/%s/addcomment/&text=%s&oauth_token=%s";
 
 	protected static final int LINKEDIN = 5;
-	protected static final String LINKEDIN_BASE_URL = "https://api.linkedin.com/v1/";
+	protected static final String LINKEDIN_BASE_URL = "https://api.linkedin.com/v1/people/~";
 	protected static final String LINKEDIN_URL_REQUEST = "https://api.linkedin.com/uas/oauth/requestToken";
 	protected static final String LINKEDIN_URL_AUTHORIZE = "https://www.linkedin.com/uas/oauth/authorize";
 	protected static final String LINKEDIN_URL_ACCESS = "https://api.linkedin.com/uas/oauth/accessToken";
-	protected static final String LINKEDIN_URL_ME = "%speople/~:(id,first-name,last-name)";
-	protected static final String LINKEDIN_URL_FEED = "%speople/~/network/updates?type=APPS&type=CMPY&type=CONN&type=JOBS&type=JGRP&type=PICT&type=PRFU&type=RECU&type=PRFX&type=ANSW&type=QSTN&type=SHAR&type=VIRL&count=%s";
+	protected static final String LINKEDIN_URL_ME = "%s:(id,first-name,last-name)";
+	protected static final String LINKEDIN_URL_FEED = "%s/network/updates?type=APPS&type=CMPY&type=CONN&type=JOBS&type=JGRP&type=PICT&type=PRFU&type=RECU&type=PRFX&type=ANSW&type=QSTN&type=SHAR&type=VIRL&count=%s";
 	protected static final String[][] LINKEDIN_HEADERS = new String[][] {{"x-li-format", "json"}};
 	protected static final HashMap<String, String> LINKEDIN_UPDATETYPES;
+	protected static final String LINKEDIN_URL_LIKES = "%s/network/updates/key=%s/likes";
+	protected static final String LINKEDIN_URL_IS_LIKED = "%s/network/updates/key=%s/is-liked";
+	protected static final String LINKEDIN_URL_UPDATE_COMMENTS = "%s/network/updates/key=%s/update-comments";
 
 	protected static final String AM = "a.m.";
 	protected static final String PM = "p.m.";

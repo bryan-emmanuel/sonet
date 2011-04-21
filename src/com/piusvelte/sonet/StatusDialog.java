@@ -36,13 +36,14 @@ import static com.piusvelte.sonet.Sonet.TOKEN;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.BUZZ;
+import static com.piusvelte.sonet.Sonet.LINKEDIN;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_LIKES;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
 import static com.piusvelte.sonet.Sonet.BUZZ_BASE_URL;
 import static com.piusvelte.sonet.Sonet.BUZZ_LIKE;
 
-import static com.piusvelte.sonet.Tokens.TWITTER_KEY;
-import static com.piusvelte.sonet.Tokens.TWITTER_SECRET;
+import static com.piusvelte.sonet.SonetTokens.TWITTER_KEY;
+import static com.piusvelte.sonet.SonetTokens.TWITTER_SECRET;
 import static com.piusvelte.sonet.Sonet.TWITTER_BASE_URL;
 import static com.piusvelte.sonet.Sonet.TWITTER_RETWEET;
 
@@ -127,6 +128,10 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 			//TODO: like
 			items = new String[]{getString(mLike ? R.string.like : R.string.unlike), getString(R.string.comment), getString(R.string.button_post), getString(R.string.settings), getString(R.string.button_refresh)};
 			break;
+		case LINKEDIN:
+			//TODO: like
+			items = new String[]{getString(mLike ? R.string.like : R.string.unlike), getString(R.string.comment), getString(R.string.button_post), getString(R.string.settings), getString(R.string.button_refresh)};
+			break;
 		default:
 			items = new String[]{getString(R.string.comment), getString(R.string.button_post), getString(R.string.settings), getString(R.string.button_refresh)};
 			break;
@@ -181,6 +186,9 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 			case BUZZ:
 				//TODO:like
 				break;
+			case LINKEDIN:
+				//TODO:like
+				break;
 			default:
 				startActivity(new Intent(this, SonetCreatePost.class).setData(mData));
 				break;
@@ -213,6 +221,9 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 			case BUZZ:
 				startActivity(new Intent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.CONTENT_URI, Long.toString(mAccount))));
 				break;
+			case LINKEDIN:
+				startActivity(new Intent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.CONTENT_URI, Long.toString(mAccount))));
+				break;
 			default:
 				startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 				break;
@@ -227,6 +238,9 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 				startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 				break;
 			case BUZZ:
+				startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
+				break;
+			case LINKEDIN:
 				startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 				break;
 			default:

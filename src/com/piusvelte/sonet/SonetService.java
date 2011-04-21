@@ -37,14 +37,15 @@ import static com.piusvelte.sonet.Sonet.MYSPACE;
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.ACTION_BUILD_SCROLL;
 
-import static com.piusvelte.sonet.Tokens.TWITTER_KEY;
-import static com.piusvelte.sonet.Tokens.TWITTER_SECRET;
-import static com.piusvelte.sonet.Tokens.MYSPACE_KEY;
-import static com.piusvelte.sonet.Tokens.MYSPACE_SECRET;
+import static com.piusvelte.sonet.SonetTokens.TWITTER_KEY;
+import static com.piusvelte.sonet.SonetTokens.TWITTER_SECRET;
+import static com.piusvelte.sonet.SonetTokens.MYSPACE_KEY;
+import static com.piusvelte.sonet.SonetTokens.MYSPACE_SECRET;
 
 import static com.piusvelte.sonet.Sonet.BUZZ;
-import static com.piusvelte.sonet.Tokens.BUZZ_KEY;
-import static com.piusvelte.sonet.Tokens.BUZZ_SECRET;
+import static com.piusvelte.sonet.SonetTokens.BUZZ_KEY;
+import static com.piusvelte.sonet.SonetTokens.BUZZ_SECRET;
+import static com.piusvelte.sonet.SonetTokens.BUZZ_API_KEY;
 
 import static com.piusvelte.sonet.Sonet.TWITTER_BASE_URL;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_FEED;
@@ -62,8 +63,8 @@ import static com.piusvelte.sonet.Sonet.FOURSQUARE;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_FEED;
 
 import static com.piusvelte.sonet.Sonet.LINKEDIN;
-import static com.piusvelte.sonet.Tokens.LINKEDIN_KEY;
-import static com.piusvelte.sonet.Tokens.LINKEDIN_SECRET;
+import static com.piusvelte.sonet.SonetTokens.LINKEDIN_KEY;
+import static com.piusvelte.sonet.SonetTokens.LINKEDIN_SECRET;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_HEADERS;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_FEED;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATETYPES;
@@ -253,7 +254,7 @@ public class SonetService extends Service {
 						case BUZZ:
 							sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, account_updates.getString(itoken), account_updates.getString(isecret));
 							try {
-								response = sonetOAuth.httpGet(String.format(BUZZ_URL_ME, BUZZ_BASE_URL));
+								response = sonetOAuth.httpGet(String.format(BUZZ_URL_ME, BUZZ_BASE_URL, BUZZ_API_KEY));
 								if (response != null) {
 									JSONObject jobj = (new JSONObject(response)).getJSONObject("data");
 									ContentValues values = new ContentValues();
@@ -691,7 +692,7 @@ public class SonetService extends Service {
 					return sonetOAuth.httpGet(String.format(MYSPACE_URL_FEED, MYSPACE_BASE_URL, status_count));
 				case BUZZ:
 					sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, params[0], params[1]);
-					return sonetOAuth.httpGet(String.format(BUZZ_URL_FEED, BUZZ_BASE_URL, status_count));
+					return sonetOAuth.httpGet(String.format(BUZZ_URL_FEED, BUZZ_BASE_URL, status_count, BUZZ_API_KEY));
 					//							case SALESFORCE:
 					//								sonetOAuth = new SonetOAuth(SALESFORCE_KEY, SALESFORCE_SECRET, token, secret);
 					//								return sonetOAuth.httpGet(SALESFORCE_FEED);
