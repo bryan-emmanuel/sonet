@@ -39,13 +39,16 @@
 			app:primaryTextColor="@color/primary" app:secondaryTextColor="@color/secondary" />
 		<Button android:id="@+id/send" android:layout_width="wrap_content"
 			android:layout_height="wrap_content" android:text="@string/send"
-			android:layout_alignParentRight="true" />
+			android:layout_alignParentRight="true" android:enabled="false" />
+		<Button android:id="@+id/like" android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:text="@string/like"
+			android:layout_toLeftOf="@id/send" android:enabled="false" />
 		<Button android:id="@+id/location" android:layout_width="fill_parent"
 			android:layout_height="wrap_content" android:text="@string/location"
-			android:layout_alignParentLeft="true" android:layout_toLeftOf="@id/send"
-			android:layout_above="@id/ad" />
+			android:layout_alignParentLeft="true" android:layout_toLeftOf="@id/like"
+			android:layout_above="@id/ad" android:enabled="false" />
 	</RelativeLayout>
 	<EditText android:id="@+id/post" android:layout_width="fill_parent"
 		android:layout_height="fill_parent" android:layout_below="@id/accounts"
-		android:layout_above="@id/buttons" />
+		android:layout_above="@id/buttons" android:gravity="top" />
 </RelativeLayout>

@@ -62,6 +62,7 @@ public class Sonet {
 	protected static final String TWITTER_URL_FEED = "%s1/statuses/home_timeline.json?count=%s";
 	protected static final String TWITTER_TWEET = "%s1/statuses/update.json";
 	protected static final String TWITTER_RETWEET = "%s1/statuses/retweet/%s.json";
+	protected static final String TWITTER_USER = "%s1/users/lookup.json?user_id=%s";
 
 	protected static final int FACEBOOK = 1;
 	protected static final String FACEBOOK_BASE_URL = "https://graph.facebook.com/";
@@ -99,11 +100,11 @@ public class Sonet {
 	protected static final String BUZZ_ACTIVITY = "%sactivities/@me/@self%s?alt=json&key=%s";
 
 	protected static final int FOURSQUARE = 4;
-	protected static final String FOURSQUARE_BASE_URL = "https://foursquare.com/v2/";
+	protected static final String FOURSQUARE_BASE_URL = "https://api.foursquare.com/v2/";
 	protected static final String FOURSQUARE_URL_ACCESS = "https://foursquare.com/oauth2/access_token";
 	protected static final String FOURSQUARE_URL_AUTHORIZE = "https://foursquare.com/oauth2/authorize?client_id=%s&response_type=token&redirect_uri=%s&display=touch";
-	protected static final String FOURSQUARE_URL_ME = "%susers/self.json?oauth_token=%s";
-	protected static final String FOURSQUARE_URL_FEED = "%scheckins/recent.json?limit=%s&oauth_token=%s";
+	protected static final String FOURSQUARE_URL_ME = "%susers/self?oauth_token=%s";
+	protected static final String FOURSQUARE_URL_FEED = "%scheckins/recent?limit=%s&oauth_token=%s";
 	protected static final String FOURSQUARE_CHECKIN = "%scheckins/add?oauth_token=%s";
 	protected static final String FOURSQUARE_ADDCOMMENT = "%scheckins/%s/addcomment?text=%s&oauth_token=%s";
 
@@ -353,6 +354,7 @@ public class Sonet {
 				}
 				break;
 			default:
+				Log.e(TAG,"http request: "+httpRequest.getURI().toString());
 				Log.e(TAG,"http error: "+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
 				break;
 			}
