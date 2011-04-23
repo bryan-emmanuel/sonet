@@ -83,6 +83,7 @@ import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
 
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpGet;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -215,7 +216,7 @@ public class SonetService extends Service {
 							}
 							break;
 						case FACEBOOK:
-							response = Sonet.httpGet(String.format(FACEBOOK_URL_ME, FACEBOOK_BASE_URL, TOKEN, account_updates.getString(itoken)));
+							response = Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_URL_ME, FACEBOOK_BASE_URL, TOKEN, account_updates.getString(itoken))));
 							if (response != null) {
 								try {
 									JSONObject jobj = new JSONObject(response);
@@ -276,7 +277,7 @@ public class SonetService extends Service {
 							}
 							break;
 						case FOURSQUARE:
-							response = Sonet.httpGet(String.format(FOURSQUARE_URL_ME, FOURSQUARE_BASE_URL, account_updates.getString(itoken)));
+							response = Sonet.httpResponse(new HttpGet(String.format(FOURSQUARE_URL_ME, FOURSQUARE_BASE_URL, account_updates.getString(itoken))));
 							if (response != null) {
 								try {
 									JSONObject jobj = (new JSONObject(response)).getJSONObject("response").getJSONObject("user");
@@ -688,7 +689,7 @@ public class SonetService extends Service {
 					sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, params[0], params[1]);
 					return sonetOAuth.httpGet(String.format(TWITTER_URL_FEED, TWITTER_BASE_URL, status_count));
 				case FACEBOOK:
-					return Sonet.httpGet(String.format(FACEBOOK_URL_FEED, FACEBOOK_BASE_URL, status_count, TOKEN, params[0]));
+					return Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_URL_FEED, FACEBOOK_BASE_URL, status_count, TOKEN, params[0])));
 				case MYSPACE:
 					sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, params[0], params[1]);
 					return sonetOAuth.httpGet(String.format(MYSPACE_URL_FEED, MYSPACE_BASE_URL, status_count));
@@ -699,7 +700,7 @@ public class SonetService extends Service {
 					//								sonetOAuth = new SonetOAuth(SALESFORCE_KEY, SALESFORCE_SECRET, token, secret);
 					//								return sonetOAuth.httpGet(SALESFORCE_FEED);
 				case FOURSQUARE:
-					return Sonet.httpGet(String.format(FOURSQUARE_URL_FEED, FOURSQUARE_BASE_URL, status_count, params[0]));
+					return Sonet.httpResponse(new HttpGet(String.format(FOURSQUARE_URL_FEED, FOURSQUARE_BASE_URL, status_count, params[0])));
 				case LINKEDIN:
 					sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, params[0], params[1]);
 					return sonetOAuth.httpGet(String.format(LINKEDIN_URL_FEED, LINKEDIN_BASE_URL, status_count), LINKEDIN_HEADERS);

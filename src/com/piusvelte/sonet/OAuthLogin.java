@@ -41,6 +41,7 @@ import oauth.signpost.exception.OAuthMessageSignerException;
 import oauth.signpost.exception.OAuthNotAuthorizedException;
 
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpGet;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -252,7 +253,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 										break;
 									}
 								}
-								String response = Sonet.httpGet(String.format(FOURSQUARE_URL_ME, FOURSQUARE_BASE_URL, token));
+								String response = Sonet.httpResponse(new HttpGet(String.format(FOURSQUARE_URL_ME, FOURSQUARE_BASE_URL, token)));
 								if (response != null) {
 									JSONObject jobj = (new JSONObject(response)).getJSONObject("response").getJSONObject("user");
 									if (jobj.has("firstName") && jobj.has("id")) addAccount(jobj.getString("firstName") + " " + jobj.getString("lastName"), token, "", 0, FOURSQUARE, jobj.getString("id"));
@@ -268,7 +269,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 									if (TOKEN.equals(param[0])) token = param[1];
 									else if (EXPIRES.equals(param[0])) expiry = param[1] == "0" ? 0 : (int) System.currentTimeMillis() + Integer.parseInt(param[1]) * 1000;
 								}
-								String response = Sonet.httpGet(String.format(FACEBOOK_URL_ME, FACEBOOK_BASE_URL, TOKEN, token));
+								String response = Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_URL_ME, FACEBOOK_BASE_URL, TOKEN, token)));
 								if (response != null) {
 									JSONObject jobj = new JSONObject(response);
 									if (jobj.has("name") && jobj.has("id")) addAccount(jobj.getString("name"), token, "", expiry, FACEBOOK, jobj.getString("id"));

@@ -26,6 +26,9 @@ import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
 
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -202,7 +205,7 @@ Content-Type: application/json
 						loadComment = new AsyncTask<String, Void, String>() {
 							@Override
 							protected String doInBackground(String... arg0) {
-								return Sonet.httpGet(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mEsid, TOKEN, arg0[0]));
+								return Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mEsid, TOKEN, arg0[0])));
 							}
 
 							@Override
@@ -332,8 +335,21 @@ Content-Type: application/json
 			String text = mPost.getText().toString();
 			if ((text != null) && (text != "")) {
 				// post or comment!
+				AsyncTask<String, Void, String> loadComment = new AsyncTask<String, Void, String>() {
+					@Override
+					protected String doInBackground(String... arg0) {
+						return null;
+					}
+
+					@Override
+					protected void onPostExecute(String response) {
+						mLike.setText(R.string.sent);
+					}
+				};
+				mPost.setEnabled(false);
 				mSend.setEnabled(false);
 				mSend.setText(R.string.sending);
+				loadComment.execute("");
 			}
 		} else if (v == mComments) {
 			this.startActivity(new Intent(this, SonetComments.class).setData(mData));
@@ -429,7 +445,7 @@ Content-Type: application/json
 							loadComment = new AsyncTask<String, Void, String>() {
 								@Override
 								protected String doInBackground(String... arg0) {
-									return mLike.getText() == getString(R.string.like) ? Sonet.httpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mSid, TOKEN, arg0[0])) : Sonet.httpDelete(String.format(FACEBOOK_LIKES, mSid, TOKEN, arg0[0]));
+									return Sonet.httpResponse(mLike.getText() == getString(R.string.like) ? new HttpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mSid, TOKEN, arg0[0])) : new HttpDelete(String.format(FACEBOOK_LIKES, mSid, TOKEN, arg0[0])));
 								}
 
 								@Override

@@ -23,6 +23,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -87,7 +90,7 @@ public class SonetComments extends ListActivity implements OnClickListener {
 			Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 			if (account.moveToFirst()) {
 				String token = account.getString(account.getColumnIndex(Accounts.TOKEN));
-				String response = Sonet.httpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, mEsid, TOKEN, token));
+				String response = Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, mEsid, TOKEN, token)));
 				if (response != null) {
 					Log.v(TAG,"response:"+response);
 					try {
@@ -99,7 +102,7 @@ public class SonetComments extends ListActivity implements OnClickListener {
 							boolean like = true;
 							if (likes > 0) {
 								// check if already liked
-								String response2 = Sonet.httpGet(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mEsid, TOKEN, token));
+								String response2 = Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mEsid, TOKEN, token)));
 								if (response2 != null) {
 									try {
 										JSONArray likes2 = new JSONObject(response2).getJSONArray("data");
@@ -153,7 +156,7 @@ public class SonetComments extends ListActivity implements OnClickListener {
 					Cursor c = SonetComments.this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 					if (c.moveToFirst()) {
 						//TODO: show progress dialog, confirm liked/unliked
-						String response = mComments.get(which).get(getString(R.string.like)) == getString(R.string.like) ? Sonet.httpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mComments.get(which).get(Statuses.SID), TOKEN, c.getString(c.getColumnIndex(Accounts.TOKEN)))) : Sonet.httpDelete(String.format(FACEBOOK_LIKES, mComments.get(which).get(Statuses.SID), TOKEN, c.getString(c.getColumnIndex(Accounts.TOKEN))));
+						String response = Sonet.httpResponse(mComments.get(which).get(getString(R.string.like)) == getString(R.string.like) ? new HttpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mComments.get(which).get(Statuses.SID), TOKEN, c.getString(c.getColumnIndex(Accounts.TOKEN)))) : new HttpDelete(String.format(FACEBOOK_LIKES, mComments.get(which).get(Statuses.SID), TOKEN, c.getString(c.getColumnIndex(Accounts.TOKEN)))));
 						//TODO: check response
 						Log.v(TAG,"like:"+response);
 					}

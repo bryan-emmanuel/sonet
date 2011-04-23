@@ -34,9 +34,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
 
@@ -364,18 +361,6 @@ public class Sonet {
 			Log.e(TAG, e.toString());
 		}
 		return response;
-	}
-	
-	protected static String httpGet(String url) {
-		return httpResponse(new HttpGet(url));
-	}
-	
-	protected static String httpPost(String url) {
-		return httpResponse(new HttpPost(url));
-	}
-	
-	protected static String httpDelete(String url) {
-		return httpResponse(new HttpDelete(url));
 	}
 	
 	protected static long parseDate(String date, String format) {
