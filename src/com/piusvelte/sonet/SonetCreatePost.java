@@ -382,10 +382,19 @@ Content-Type: application/json
 				.setMultiChoiceItems(accounts, defaults, new DialogInterface.OnMultiChoiceClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-						mAccountsToPost = isChecked ? Sonet.arrayPush(mAccountsToPost, accountIndexes[which]) : Sonet.arrayRemove(mAccountsToPost, accountIndexes[which]);
+						boolean exists = false;
+						for (int account : mAccountsToPost) {
+							if (accountIndexes[which] == account) {
+								exists = true;
+								break;
+							}
+						}
+						if (!exists) {
+							mAccountsToPost = isChecked ? Sonet.arrayPush(mAccountsToPost, accountIndexes[which]) : Sonet.arrayRemove(mAccountsToPost, accountIndexes[which]);
+						}
 					}
 				})
-				.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+				.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.dismiss();
