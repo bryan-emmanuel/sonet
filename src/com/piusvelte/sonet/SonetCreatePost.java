@@ -62,7 +62,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.appwidget.AppWidgetManager;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -75,8 +74,9 @@ import android.view.View.OnClickListener;
 import android.view.View.OnKeyListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
-public class SonetCreatePost extends Activity implements OnKeyListener, OnClickListener, OnCancelListener, android.content.DialogInterface.OnClickListener {
+public class SonetCreatePost extends Activity implements OnKeyListener, OnClickListener {
 	private static final String TAG = "SonetCreatePost";
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private int mService = 0;
@@ -91,6 +91,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 	private Button mComments;
 	private Button mAccounts;
 	private Button mLike;
+	private TextView mCount;
 	/* buzz
 POST https://www.googleapis.com/buzz/v1/activities/@me/@self?key=INSERT-YOUR-KEY&alt=json
 Authorization: /* auth token here *\/
@@ -131,6 +132,7 @@ Content-Type: application/json
 		mComments = (Button) findViewById(R.id.comments);
 		mAccounts = (Button) findViewById(R.id.accounts);
 		mLike = (Button) findViewById(R.id.like);
+		mCount = (TextView) findViewById(R.id.count);
 		Intent intent = getIntent();
 		if (intent != null) {
 			mData = intent.getData();
@@ -320,8 +322,10 @@ Content-Type: application/json
 	public boolean onKey(View v, int keyCode, KeyEvent event) {
 		// track the post length, if TWITTER and >140, truncate
 		String text = mPost.getText().toString();
-		mSend.setEnabled(text.length() > 0);
-		if ((mService == TWITTER) && (text.length() > 140)) {
+		int count = text.length();
+		mCount.setText(Integer.toString(count));
+		mSend.setEnabled(count > 0);
+		if ((mService == TWITTER) && (count > 140)) {
 			mPost.setText(text.substring(0, 140));
 		}
 		return false;
@@ -485,16 +489,6 @@ Content-Type: application/json
 				break;
 			}
 		}
-	}
-
-	@Override
-	public void onClick(DialogInterface arg0, int arg1) {
-		finish();
-	}
-
-	@Override
-	public void onCancel(DialogInterface dialog) {
-		finish();
 	}
 
 }

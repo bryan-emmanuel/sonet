@@ -51,4 +51,9 @@
 	<EditText android:id="@+id/post" android:layout_width="fill_parent"
 		android:layout_height="fill_parent" android:layout_below="@id/accounts"
 		android:layout_above="@id/buttons" android:gravity="top" />
+	<TextView android:id="@+id/count" android:layout_width="wrap_content"
+		android:layout_height="wrap_content" android:layout_alignBottom="@id/post"
+		android:layout_alignParentRight="true" android:padding="8dip"
+		android:background="#33000000" android:textColor="#66000000"
+		android:textStyle="bold" android:text="0" />
 </RelativeLayout>
