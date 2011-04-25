@@ -78,11 +78,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import oauth.signpost.exception.OAuthCommunicationException;
-import oauth.signpost.exception.OAuthExpectationFailedException;
-import oauth.signpost.exception.OAuthMessageSignerException;
-
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
 
 import org.json.JSONArray;
@@ -194,23 +189,13 @@ public class SonetService extends Service {
 						case TWITTER:
 							sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, account_updates.getString(itoken), account_updates.getString(isecret));
 							try {
-								response = sonetOAuth.httpGet("http://api.twitter.com/1/account/verify_credentials.json");
+								response = sonetOAuth.httpResponse(new HttpGet("http://api.twitter.com/1/account/verify_credentials.json"));
 								if (response != null) {
 									JSONObject jobj = new JSONObject(response);
 									ContentValues values = new ContentValues();
 									values.put(Accounts.SID, jobj.getString("id"));
 									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
 								}
-							} catch (ClientProtocolException e) {
-								Log.e(TAG, service + ":" + e.toString());
-							} catch (OAuthMessageSignerException e) {
-								Log.e(TAG, service + ":" + e.toString());
-							} catch (OAuthExpectationFailedException e) {
-								Log.e(TAG, service + ":" + e.toString());
-							} catch (OAuthCommunicationException e) {
-								Log.e(TAG, service + ":" + e.toString());
-							} catch (IOException e) {
-								Log.e(TAG, service + ":" + e.toString());
 							} catch (JSONException e) {
 								Log.e(TAG, service + ":" + e.toString());
 							}
@@ -231,23 +216,13 @@ public class SonetService extends Service {
 						case MYSPACE:
 							sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, account_updates.getString(itoken), account_updates.getString(isecret));
 							try {
-								response = sonetOAuth.httpGet(String.format(MYSPACE_URL_ME, MYSPACE_BASE_URL));
+								response = sonetOAuth.httpResponse(new HttpGet(String.format(MYSPACE_URL_ME, MYSPACE_BASE_URL)));
 								if (response != null) {
 									JSONObject jobj = (new JSONObject(response)).getJSONObject("person");
 									ContentValues values = new ContentValues();
 									values.put(Accounts.SID, jobj.getString("id"));
 									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
 								}
-							} catch (ClientProtocolException e) {
-								Log.e(TAG, service + ":" + e.toString());
-							} catch (OAuthMessageSignerException e) {
-								Log.e(TAG, service + ":" + e.toString());
-							} catch (OAuthExpectationFailedException e) {
-								Log.e(TAG, service + ":" + e.toString());
-							} catch (OAuthCommunicationException e) {
-								Log.e(TAG, service + ":" + e.toString());
-							} catch (IOException e) {
-								Log.e(TAG, service + ":" + e.toString());
 							} catch (JSONException e) {
 								Log.e(TAG, service + ":" + e.toString());
 							}
@@ -255,23 +230,13 @@ public class SonetService extends Service {
 						case BUZZ:
 							sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, account_updates.getString(itoken), account_updates.getString(isecret));
 							try {
-								response = sonetOAuth.httpGet(String.format(BUZZ_URL_ME, BUZZ_BASE_URL, BUZZ_API_KEY));
+								response = sonetOAuth.httpResponse(new HttpGet(String.format(BUZZ_URL_ME, BUZZ_BASE_URL, BUZZ_API_KEY)));
 								if (response != null) {
 									JSONObject jobj = (new JSONObject(response)).getJSONObject("data");
 									ContentValues values = new ContentValues();
 									values.put(Accounts.SID, jobj.getString("id"));
 									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
 								}
-							} catch (ClientProtocolException e) {
-								Log.e(TAG, service + ":" + e.toString());
-							} catch (OAuthMessageSignerException e) {
-								Log.e(TAG, service + ":" + e.toString());
-							} catch (OAuthExpectationFailedException e) {
-								Log.e(TAG, service + ":" + e.toString());
-							} catch (OAuthCommunicationException e) {
-								Log.e(TAG, service + ":" + e.toString());
-							} catch (IOException e) {
-								Log.e(TAG, service + ":" + e.toString());
 							} catch (JSONException e) {
 								Log.e(TAG, service + ":" + e.toString());
 							}
@@ -293,23 +258,15 @@ public class SonetService extends Service {
 						case LINKEDIN:
 							sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, account_updates.getString(itoken), account_updates.getString(isecret));
 							try {
-								response = sonetOAuth.httpGet(String.format(LINKEDIN_URL_ME, LINKEDIN_BASE_URL), LINKEDIN_HEADERS);
+								HttpGet httpGet = new HttpGet(String.format(LINKEDIN_URL_ME, LINKEDIN_BASE_URL));
+								for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
+								response = sonetOAuth.httpResponse(httpGet);
 								if (response != null) {
 									JSONObject jobj = new JSONObject(response);
 									ContentValues values = new ContentValues();
 									values.put(Accounts.SID, jobj.getString("id"));
 									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
 								}
-							} catch (ClientProtocolException e) {
-								Log.e(TAG, service + ":" + e.toString());
-							} catch (OAuthMessageSignerException e) {
-								Log.e(TAG, service + ":" + e.toString());
-							} catch (OAuthExpectationFailedException e) {
-								Log.e(TAG, service + ":" + e.toString());
-							} catch (OAuthCommunicationException e) {
-								Log.e(TAG, service + ":" + e.toString());
-							} catch (IOException e) {
-								Log.e(TAG, service + ":" + e.toString());
 							} catch (JSONException e) {
 								Log.e(TAG, service + ":" + e.toString());
 							}
@@ -413,22 +370,8 @@ public class SonetService extends Service {
 											d.close();
 										}
 										c.close();
-										SonetOAuth sonetOAuth;
-										try {
-											sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, params[3], params[4]);
-											return sonetOAuth.httpGet(String.format(TWITTER_URL_FEED, TWITTER_BASE_URL, status_count));
-										} catch (ClientProtocolException e) {
-											Log.e(TAG, service + ":" + e.toString());
-										} catch (OAuthMessageSignerException e) {
-											Log.e(TAG, service + ":" + e.toString());
-										} catch (OAuthExpectationFailedException e) {
-											Log.e(TAG, service + ":" + e.toString());
-										} catch (OAuthCommunicationException e) {
-											Log.e(TAG, service + ":" + e.toString());
-										} catch (IOException e) {
-											Log.e(TAG, service + ":" + e.toString());
-										}
-										return null;
+										SonetOAuth sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, params[3], params[4]);
+										return sonetOAuth.httpResponse(new HttpGet(String.format(TWITTER_URL_FEED, TWITTER_BASE_URL, status_count)));
 									}
 
 									@Override
@@ -700,22 +643,8 @@ public class SonetService extends Service {
 											d.close();
 										}
 										c.close();
-										SonetOAuth sonetOAuth;
-										try {
-											sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, params[3], params[4]);
-											return sonetOAuth.httpGet(String.format(MYSPACE_URL_FEED, MYSPACE_BASE_URL, status_count));
-										} catch (ClientProtocolException e) {
-											Log.e(TAG, service + ":" + e.toString());
-										} catch (OAuthMessageSignerException e) {
-											Log.e(TAG, service + ":" + e.toString());
-										} catch (OAuthExpectationFailedException e) {
-											Log.e(TAG, service + ":" + e.toString());
-										} catch (OAuthCommunicationException e) {
-											Log.e(TAG, service + ":" + e.toString());
-										} catch (IOException e) {
-											Log.e(TAG, service + ":" + e.toString());
-										}
-										return null;
+										SonetOAuth sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, params[3], params[4]);
+										return sonetOAuth.httpResponse(new HttpGet(String.format(MYSPACE_URL_FEED, MYSPACE_BASE_URL, status_count)));
 									}
 
 									@Override
@@ -866,22 +795,8 @@ public class SonetService extends Service {
 											d.close();
 										}
 										c.close();
-										SonetOAuth sonetOAuth;
-										try {
-											sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, params[3], params[4]);
-											return sonetOAuth.httpGet(String.format(BUZZ_URL_FEED, BUZZ_BASE_URL, status_count, BUZZ_API_KEY));
-										} catch (ClientProtocolException e) {
-											Log.e(TAG, service + ":" + e.toString());
-										} catch (OAuthMessageSignerException e) {
-											Log.e(TAG, service + ":" + e.toString());
-										} catch (OAuthExpectationFailedException e) {
-											Log.e(TAG, service + ":" + e.toString());
-										} catch (OAuthCommunicationException e) {
-											Log.e(TAG, service + ":" + e.toString());
-										} catch (IOException e) {
-											Log.e(TAG, service + ":" + e.toString());
-										}
-										return null;
+										SonetOAuth sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, params[3], params[4]);
+										return sonetOAuth.httpResponse(new HttpGet(String.format(BUZZ_URL_FEED, BUZZ_BASE_URL, status_count, BUZZ_API_KEY)));
 									}
 
 									@Override
@@ -1137,22 +1052,10 @@ public class SonetService extends Service {
 											d.close();
 										}
 										c.close();
-										SonetOAuth sonetOAuth;
-										try {
-											sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, params[3], params[4]);
-											return sonetOAuth.httpGet(String.format(LINKEDIN_URL_FEED, LINKEDIN_BASE_URL, status_count), LINKEDIN_HEADERS);
-										} catch (ClientProtocolException e) {
-											Log.e(TAG, service + ":" + e.toString());
-										} catch (OAuthMessageSignerException e) {
-											Log.e(TAG, service + ":" + e.toString());
-										} catch (OAuthExpectationFailedException e) {
-											Log.e(TAG, service + ":" + e.toString());
-										} catch (OAuthCommunicationException e) {
-											Log.e(TAG, service + ":" + e.toString());
-										} catch (IOException e) {
-											Log.e(TAG, service + ":" + e.toString());
-										}
-										return null;
+										SonetOAuth sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, params[3], params[4]);
+										HttpGet httpGet = new HttpGet(String.format(LINKEDIN_URL_FEED, LINKEDIN_BASE_URL, status_count));
+										for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
+										return sonetOAuth.httpResponse(httpGet);
 									}
 
 									@Override

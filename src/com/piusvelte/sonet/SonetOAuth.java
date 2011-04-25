@@ -29,8 +29,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
 
@@ -62,66 +60,87 @@ public class SonetOAuth {
 		mOAuthConsumer.setTokenWithSecret(token, tokenSecret);
 	}
 
-	public String getAuthUrl(String request, String access, String authorize, String callback, boolean isOAuth10a) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
+	public String getAuthUrl(String request, String access, String authorize, String callback, boolean isOAuth10a) {
 		mOAuthProvider = new CommonsHttpOAuthProvider(request, access, authorize);
 		mOAuthProvider.setOAuth10a(isOAuth10a);
-		return mOAuthProvider.retrieveRequestToken(mOAuthConsumer, callback);
+		try {
+			return mOAuthProvider.retrieveRequestToken(mOAuthConsumer, callback);
+		} catch (OAuthMessageSignerException e) {
+			Log.e(TAG,e.toString());
+		} catch (OAuthNotAuthorizedException e) {
+			Log.e(TAG,e.toString());
+		} catch (OAuthExpectationFailedException e) {
+			Log.e(TAG,e.toString());
+		} catch (OAuthCommunicationException e) {
+			Log.e(TAG,e.toString());
+		}
+		return null;
 	}
 
-	public void retrieveAccessToken(String verifier) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
-		mOAuthProvider.retrieveAccessToken(mOAuthConsumer, verifier);
+	public boolean retrieveAccessToken(String verifier) {
+		try {
+			mOAuthProvider.retrieveAccessToken(mOAuthConsumer, verifier);
+			return true;
+		} catch (OAuthMessageSignerException e) {
+			Log.e(TAG,e.toString());
+		} catch (OAuthNotAuthorizedException e) {
+			Log.e(TAG,e.toString());
+		} catch (OAuthExpectationFailedException e) {
+			Log.e(TAG,e.toString());
+		} catch (OAuthCommunicationException e) {
+			Log.e(TAG,e.toString());
+		}
+		return false;
 	}
-	
-	public String httpResponse(HttpUriRequest httpRequest) throws OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, ClientProtocolException, IOException {
-		mOAuthConsumer.sign(httpRequest);
-		HttpClient httpClient = new DefaultHttpClient();
-		HttpResponse httpResponse = httpClient.execute(httpRequest);
-		StatusLine statusLine = httpResponse.getStatusLine();
-		HttpEntity entity = httpResponse.getEntity();
+
+	public String httpResponse(HttpUriRequest httpRequest) {
 		String response = null;
+		try {
+			mOAuthConsumer.sign(httpRequest);
+			HttpClient httpClient = new DefaultHttpClient();
+			HttpResponse httpResponse = httpClient.execute(httpRequest);
+			StatusLine statusLine = httpResponse.getStatusLine();
+			HttpEntity entity = httpResponse.getEntity();
 
-		switch(statusLine.getStatusCode()) {
-		case 200:
-		case 201:
-			if (entity != null) {
-				InputStream is = entity.getContent();
-				BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-				StringBuilder sb = new StringBuilder();
+			switch(statusLine.getStatusCode()) {
+			case 200:
+			case 201:
+				if (entity != null) {
+					InputStream is = entity.getContent();
+					BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+					StringBuilder sb = new StringBuilder();
 
-				String line = null;
-				try {
-					while ((line = reader.readLine()) != null) sb.append(line + "\n");
-				} catch (IOException e) {
-					e.printStackTrace();
-				} finally {
+					String line = null;
 					try {
-						is.close();
+						while ((line = reader.readLine()) != null) sb.append(line + "\n");
 					} catch (IOException e) {
 						e.printStackTrace();
+					} finally {
+						try {
+							is.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
 					}
+					response = sb.toString();
 				}
-				response = sb.toString();
+				break;
+			default:
+				Log.e(TAG,"get error:"+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
+				break;
 			}
-			break;
-		default:
-			Log.e(TAG,"get error:"+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
-			break;
+		} catch (OAuthMessageSignerException e) {
+			Log.e(TAG,e.toString());
+		} catch (OAuthExpectationFailedException e) {
+			Log.e(TAG,e.toString());
+		} catch (OAuthCommunicationException e) {
+			Log.e(TAG,e.toString());
+		} catch (ClientProtocolException e) {
+			Log.e(TAG,e.toString());
+		} catch (IOException e) {
+			Log.e(TAG,e.toString());
 		}
 		return response;		
-	}
-
-	public String httpGet(String url) throws ClientProtocolException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException {
-		return httpResponse(new HttpGet(url));
-	}
-
-	public String httpPost(String url) throws ClientProtocolException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException {
-		return httpResponse(new HttpPost(url));
-	}
-	
-	public String httpGet(String url, String[][] headers) throws OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, ClientProtocolException, IOException {
-		HttpGet httpGet = new HttpGet(url);
-		for (String[] header : headers) httpGet.setHeader(header[0], header[1]);
-		return httpResponse(httpGet);
 	}
 
 	public String getToken() {

@@ -60,13 +60,14 @@ public class Sonet {
 	protected static final String TWITTER_TWEET = "%s1/statuses/update.json";
 	protected static final String TWITTER_RETWEET = "%s1/statuses/retweet/%s.json";
 	protected static final String TWITTER_USER = "%s1/users/lookup.json?user_id=%s";
+	protected static final String TWITTER_UPDATE = "%s1/statuses/update.json";
 
 	protected static final int FACEBOOK = 1;
 	protected static final String FACEBOOK_BASE_URL = "https://graph.facebook.com/";
 	protected static final String FACEBOOK_URL_AUTHORIZE = "%Soauth/authorize?client_id=%s&scope=offline_access,publish_stream&type=user_agent&redirect_uri=%s&display=touch&sdk=android";
 	protected static final String FACEBOOK_URL_ME = "%Sme?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_URL_FEED = "%Sme/home?date_format=U&format=json&sdk=android&limit=%s&%s=%s&fields=actions,link,type,from,message,created_time,to";
-	protected static final String FACEBOOK_POST = "%s%s/feed?%s=%s";
+	protected static final String FACEBOOK_POST = "%s%s/feed?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_LIKES = "%s%s/likes?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_COMMENTS = "%s%s/comments?date_format=U&format=json&sdk=android&%s=%s";
 
@@ -77,12 +78,14 @@ public class Sonet {
 	protected static final int RESULT_REFRESH = 1;
 
 	protected static final int MYSPACE = 2;
-	protected static final String MYSPACE_BASE_URL = "http://opensocial.myspace.com/1.0/";
+	protected static final String MYSPACE_BASE_URL = "http://api.myspace.com/1.0/";
 	protected static final String MYSPACE_URL_REQUEST = "http://api.myspace.com/request_token";
 	protected static final String MYSPACE_URL_AUTHORIZE = "http://api.myspace.com/authorize";
 	protected static final String MYSPACE_URL_ACCESS = "http://api.myspace.com/access_token";
 	protected static final String MYSPACE_URL_ME = "%speople/@me/@self";
 	protected static final String MYSPACE_URL_FEED = "%sstatusmood/@me/@friends/history?count=%s&includeself=true&fields=author,source";
+	protected static final String MYSPACE_URL_STATUSMOOD = "%sstatusmood/@me/@self";
+	protected static final String MYSPACE_URL_STATUSMOODCOMMENTS = "%sstatusmoodcomments/%s/@self/%s?format=json";
 
 	protected static final int BUZZ = 3;
 	protected static final String BUZZ_BASE_URL = "https://www.googleapis.com/buzz/v1/";

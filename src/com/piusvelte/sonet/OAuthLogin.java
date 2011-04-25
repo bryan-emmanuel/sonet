@@ -35,12 +35,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 
-import oauth.signpost.exception.OAuthCommunicationException;
-import oauth.signpost.exception.OAuthExpectationFailedException;
-import oauth.signpost.exception.OAuthMessageSignerException;
-import oauth.signpost.exception.OAuthNotAuthorizedException;
-
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -145,6 +139,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 				mWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 				mAccountId = extras.getLong(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID);
 				SonetWebView sonetWebView = new SonetWebView();
+				String authUrl = null;
 				try {
 					switch (service) {
 					case FOURSQUARE:
@@ -155,15 +150,30 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 						break;
 					case TWITTER:
 						mSonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET);
-						sonetWebView.open(mSonetOAuth.getAuthUrl(String.format(TWITTER_URL_REQUEST, TWITTER_BASE_URL), String.format(TWITTER_URL_ACCESS, TWITTER_BASE_URL), String.format(TWITTER_URL_AUTHORIZE, TWITTER_BASE_URL), TWITTER_CALLBACK.toString(), true));
+						authUrl = mSonetOAuth.getAuthUrl(String.format(TWITTER_URL_REQUEST, TWITTER_BASE_URL), String.format(TWITTER_URL_ACCESS, TWITTER_BASE_URL), String.format(TWITTER_URL_AUTHORIZE, TWITTER_BASE_URL), TWITTER_CALLBACK.toString(), true);
+						if (authUrl != null) {
+							sonetWebView.open(authUrl);
+						} else {
+							this.finish();
+						}
 						break;
 					case MYSPACE:
 						mSonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET);
-						sonetWebView.open(mSonetOAuth.getAuthUrl(MYSPACE_URL_REQUEST, MYSPACE_URL_ACCESS, MYSPACE_URL_AUTHORIZE, MYSPACE_CALLBACK.toString(), true));
+						authUrl = mSonetOAuth.getAuthUrl(MYSPACE_URL_REQUEST, MYSPACE_URL_ACCESS, MYSPACE_URL_AUTHORIZE, MYSPACE_CALLBACK.toString(), true);
+						if (authUrl != null) {
+							sonetWebView.open(authUrl);
+						} else {
+							this.finish();
+						}
 						break;
 					case BUZZ:
 						mSonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET);
-						sonetWebView.open(mSonetOAuth.getAuthUrl(String.format(BUZZ_URL_REQUEST, URLEncoder.encode(BUZZ_SCOPE, "utf-8"), getString(R.string.app_name), BUZZ_KEY), BUZZ_URL_ACCESS, String.format(BUZZ_URL_AUTHORIZE, URLEncoder.encode(BUZZ_SCOPE, "utf-8"), getString(R.string.app_name), BUZZ_KEY), BUZZ_CALLBACK.toString(), true));
+						authUrl = mSonetOAuth.getAuthUrl(String.format(BUZZ_URL_REQUEST, URLEncoder.encode(BUZZ_SCOPE, "utf-8"), getString(R.string.app_name), BUZZ_KEY), BUZZ_URL_ACCESS, String.format(BUZZ_URL_AUTHORIZE, URLEncoder.encode(BUZZ_SCOPE, "utf-8"), getString(R.string.app_name), BUZZ_KEY), BUZZ_CALLBACK.toString(), true);
+						if (authUrl != null) {
+							sonetWebView.open(authUrl);
+						} else {
+							this.finish();
+						}
 						break;
 						//					case SALESFORCE:
 						//						mSonetOAuth = new SonetOAuth(SALESFORCE_KEY, SALESFORCE_SECRET);
@@ -171,23 +181,16 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 						//						break;
 					case LINKEDIN:
 						mSonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET);
-						sonetWebView.open(mSonetOAuth.getAuthUrl(LINKEDIN_URL_REQUEST, LINKEDIN_URL_ACCESS, LINKEDIN_URL_AUTHORIZE, LINKEDIN_CALLBACK.toString(), true));
+						authUrl = mSonetOAuth.getAuthUrl(LINKEDIN_URL_REQUEST, LINKEDIN_URL_ACCESS, LINKEDIN_URL_AUTHORIZE, LINKEDIN_CALLBACK.toString(), true);
+						if (authUrl != null) {
+							sonetWebView.open(authUrl);
+						} else {
+							this.finish();
+						}
 						break;
 					default:
 						this.finish();
 					}
-				} catch (OAuthMessageSignerException e) {
-					Log.e(TAG,e.toString());
-					this.finish();
-				} catch (OAuthNotAuthorizedException e) {
-					Log.e(TAG,e.toString());
-					this.finish();
-				} catch (OAuthExpectationFailedException e) {
-					Log.e(TAG,e.toString());
-					this.finish();
-				} catch (OAuthCommunicationException e) {
-					Log.e(TAG,e.toString());
-					this.finish();
 				} catch (UnsupportedEncodingException e) {
 					Log.e(TAG,e.toString());
 					this.finish();
@@ -234,11 +237,12 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 						Uri uri = Uri.parse(url);
 						try {
 							if (TWITTER_CALLBACK.getHost().equals(uri.getHost())) {
-								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER));
-								String response = mSonetOAuth.httpGet("http://api.twitter.com/1/account/verify_credentials.json");
-								if (response != null) {
-									JSONObject jobj = new JSONObject(response);
-									addAccount(jobj.getString("screen_name"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, TWITTER, jobj.getString("id"));
+								if (mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER))) {
+									String response = mSonetOAuth.httpResponse(new HttpGet("http://api.twitter.com/1/account/verify_credentials.json"));
+									if (response != null) {
+										JSONObject jobj = new JSONObject(response);
+										addAccount(jobj.getString("screen_name"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, TWITTER, jobj.getString("id"));
+									}
 								}
 							} else if (FOURSQUARE_CALLBACK.getHost().equals(uri.getHost())) {
 								// get the access_token
@@ -275,20 +279,22 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 									if (jobj.has("name") && jobj.has("id")) addAccount(jobj.getString("name"), token, "", expiry, FACEBOOK, jobj.getString("id"));
 								}
 							} else if (MYSPACE_CALLBACK.getHost().equals(uri.getHost())) {
-								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER));
-								String response = mSonetOAuth.httpGet(String.format(MYSPACE_URL_ME, MYSPACE_BASE_URL));
-								if (response != null) {
-									JSONObject jobj = new JSONObject(response);
-									JSONObject person = jobj.getJSONObject("person");
-									if (person.has("displayName") && person.has("id")) addAccount(person.getString("displayName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, MYSPACE, person.getString("id"));
+								if (mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER))) {
+									String response = mSonetOAuth.httpResponse(new HttpGet(String.format(MYSPACE_URL_ME, MYSPACE_BASE_URL)));
+									if (response != null) {
+										JSONObject jobj = new JSONObject(response);
+										JSONObject person = jobj.getJSONObject("person");
+										if (person.has("displayName") && person.has("id")) addAccount(person.getString("displayName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, MYSPACE, person.getString("id"));
+									}
 								}
 							} else if (BUZZ_CALLBACK.getHost().equals(uri.getHost())) {
 								mWebView.setVisibility(View.INVISIBLE);
-								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER));
-								String response = mSonetOAuth.httpGet(String.format(BUZZ_URL_ME, BUZZ_BASE_URL, BUZZ_API_KEY));
-								if (response != null) {
-									JSONObject data = new JSONObject(response).getJSONObject("data");
-									if (data.has("displayName") && data.has("id")) addAccount(data.getString("displayName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, BUZZ, data.getString("id"));
+								if (mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER))) {
+									String response = mSonetOAuth.httpResponse(new HttpGet(String.format(BUZZ_URL_ME, BUZZ_BASE_URL, BUZZ_API_KEY)));
+									if (response != null) {
+										JSONObject data = new JSONObject(response).getJSONObject("data");
+										if (data.has("displayName") && data.has("id")) addAccount(data.getString("displayName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, BUZZ, data.getString("id"));
+									}
 								}
 								//							} else if (SALESFORCE_CALLBACK.getHost().equals(uri.getHost())) {
 								//								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER));
@@ -297,27 +303,20 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 								//								//account info
 								//								//https://login.salesforce.com/ID/orgID/userID?Format=json
 							} else if (LINKEDIN_CALLBACK.getHost().equals(uri.getHost())) {
-								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER));
-								String response = mSonetOAuth.httpGet(String.format(LINKEDIN_URL_ME, LINKEDIN_BASE_URL), LINKEDIN_HEADERS);
-								if (response != null) {
-									JSONObject jobj = new JSONObject(response);
-									if (jobj.has("firstName") && jobj.has("id")) addAccount(jobj.getString("firstName") + " " + jobj.getString("lastName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, LINKEDIN, jobj.getString("id"));
+								if (mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER))) {
+									HttpGet httpGet = new HttpGet(String.format(LINKEDIN_URL_ME, LINKEDIN_BASE_URL));
+									for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
+									String response = mSonetOAuth.httpResponse(httpGet);
+									if (response != null) {
+										JSONObject jobj = new JSONObject(response);
+										if (jobj.has("firstName") && jobj.has("id")) addAccount(jobj.getString("firstName") + " " + jobj.getString("lastName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, LINKEDIN, jobj.getString("id"));
+									}
 								}
 								//							} else if (uri.getHost().contains("salesforce.com") && (uri.getQueryParameter("oauth_consumer_key") == null)) {
 								//								Log.v(TAG,"load:"+url + "&oauth_consumer_key=" + SALESFORCE_KEY);
 								//								view.loadUrl(url + "&oauth_consumer_key=" + SALESFORCE_KEY);
 								//								return true;
 							} else return false;// allow google to redirect
-						} catch (OAuthMessageSignerException e) {
-							Log.e(TAG, e.getMessage());
-						} catch (OAuthNotAuthorizedException e) {
-							Log.e(TAG, e.getMessage());
-						} catch (OAuthExpectationFailedException e) {
-							Log.e(TAG, e.getMessage());
-						} catch (OAuthCommunicationException e) {
-							Log.e(TAG, e.getMessage());
-						} catch (ClientProtocolException e) {
-							Log.e(TAG, e.getMessage());
 						} catch (JSONException e) {
 							Log.e(TAG, e.getMessage());
 						} catch (IOException e) {

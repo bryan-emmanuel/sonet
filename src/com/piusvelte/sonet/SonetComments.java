@@ -40,6 +40,14 @@ import static com.piusvelte.sonet.Sonet.BUZZ;
 import static com.piusvelte.sonet.Sonet.LINKEDIN;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_LIKES;
+import static com.piusvelte.sonet.Sonet.MYSPACE;
+import static com.piusvelte.sonet.Sonet.MYSPACE_BASE_URL;
+import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOOD;
+import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOODCOMMENTS;
+import static com.piusvelte.sonet.SonetTokens.BUZZ_KEY;
+import static com.piusvelte.sonet.SonetTokens.BUZZ_SECRET;
+import static com.piusvelte.sonet.SonetTokens.MYSPACE_KEY;
+import static com.piusvelte.sonet.SonetTokens.MYSPACE_SECRET;
 import static com.piusvelte.sonet.Sonet.TOKEN;
 
 import android.app.AlertDialog;
@@ -59,6 +67,7 @@ public class SonetComments extends ListActivity implements OnClickListener {
 	private static final String TAG = "SonetComments";
 	private int mService = 0;
 	private long mAccount = Sonet.INVALID_ACCOUNT_ID;
+	private String mSid;
 	private String mEsid;
 	private Uri mData;
 	private List<HashMap<String, String>> mComments = new ArrayList<HashMap<String, String>>();
@@ -71,10 +80,11 @@ public class SonetComments extends ListActivity implements OnClickListener {
 		Intent intent = getIntent();
 		if (intent != null) {
 			mData = intent.getData();
-			Cursor c = this.getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.SERVICE, Statuses_styles.ACCOUNT, Statuses_styles.ESID}, Statuses_styles._ID + "=?", new String[] {mData.getLastPathSegment()}, null);
+			Cursor c = this.getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.SERVICE, Statuses_styles.ACCOUNT, Statuses_styles.SID, Statuses_styles.ESID}, Statuses_styles._ID + "=?", new String[] {mData.getLastPathSegment()}, null);
 			if (c.moveToFirst()) {
 				mService = c.getInt(c.getColumnIndex(Statuses_styles.SERVICE));
 				mAccount = c.getLong(c.getColumnIndex(Statuses_styles.ACCOUNT));
+				mSid = c.getString(c.getColumnIndex(Statuses_styles.SID));
 				mEsid = c.getString(c.getColumnIndex(Statuses_styles.ESID));
 			}
 			c.close();
@@ -85,12 +95,14 @@ public class SonetComments extends ListActivity implements OnClickListener {
 	protected void onResume() {
 		super.onResume();
 		//TODO: load comments
+		Cursor account;
+		SonetOAuth sonetOAuth;
 		switch (mService) {
 		case FACEBOOK:
-			Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+			account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 			if (account.moveToFirst()) {
 				String token = account.getString(account.getColumnIndex(Accounts.TOKEN));
-				String response = Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, mEsid, TOKEN, token)));
+				String response = Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, mSid, TOKEN, token)));
 				if (response != null) {
 					Log.v(TAG,"response:"+response);
 					try {
@@ -102,7 +114,7 @@ public class SonetComments extends ListActivity implements OnClickListener {
 							boolean like = true;
 							if (likes > 0) {
 								// check if already liked
-								String response2 = Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mEsid, TOKEN, token)));
+								String response2 = Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mSid, TOKEN, token)));
 								if (response2 != null) {
 									try {
 										JSONArray likes2 = new JSONObject(response2).getJSONArray("data");
@@ -130,6 +142,34 @@ public class SonetComments extends ListActivity implements OnClickListener {
 					} catch (JSONException e) {
 						Log.e(TAG, e.toString());
 					}
+				}
+			}
+			account.close();
+			break;
+		case MYSPACE:
+			account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+			if (account.moveToFirst()) {
+				sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+				String response;
+				try {
+					response = sonetOAuth.httpResponse(new HttpGet(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mEsid, mSid)));
+					if (response != null) {
+						Log.v(TAG,"myspace:"+response);
+						//TODO:
+						JSONObject jobj = new JSONObject(response);
+//						for (int i = 0; i < comments.length(); i++) {
+//							HashMap<String, String> commentMap = new HashMap<String, String>();
+//							commentMap.put(Statuses.SID, id);
+//							commentMap.put(Entities.FRIEND, comment.getJSONObject("from").getString("name"));
+//							commentMap.put(Statuses.MESSAGE, comment.getString("message"));
+//							//TODO: get time24hr value for this widget/account
+//							commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(Long.parseLong(comment.getString("created")) * 1000, false));
+//							commentMap.put(getString(R.string.like), getString(like ? R.string.like : R.string.unlike));
+//							mComments.add(commentMap);
+//						}						
+					}
+				} catch (JSONException e) {
+					Log.e(TAG, e.toString());
 				}
 			}
 			account.close();
