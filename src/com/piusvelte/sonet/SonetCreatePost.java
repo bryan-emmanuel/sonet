@@ -20,6 +20,8 @@
 package com.piusvelte.sonet;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
 
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -91,7 +93,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private int mService = 0;
 	private int mAccount = (int) Sonet.INVALID_ACCOUNT_ID;
-	private int[] mAccountsToPost = new int[0];
+	private HashMap<Integer, Boolean> mAccountsToPost = new HashMap<Integer, Boolean>();
 	private String mSid;
 	private String mEsid;
 	private Uri mData;
@@ -266,7 +268,9 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					mAccount = account.getInt(account.getColumnIndex(Accounts._ID));
 					mService = account.getInt(account.getColumnIndex(Accounts.SERVICE));
 					mAppWidgetId = account.getInt(account.getColumnIndex(Accounts.WIDGET));
-					this.mAccountsToPost = Sonet.arrayPush(mAccountsToPost, mAccount);
+					if (!mAccountsToPost.containsKey(mAccount)) {
+						mAccountsToPost.put(mAccount, true);
+					}
 				}
 				account.close();
 				mAccounts.setEnabled(true);
@@ -297,6 +301,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		if (v == mLocation) {
 			// set the location
 		} else if (v == mSend) {
+			//TODO: loop through AccountsToPost
 			final String message = mPost.getText().toString();
 			if ((message != null) && (message != "")) {
 				// post or comment!
@@ -435,17 +440,16 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					account.close();
 					break;
 				case FOURSQUARE:
-					//TODO:
+					//TODO: send
 					break;
 				case LINKEDIN:
-					//TODO:
+					//TODO: send
 				}
 			}
 		} else if (v == mComments) {
 			this.startActivity(new Intent(this, SonetComments.class).setData(mData));
 		}
 		else if (v == mAccounts) {
-			//TODO: dialog to allow selection of accounts to post to, defaulting the replying/commenting account if this is a reply/comment
 			Cursor c = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID,
 					"(case when " + Accounts.SERVICE + "='" + TWITTER + "' then 'Twitter: ' when "
 					+ Accounts.SERVICE + "='" + FACEBOOK + "' then 'Facebook: ' when "
@@ -457,14 +461,16 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 			if (c.moveToFirst()) {
 				int iid = c.getColumnIndex(Accounts._ID),
 				iusername = c.getColumnIndex(Accounts.USERNAME),
-				i = -1;
+				i = 0;
 				final int[] accountIndexes = new int[c.getCount()];
 				final String[] accounts = new String[c.getCount()];
 				final boolean[] defaults = new boolean[c.getCount()];
 				while (!c.isAfterLast()) {
-					accountIndexes[i++] = c.getInt(iid);
+					int id = c.getInt(iid);
+					mAccountsToPost.put(id, id == mAccount);
+					accountIndexes[i] = id;
 					accounts[i] = c.getString(iusername);
-					defaults[i] = c.getInt(iid) == mAccount;
+					defaults[i++] = id == mAccount;
 					c.moveToNext();
 				}
 				AlertDialog.Builder dialog = new AlertDialog.Builder(this);
@@ -472,16 +478,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				.setMultiChoiceItems(accounts, defaults, new DialogInterface.OnMultiChoiceClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-						boolean exists = false;
-						for (int account : mAccountsToPost) {
-							if (accountIndexes[which] == account) {
-								exists = true;
-								break;
-							}
-						}
-						if (!exists) {
-							mAccountsToPost = isChecked ? Sonet.arrayPush(mAccountsToPost, accountIndexes[which]) : Sonet.arrayRemove(mAccountsToPost, accountIndexes[which]);
-						}
+						mAccountsToPost.put(accountIndexes[which], isChecked);
 					}
 				})
 				.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -578,10 +575,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				break;
 			case LINKEDIN:
 				//TODO:like
-				break;
-			default:
-				startActivity(new Intent(this, SonetCreatePost.class).setData(mData));
-				break;
 			}
 		}
 	}

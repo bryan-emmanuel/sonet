@@ -1318,6 +1318,7 @@ public class SonetService extends Service {
 			values.put(Entities.ACCOUNT, accountId);
 			id = Long.parseLong(this.getContentResolver().insert(Entities.CONTENT_URI, values).getLastPathSegment());
 		}
+		entity.close();
 		ContentValues values = new ContentValues();
 		values.put(Statuses.CREATED, created);
 		values.put(Statuses.ENTITY, id);
@@ -1413,7 +1414,9 @@ public class SonetService extends Service {
 							// set icons
 							byte[] icon = statuses_styles.getBlob(iicon);
 							Bitmap iconbmp = BitmapFactory.decodeByteArray(icon, 0, icon.length);
-							if (iconbmp != null) views.setImageViewBitmap(map_icon[count_status], iconbmp);
+							if (iconbmp != null) {
+								views.setImageViewBitmap(map_icon[count_status], iconbmp);
+							}
 							views.setTextViewText(map_friend_bg_clear[count_status], statuses_styles.getString(ifriend));
 							views.setFloat(map_friend_bg_clear[count_status], "setTextSize", friend_textsize);
 							views.setTextViewText(map_message_bg_clear[count_status], statuses_styles.getString(imessage));
@@ -1421,7 +1424,9 @@ public class SonetService extends Service {
 							// set messages background
 							byte[] status_bg = statuses_styles.getBlob(istatus_bg);
 							Bitmap status_bgbmp = BitmapFactory.decodeByteArray(status_bg, 0, status_bg.length);
-							if (status_bgbmp != null) views.setImageViewBitmap(map_status_bg[count_status], status_bgbmp);
+							if (status_bgbmp != null) {
+								views.setImageViewBitmap(map_status_bg[count_status], status_bgbmp);
+							}
 							views.setTextViewText(map_message[count_status], statuses_styles.getString(imessage));
 							views.setTextColor(map_message[count_status], messages_color);
 							views.setFloat(map_message[count_status], "setTextSize", messages_textsize);
@@ -1435,19 +1440,31 @@ public class SonetService extends Service {
 							views.setFloat(map_created[count_status], "setTextSize", created_textsize);
 							byte[] profile = statuses_styles.getBlob(iprofile);
 							Bitmap profilebmp = null;
-							if (profile != null) profilebmp = BitmapFactory.decodeByteArray(profile, 0, profile.length);
-							if (profilebmp != null) views.setImageViewBitmap(map_profile[count_status], profilebmp);						
+							if (profile != null) {
+								profilebmp = BitmapFactory.decodeByteArray(profile, 0, profile.length);
+							}
+							if (profilebmp != null) {
+								views.setImageViewBitmap(map_profile[count_status], profilebmp);						
+							}
 							count_status++;
 							statuses_styles.moveToNext();
 						}
 					}
-				} else views.setTextViewText(map_message[0], this.getString((mConnectivityManager.getActiveNetworkInfo() != null) && mConnectivityManager.getActiveNetworkInfo().isConnected() ? R.string.no_updates : R.string.no_connection));
+				} else {
+					views.setTextViewText(map_message[0], this.getString((mConnectivityManager.getActiveNetworkInfo() != null) && mConnectivityManager.getActiveNetworkInfo().isConnected() ? R.string.no_updates : R.string.no_connection));
+				}
 				statuses_styles.close();
-			} else views.setTextViewText(map_message[0], this.getString(R.string.no_accounts));
+			} else {
+				views.setTextViewText(map_message[0], this.getString(R.string.no_accounts));
+			}
 			accounts.close();
-			if ((widget != null) && (views != null)) AppWidgetManager.getInstance(this).updateAppWidget(Integer.parseInt(widget), views);
+			if ((widget != null) && (views != null)) {
+				AppWidgetManager.getInstance(this).updateAppWidget(Integer.parseInt(widget), views);
+			}
 			// replace with scrollable widget
-			if (scrollable) this.sendBroadcast(new Intent(this, SonetWidget.class).setAction(ACTION_BUILD_SCROLL).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widget));			
+			if (scrollable) {
+				this.sendBroadcast(new Intent(this, SonetWidget.class).setAction(ACTION_BUILD_SCROLL).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, Integer.parseInt(widget)));			
+			}
 		}
 		if (SonetService.sWidgetsTasks.isEmpty()) {
 			Sonet.release();

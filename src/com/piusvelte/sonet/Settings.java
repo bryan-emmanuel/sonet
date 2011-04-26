@@ -129,7 +129,7 @@ public class Settings extends Activity implements View.OnClickListener, OnChecke
 				mTime24hr.setChecked(d.getInt(d.getColumnIndex(Widgets.TIME24HR)) == 1);
 				mIcon.setChecked(d.getInt(d.getColumnIndex(Widgets.ICON)) == 1);
 				mStatuses_per_account_value = d.getInt(d.getColumnIndex(Widgets.STATUSES_PER_ACCOUNT));
-				mBackgroundUpdate.setChecked(c.getInt(c.getColumnIndex(Widgets.BACKGROUND_UPDATE)) == 1);
+				mBackgroundUpdate.setChecked(d.getInt(d.getColumnIndex(Widgets.BACKGROUND_UPDATE)) == 1);
 			} else {
 				mInterval_value = Sonet.default_interval;
 				mButtons_bg_color_value = Sonet.default_buttons_bg_color;

@@ -424,16 +424,16 @@ public class Sonet {
 		return a;
 	}
 	
-	protected static int[] arrayRemove(int[] a, int b) {
-		int[] c = new int[a.length - 1];
-		int n = 0;
-		for (int i = 0; n < c.length; i++) {
-			if ((n != i) || (a[i] != b)) {
-				c[n++] = a[i];
-			}
-		}
-		return c;
-	}
+//	protected static int[] arrayRemove(int[] a, int b) {
+//		int[] c = new int[a.length - 1];
+//		int n = 0;
+//		for (int i = 0; n < c.length; i++) {
+//			if ((n != i) || (a[i] != b)) {
+//				c[n++] = a[i];
+//			}
+//		}
+//		return c;
+//	}
 
 	protected static boolean arrayContains(int[] a, int b) {
 		boolean contains = false;
