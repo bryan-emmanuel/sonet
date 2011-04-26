@@ -39,6 +39,7 @@ import static com.piusvelte.sonet.Sonet.BUZZ;
 import static com.piusvelte.sonet.Sonet.BUZZ_ACTIVITY;
 import static com.piusvelte.sonet.Sonet.BUZZ_BASE_URL;
 import static com.piusvelte.sonet.Sonet.BUZZ_COMMENT;
+import static com.piusvelte.sonet.Sonet.BUZZ_LIKE;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_LIKES;
@@ -313,7 +314,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 								HttpParams httpParams = new BasicHttpParams();
 								httpParams.setParameter("status", message);
 								if (arg0[2] != null) {
-									httpParams.setParameter("in_reply_to_status_id", arg0[2]);
+									httpParams.setParameter("in_reply_to_status_id", mSid);
 								}
 								httpPost.setParams(httpParams);
 								return sonetOAuth.httpResponse(httpPost);
@@ -328,7 +329,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 						mPost.setEnabled(false);
 						mSend.setEnabled(false);
 						mSend.setText(R.string.sending);
-						asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)), mSid);
+						asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
 					}
 					account.close();
 					break;
@@ -342,7 +343,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 								HttpParams httpParams = new BasicHttpParams();
 								httpParams.setParameter("message", message);
 								if (arg0[1] != null) {
-									httpPost = new HttpPost(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, TOKEN, arg0[0], arg0[1]));
+									httpPost = new HttpPost(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, TOKEN, arg0[0], mSid));
 								} else {
 									httpPost = new HttpPost(String.format(FACEBOOK_POST, FACEBOOK_BASE_URL, TOKEN, arg0[0]));
 								}
@@ -356,7 +357,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 							}
 						};
 						mLike.setText(R.string.loading);
-						asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), mSid);
+						asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)));
 					}
 					account.close();
 					break;
@@ -369,7 +370,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 								SonetOAuth sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, arg0[0], arg0[1]);
 								try {
 									if ((arg0[2] != null) && (arg0[3] != null)) {
-										HttpPost httpPost = new HttpPost(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, arg0[2], arg0[3]));
+										HttpPost httpPost = new HttpPost(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mEsid, mSid));
 										httpPost.setEntity(new StringEntity("{\"body\":\"" + message + "\"}"));
 										return sonetOAuth.httpResponse(httpPost);
 									} else {
@@ -392,7 +393,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 						mPost.setEnabled(false);
 						mSend.setEnabled(false);
 						mSend.setText(R.string.sending);
-						asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)), mEsid, mSid);
+						asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
 					}
 					account.close();
 					break;
@@ -406,7 +407,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 								try {
 									HttpPost httpPost;
 									if ((arg0[2] != null) && (arg0[3] != null)) {
-										httpPost = new HttpPost(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, arg0[2], arg0[3], BUZZ_API_KEY));
+										httpPost = new HttpPost(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, mEsid, mSid, BUZZ_API_KEY));
 										httpPost.setEntity(new StringEntity("{\"data\":{\"object\":{\"type\":\"note\",\"content\":\"" + message + "\"}}}"));
 									} else {
 										httpPost = new HttpPost(String.format(BUZZ_ACTIVITY, BUZZ_BASE_URL, "", BUZZ_API_KEY));
@@ -429,13 +430,15 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 						mPost.setEnabled(false);
 						mSend.setEnabled(false);
 						mSend.setText(R.string.sending);
-						asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)), mEsid, mSid);
+						asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
 					}
 					account.close();
 					break;
 				case FOURSQUARE:
+					//TODO:
 					break;
 				case LINKEDIN:
+					//TODO:
 				}
 			}
 		} else if (v == mComments) {
@@ -509,7 +512,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 							@Override
 							protected void onPostExecute(String response) {
 								mLike.setText(R.string.retweet);
-								mLike.setEnabled(false);
+								Log.v(TAG,"retweet:"+response);
 							}
 						};
 						mLike.setEnabled(false);
@@ -550,6 +553,28 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				break;
 			case BUZZ:
 				//TODO:like
+				if (mSid != null) {
+					account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+					if (account.moveToFirst()) {
+						asyncTask = new AsyncTask<String, Void, String>() {
+							@Override
+							protected String doInBackground(String... arg0) {
+								SonetOAuth sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, arg0[0], arg0[1]);
+								return sonetOAuth.httpResponse(mLike.getText() == getString(R.string.like) ? new HttpPut(String.format(BUZZ_LIKE, BUZZ_BASE_URL, mSid, BUZZ_API_KEY)) :  new HttpDelete(String.format(BUZZ_LIKE, BUZZ_BASE_URL, mSid, BUZZ_API_KEY)));
+							}
+
+							@Override
+							protected void onPostExecute(String response) {
+								mLike.setText(R.string.like);
+								Log.v(TAG,"buzz like:"+response);
+							}
+						};
+						mLike.setEnabled(false);
+						mLike.setText(R.string.loading);
+						asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+					}
+					account.close();
+				}
 				break;
 			case LINKEDIN:
 				//TODO:like
