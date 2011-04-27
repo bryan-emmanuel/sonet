@@ -95,4 +95,10 @@
 	<string name="resend">Resend</string>
 	<string name="comments">Comments</string>
 	<string name="no_comments">No comments</string>
+	<string name="twitter">Twitter</string>
+	<string name="facebook">Facebook</string>
+	<string name="myspace">MySpace</string>
+	<string name="buzz">Buzz</string>
+	<string name="foursquare">Foursquare</string>
+	<string name="linkedin">LinkedIn</string>
 </resources>

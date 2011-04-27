@@ -126,7 +126,8 @@ public class SonetOAuth {
 				}
 				break;
 			default:
-				Log.e(TAG,"get error:"+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
+				Log.e(TAG,httpRequest.getURI().toString());
+				Log.e(TAG,""+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
 				break;
 			}
 		} catch (OAuthMessageSignerException e) {

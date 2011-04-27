@@ -23,6 +23,7 @@ import static com.piusvelte.sonet.Sonet.TOKEN;
 
 import static com.piusvelte.sonet.Sonet.BUZZ_BASE_URL;
 import static com.piusvelte.sonet.Sonet.BUZZ_URL_ME;
+import static com.piusvelte.sonet.Sonet.BUZZ_DATE_FORMAT;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_ME;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_BASE_URL;
@@ -822,7 +823,7 @@ public class SonetService extends Service {
 													for (int e = 0; e < entries.length(); e++) {
 														JSONObject entry = entries.getJSONObject(e);
 														if (entry.has("published") && entry.has("actor") && entry.has("object")) {
-															long epoch = Sonet.parseDate(entry.getString("published"), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+															long epoch = Sonet.parseDate(entry.getString("published"), BUZZ_DATE_FORMAT);
 															JSONObject actor = entry.getJSONObject("actor");
 															JSONObject object = entry.getJSONObject("object");
 															if (actor.has("name") && actor.has("thumbnailUrl") && object.has("originalContent")) {

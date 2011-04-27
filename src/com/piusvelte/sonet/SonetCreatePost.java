@@ -42,6 +42,7 @@ import static com.piusvelte.sonet.Sonet.BUZZ_ACTIVITY;
 import static com.piusvelte.sonet.Sonet.BUZZ_BASE_URL;
 import static com.piusvelte.sonet.Sonet.BUZZ_COMMENT;
 import static com.piusvelte.sonet.Sonet.BUZZ_LIKE;
+import static com.piusvelte.sonet.Sonet.BUZZ_GET_LIKE;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_LIKES;
@@ -87,13 +88,14 @@ import android.view.View.OnKeyListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class SonetCreatePost extends Activity implements OnKeyListener, OnClickListener {
 	private static final String TAG = "SonetCreatePost";
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private int mService = 0;
 	private int mAccount = (int) Sonet.INVALID_ACCOUNT_ID;
-	private HashMap<Integer, Boolean> mAccountsToPost = new HashMap<Integer, Boolean>();
+	private HashMap<Integer, HashMap<String, Integer>> mAccountsToPost = new HashMap<Integer, HashMap<String, Integer>>();
 	private String mSid;
 	private String mEsid;
 	private Uri mData;
@@ -182,7 +184,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 						asyncTask = new AsyncTask<String, Void, String>() {
 							@Override
 							protected String doInBackground(String... arg0) {
-								return Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mEsid, TOKEN, arg0[0])));
+								return Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mSid, TOKEN, arg0[0])));
 							}
 
 							@Override
@@ -221,7 +223,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 							@Override
 							protected String doInBackground(String... arg0) {
 								SonetOAuth sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, arg0[0], arg0[1]);
-								return sonetOAuth.httpResponse(new HttpGet(String.format(BUZZ_ACTIVITY, BUZZ_BASE_URL, mEsid, BUZZ_API_KEY)));
+								return sonetOAuth.httpResponse(new HttpGet(String.format(BUZZ_GET_LIKE, BUZZ_BASE_URL, mSid, BUZZ_API_KEY)));
 							}
 
 							@Override
@@ -230,14 +232,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 								if (response != null) {
 									Log.v(TAG,"response:"+response);
 									try {
-										JSONArray likes = new JSONObject(response).getJSONArray("data");
-										for (int i = 0; i < likes.length(); i++) {
-											JSONObject like = likes.getJSONObject(i);
-											if (like.getString("id") == mSid) {
-												liked = true;
-												break;
-											}
-										}
+										JSONObject data = new JSONObject(response).getJSONObject("data");
 									} catch (JSONException e) {
 										Log.e(TAG,e.toString());
 									}
@@ -269,7 +264,10 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					mService = account.getInt(account.getColumnIndex(Accounts.SERVICE));
 					mAppWidgetId = account.getInt(account.getColumnIndex(Accounts.WIDGET));
 					if (!mAccountsToPost.containsKey(mAccount)) {
-						mAccountsToPost.put(mAccount, true);
+						HashMap<String, Integer> values = new HashMap<String, Integer>();
+						values.put(Accounts.SERVICE, mService);
+						values.put(Accounts._ID, 1);
+						mAccountsToPost.put(mAccount, values);
 					}
 				}
 				account.close();
@@ -301,149 +299,163 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		if (v == mLocation) {
 			// set the location
 		} else if (v == mSend) {
-			//TODO: loop through AccountsToPost
 			final String message = mPost.getText().toString();
 			if ((message != null) && (message != "")) {
-				// post or comment!
-				AsyncTask<String, Void, String> asyncTask;
-				Cursor account;
-				switch (mService) {
-				case TWITTER:
-					account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-					if (account.moveToFirst()) {
-						asyncTask = new AsyncTask<String, Void, String>() {
-							@Override
-							protected String doInBackground(String... arg0) {
-								SonetOAuth sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, arg0[0], arg0[1]);
-								HttpPost httpPost = new HttpPost(String.format(TWITTER_UPDATE, TWITTER_BASE_URL));
-								HttpParams httpParams = new BasicHttpParams();
-								httpParams.setParameter("status", message);
-								if (arg0[2] != null) {
-									httpParams.setParameter("in_reply_to_status_id", mSid);
-								}
-								httpPost.setParams(httpParams);
-								return sonetOAuth.httpResponse(httpPost);
-							}
-
-							@Override
-							protected void onPostExecute(String response) {
-								Log.v(TAG,"tweet:"+response);
-								finish();
-							}
-						};
-						mPost.setEnabled(false);
-						mSend.setEnabled(false);
-						mSend.setText(R.string.sending);
-						asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
-					}
-					account.close();
-					break;
-				case FACEBOOK:
-					account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-					if (account.moveToFirst()) {
-						asyncTask = new AsyncTask<String, Void, String>() {
-							@Override
-							protected String doInBackground(String... arg0) {
-								HttpPost httpPost = new HttpPost(String.format(FACEBOOK_POST, FACEBOOK_BASE_URL));
-								HttpParams httpParams = new BasicHttpParams();
-								httpParams.setParameter("message", message);
-								if (arg0[1] != null) {
-									httpPost = new HttpPost(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, TOKEN, arg0[0], mSid));
-								} else {
-									httpPost = new HttpPost(String.format(FACEBOOK_POST, FACEBOOK_BASE_URL, TOKEN, arg0[0]));
-								}
-								return Sonet.httpResponse(httpPost);
-							}
-
-							@Override
-							protected void onPostExecute(String response) {
-								Log.v(TAG,"facebook post:"+response);
-								finish();
-							}
-						};
-						mLike.setText(R.string.loading);
-						asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)));
-					}
-					account.close();
-					break;
-				case MYSPACE:
-					account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-					if (account.moveToFirst()) {
-						asyncTask = new AsyncTask<String, Void, String>() {
-							@Override
-							protected String doInBackground(String... arg0) {
-								SonetOAuth sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, arg0[0], arg0[1]);
-								try {
-									if ((arg0[2] != null) && (arg0[3] != null)) {
-										HttpPost httpPost = new HttpPost(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mEsid, mSid));
-										httpPost.setEntity(new StringEntity("{\"body\":\"" + message + "\"}"));
+				//TODO: loop through AccountsToPost
+				Iterator<Integer> i = mAccountsToPost.keySet().iterator();
+				while (i.hasNext()) {
+					HashMap<String, Integer> values = mAccountsToPost.get(i);
+					if (values.get(Accounts._ID) == 1) {
+						// post or comment!
+						AsyncTask<String, Void, String> asyncTask;
+						Cursor account;
+						switch (values.get(Accounts.SERVICE)) {
+						case TWITTER:
+							account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+							if (account.moveToFirst()) {
+								asyncTask = new AsyncTask<String, Void, String>() {
+									@Override
+									protected String doInBackground(String... arg0) {
+										SonetOAuth sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, arg0[0], arg0[1]);
+										HttpPost httpPost = new HttpPost(String.format(TWITTER_UPDATE, TWITTER_BASE_URL));
+										HttpParams httpParams = new BasicHttpParams();
+										httpParams.setParameter("status", message);
+										if (arg0[2] != null) {
+											httpParams.setParameter("in_reply_to_status_id", mSid);
+										}
+										httpPost.setParams(httpParams);
 										return sonetOAuth.httpResponse(httpPost);
-									} else {
-										HttpPut httpPut = new HttpPut(String.format(MYSPACE_URL_STATUSMOOD, MYSPACE_BASE_URL));
-										httpPut.setEntity(new StringEntity("{\"status\":\"" + message + "\"}"));
-										return sonetOAuth.httpResponse(httpPut);
 									}
-								} catch (IOException e) {
-									Log.e(TAG, e.toString());
-								}
-								return null;
-							}
 
-							@Override
-							protected void onPostExecute(String response) {
-								Log.v(TAG,"myspace:"+response);
-								finish();
-							}
-						};
-						mPost.setEnabled(false);
-						mSend.setEnabled(false);
-						mSend.setText(R.string.sending);
-						asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
-					}
-					account.close();
-					break;
-				case BUZZ:
-					account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-					if (account.moveToFirst()) {
-						asyncTask = new AsyncTask<String, Void, String>() {
-							@Override
-							protected String doInBackground(String... arg0) {
-								SonetOAuth sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, arg0[0], arg0[1]);
-								try {
-									HttpPost httpPost;
-									if ((arg0[2] != null) && (arg0[3] != null)) {
-										httpPost = new HttpPost(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, mEsid, mSid, BUZZ_API_KEY));
-										httpPost.setEntity(new StringEntity("{\"data\":{\"object\":{\"type\":\"note\",\"content\":\"" + message + "\"}}}"));
-									} else {
-										httpPost = new HttpPost(String.format(BUZZ_ACTIVITY, BUZZ_BASE_URL, "", BUZZ_API_KEY));
-										httpPost.setEntity(new StringEntity("{\"data\":{\"content\":\"" + message + "\"}}"));
+									@Override
+									protected void onPostExecute(String response) {
+										Log.v(TAG,"tweet:"+response);
+										//TODO: handle response to user
+										(Toast.makeText(SonetCreatePost.this, getString(R.string.twitter) + " " + getString(R.string.sent), Toast.LENGTH_LONG)).show();
+										finish();
 									}
-									httpPost.addHeader(new BasicHeader("Content-Type", "application/json"));
-									return sonetOAuth.httpResponse(httpPost);
-								} catch (IOException e) {
-									Log.e(TAG, e.toString());
-								}
-								return null;
+								};
+								mPost.setEnabled(false);
+								mSend.setEnabled(false);
+								mSend.setText(R.string.sending);
+								asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
 							}
+							account.close();
+							break;
+						case FACEBOOK:
+							account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+							if (account.moveToFirst()) {
+								asyncTask = new AsyncTask<String, Void, String>() {
+									@Override
+									protected String doInBackground(String... arg0) {
+										HttpPost httpPost = new HttpPost(String.format(FACEBOOK_POST, FACEBOOK_BASE_URL));
+										HttpParams httpParams = new BasicHttpParams();
+										httpParams.setParameter("message", message);
+										if (arg0[1] != null) {
+											httpPost = new HttpPost(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, TOKEN, arg0[0], mSid));
+										} else {
+											httpPost = new HttpPost(String.format(FACEBOOK_POST, FACEBOOK_BASE_URL, TOKEN, arg0[0]));
+										}
+										return Sonet.httpResponse(httpPost);
+									}
 
-							@Override
-							protected void onPostExecute(String response) {
-								Log.v(TAG,"buzz:"+response);
-								finish();
+									@Override
+									protected void onPostExecute(String response) {
+										Log.v(TAG,"facebook post:"+response);
+										//TODO: handle response to user
+										(Toast.makeText(SonetCreatePost.this, getString(R.string.facebook) + " " + getString(R.string.sent), Toast.LENGTH_LONG)).show();
+										finish();
+									}
+								};
+								mLike.setText(R.string.loading);
+								asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)));
 							}
-						};
-						mPost.setEnabled(false);
-						mSend.setEnabled(false);
-						mSend.setText(R.string.sending);
-						asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+							account.close();
+							break;
+						case MYSPACE:
+							account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+							if (account.moveToFirst()) {
+								asyncTask = new AsyncTask<String, Void, String>() {
+									@Override
+									protected String doInBackground(String... arg0) {
+										SonetOAuth sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, arg0[0], arg0[1]);
+										try {
+											if ((arg0[2] != null) && (arg0[3] != null)) {
+												HttpPost httpPost = new HttpPost(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mEsid, mSid));
+												httpPost.setEntity(new StringEntity("{\"body\":\"" + message + "\"}"));
+												return sonetOAuth.httpResponse(httpPost);
+											} else {
+												HttpPut httpPut = new HttpPut(String.format(MYSPACE_URL_STATUSMOOD, MYSPACE_BASE_URL));
+												httpPut.setEntity(new StringEntity("{\"status\":\"" + message + "\"}"));
+												return sonetOAuth.httpResponse(httpPut);
+											}
+										} catch (IOException e) {
+											Log.e(TAG, e.toString());
+										}
+										return null;
+									}
+
+									@Override
+									protected void onPostExecute(String response) {
+										Log.v(TAG,"myspace:"+response);
+										//TODO: handle response to user
+										(Toast.makeText(SonetCreatePost.this, getString(R.string.myspace) + " " + getString(R.string.sent), Toast.LENGTH_LONG)).show();
+										finish();
+									}
+								};
+								mPost.setEnabled(false);
+								mSend.setEnabled(false);
+								mSend.setText(R.string.sending);
+								asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+							}
+							account.close();
+							break;
+						case BUZZ:
+							account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+							if (account.moveToFirst()) {
+								asyncTask = new AsyncTask<String, Void, String>() {
+									@Override
+									protected String doInBackground(String... arg0) {
+										SonetOAuth sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, arg0[0], arg0[1]);
+										try {
+											HttpPost httpPost;
+											if ((arg0[2] != null) && (arg0[3] != null)) {
+												httpPost = new HttpPost(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, mSid, BUZZ_API_KEY));
+												httpPost.setEntity(new StringEntity("{\"data\":{\"object\":{\"type\":\"note\",\"content\":\"" + message + "\"}}}"));
+											} else {
+												httpPost = new HttpPost(String.format(BUZZ_ACTIVITY, BUZZ_BASE_URL, "", BUZZ_API_KEY));
+												httpPost.setEntity(new StringEntity("{\"data\":{\"content\":\"" + message + "\"}}"));
+											}
+											httpPost.addHeader(new BasicHeader("Content-Type", "application/json"));
+											return sonetOAuth.httpResponse(httpPost);
+										} catch (IOException e) {
+											Log.e(TAG, e.toString());
+										}
+										return null;
+									}
+
+									@Override
+									protected void onPostExecute(String response) {
+										Log.v(TAG,"buzz:"+response);
+										//TODO: handle response to user
+										(Toast.makeText(SonetCreatePost.this, getString(R.string.buzz) + " " + getString(R.string.sent), Toast.LENGTH_LONG)).show();
+										finish();
+									}
+								};
+								mPost.setEnabled(false);
+								mSend.setEnabled(false);
+								mSend.setText(R.string.sending);
+								asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+							}
+							account.close();
+							break;
+						case FOURSQUARE:
+							//TODO: send
+							break;
+						case LINKEDIN:
+							//TODO: send
+						}
 					}
-					account.close();
-					break;
-				case FOURSQUARE:
-					//TODO: send
-					break;
-				case LINKEDIN:
-					//TODO: send
 				}
 			}
 		} else if (v == mComments) {
@@ -461,13 +473,17 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 			if (c.moveToFirst()) {
 				int iid = c.getColumnIndex(Accounts._ID),
 				iusername = c.getColumnIndex(Accounts.USERNAME),
+				iservice = c.getColumnIndex(Accounts.SERVICE),
 				i = 0;
 				final int[] accountIndexes = new int[c.getCount()];
 				final String[] accounts = new String[c.getCount()];
 				final boolean[] defaults = new boolean[c.getCount()];
 				while (!c.isAfterLast()) {
 					int id = c.getInt(iid);
-					mAccountsToPost.put(id, id == mAccount);
+					HashMap<String, Integer> values = new HashMap<String, Integer>();
+					values.put(Accounts.SERVICE, c.getInt(iservice));
+					values.put(Accounts._ID, id == mAccount ? 1 : 0);
+					mAccountsToPost.put(id, values);
 					accountIndexes[i] = id;
 					accounts[i] = c.getString(iusername);
 					defaults[i++] = id == mAccount;
@@ -478,7 +494,9 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				.setMultiChoiceItems(accounts, defaults, new DialogInterface.OnMultiChoiceClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-						mAccountsToPost.put(accountIndexes[which], isChecked);
+						HashMap<String, Integer> values = mAccountsToPost.get(accountIndexes[which]);
+						values.put(Accounts._ID, isChecked ? 1 : 0);
+						mAccountsToPost.put(accountIndexes[which], values);
 					}
 				})
 				.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -510,6 +528,8 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 							protected void onPostExecute(String response) {
 								mLike.setText(R.string.retweet);
 								Log.v(TAG,"retweet:"+response);
+								//TODO: handle response to user
+								(Toast.makeText(SonetCreatePost.this, getString(R.string.retweet) + " " + getString(R.string.sent), Toast.LENGTH_LONG)).show();
 							}
 						};
 						mLike.setEnabled(false);
@@ -535,6 +555,8 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 								protected void onPostExecute(String response) {
 									//TODO: check response
 									Log.v(TAG,"like:"+response);
+									//TODO: handle response to user
+									(Toast.makeText(SonetCreatePost.this, getString(R.string.facebook) + " " + getString(R.string.sent), Toast.LENGTH_LONG)).show();
 									mLike.setText(R.string.unlike);
 									mLike.setEnabled(true);
 								}
@@ -562,8 +584,11 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 
 							@Override
 							protected void onPostExecute(String response) {
-								mLike.setText(R.string.like);
 								Log.v(TAG,"buzz like:"+response);
+								//TODO: handle response to user
+								(Toast.makeText(SonetCreatePost.this, getString(R.string.buzz) + " " + getString(R.string.sent), Toast.LENGTH_LONG)).show();
+								mLike.setText(R.string.unlike);
+								mLike.setEnabled(true);
 							}
 						};
 						mLike.setEnabled(false);

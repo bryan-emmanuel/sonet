@@ -50,6 +50,11 @@ public class Sonet {
 
 	protected static final String TOKEN = "access_token";
 	protected static final String EXPIRES = "expires_in";
+	protected static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
+	protected static final String ACTION_BUILD_SCROLL = "com.piusvelte.sonet.Sonet.BUILD_SCROLL";
+	protected static final String EXTRA_ACCOUNT_ID = "com.piusvelte.sonet.Sonet.ACCOUNT_ID";
+	protected static final long INVALID_ACCOUNT_ID = -1;
+	protected static final int RESULT_REFRESH = 1;
 
 	protected static final int TWITTER = 0;
 	protected static final String TWITTER_BASE_URL = "http://api.twitter.com/";
@@ -71,12 +76,6 @@ public class Sonet {
 	protected static final String FACEBOOK_LIKES = "%s%s/likes?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_COMMENTS = "%s%s/comments?date_format=U&format=json&sdk=android&%s=%s";
 
-	protected static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
-	protected static final String ACTION_BUILD_SCROLL = "com.piusvelte.sonet.Sonet.BUILD_SCROLL";
-	protected static final String EXTRA_ACCOUNT_ID = "com.piusvelte.sonet.Sonet.ACCOUNT_ID";
-	protected static final long INVALID_ACCOUNT_ID = -1;
-	protected static final int RESULT_REFRESH = 1;
-
 	protected static final int MYSPACE = 2;
 	protected static final String MYSPACE_BASE_URL = "http://api.myspace.com/1.0/";
 	protected static final String MYSPACE_URL_REQUEST = "http://api.myspace.com/request_token";
@@ -96,8 +95,10 @@ public class Sonet {
 	protected static final String BUZZ_URL_ME = "%speople/@me/@self?alt=json&key=%s";
 	protected static final String BUZZ_URL_FEED = "%sactivities/@me/@consumption?alt=json&max-results=%s&key=%s";
 	protected static final String BUZZ_LIKE = "%sactivities/@me/@liked/%s?alt=json&key=%s";
-	protected static final String BUZZ_COMMENT = "%sactivities/%s/@self/%s/@comments?alt=json&key=%s";
-	protected static final String BUZZ_ACTIVITY = "%sactivities/@me/@self%s?alt=json&key=%s";
+	protected static final String BUZZ_GET_LIKE = "%sactivities/@me/@self/%s/@liked?alt=json&key=%s";
+	protected static final String BUZZ_COMMENT = "%sactivities/@me/@self/%s/@comments?alt=json&key=%s";
+	protected static final String BUZZ_ACTIVITY = "%sactivities/@me/@self/%s?alt=json&key=%s";
+	protected static final String BUZZ_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 
 	protected static final int FOURSQUARE = 4;
 	protected static final String FOURSQUARE_BASE_URL = "https://api.foursquare.com/v2/";
@@ -423,17 +424,6 @@ public class Sonet {
 		a[a.length - 1] = b;
 		return a;
 	}
-	
-//	protected static int[] arrayRemove(int[] a, int b) {
-//		int[] c = new int[a.length - 1];
-//		int n = 0;
-//		for (int i = 0; n < c.length; i++) {
-//			if ((n != i) || (a[i] != b)) {
-//				c[n++] = a[i];
-//			}
-//		}
-//		return c;
-//	}
 
 	protected static boolean arrayContains(int[] a, int b) {
 		boolean contains = false;
