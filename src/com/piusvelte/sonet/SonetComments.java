@@ -26,6 +26,7 @@ import java.util.List;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -38,6 +39,8 @@ import com.piusvelte.sonet.Sonet.Statuses_styles;
 import static com.piusvelte.sonet.Sonet.BUZZ_BASE_URL;
 import static com.piusvelte.sonet.Sonet.BUZZ_COMMENT;
 import static com.piusvelte.sonet.Sonet.BUZZ_DATE_FORMAT;
+import static com.piusvelte.sonet.Sonet.BUZZ_GET_LIKE;
+import static com.piusvelte.sonet.Sonet.BUZZ_LIKE;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.BUZZ;
 import static com.piusvelte.sonet.Sonet.LINKEDIN;
@@ -64,11 +67,13 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
+import android.widget.Toast;
 
 public class SonetComments extends ListActivity implements OnClickListener, OnCancelListener {
 	private static final String TAG = "SonetComments";
@@ -101,7 +106,6 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 	@Override
 	protected void onResume() {
 		super.onResume();
-		//TODO: load comments, NEED TO SHOW LOADING PROGRESS DIALOG
 		mLoadingDialog = new ProgressDialog(this);
 		mLoadingDialog.setMessage(getString(R.string.loading));
 		mLoadingDialog.setCancelable(true);
@@ -224,9 +228,10 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 	@Override
 	protected void onListItemClick(ListView list, View view, int position, long id) {
 		super.onListItemClick(list, view, position, id);
+		AlertDialog.Builder dialog;
 		switch (mService) {
 		case FACEBOOK:
-			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+			dialog = new AlertDialog.Builder(this);
 			dialog.setMessage(mComments.get(position).get(getString(R.string.like)) == getString(R.string.like) ? R.string.like : R.string.unlike)
 			.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 				@Override
@@ -234,9 +239,25 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 					Cursor c = SonetComments.this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 					if (c.moveToFirst()) {
 						//TODO: show progress dialog, confirm liked/unliked
-						String response = Sonet.httpResponse(mComments.get(which).get(getString(R.string.like)) == getString(R.string.like) ? new HttpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mComments.get(which).get(Statuses.SID), TOKEN, c.getString(c.getColumnIndex(Accounts.TOKEN)))) : new HttpDelete(String.format(FACEBOOK_LIKES, mComments.get(which).get(Statuses.SID), TOKEN, c.getString(c.getColumnIndex(Accounts.TOKEN)))));
-						//TODO: check response
-						Log.v(TAG,"like:"+response);
+						AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
+							@Override
+							protected String doInBackground(String... arg0) {
+								return Sonet.httpResponse(arg0[2] == getString(R.string.like) ?
+										new HttpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, arg0[1], TOKEN, arg0[0]))
+								: new HttpDelete(String.format(FACEBOOK_LIKES, arg0[1], TOKEN, arg0[0])));
+							}
+
+							@Override
+							protected void onPostExecute(String response) {
+								boolean liked = false;
+								if (response != null) {
+									//TODO: check response, update the listview
+									Log.v(TAG,"like:"+response);
+									(Toast.makeText(SonetComments.this, getString(R.string.facebook) + " " + getString(R.string.sent), Toast.LENGTH_LONG)).show();
+								}
+							}
+						};
+						asyncTask.execute(c.getString(c.getColumnIndex(Accounts.TOKEN)), mComments.get(which).get(Statuses.SID), mComments.get(which).get(getString(R.string.like)));
 					}
 					c.close();
 				}
@@ -245,7 +266,40 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 			.show();
 			break;
 		case BUZZ:
-			//TODO:
+			dialog = new AlertDialog.Builder(this);
+			dialog.setMessage(mComments.get(position).get(getString(R.string.like)) == getString(R.string.like) ? R.string.like : R.string.unlike)
+			.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					Cursor c = SonetComments.this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+					if (c.moveToFirst()) {
+						//TODO: show progress dialog, confirm liked/unliked
+						AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
+							@Override
+							protected String doInBackground(String... arg0) {
+								SonetOAuth sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, arg0[0], arg0[1]);
+								return sonetOAuth.httpResponse(arg0[3] == getString(R.string.like) ?
+										new HttpPut(String.format(BUZZ_LIKE, BUZZ_BASE_URL, arg0[2], BUZZ_API_KEY))
+								: new HttpDelete(String.format(BUZZ_LIKE, BUZZ_BASE_URL, arg0[2], BUZZ_API_KEY)));
+							}
+
+							@Override
+							protected void onPostExecute(String response) {
+								boolean liked = false;
+								if (response != null) {
+									//TODO: check response, update the listview
+									Log.v(TAG,"like:"+response);
+									(Toast.makeText(SonetComments.this, getString(R.string.buzz) + " " + getString(R.string.sent), Toast.LENGTH_LONG)).show();
+								}
+							}
+						};
+						asyncTask.execute(c.getString(c.getColumnIndex(Accounts.TOKEN)), c.getString(c.getColumnIndex(Accounts.SECRET)), mComments.get(which).get(Statuses.SID), mComments.get(which).get(getString(R.string.like)));
+					}
+					c.close();
+				}
+			})
+			.setNegativeButton(android.R.string.cancel, this)
+			.show();
 			break;
 		case LINKEDIN:
 			//TODO:
