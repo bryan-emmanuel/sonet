@@ -90,9 +90,6 @@
 	<string name="comment">Comment</string>
 	<string name="location">Location</string>
 	<string name="send">Send</string>
-	<string name="sending">Sending</string>
-	<string name="sent">Sent</string>
-	<string name="resend">Resend</string>
 	<string name="comments">Comments</string>
 	<string name="no_comments">No comments</string>
 	<string name="twitter">Twitter</string>
@@ -101,4 +98,6 @@
 	<string name="buzz">Buzz</string>
 	<string name="foursquare">Foursquare</string>
 	<string name="linkedin">LinkedIn</string>
+	<string name="success">success</string>
+	<string name="failure">failure</string>
 </resources>

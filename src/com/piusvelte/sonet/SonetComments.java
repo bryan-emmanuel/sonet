@@ -220,6 +220,7 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 			break;
 		case LINKEDIN:
 			//TODO:
+			break;
 		}
 		mLoadingDialog.dismiss();
 		this.setListAdapter(new SimpleAdapter(this, mComments, R.layout.comment, new String[]{Entities.FRIEND, Statuses.MESSAGE, Statuses.CREATEDTEXT, getString(R.string.like)}, new int[]{R.id.friend, R.id.message, R.id.created, R.id.like}));
@@ -252,8 +253,7 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 								boolean liked = false;
 								if (response != null) {
 									//TODO: check response, update the listview
-									Log.v(TAG,"like:"+response);
-									(Toast.makeText(SonetComments.this, getString(R.string.facebook) + " " + getString(R.string.sent), Toast.LENGTH_LONG)).show();
+									(Toast.makeText(SonetComments.this, getString(R.string.facebook) + " " + getString((response != null) && (response == "true") ? R.string.success : R.string.failure), Toast.LENGTH_LONG)).show();
 								}
 							}
 						};
@@ -289,7 +289,7 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 								if (response != null) {
 									//TODO: check response, update the listview
 									Log.v(TAG,"like:"+response);
-									(Toast.makeText(SonetComments.this, getString(R.string.buzz) + " " + getString(R.string.sent), Toast.LENGTH_LONG)).show();
+									(Toast.makeText(SonetComments.this, getString(R.string.buzz) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
 								}
 							}
 						};
@@ -303,6 +303,7 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 			break;
 		case LINKEDIN:
 			//TODO:
+			break;
 		}
 	}
 
