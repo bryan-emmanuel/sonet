@@ -20,6 +20,7 @@
 package com.piusvelte.sonet;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -51,6 +52,7 @@ import static com.piusvelte.sonet.Sonet.FACEBOOK_POST;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_COMMENTS;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE;
 import static com.piusvelte.sonet.Sonet.LINKEDIN;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_HEADERS;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
 import static com.piusvelte.sonet.Sonet.MYSPACE_BASE_URL;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOOD;
@@ -62,6 +64,14 @@ import static com.piusvelte.sonet.Sonet.TWITTER_BASE_URL;
 import static com.piusvelte.sonet.Sonet.TWITTER_RETWEET;
 import static com.piusvelte.sonet.Sonet.TWITTER_USER;
 import static com.piusvelte.sonet.Sonet.TWITTER_UPDATE;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_BASE_URL;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_POST;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_POST_BODY;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_COMMENT_BODY;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATE;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATE_COMMENTS;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_IS_LIKED;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_LIKE_BODY;
 import static com.piusvelte.sonet.SonetTokens.BUZZ_API_KEY;
 import static com.piusvelte.sonet.SonetTokens.BUZZ_KEY;
 import static com.piusvelte.sonet.SonetTokens.BUZZ_SECRET;
@@ -69,6 +79,8 @@ import static com.piusvelte.sonet.SonetTokens.TWITTER_KEY;
 import static com.piusvelte.sonet.SonetTokens.TWITTER_SECRET;
 import static com.piusvelte.sonet.SonetTokens.MYSPACE_KEY;
 import static com.piusvelte.sonet.SonetTokens.MYSPACE_SECRET;
+import static com.piusvelte.sonet.SonetTokens.LINKEDIN_KEY;
+import static com.piusvelte.sonet.SonetTokens.LINKEDIN_SECRET;
 
 import com.piusvelte.sonet.Sonet.Statuses_styles;
 
@@ -255,8 +267,30 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					mComments.setEnabled(true);
 					mComments.setOnClickListener(this);
 					//TODO: check if liked
-					mLike.setEnabled(true);
-					mLike.setOnClickListener(this);
+					account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+					if (account.moveToFirst()) {
+						asyncTask = new AsyncTask<String, Void, String>() {
+							@Override
+							protected String doInBackground(String... arg0) {
+								SonetOAuth sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, arg0[0], arg0[1]);
+								HttpGet httpGet = new HttpGet(String.format(LINKEDIN_UPDATE, LINKEDIN_BASE_URL, mSid));
+								for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
+								return sonetOAuth.httpResponse(httpGet);
+							}
+
+							@Override
+							protected void onPostExecute(String response) {
+								Log.v(TAG,"linkedin update:"+response);
+								//TODO: handle response
+								//								mLike.setText(liked ? R.string.unlike : R.string.like);
+								mLike.setEnabled(true);
+								mLike.setOnClickListener(SonetCreatePost.this);
+							}
+						};
+						mLike.setEnabled(false);
+						asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+					}
+					account.close();
 					break;
 				default:
 					mComments.setEnabled(true);
@@ -321,9 +355,11 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				@Override
 				protected void onPostExecute(String response) {
 					Log.v(TAG,"tweet:"+response);
-					//TODO: handle response to user
-					(Toast.makeText(SonetCreatePost.this, getString(R.string.twitter) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-					finish();
+					if (response != null) {
+						//TODO: handle response to user
+						(Toast.makeText(SonetCreatePost.this, getString(R.string.twitter) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+						finish();
+					}
 				}
 			};
 			mPost.setEnabled(false);
@@ -344,9 +380,11 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				@Override
 				protected void onPostExecute(String response) {
 					Log.v(TAG,"facebook post:"+response);
-					//TODO: handle response to user
-					(Toast.makeText(SonetCreatePost.this, getString(R.string.facebook) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-					finish();
+					if (response != null) {
+						//TODO: handle response to user
+						(Toast.makeText(SonetCreatePost.this, getString(R.string.facebook) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+						finish();
+					}
 				}
 			};
 			mPost.setEnabled(false);
@@ -377,9 +415,11 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				@Override
 				protected void onPostExecute(String response) {
 					Log.v(TAG,"myspace:"+response);
-					//TODO: handle response to user
-					(Toast.makeText(SonetCreatePost.this, getString(R.string.myspace) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-					finish();
+					if (response != null) {
+						//TODO: handle response to user
+						(Toast.makeText(SonetCreatePost.this, getString(R.string.myspace) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+						finish();
+					}
 				}
 			};
 			mPost.setEnabled(false);
@@ -411,9 +451,11 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				@Override
 				protected void onPostExecute(String response) {
 					Log.v(TAG,"buzz:"+response);
-					//TODO: handle response to user
-					(Toast.makeText(SonetCreatePost.this, getString(R.string.buzz) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-					finish();
+					if (response != null) {
+						//TODO: handle response to user
+						(Toast.makeText(SonetCreatePost.this, getString(R.string.buzz) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+						finish();
+					}
 				}
 			};
 			mPost.setEnabled(false);
@@ -424,7 +466,41 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 			//TODO: send
 			break;
 		case LINKEDIN:
-			//TODO: send
+			asyncTask = new AsyncTask<String, Void, String>() {
+				@Override
+				protected String doInBackground(String... arg0) {
+					SonetOAuth sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, token, secret);
+					try {
+						HttpPost httpPost;
+						if (sid != null) {
+							httpPost = new HttpPost(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, sid));
+							httpPost.setEntity(new StringEntity(String.format(LINKEDIN_COMMENT_BODY, message)));
+						} else {
+							httpPost = new HttpPost(String.format(LINKEDIN_POST, LINKEDIN_BASE_URL));
+							// TODO: need locale
+							httpPost.setEntity(new StringEntity(String.format(LINKEDIN_POST_BODY, "", message)));
+						}
+						httpPost.addHeader(new BasicHeader("Content-Type", "application/xml"));
+						return sonetOAuth.httpResponse(httpPost);
+					} catch (IOException e) {
+						Log.e(TAG, e.toString());
+					}
+					return null;
+				}
+
+				@Override
+				protected void onPostExecute(String response) {
+					Log.v(TAG,"buzz:"+response);
+					if (response != null) {
+						//TODO: handle response to user
+						(Toast.makeText(SonetCreatePost.this, getString(R.string.buzz) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+						finish();
+					}
+				}
+			};
+			mPost.setEnabled(false);
+			mSend.setEnabled(false);
+			asyncTask.execute();
 		}		
 	}
 
@@ -557,10 +633,12 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 
 							@Override
 							protected void onPostExecute(String response) {
-								mLike.setText(R.string.retweet);
-								Log.v(TAG,"retweet:"+response);
-								//TODO: handle response to user
-								(Toast.makeText(SonetCreatePost.this, getString(R.string.retweet) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+								if (response != null) {
+									mLike.setText(R.string.retweet);
+									Log.v(TAG,"retweet:"+response);
+									//TODO: handle response to user
+									(Toast.makeText(SonetCreatePost.this, getString(R.string.retweet) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+								}
 							}
 						};
 						mLike.setEnabled(false);
@@ -582,9 +660,11 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 
 							@Override
 							protected void onPostExecute(String response) {
-								(Toast.makeText(SonetCreatePost.this, getString(R.string.facebook) + " " + getString((response != null) && (response == "true") ? R.string.success : R.string.failure), Toast.LENGTH_LONG)).show();
-								mLike.setText(R.string.unlike);
-								mLike.setEnabled(true);
+								if (response != null) {
+									(Toast.makeText(SonetCreatePost.this, getString(R.string.facebook) + " " + getString((response != null) && (response == "true") ? R.string.success : R.string.failure), Toast.LENGTH_LONG)).show();
+									mLike.setText(R.string.unlike);
+									mLike.setEnabled(true);
+								}
 							}
 						};
 						mLike.setEnabled(false);
@@ -609,10 +689,12 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 							@Override
 							protected void onPostExecute(String response) {
 								Log.v(TAG,"buzz like:"+response);
-								//TODO: handle response to user
-								(Toast.makeText(SonetCreatePost.this, getString(R.string.buzz) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-								mLike.setText(R.string.unlike);
-								mLike.setEnabled(true);
+								if (response != null) {
+									//TODO: handle response to user
+									(Toast.makeText(SonetCreatePost.this, getString(R.string.buzz) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+									mLike.setText(R.string.unlike);
+									mLike.setEnabled(true);
+								}
 							}
 						};
 						mLike.setEnabled(false);
@@ -623,6 +705,40 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				break;
 			case LINKEDIN:
 				//TODO:like
+				if (mSid != null) {
+					account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+					if (account.moveToFirst()) {
+						asyncTask = new AsyncTask<String, Void, String>() {
+							@Override
+							protected String doInBackground(String... arg0) {
+								SonetOAuth sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, arg0[0], arg0[1]);
+								HttpPut httpPut = new HttpPut(String.format(LINKEDIN_IS_LIKED, LINKEDIN_BASE_URL, mSid));
+								httpPut.addHeader(new BasicHeader("Content-Type", "application/xml"));
+								try {
+									httpPut.setEntity(new StringEntity(String.format(LINKEDIN_LIKE_BODY, Boolean.toString(mLike.getText() == getString(R.string.like)))));
+									return sonetOAuth.httpResponse(httpPut);
+								} catch (UnsupportedEncodingException e) {
+									Log.e(TAG, e.toString());
+								}
+								return null;
+							}
+
+							@Override
+							protected void onPostExecute(String response) {
+								Log.v(TAG,"linkedin like:"+response);
+								if (response != null) {
+									//TODO: handle response to user
+									(Toast.makeText(SonetCreatePost.this, getString(R.string.linkedin) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+									mLike.setText(R.string.unlike);
+									mLike.setEnabled(true);
+								}
+							}
+						};
+						mLike.setEnabled(false);
+						asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+					}
+					account.close();
+				}
 				break;
 			}
 		}

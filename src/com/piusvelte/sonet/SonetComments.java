@@ -47,6 +47,9 @@ import static com.piusvelte.sonet.Sonet.LINKEDIN;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_LIKES;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_COMMENTS;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_BASE_URL;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_HEADERS;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATE_COMMENTS;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
 import static com.piusvelte.sonet.Sonet.MYSPACE_BASE_URL;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOOD;
@@ -54,6 +57,8 @@ import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOODCOMMENTS;
 import static com.piusvelte.sonet.SonetTokens.BUZZ_API_KEY;
 import static com.piusvelte.sonet.SonetTokens.BUZZ_KEY;
 import static com.piusvelte.sonet.SonetTokens.BUZZ_SECRET;
+import static com.piusvelte.sonet.SonetTokens.LINKEDIN_KEY;
+import static com.piusvelte.sonet.SonetTokens.LINKEDIN_SECRET;
 import static com.piusvelte.sonet.SonetTokens.MYSPACE_KEY;
 import static com.piusvelte.sonet.SonetTokens.MYSPACE_SECRET;
 import static com.piusvelte.sonet.Sonet.TOKEN;
@@ -220,6 +225,16 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 			break;
 		case LINKEDIN:
 			//TODO:
+			account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+			if (account.moveToFirst()) {
+				sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+				HttpGet httpGet = new HttpGet(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, mSid));
+				for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
+				String response = sonetOAuth.httpResponse(httpGet);
+				Log.v(TAG,"linkedin:"+response);
+				//TODO: handle response
+			}
+			account.close();
 			break;
 		}
 		mLoadingDialog.dismiss();

@@ -118,9 +118,13 @@ public class Sonet {
 	protected static final String LINKEDIN_URL_FEED = "%s/network/updates?type=APPS&type=CMPY&type=CONN&type=JOBS&type=JGRP&type=PICT&type=PRFU&type=RECU&type=PRFX&type=ANSW&type=QSTN&type=SHAR&type=VIRL&count=%s";
 	protected static final String[][] LINKEDIN_HEADERS = new String[][] {{"x-li-format", "json"}};
 	protected static final HashMap<String, String> LINKEDIN_UPDATETYPES;
-	protected static final String LINKEDIN_URL_LIKES = "%s/network/updates/key=%s/likes";
-	protected static final String LINKEDIN_URL_IS_LIKED = "%s/network/updates/key=%s/is-liked";
-	protected static final String LINKEDIN_URL_UPDATE_COMMENTS = "%s/network/updates/key=%s/update-comments";
+	protected static final String LINKEDIN_IS_LIKED = "%s/network/updates/key=%s/is-liked";
+	protected static final String LINKEDIN_UPDATE = "%s/network/updates/key=%s";
+	protected static final String LINKEDIN_UPDATE_COMMENTS = "%s/network/updates/key=%s/update-comments";
+	protected static final String LINKEDIN_POST = "%s/person-activities";
+	protected static final String LINKEDIN_POST_BODY = "<?xml version='1.0' encoding='UTF-8'?><activity locale=\"%s\"><content-type>linkedin-html</content-type><body>%s</body></activity>";
+	protected static final String LINKEDIN_COMMENT_BODY = "<?xml version='1.0' encoding='UTF-8'?><update-comment><comment>%s</comment></update-comment>";
+	protected static final String LINKEDIN_LIKE_BODY = "<?xml version='1.0' encoding='UTF-8'?><is-liked>%s</is-liked>";
 
 	protected static final String AM = "a.m.";
 	protected static final String PM = "p.m.";
