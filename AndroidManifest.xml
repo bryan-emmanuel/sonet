@@ -19,8 +19,8 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.piusvelte.sonet" android:versionCode="212"
-	android:versionName="2.1.2" android:installLocation="auto">
+	package="com.piusvelte.sonet" android:versionCode="213"
+	android:versionName="2.1.3" android:installLocation="auto">
 	<application android:icon="@drawable/icon" android:label="@string/app_name">
 		<activity android:name=".About" android:label="@string/app_name">
 			<intent-filter>
@@ -92,6 +92,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-sdk android:minSdkVersion="6" android:targetSdkVersion="9" />
 
 </manifest> 

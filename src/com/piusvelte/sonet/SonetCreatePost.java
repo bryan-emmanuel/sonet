@@ -50,10 +50,12 @@ import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_LIKES;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_POST;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_COMMENTS;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_SEARCH;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_BASE_URL;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_CHECKIN;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_ADDCOMMENT;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE_SEARCH;
 import static com.piusvelte.sonet.Sonet.LINKEDIN;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_HEADERS;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
@@ -67,6 +69,7 @@ import static com.piusvelte.sonet.Sonet.TWITTER_BASE_URL;
 import static com.piusvelte.sonet.Sonet.TWITTER_RETWEET;
 import static com.piusvelte.sonet.Sonet.TWITTER_USER;
 import static com.piusvelte.sonet.Sonet.TWITTER_UPDATE;
+import static com.piusvelte.sonet.Sonet.TWITTER_SEARCH;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_BASE_URL;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_POST;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_POST_BODY;
@@ -89,10 +92,16 @@ import com.piusvelte.sonet.Sonet.Statuses_styles;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.appwidget.AppWidgetManager;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.database.Cursor;
+import android.location.Location;
+import android.location.LocationManager;
+import android.location.LocationProvider;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -122,6 +131,8 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 	private Button mAccounts;
 	private Button mLike;
 	private TextView mCount;
+	private ProgressDialog mLoadingDialog;
+	private String mPlaceId = null;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -316,8 +327,20 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				account.close();
 				mAccounts.setEnabled(true);
 				mAccounts.setOnClickListener(this);
-				mLocation.setEnabled(true);
-				mLocation.setOnClickListener(this);
+				switch (mService) {
+				case TWITTER:
+					mLocation.setEnabled(true);
+					mLocation.setOnClickListener(this);
+					break;
+				case FACEBOOK:
+					mLocation.setEnabled(true);
+					mLocation.setOnClickListener(this);
+					break;
+				case FOURSQUARE:
+					mLocation.setEnabled(true);
+					mLocation.setOnClickListener(this);
+					break;
+				}
 			}
 		}
 		mPost.setOnKeyListener(this);
@@ -529,6 +552,177 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 	public void onClick(View v) {
 		if (v == mLocation) {
 			// set the location
+			final AsyncTask<String, Void, String> asyncTask;
+			switch (mService) {
+			case TWITTER:
+				asyncTask = new AsyncTask<String, Void, String>() {
+					@Override
+					protected String doInBackground(String... arg0) {
+						LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
+						Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+						return Sonet.httpResponse(new HttpGet(String.format(TWITTER_SEARCH, TWITTER_BASE_URL, Double.toString(location.getLatitude()), Double.toString(location.getLongitude()))));
+					}
+					@Override
+					protected void onPostExecute(String response) {
+						if (mLoadingDialog.isShowing()) mLoadingDialog.dismiss();
+						if (response != null) {
+							//TODO: handle response, create list dialog
+							Log.v(TAG,"tw, search:"+response);
+							final String places[];
+							final String placesIds[];
+							places = new String[0];
+							placesIds = new String[0];
+							AlertDialog.Builder dialog = new AlertDialog.Builder(SonetCreatePost.this);
+							dialog.setTitle(R.string.accounts)
+							.setSingleChoiceItems(places, -1, new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									mLocation.setText(places[which]);
+									mPlaceId = placesIds[which];
+									dialog.dismiss();
+								}
+							})
+							.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									dialog.cancel();
+								}
+							})
+							.show();
+						}
+					}
+				};
+				mLoadingDialog = new ProgressDialog(this);
+				mLoadingDialog.setMessage(getString(R.string.loading));
+				mLoadingDialog.setCancelable(true);
+				mLoadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+					}
+				});
+				mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+					}
+				});
+				mLoadingDialog.show();
+				asyncTask.execute();
+				break;
+			case FACEBOOK:
+				asyncTask = new AsyncTask<String, Void, String>() {
+					@Override
+					protected String doInBackground(String... arg0) {
+						LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
+						Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+						return Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_SEARCH, TWITTER_BASE_URL, Double.toString(location.getLatitude()), Double.toString(location.getLongitude()))));
+					}
+					@Override
+					protected void onPostExecute(String response) {
+						if (mLoadingDialog.isShowing()) mLoadingDialog.dismiss();
+						if (response != null) {
+							//TODO: handle response
+							Log.v(TAG,"fb, search:"+response);
+							final String places[];
+							final String placesIds[];
+							places = new String[0];
+							placesIds = new String[0];
+							AlertDialog.Builder dialog = new AlertDialog.Builder(SonetCreatePost.this);
+							dialog.setTitle(R.string.accounts)
+							.setSingleChoiceItems(places, -1, new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									mLocation.setText(places[which]);
+									mPlaceId = placesIds[which];
+									dialog.dismiss();
+								}
+							})
+							.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									dialog.cancel();
+								}
+							})
+							.show();
+						}
+					}
+				};
+				mLoadingDialog = new ProgressDialog(this);
+				mLoadingDialog.setMessage(getString(R.string.loading));
+				mLoadingDialog.setCancelable(true);
+				mLoadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+					}
+				});
+				mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+					}
+				});
+				mLoadingDialog.show();
+				asyncTask.execute();
+				break;
+			case FOURSQUARE:
+				asyncTask = new AsyncTask<String, Void, String>() {
+					@Override
+					protected String doInBackground(String... arg0) {
+						LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
+						Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+						return Sonet.httpResponse(new HttpGet(String.format(FOURSQUARE_SEARCH, FOURSQUARE_BASE_URL, Double.toString(location.getLatitude()), Double.toString(location.getLongitude()))));
+					}
+					@Override
+					protected void onPostExecute(String response) {
+						if (mLoadingDialog.isShowing()) mLoadingDialog.dismiss();
+						if (response != null) {
+							//TODO: handle response
+							Log.v(TAG,"4s, search:"+response);
+							final String places[];
+							final String placesIds[];
+							places = new String[0];
+							placesIds = new String[0];
+							AlertDialog.Builder dialog = new AlertDialog.Builder(SonetCreatePost.this);
+							dialog.setTitle(R.string.accounts)
+							.setSingleChoiceItems(places, -1, new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									mLocation.setText(places[which]);
+									mPlaceId = placesIds[which];
+									dialog.dismiss();
+								}
+							})
+							.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									dialog.cancel();
+								}
+							})
+							.show();
+						}
+					}
+				};
+				mLoadingDialog = new ProgressDialog(this);
+				mLoadingDialog.setMessage(getString(R.string.loading));
+				mLoadingDialog.setCancelable(true);
+				mLoadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+					}
+				});
+				mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+					}
+				});
+				mLoadingDialog.show();
+				asyncTask.execute();
+				break;
+			}
 		} else if (v == mSend) {
 			final String message = mPost.getText().toString();
 			Log.v(TAG,"send:"+message);
