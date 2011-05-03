@@ -106,7 +106,7 @@ public class Sonet {
 	protected static final String FOURSQUARE_URL_AUTHORIZE = "https://foursquare.com/oauth2/authorize?client_id=%s&response_type=token&redirect_uri=%s&display=touch";
 	protected static final String FOURSQUARE_URL_ME = "%susers/self?oauth_token=%s";
 	protected static final String FOURSQUARE_URL_FEED = "%scheckins/recent?limit=%s&oauth_token=%s";
-	protected static final String FOURSQUARE_CHECKIN = "%scheckins/add?oauth_token=%s";
+	protected static final String FOURSQUARE_CHECKIN = "%scheckins/add?venueID=%s&shout=%s&broadcast=public&oauth_token=%s";
 	protected static final String FOURSQUARE_ADDCOMMENT = "%scheckins/%s/addcomment?text=%s&oauth_token=%s";
 
 	protected static final int LINKEDIN = 5;

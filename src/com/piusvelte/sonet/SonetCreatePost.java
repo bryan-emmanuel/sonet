@@ -51,6 +51,9 @@ import static com.piusvelte.sonet.Sonet.FACEBOOK_LIKES;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_POST;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_COMMENTS;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE_BASE_URL;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE_CHECKIN;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE_ADDCOMMENT;
 import static com.piusvelte.sonet.Sonet.LINKEDIN;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_HEADERS;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
@@ -463,7 +466,25 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 			asyncTask.execute();
 			break;
 		case FOURSQUARE:
-			//TODO: send
+			asyncTask = new AsyncTask<String, Void, String>() {
+				@Override
+				protected String doInBackground(String... arg0) {
+					return Sonet.httpResponse(sid != null ? new HttpPost(String.format(FOURSQUARE_ADDCOMMENT, FOURSQUARE_BASE_URL, sid, message, token)) : new HttpPost(String.format(FOURSQUARE_CHECKIN, FOURSQUARE_BASE_URL, "", message, token)));
+				}
+
+				@Override
+				protected void onPostExecute(String response) {
+					Log.v(TAG,"foursquare post:"+response);
+					if (response != null) {
+						//TODO: handle response to user
+						(Toast.makeText(SonetCreatePost.this, getString(R.string.foursquare) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+						finish();
+					}
+				}
+			};
+			mPost.setEnabled(false);
+			mSend.setEnabled(false);
+			asyncTask.execute();
 			break;
 		case LINKEDIN:
 			asyncTask = new AsyncTask<String, Void, String>() {
