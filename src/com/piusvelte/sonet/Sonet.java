@@ -70,13 +70,15 @@ public class Sonet {
 
 	protected static final int FACEBOOK = 1;
 	protected static final String FACEBOOK_BASE_URL = "https://graph.facebook.com/";
-	protected static final String FACEBOOK_URL_AUTHORIZE = "%Soauth/authorize?client_id=%s&scope=offline_access,publish_stream&type=user_agent&redirect_uri=%s&display=touch&sdk=android";
+	protected static final String FACEBOOK_URL_AUTHORIZE = "%Soauth/authorize?client_id=%s&scope=offline_access,publish_stream,publish_checkins&type=user_agent&redirect_uri=%s&display=touch&sdk=android";
 	protected static final String FACEBOOK_URL_ME = "%Sme?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_URL_FEED = "%Sme/home?date_format=U&format=json&sdk=android&limit=%s&%s=%s&fields=actions,link,type,from,message,created_time,to";
 	protected static final String FACEBOOK_POST = "%sme/feed?format=json&sdk=android&%s=%s";
+	protected static final String FACEBOOK_CHECKIN = "%sme/checkins?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_LIKES = "%s%s/likes?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_COMMENTS = "%s%s/comments?date_format=U&format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_SEARCH = "%ssearch?type=place&center=%s,%s&distance=1000&format=json&sdk=android&%s=%s";
+	protected static final String FACEBOOK_COORDINATES = "{\"latitude\":\"%s\",\"longitude\":\"%s\"}";
 
 	protected static final int MYSPACE = 2;
 	protected static final String MYSPACE_BASE_URL = "http://api.myspace.com/1.0/";
@@ -108,7 +110,7 @@ public class Sonet {
 	protected static final String FOURSQUARE_URL_AUTHORIZE = "https://foursquare.com/oauth2/authorize?client_id=%s&response_type=token&redirect_uri=%s&display=touch";
 	protected static final String FOURSQUARE_URL_ME = "%susers/self?oauth_token=%s";
 	protected static final String FOURSQUARE_URL_FEED = "%scheckins/recent?limit=%s&oauth_token=%s";
-	protected static final String FOURSQUARE_CHECKIN = "%scheckins/add?venueID=%s&shout=%s&broadcast=public&oauth_token=%s";
+	protected static final String FOURSQUARE_CHECKIN = "%scheckins/add?venueID=%s&shout=%s&ll=%s,%s&broadcast=public&oauth_token=%s";
 	protected static final String FOURSQUARE_ADDCOMMENT = "%scheckins/%s/addcomment?text=%s&oauth_token=%s";
 	protected static final String FOURSQUARE_SEARCH = "%svenues/search?ll=%s,%s&intent=checkin&oauth_token=%s";
 
@@ -310,21 +312,21 @@ public class Sonet {
 		public static final String ESID = "esid";
 
 	}
-	
+
 	public static final class Entities implements BaseColumns {
-		
+
 		private Entities() {
 		}
-		
+
 		public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/entities");
-		
+
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.entities";
-		
+
 		public static final String ESID = "esid";
 		public static final String FRIEND = "friend";
 		public static final String PROFILE = "profile";
 		public static final String ACCOUNT = "account";
-		
+
 	}
 
 	protected static String httpResponse(HttpUriRequest httpRequest) {
@@ -373,7 +375,7 @@ public class Sonet {
 		}
 		return response;
 	}
-	
+
 	protected static long parseDate(String date, String format) {
 		SimpleDateFormat msformat = new SimpleDateFormat(format);
 		Date created;
@@ -419,16 +421,18 @@ public class Sonet {
 		return a;
 	}
 
-	protected static int[] arrayPush(int[] a, int b) {
-		int[] c = new int[a.length];
-		for (int i = 0; i < a.length; i++) {
-			c[i] = a[i];
+	protected static int[] arrayAdd(int[] a, int b) {
+		if (Sonet.arrayContains(a, b)) {
+			int[] c = new int[a.length];
+			for (int i = 0; i < a.length; i++) {
+				c[i] = a[i];
+			}
+			a = new int[c.length + 1];
+			for (int i = 0; i < c.length; i++) {
+				a[i] = c[i];
+			}
+			a[a.length - 1] = b;
 		}
-		a = new int[c.length + 1];
-		for (int i = 0; i < c.length; i++) {
-			a[i] = c[i];
-		}
-		a[a.length - 1] = b;
 		return a;
 	}
 
@@ -441,6 +445,21 @@ public class Sonet {
 			}
 		}
 		return contains;
+	}
+
+	protected static int[] arrayRemove(int[] a, int b) {
+		if (Sonet.arrayContains(a, b)) {
+			int[] c = new int[a.length - 1];
+			int i = 0;
+			for (int d : a) {
+				if (d != b) {
+					c[i++] = d;
+				}
+			}
+			return c;			
+		} else {
+			return a;
+		}
 	}
 
 }

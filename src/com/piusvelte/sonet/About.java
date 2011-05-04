@@ -68,7 +68,7 @@ DialogInterface.OnClickListener {
 			int iwidget = widgets.getColumnIndex(Widgets.WIDGET), appWidgetId;
 			while (!widgets.isAfterLast()) {
 				appWidgetId = widgets.getInt(iwidget);
-				if ((appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) && !Sonet.arrayContains(mAppWidgetIds, appWidgetId)) removeAppWidgets = Sonet.arrayPush(removeAppWidgets, appWidgetId);
+				if ((appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) && !Sonet.arrayContains(mAppWidgetIds, appWidgetId)) removeAppWidgets = Sonet.arrayAdd(removeAppWidgets, appWidgetId);
 				widgets.moveToNext();
 			}
 		}
