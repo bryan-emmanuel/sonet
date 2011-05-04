@@ -76,7 +76,7 @@ public class Sonet {
 	protected static final String FACEBOOK_POST = "%sme/feed?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_LIKES = "%s%s/likes?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_COMMENTS = "%s%s/comments?date_format=U&format=json&sdk=android&%s=%s";
-	protected static final String FACEBOOK_SEARCH = "%ssearch?type=place&center=%s,%s&format=json";
+	protected static final String FACEBOOK_SEARCH = "%ssearch?type=place&center=%s,%s&distance=1000&format=json&sdk=android&%s=%s";
 
 	protected static final int MYSPACE = 2;
 	protected static final String MYSPACE_BASE_URL = "http://api.myspace.com/1.0/";
@@ -110,7 +110,7 @@ public class Sonet {
 	protected static final String FOURSQUARE_URL_FEED = "%scheckins/recent?limit=%s&oauth_token=%s";
 	protected static final String FOURSQUARE_CHECKIN = "%scheckins/add?venueID=%s&shout=%s&broadcast=public&oauth_token=%s";
 	protected static final String FOURSQUARE_ADDCOMMENT = "%scheckins/%s/addcomment?text=%s&oauth_token=%s";
-	protected static final String FOURSQUARE_SEARCH = "%svenues/search?ll=%s,%s&intent=checkin";
+	protected static final String FOURSQUARE_SEARCH = "%svenues/search?ll=%s,%s&intent=checkin&oauth_token=%s";
 
 	protected static final int LINKEDIN = 5;
 	protected static final String LINKEDIN_BASE_URL = "https://api.linkedin.com/v1/people/~";

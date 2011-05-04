@@ -121,7 +121,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 	private int mService = 0;
 	private int mAccount = (int) Sonet.INVALID_ACCOUNT_ID;
 	private HashMap<Integer, HashMap<String, Integer>> mAccountsToPost = new HashMap<Integer, HashMap<String, Integer>>();
-	private String mSid;
+	private String mSid = null;
 	private String mEsid;
 	private Uri mData;
 	private EditText mPost;
@@ -310,6 +310,10 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					mComments.setEnabled(true);
 					mComments.setOnClickListener(this);
 				}
+				HashMap<String, Integer> values = new HashMap<String, Integer>();
+				values.put(Accounts.SERVICE, mService);
+				values.put(Accounts._ID, 1);
+				mAccountsToPost.put(mAccount, values);
 			} else {
 				// default to the account passed in, but allow selecting additional accounts
 				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SERVICE, Accounts.WIDGET}, Accounts._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
@@ -317,12 +321,10 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					mAccount = account.getInt(account.getColumnIndex(Accounts._ID));
 					mService = account.getInt(account.getColumnIndex(Accounts.SERVICE));
 					mAppWidgetId = account.getInt(account.getColumnIndex(Accounts.WIDGET));
-					if (!mAccountsToPost.containsKey(mAccount)) {
-						HashMap<String, Integer> values = new HashMap<String, Integer>();
-						values.put(Accounts.SERVICE, mService);
-						values.put(Accounts._ID, 1);
-						mAccountsToPost.put(mAccount, values);
-					}
+					HashMap<String, Integer> values = new HashMap<String, Integer>();
+					values.put(Accounts.SERVICE, mService);
+					values.put(Accounts._ID, 1);
+					mAccountsToPost.put(mAccount, values);
 				}
 				account.close();
 				mAccounts.setEnabled(true);
@@ -360,199 +362,12 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		return false;
 	}
 
-	private void sendMessage(final String token, final String secret, int service, final String sid, final String message) {
-		AsyncTask<String, Void, String> asyncTask;
-		switch (service) {
-		case TWITTER:
-			asyncTask = new AsyncTask<String, Void, String>() {
-				@Override
-				protected String doInBackground(String... arg0) {
-					SonetOAuth sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, token, secret);
-					HttpPost httpPost = new HttpPost(String.format(TWITTER_UPDATE, TWITTER_BASE_URL));
-					HttpParams httpParams = new BasicHttpParams();
-					httpParams.setParameter("status", message);
-					if (sid != null) {
-						httpParams.setParameter("in_reply_to_status_id", sid);
-					}
-					httpPost.setParams(httpParams);
-					return sonetOAuth.httpResponse(httpPost);
-				}
-
-				@Override
-				protected void onPostExecute(String response) {
-					Log.v(TAG,"tweet:"+response);
-					if (response != null) {
-						//TODO: handle response to user
-						(Toast.makeText(SonetCreatePost.this, getString(R.string.twitter) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-						finish();
-					}
-				}
-			};
-			mPost.setEnabled(false);
-			mSend.setEnabled(false);
-			asyncTask.execute();
-			break;
-		case FACEBOOK:
-			asyncTask = new AsyncTask<String, Void, String>() {
-				@Override
-				protected String doInBackground(String... arg0) {
-					HttpPost httpPost = sid != null ? new HttpPost(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, sid, TOKEN, token)) : new HttpPost(String.format(FACEBOOK_POST, FACEBOOK_BASE_URL, TOKEN, token));
-					HttpParams httpParams = new BasicHttpParams();
-					httpParams.setParameter("message", message);
-					httpPost.setParams(httpParams);
-					return Sonet.httpResponse(httpPost);
-				}
-
-				@Override
-				protected void onPostExecute(String response) {
-					Log.v(TAG,"facebook post:"+response);
-					if (response != null) {
-						//TODO: handle response to user
-						(Toast.makeText(SonetCreatePost.this, getString(R.string.facebook) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-						finish();
-					}
-				}
-			};
-			mPost.setEnabled(false);
-			mSend.setEnabled(false);
-			asyncTask.execute();
-			break;
-		case MYSPACE:
-			asyncTask = new AsyncTask<String, Void, String>() {
-				@Override
-				protected String doInBackground(String... arg0) {
-					SonetOAuth sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, token, secret);
-					try {
-						if ((mEsid != null) && (mSid != null)) {
-							HttpPost httpPost = new HttpPost(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mEsid, mSid));
-							httpPost.setEntity(new StringEntity("{\"body\":\"" + message + "\"}"));
-							return sonetOAuth.httpResponse(httpPost);
-						} else {
-							HttpPut httpPut = new HttpPut(String.format(MYSPACE_URL_STATUSMOOD, MYSPACE_BASE_URL));
-							httpPut.setEntity(new StringEntity("{\"status\":\"" + message + "\"}"));
-							return sonetOAuth.httpResponse(httpPut);
-						}
-					} catch (IOException e) {
-						Log.e(TAG, e.toString());
-					}
-					return null;
-				}
-
-				@Override
-				protected void onPostExecute(String response) {
-					Log.v(TAG,"myspace:"+response);
-					if (response != null) {
-						//TODO: handle response to user
-						(Toast.makeText(SonetCreatePost.this, getString(R.string.myspace) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-						finish();
-					}
-				}
-			};
-			mPost.setEnabled(false);
-			mSend.setEnabled(false);
-			asyncTask.execute();
-			break;
-		case BUZZ:
-			asyncTask = new AsyncTask<String, Void, String>() {
-				@Override
-				protected String doInBackground(String... arg0) {
-					SonetOAuth sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, token, secret);
-					try {
-						HttpPost httpPost;
-						if (sid != null) {
-							httpPost = new HttpPost(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, sid, BUZZ_API_KEY));
-							httpPost.setEntity(new StringEntity("{\"data\":{\"object\":{\"type\":\"note\",\"content\":\"" + message + "\"}}}"));
-						} else {
-							httpPost = new HttpPost(String.format(BUZZ_ACTIVITY, BUZZ_BASE_URL, "", BUZZ_API_KEY));
-							httpPost.setEntity(new StringEntity("{\"data\":{\"content\":\"" + message + "\"}}"));
-						}
-						httpPost.addHeader(new BasicHeader("Content-Type", "application/json"));
-						return sonetOAuth.httpResponse(httpPost);
-					} catch (IOException e) {
-						Log.e(TAG, e.toString());
-					}
-					return null;
-				}
-
-				@Override
-				protected void onPostExecute(String response) {
-					Log.v(TAG,"buzz:"+response);
-					if (response != null) {
-						//TODO: handle response to user
-						(Toast.makeText(SonetCreatePost.this, getString(R.string.buzz) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-						finish();
-					}
-				}
-			};
-			mPost.setEnabled(false);
-			mSend.setEnabled(false);
-			asyncTask.execute();
-			break;
-		case FOURSQUARE:
-			asyncTask = new AsyncTask<String, Void, String>() {
-				@Override
-				protected String doInBackground(String... arg0) {
-					return Sonet.httpResponse(sid != null ? new HttpPost(String.format(FOURSQUARE_ADDCOMMENT, FOURSQUARE_BASE_URL, sid, message, token)) : new HttpPost(String.format(FOURSQUARE_CHECKIN, FOURSQUARE_BASE_URL, "", message, token)));
-				}
-
-				@Override
-				protected void onPostExecute(String response) {
-					Log.v(TAG,"foursquare post:"+response);
-					if (response != null) {
-						//TODO: handle response to user
-						(Toast.makeText(SonetCreatePost.this, getString(R.string.foursquare) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-						finish();
-					}
-				}
-			};
-			mPost.setEnabled(false);
-			mSend.setEnabled(false);
-			asyncTask.execute();
-			break;
-		case LINKEDIN:
-			asyncTask = new AsyncTask<String, Void, String>() {
-				@Override
-				protected String doInBackground(String... arg0) {
-					SonetOAuth sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, token, secret);
-					try {
-						HttpPost httpPost;
-						if (sid != null) {
-							httpPost = new HttpPost(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, sid));
-							httpPost.setEntity(new StringEntity(String.format(LINKEDIN_COMMENT_BODY, message)));
-						} else {
-							httpPost = new HttpPost(String.format(LINKEDIN_POST, LINKEDIN_BASE_URL));
-							// TODO: need locale
-							httpPost.setEntity(new StringEntity(String.format(LINKEDIN_POST_BODY, "", message)));
-						}
-						httpPost.addHeader(new BasicHeader("Content-Type", "application/xml"));
-						return sonetOAuth.httpResponse(httpPost);
-					} catch (IOException e) {
-						Log.e(TAG, e.toString());
-					}
-					return null;
-				}
-
-				@Override
-				protected void onPostExecute(String response) {
-					Log.v(TAG,"buzz:"+response);
-					if (response != null) {
-						//TODO: handle response to user
-						(Toast.makeText(SonetCreatePost.this, getString(R.string.buzz) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-						finish();
-					}
-				}
-			};
-			mPost.setEnabled(false);
-			mSend.setEnabled(false);
-			asyncTask.execute();
-		}		
-	}
-
 	@Override
 	public void onClick(View v) {
 		if (v == mLocation) {
 			// set the location
 			final AsyncTask<String, Void, String> asyncTask;
+			Cursor account;
 			switch (mService) {
 			case TWITTER:
 				asyncTask = new AsyncTask<String, Void, String>() {
@@ -566,29 +381,36 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					protected void onPostExecute(String response) {
 						if (mLoadingDialog.isShowing()) mLoadingDialog.dismiss();
 						if (response != null) {
-							//TODO: handle response, create list dialog
-							Log.v(TAG,"tw, search:"+response);
-							final String places[];
-							final String placesIds[];
-							places = new String[0];
-							placesIds = new String[0];
-							AlertDialog.Builder dialog = new AlertDialog.Builder(SonetCreatePost.this);
-							dialog.setTitle(R.string.accounts)
-							.setSingleChoiceItems(places, -1, new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									mLocation.setText(places[which]);
-									mPlaceId = placesIds[which];
-									dialog.dismiss();
+							try {
+								JSONArray places = new JSONObject(response).getJSONObject("result").getJSONArray("places");
+								final String placesNames[] = new String[places.length()];
+								final String placesIds[] = new String[places.length()];
+								for (int i = 0; i < places.length(); i++) {
+									JSONObject place = places.getJSONObject(i);
+									placesNames[i] = place.getString("full_name");
+									placesIds[i] = place.getString("id");
 								}
-							})
-							.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									dialog.cancel();
-								}
-							})
-							.show();
+								AlertDialog.Builder dialog = new AlertDialog.Builder(SonetCreatePost.this);
+								dialog.setSingleChoiceItems(placesNames, -1, new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										mLocation.setText(placesNames[which]);
+										mPlaceId = placesIds[which];
+										dialog.dismiss();
+									}
+								})
+								.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										dialog.cancel();
+									}
+								})
+								.show();
+							} catch (JSONException e) {
+								Log.e(TAG, e.toString());
+							}
+						} else {
+							(Toast.makeText(SonetCreatePost.this, getString(R.string.twitter) + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
 						}
 					}
 				};
@@ -611,142 +433,366 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				asyncTask.execute();
 				break;
 			case FACEBOOK:
-				asyncTask = new AsyncTask<String, Void, String>() {
-					@Override
-					protected String doInBackground(String... arg0) {
-						LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
-						Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-						return Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_SEARCH, TWITTER_BASE_URL, Double.toString(location.getLatitude()), Double.toString(location.getLongitude()))));
-					}
-					@Override
-					protected void onPostExecute(String response) {
-						if (mLoadingDialog.isShowing()) mLoadingDialog.dismiss();
-						if (response != null) {
-							//TODO: handle response
-							Log.v(TAG,"fb, search:"+response);
-							final String places[];
-							final String placesIds[];
-							places = new String[0];
-							placesIds = new String[0];
-							AlertDialog.Builder dialog = new AlertDialog.Builder(SonetCreatePost.this);
-							dialog.setTitle(R.string.accounts)
-							.setSingleChoiceItems(places, -1, new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									mLocation.setText(places[which]);
-									mPlaceId = placesIds[which];
-									dialog.dismiss();
-								}
-							})
-							.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									dialog.cancel();
-								}
-							})
-							.show();
+				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				if (account.moveToFirst()) {
+					asyncTask = new AsyncTask<String, Void, String>() {
+						@Override
+						protected String doInBackground(String... arg0) {
+							LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
+							Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+							return Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_SEARCH, FACEBOOK_BASE_URL, Double.toString(location.getLatitude()), Double.toString(location.getLongitude()), TOKEN, arg0[0])));
 						}
-					}
-				};
-				mLoadingDialog = new ProgressDialog(this);
-				mLoadingDialog.setMessage(getString(R.string.loading));
-				mLoadingDialog.setCancelable(true);
-				mLoadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
-					@Override
-					public void onCancel(DialogInterface dialog) {
-						if (!asyncTask.isCancelled()) asyncTask.cancel(true);
-					}
-				});
-				mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.cancel();
-					}
-				});
-				mLoadingDialog.show();
-				asyncTask.execute();
+						@Override
+						protected void onPostExecute(String response) {
+							if (mLoadingDialog.isShowing()) mLoadingDialog.dismiss();
+							if (response != null) {
+								try {
+									JSONArray places = new JSONObject(response).getJSONArray("data");
+									final String placesNames[] = new String[places.length()];
+									final String placesIds[] = new String[places.length()];
+									for (int i = 0; i < places.length(); i++) {
+										JSONObject place = places.getJSONObject(i);
+										placesNames[i] = place.getString("name");
+										placesIds[i] = place.getString("id");
+									}
+									AlertDialog.Builder dialog = new AlertDialog.Builder(SonetCreatePost.this);
+									dialog.setSingleChoiceItems(placesNames, -1, new DialogInterface.OnClickListener() {
+										@Override
+										public void onClick(DialogInterface dialog, int which) {
+											mLocation.setText(placesNames[which]);
+											mPlaceId = placesIds[which];
+											dialog.dismiss();
+										}
+									})
+									.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+										@Override
+										public void onClick(DialogInterface dialog, int which) {
+											dialog.cancel();
+										}
+									})
+									.show();
+								} catch (JSONException e) {
+									Log.e(TAG, e.toString());
+								}
+							} else {
+								(Toast.makeText(SonetCreatePost.this, getString(R.string.twitter) + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
+							}
+						}
+					};
+					mLoadingDialog = new ProgressDialog(this);
+					mLoadingDialog.setMessage(getString(R.string.loading));
+					mLoadingDialog.setCancelable(true);
+					mLoadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+						@Override
+						public void onCancel(DialogInterface dialog) {
+							if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+						}
+					});
+					mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.cancel();
+						}
+					});
+					mLoadingDialog.show();
+					asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)));
+				}
+				account.close();
 				break;
 			case FOURSQUARE:
-				asyncTask = new AsyncTask<String, Void, String>() {
-					@Override
-					protected String doInBackground(String... arg0) {
-						LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
-						Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-						return Sonet.httpResponse(new HttpGet(String.format(FOURSQUARE_SEARCH, FOURSQUARE_BASE_URL, Double.toString(location.getLatitude()), Double.toString(location.getLongitude()))));
-					}
-					@Override
-					protected void onPostExecute(String response) {
-						if (mLoadingDialog.isShowing()) mLoadingDialog.dismiss();
-						if (response != null) {
-							//TODO: handle response
-							Log.v(TAG,"4s, search:"+response);
-							final String places[];
-							final String placesIds[];
-							places = new String[0];
-							placesIds = new String[0];
-							AlertDialog.Builder dialog = new AlertDialog.Builder(SonetCreatePost.this);
-							dialog.setTitle(R.string.accounts)
-							.setSingleChoiceItems(places, -1, new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									mLocation.setText(places[which]);
-									mPlaceId = placesIds[which];
-									dialog.dismiss();
-								}
-							})
-							.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									dialog.cancel();
-								}
-							})
-							.show();
+				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				if (account.moveToFirst()) {
+					asyncTask = new AsyncTask<String, Void, String>() {
+						@Override
+						protected String doInBackground(String... arg0) {
+							LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
+							Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+							return Sonet.httpResponse(new HttpGet(String.format(FOURSQUARE_SEARCH, FOURSQUARE_BASE_URL, Double.toString(location.getLatitude()), Double.toString(location.getLongitude()), arg0[0])));
 						}
-					}
-				};
-				mLoadingDialog = new ProgressDialog(this);
-				mLoadingDialog.setMessage(getString(R.string.loading));
-				mLoadingDialog.setCancelable(true);
-				mLoadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
-					@Override
-					public void onCancel(DialogInterface dialog) {
-						if (!asyncTask.isCancelled()) asyncTask.cancel(true);
-					}
-				});
-				mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.cancel();
-					}
-				});
-				mLoadingDialog.show();
-				asyncTask.execute();
+						@Override
+						protected void onPostExecute(String response) {
+							if (mLoadingDialog.isShowing()) mLoadingDialog.dismiss();
+							if (response != null) {
+								try {
+									JSONArray groups = new JSONObject(response).getJSONObject("response").getJSONArray("groups");
+									for (int g = 0; g < groups.length(); g++) {
+										JSONObject group = groups.getJSONObject(g);
+										if (group.getString("name").equals("Nearby")) {
+											JSONArray places = group.getJSONArray("items");
+											final String placesNames[] = new String[places.length()];
+											final String placesIds[] = new String[places.length()];
+											for (int i = 0; i < places.length(); i++) {
+												JSONObject place = places.getJSONObject(i);
+												placesNames[i] = place.getString("name");
+												placesIds[i] = place.getString("id");
+											}
+											AlertDialog.Builder dialog = new AlertDialog.Builder(SonetCreatePost.this);
+											dialog.setSingleChoiceItems(placesNames, -1, new DialogInterface.OnClickListener() {
+												@Override
+												public void onClick(DialogInterface dialog, int which) {
+													mLocation.setText(placesNames[which]);
+													mPlaceId = placesIds[which];
+													dialog.dismiss();
+												}
+											})
+											.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+												@Override
+												public void onClick(DialogInterface dialog, int which) {
+													dialog.cancel();
+												}
+											})
+											.show();
+											break;
+										}
+									}
+								} catch (JSONException e) {
+									Log.e(TAG, e.toString());
+								}
+							} else {
+								(Toast.makeText(SonetCreatePost.this, getString(R.string.foursquare) + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
+							}
+						}
+					};
+					mLoadingDialog = new ProgressDialog(this);
+					mLoadingDialog.setMessage(getString(R.string.loading));
+					mLoadingDialog.setCancelable(true);
+					mLoadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+						@Override
+						public void onCancel(DialogInterface dialog) {
+							if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+						}
+					});
+					mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.cancel();
+						}
+					});
+					mLoadingDialog.show();
+					asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)));
+				}
+				account.close();
 				break;
 			}
 		} else if (v == mSend) {
 			final String message = mPost.getText().toString();
 			Log.v(TAG,"send:"+message);
 			if ((message != null) && (message != "")) {
-				Log.v(TAG,"got iterator");
-				if (mAccountsToPost.isEmpty()) {
-					// comment
-					Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Integer.toString(mAccount)}, null);
-					if (account.moveToFirst()) {
-						sendMessage(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)), mService, mSid, message);
-					}
-					account.close();
-				} else {
-					// post
-					for (Entry<Integer, HashMap<String, Integer>> entry : mAccountsToPost.entrySet()) {
-						HashMap<String, Integer> values = entry.getValue();
-						Log.v(TAG,"post:"+values.get(Accounts._ID));
-						Log.v(TAG,"service:"+values.get(Accounts.SERVICE));
-						if (values.get(Accounts._ID) == 1) {
-							// post or comment!
-							Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Integer.toString(entry.getKey())}, null);
+				for (Entry<Integer, HashMap<String, Integer>> entry : mAccountsToPost.entrySet()) {
+					HashMap<String, Integer> values = entry.getValue();
+					Log.v(TAG,"post:"+values.get(Accounts._ID));
+					Log.v(TAG,"service:"+values.get(Accounts.SERVICE));
+					if (values.get(Accounts._ID) == 1) {
+						// post or comment!
+						Cursor account;
+						AsyncTask<String, Void, String> asyncTask;
+						switch (values.get(Accounts.SERVICE)) {
+						case TWITTER:
+							account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Integer.toString(entry.getKey())}, null);
 							if (account.moveToFirst()) {
-								sendMessage(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)), values.get(Accounts.SERVICE), null, message);
+								asyncTask = new AsyncTask<String, Void, String>() {
+									@Override
+									protected String doInBackground(String... arg0) {
+										SonetOAuth sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, arg0[0], arg0[1]);
+										HttpPost httpPost = new HttpPost(String.format(TWITTER_UPDATE, TWITTER_BASE_URL));
+										HttpParams httpParams = new BasicHttpParams();
+										httpParams.setParameter("status", message);
+										if (mSid != null) {
+											httpParams.setParameter("in_reply_to_status_id", mSid);
+										}
+										httpPost.setParams(httpParams);
+										return sonetOAuth.httpResponse(httpPost);
+									}
+
+									@Override
+									protected void onPostExecute(String response) {
+										Log.v(TAG,"tweet:"+response);
+										if (response != null) {
+											//TODO: handle response to user
+											(Toast.makeText(SonetCreatePost.this, getString(R.string.twitter) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+											finish();
+										}
+									}
+								};
+								mPost.setEnabled(false);
+								mSend.setEnabled(false);
+								asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
 							}
+							account.close();
+							break;
+						case FACEBOOK:
+							account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Integer.toString(entry.getKey())}, null);
+							if (account.moveToFirst()) {
+								asyncTask = new AsyncTask<String, Void, String>() {
+									@Override
+									protected String doInBackground(String... arg0) {
+										HttpPost httpPost = mSid != null ? new HttpPost(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, mSid, TOKEN, arg0[0])) : new HttpPost(String.format(FACEBOOK_POST, FACEBOOK_BASE_URL, TOKEN, arg0[0]));
+										HttpParams httpParams = new BasicHttpParams();
+										httpParams.setParameter("message", message);
+										httpPost.setParams(httpParams);
+										return Sonet.httpResponse(httpPost);
+									}
+
+									@Override
+									protected void onPostExecute(String response) {
+										Log.v(TAG,"facebook post:"+response);
+										if (response != null) {
+											//TODO: handle response to user
+											(Toast.makeText(SonetCreatePost.this, getString(R.string.facebook) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+											finish();
+										}
+									}
+								};
+								mPost.setEnabled(false);
+								mSend.setEnabled(false);
+								asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)));
+							}
+							account.close();
+							break;
+						case MYSPACE:
+							account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Integer.toString(entry.getKey())}, null);
+							if (account.moveToFirst()) {
+								asyncTask = new AsyncTask<String, Void, String>() {
+									@Override
+									protected String doInBackground(String... arg0) {
+										SonetOAuth sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, arg0[0], arg0[1]);
+										try {
+											if ((mEsid != null) && (mSid != null)) {
+												HttpPost httpPost = new HttpPost(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mEsid, mSid));
+												httpPost.setEntity(new StringEntity("{\"body\":\"" + message + "\"}"));
+												return sonetOAuth.httpResponse(httpPost);
+											} else {
+												HttpPut httpPut = new HttpPut(String.format(MYSPACE_URL_STATUSMOOD, MYSPACE_BASE_URL));
+												httpPut.setEntity(new StringEntity("{\"status\":\"" + message + "\"}"));
+												return sonetOAuth.httpResponse(httpPut);
+											}
+										} catch (IOException e) {
+											Log.e(TAG, e.toString());
+										}
+										return null;
+									}
+
+									@Override
+									protected void onPostExecute(String response) {
+										Log.v(TAG,"myspace:"+response);
+										if (response != null) {
+											//TODO: handle response to user
+											(Toast.makeText(SonetCreatePost.this, getString(R.string.myspace) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+											finish();
+										}
+									}
+								};
+								mPost.setEnabled(false);
+								mSend.setEnabled(false);
+								asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+							}
+							account.close();
+							break;
+						case BUZZ:
+							account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Integer.toString(entry.getKey())}, null);
+							if (account.moveToFirst()) {
+								asyncTask = new AsyncTask<String, Void, String>() {
+									@Override
+									protected String doInBackground(String... arg0) {
+										SonetOAuth sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, arg0[0], arg0[1]);
+										try {
+											HttpPost httpPost;
+											if (mSid != null) {
+												httpPost = new HttpPost(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, mSid, BUZZ_API_KEY));
+												httpPost.setEntity(new StringEntity("{\"data\":{\"object\":{\"type\":\"note\",\"content\":\"" + message + "\"}}}"));
+											} else {
+												httpPost = new HttpPost(String.format(BUZZ_ACTIVITY, BUZZ_BASE_URL, "", BUZZ_API_KEY));
+												httpPost.setEntity(new StringEntity("{\"data\":{\"content\":\"" + message + "\"}}"));
+											}
+											httpPost.addHeader(new BasicHeader("Content-Type", "application/json"));
+											return sonetOAuth.httpResponse(httpPost);
+										} catch (IOException e) {
+											Log.e(TAG, e.toString());
+										}
+										return null;
+									}
+
+									@Override
+									protected void onPostExecute(String response) {
+										Log.v(TAG,"buzz:"+response);
+										if (response != null) {
+											//TODO: handle response to user
+											(Toast.makeText(SonetCreatePost.this, getString(R.string.buzz) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+											finish();
+										}
+									}
+								};
+								mPost.setEnabled(false);
+								mSend.setEnabled(false);
+								asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+							}
+							account.close();
+							break;
+						case FOURSQUARE:
+							account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Integer.toString(entry.getKey())}, null);
+							if (account.moveToFirst()) {
+								asyncTask = new AsyncTask<String, Void, String>() {
+									@Override
+									protected String doInBackground(String... arg0) {
+										return Sonet.httpResponse(mSid != null ? new HttpPost(String.format(FOURSQUARE_ADDCOMMENT, FOURSQUARE_BASE_URL, mSid, message, arg0[0])) : new HttpPost(String.format(FOURSQUARE_CHECKIN, FOURSQUARE_BASE_URL, "", message, arg0[0])));
+									}
+
+									@Override
+									protected void onPostExecute(String response) {
+										Log.v(TAG,"foursquare post:"+response);
+										if (response != null) {
+											//TODO: handle response to user
+											(Toast.makeText(SonetCreatePost.this, getString(R.string.foursquare) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+											finish();
+										}
+									}
+								};
+								mPost.setEnabled(false);
+								mSend.setEnabled(false);
+								asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)));
+							}
+							account.close();
+							break;
+						case LINKEDIN:
+							account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Integer.toString(entry.getKey())}, null);
+							if (account.moveToFirst()) {
+								asyncTask = new AsyncTask<String, Void, String>() {
+									@Override
+									protected String doInBackground(String... arg0) {
+										SonetOAuth sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, arg0[0], arg0[1]);
+										try {
+											HttpPost httpPost;
+											if (mSid != null) {
+												httpPost = new HttpPost(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, mSid));
+												httpPost.setEntity(new StringEntity(String.format(LINKEDIN_COMMENT_BODY, message)));
+											} else {
+												httpPost = new HttpPost(String.format(LINKEDIN_POST, LINKEDIN_BASE_URL));
+												// TODO: need locale
+												httpPost.setEntity(new StringEntity(String.format(LINKEDIN_POST_BODY, "", message)));
+											}
+											httpPost.addHeader(new BasicHeader("Content-Type", "application/xml"));
+											return sonetOAuth.httpResponse(httpPost);
+										} catch (IOException e) {
+											Log.e(TAG, e.toString());
+										}
+										return null;
+									}
+
+									@Override
+									protected void onPostExecute(String response) {
+										Log.v(TAG,"buzz:"+response);
+										if (response != null) {
+											//TODO: handle response to user
+											(Toast.makeText(SonetCreatePost.this, getString(R.string.buzz) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+											finish();
+										}
+									}
+								};
+								mPost.setEnabled(false);
+								mSend.setEnabled(false);
+								asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+							}
+							account.close();
 						}
 					}
 				}
@@ -772,42 +818,15 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				final String[] accounts = new String[c.getCount()];
 				final boolean[] defaults = new boolean[c.getCount()];
 				while (!c.isAfterLast()) {
-					int id = c.getInt(iid),
-					service = c.getInt(iservice);
-					// add only new accounts
-					if (!mAccountsToPost.containsKey(id)) {
-						HashMap<String, Integer> values;
-						// only show supported services
-						switch (service) {
-						case FACEBOOK:
-							values = new HashMap<String, Integer>();
-							values.put(Accounts.SERVICE, service);
-							values.put(Accounts._ID, id == mAccount ? 1 : 0);
-							mAccountsToPost.put(id, values);
-							accountIndexes[i] = id;
-							accounts[i] = c.getString(iusername);
-							defaults[i++] = id == mAccount;
-							break;
-						case MYSPACE:
-							values = new HashMap<String, Integer>();
-							values.put(Accounts.SERVICE, service);
-							values.put(Accounts._ID, id == mAccount ? 1 : 0);
-							mAccountsToPost.put(id, values);
-							accountIndexes[i] = id;
-							accounts[i] = c.getString(iusername);
-							defaults[i++] = id == mAccount;
-							break;
-						case BUZZ:
-							values = new HashMap<String, Integer>();
-							values.put(Accounts.SERVICE, service);
-							values.put(Accounts._ID, id == mAccount ? 1 : 0);
-							mAccountsToPost.put(id, values);
-							accountIndexes[i] = id;
-							accounts[i] = c.getString(iusername);
-							defaults[i++] = id == mAccount;
-							break;
-						}
-					}
+					int id = c.getInt(iid);
+					HashMap<String, Integer> values;
+					values = new HashMap<String, Integer>();
+					values.put(Accounts.SERVICE, c.getInt(iservice));
+					values.put(Accounts._ID, id == mAccount ? 1 : 0);
+					mAccountsToPost.put(id, values);
+					accountIndexes[i] = id;
+					accounts[i] = c.getString(iusername);
+					defaults[i++] = id == mAccount;
 					c.moveToNext();
 				}
 				AlertDialog.Builder dialog = new AlertDialog.Builder(this);
