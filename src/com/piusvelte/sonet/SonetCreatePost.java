@@ -34,6 +34,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.google.ads.*;
 import com.piusvelte.sonet.Sonet.Accounts;
 
 import static com.piusvelte.sonet.Sonet.BUZZ;
@@ -109,6 +110,7 @@ import android.view.View.OnClickListener;
 import android.view.View.OnKeyListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -140,6 +142,9 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		// allow selecting which accounts to use
 		// get existing comments, allow liking|unliking those comments
 		setContentView(R.layout.post);
+		AdView adView = new AdView(this, AdSize.BANNER, Sonet.GOOGLE_AD_ID);
+		((LinearLayout) findViewById(R.id.ad)).addView(adView);
+		adView.loadAd(new AdRequest());
 
 		mPost = (EditText) findViewById(R.id.post);
 		mSend = (Button) findViewById(R.id.send);
@@ -807,10 +812,12 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				final int[] accountIndexes = new int[c.getCount()];
 				final String[] accounts = new String[c.getCount()];
 				final boolean[] defaults = new boolean[c.getCount()];
+				final int[] accountServices = new int[c.getCount()];
 				while (!c.isAfterLast()) {
 					int id = c.getInt(iid);
 					accountIndexes[i] = id;
 					accounts[i] = c.getString(iusername);
+					accountServices[i] = c.getInt(iservice);
 					defaults[i++] = id == mAccount;
 					c.moveToNext();
 				}
@@ -824,11 +831,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 							// if there's only one account, change the default
 							if (mAccountsToPost.length == 1) {
 								mAccount = mAccountsToPost[0];
-								Cursor account = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Integer.toString(mAccount)}, null);
-								if (account.moveToFirst()) {
-									mService = account.getInt(account.getColumnIndex(Accounts.SERVICE));
-								}
-								account.close();
+								mService = accountServices[which];
 								String text = mPost.getText().toString();
 								if ((mService == TWITTER) && (text.length() > 140)) {
 									mPost.setText(text.substring(0, 140));

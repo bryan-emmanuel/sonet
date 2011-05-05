@@ -61,6 +61,6 @@
 		android:paddingRight="4dip" android:paddingBottom="4dip" />
 	<ImageView android:id="@+id/icon" android:layout_width="16dip"
 		android:layout_height="16dip" android:layout_alignParentRight="true"
-		android:layout_alignParentBottom="true" android:paddingTop="4dip"
+		android:layout_alignParentBottom="true" android:paddingBottom="4dip"
 		android:paddingRight="4dip" />
 </RelativeLayout>

@@ -19,6 +19,7 @@
  */
 package com.piusvelte.sonet;
 
+import com.google.ads.*;
 import com.piusvelte.sonet.Sonet.Widgets;
 
 import android.app.Activity;
@@ -33,6 +34,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.LinearLayout;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 
 public class Settings extends Activity implements View.OnClickListener, OnCheckedChangeListener {
@@ -72,6 +74,9 @@ public class Settings extends Activity implements View.OnClickListener, OnChecke
 		super.onCreate(savedInstanceState);
 		setResult(RESULT_CANCELED);
 		setContentView(R.layout.preferences);
+		AdView adView = new AdView(this, AdSize.BANNER, Sonet.GOOGLE_AD_ID);
+		((LinearLayout) findViewById(R.id.ad)).addView(adView);
+		adView.loadAd(new AdRequest());
 		Intent i = getIntent();
 		if (i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
 		mInterval = (Button) findViewById(R.id.interval);

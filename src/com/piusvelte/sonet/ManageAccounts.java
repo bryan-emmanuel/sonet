@@ -29,6 +29,7 @@ import static com.piusvelte.sonet.Sonet.LINKEDIN;
 import static com.piusvelte.sonet.Sonet.BUZZ;
 import static com.piusvelte.sonet.Sonet.SALESFORCE;
 
+import com.google.ads.*;
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Widgets;
@@ -47,6 +48,7 @@ import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.AdapterView.AdapterContextMenuInfo;
@@ -66,6 +68,11 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 
 		this.setResult(RESULT_CANCELED);
 
+		setContentView(R.layout.accounts);
+		AdView adView = new AdView(this, AdSize.BANNER, Sonet.GOOGLE_AD_ID);
+		((LinearLayout) findViewById(R.id.ad)).addView(adView);
+		adView.loadAd(new AdRequest());
+
 		Intent intent = getIntent();
 		if (intent != null) {
 			Bundle extras = intent.getExtras();
@@ -73,8 +80,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			// if called from widget, the id is set in the action, as pendingintents must have a unique action
 			else if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH)) && (!intent.getAction().equals(Intent.ACTION_VIEW))) mAppWidgetId = Integer.parseInt(intent.getAction());
 		}
-
-		setContentView(R.layout.accounts);
 		registerForContextMenu(getListView());
 		((Button) findViewById(R.id.default_widget_settings)).setOnClickListener(this);
 		((Button) findViewById(R.id.button_add_account)).setOnClickListener(this);

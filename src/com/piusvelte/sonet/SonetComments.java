@@ -31,6 +31,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.google.ads.*;
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Entities;
 import com.piusvelte.sonet.Sonet.Statuses;
@@ -76,6 +77,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
@@ -94,6 +96,9 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.comments);
+		AdView adView = new AdView(this, AdSize.BANNER, Sonet.GOOGLE_AD_ID);
+		((LinearLayout) findViewById(R.id.ad)).addView(adView);
+		adView.loadAd(new AdRequest());
 		Intent intent = getIntent();
 		if (intent != null) {
 			mData = intent.getData();

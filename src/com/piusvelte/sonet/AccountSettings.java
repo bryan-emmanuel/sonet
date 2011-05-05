@@ -19,6 +19,7 @@
  */
 package com.piusvelte.sonet;
 
+import com.google.ads.*;
 import com.piusvelte.sonet.Sonet.Widgets;
 
 import android.app.Activity;
@@ -33,6 +34,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.LinearLayout;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 
 public class AccountSettings extends Activity implements View.OnClickListener, OnCheckedChangeListener {
@@ -63,6 +65,9 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 		super.onCreate(savedInstanceState);
 		setResult(RESULT_CANCELED);
 		setContentView(R.layout.account_preferences);
+		AdView adView = new AdView(this, AdSize.BANNER, Sonet.GOOGLE_AD_ID);
+		((LinearLayout) findViewById(R.id.ad)).addView(adView);
+		adView.loadAd(new AdRequest());
 		Intent i = getIntent();
 		if (i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
 		if (i.hasExtra(Sonet.EXTRA_ACCOUNT_ID)) mAccountId = i.getLongExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID);

@@ -55,6 +55,7 @@ public class Sonet {
 	protected static final String EXTRA_ACCOUNT_ID = "com.piusvelte.sonet.Sonet.ACCOUNT_ID";
 	protected static final long INVALID_ACCOUNT_ID = -1;
 	protected static final int RESULT_REFRESH = 1;
+	protected static final String GOOGLE_AD_ID = "a14d5598b4afd11";
 
 	protected static final int TWITTER = 0;
 	protected static final String TWITTER_BASE_URL = "http://api.twitter.com/";

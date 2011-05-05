@@ -21,6 +21,7 @@ package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 
+import com.google.ads.*;
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Widgets;
@@ -36,6 +37,7 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 public class About extends Activity implements View.OnClickListener,
@@ -48,6 +50,9 @@ DialogInterface.OnClickListener {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.about);
+		AdView adView = new AdView(this, AdSize.BANNER, Sonet.GOOGLE_AD_ID);
+		((LinearLayout) findViewById(R.id.ad)).addView(adView);
+		adView.loadAd(new AdRequest());
 		mAppWidgetIds = new int[0];
 		// validate appwidgetids from appwidgetmanager
 		mAppWidgetManager = AppWidgetManager.getInstance(this);
