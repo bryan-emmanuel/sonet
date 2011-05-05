@@ -128,6 +128,25 @@ public class SonetOAuth {
 			default:
 				Log.e(TAG,httpRequest.getURI().toString());
 				Log.e(TAG,""+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
+				if (entity != null) {
+					InputStream is = entity.getContent();
+					BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+					StringBuilder sb = new StringBuilder();
+
+					String line = null;
+					try {
+						while ((line = reader.readLine()) != null) sb.append(line + "\n");
+					} catch (IOException e) {
+						e.printStackTrace();
+					} finally {
+						try {
+							is.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+					Log.e(TAG,"response:"+sb.toString());
+				}
 				break;
 			}
 		} catch (OAuthMessageSignerException e) {

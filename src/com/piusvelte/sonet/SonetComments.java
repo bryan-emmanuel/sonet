@@ -143,7 +143,7 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 									JSONArray likes = new JSONObject(response2).getJSONArray("data");
 									for (int l = 0; l < likes.length(); l++) {
 										JSONObject like2 = likes.getJSONObject(l);
-										if (like2.getString("id") == account.getString(account.getColumnIndex(Accounts.SID))) {
+										if (like2.getString("id").equals(account.getString(account.getColumnIndex(Accounts.SID)))) {
 											like = false;
 											break;
 										}

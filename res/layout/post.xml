@@ -28,17 +28,12 @@
 		android:layout_below="@id/ad" android:enabled="false"
 		android:layout_alignParentRight="true" />
 	<Button android:id="@+id/accounts" android:layout_width="fill_parent"
-		android:layout_height="wrap_content" android:text="@string/accounts"
-		android:enabled="false" android:layout_toLeftOf="@id/comments"
-		android:layout_alignParentLeft="true" />
+		android:layout_below="@id/ad" android:layout_height="wrap_content"
+		android:text="@string/accounts" android:enabled="false"
+		android:layout_toLeftOf="@id/comments" android:layout_alignParentLeft="true" />
 	<RelativeLayout android:id="@+id/buttons"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
 		android:layout_alignParentBottom="true">
-		<com.admob.android.ads.AdView android:id="@+id/ad"
-			android:visibility="gone" android:layout_width="fill_parent"
-			android:layout_height="wrap_content"
-			android:layout_alignParentBottom="true" app:backgroundColor="@color/tertiary"
-			app:primaryTextColor="@color/primary" app:secondaryTextColor="@color/secondary" />
 		<Button android:id="@+id/send" android:layout_width="wrap_content"
 			android:layout_height="wrap_content" android:text="@string/send"
 			android:layout_alignParentRight="true" android:enabled="false" />
@@ -48,7 +43,7 @@
 		<Button android:id="@+id/location" android:layout_width="fill_parent"
 			android:layout_height="wrap_content" android:text="@string/location"
 			android:layout_alignParentLeft="true" android:layout_toLeftOf="@id/like"
-			android:layout_above="@id/ad" android:enabled="false" />
+			android:enabled="false" />
 	</RelativeLayout>
 	<EditText android:id="@+id/post" android:layout_width="fill_parent"
 		android:layout_height="fill_parent" android:layout_below="@id/accounts"
