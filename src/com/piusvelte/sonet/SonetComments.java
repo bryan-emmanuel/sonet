@@ -36,6 +36,7 @@ import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Entities;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
+import com.piusvelte.sonet.Sonet.Widgets;
 
 import static com.piusvelte.sonet.Sonet.BUZZ_BASE_URL;
 import static com.piusvelte.sonet.Sonet.BUZZ_COMMENT;
@@ -55,6 +56,7 @@ import static com.piusvelte.sonet.Sonet.MYSPACE;
 import static com.piusvelte.sonet.Sonet.MYSPACE_BASE_URL;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOOD;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOODCOMMENTS;
+import static com.piusvelte.sonet.Sonet.MYSPACE_DATE_FORMAT;
 import static com.piusvelte.sonet.SonetTokens.BUZZ_API_KEY;
 import static com.piusvelte.sonet.SonetTokens.BUZZ_KEY;
 import static com.piusvelte.sonet.SonetTokens.BUZZ_SECRET;
@@ -91,6 +93,7 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 	private Uri mData;
 	private List<HashMap<String, String>> mComments = new ArrayList<HashMap<String, String>>();
 	private ProgressDialog mLoadingDialog;
+	private boolean mTime24hr = false;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -102,12 +105,15 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 		Intent intent = getIntent();
 		if (intent != null) {
 			mData = intent.getData();
-			Cursor c = this.getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.SERVICE, Statuses_styles.ACCOUNT, Statuses_styles.SID, Statuses_styles.ESID}, Statuses_styles._ID + "=?", new String[] {mData.getLastPathSegment()}, null);
+			Cursor c = this.getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.SERVICE, Statuses_styles.ACCOUNT, Statuses_styles.SID, Statuses_styles.ESID, Statuses_styles.WIDGET}, Statuses_styles._ID + "=?", new String[] {mData.getLastPathSegment()}, null);
 			if (c.moveToFirst()) {
 				mService = c.getInt(c.getColumnIndex(Statuses_styles.SERVICE));
 				mAccount = c.getLong(c.getColumnIndex(Statuses_styles.ACCOUNT));
 				mSid = c.getString(c.getColumnIndex(Statuses_styles.SID));
 				mEsid = c.getString(c.getColumnIndex(Statuses_styles.ESID));
+				Cursor widget = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(c.getInt(c.getColumnIndex(Statuses_styles.WIDGET))), Long.toString(mAccount)}, null);
+				mTime24hr = widget.moveToFirst() ? widget.getInt(widget.getColumnIndex(Widgets.TIME24HR)) == 1 : false;
+				widget.close();
 			}
 			c.close();
 		}
@@ -156,8 +162,7 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 							commentMap.put(Statuses.SID, id);
 							commentMap.put(Entities.FRIEND, comment.getJSONObject("from").getString("name"));
 							commentMap.put(Statuses.MESSAGE, comment.getString("message"));
-							//TODO: get time24hr value for this widget/account
-							commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(Long.parseLong(comment.getString("created_time")) * 1000, false));
+							commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(Long.parseLong(comment.getString("created_time")) * 1000, mTime24hr));
 							commentMap.put(getString(R.string.like), getString(like ? R.string.like : R.string.unlike));
 							mComments.add(commentMap);
 						}
@@ -176,19 +181,18 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 				try {
 					response = sonetOAuth.httpResponse(new HttpGet(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mEsid, mSid)));
 					if (response != null) {
-						Log.v(TAG,"myspace:"+response);
-						//TODO:
-						JSONObject jobj = new JSONObject(response);
-						//						for (int i = 0; i < comments.length(); i++) {
-						//							HashMap<String, String> commentMap = new HashMap<String, String>();
-						//							commentMap.put(Statuses.SID, id);
-						//							commentMap.put(Entities.FRIEND, comment.getJSONObject("from").getString("name"));
-						//							commentMap.put(Statuses.MESSAGE, comment.getString("message"));
-						//							//TODO: get time24hr value for this widget/account
-						//							commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(Long.parseLong(comment.getString("created")) * 1000, false));
-						//							commentMap.put(getString(R.string.like), getString(like ? R.string.like : R.string.unlike));
-						//							mComments.add(commentMap);
-						//						}						
+						JSONArray entries = new JSONObject(response).getJSONArray("entry");
+						for (int i = 0; i < entries.length(); i++) {
+							JSONObject entry = entries.getJSONObject(i);
+							HashMap<String, String> commentMap = new HashMap<String, String>();
+							commentMap.put(Statuses.SID, entry.getString("commentId"));
+							//TODO: get user name
+							commentMap.put(Entities.FRIEND, entry.getJSONObject("author").getString("id"));
+							commentMap.put(Statuses.MESSAGE, entry.getString("body"));
+							commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(Sonet.parseDate(entry.getString("postedDate"), MYSPACE_DATE_FORMAT), mTime24hr));
+							commentMap.put(getString(R.string.like), "");
+							mComments.add(commentMap);
+						}
 					}
 				} catch (JSONException e) {
 					Log.e(TAG, e.toString());
@@ -215,8 +219,7 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 								commentMap.put(Statuses.SID, id);
 								commentMap.put(Entities.FRIEND, comment.getJSONObject("actor").getString("name"));
 								commentMap.put(Statuses.MESSAGE, comment.getString("content"));
-								//TODO: get time24hr value for this widget/account
-								commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(Sonet.parseDate(comment.getString("published"), BUZZ_DATE_FORMAT), false));
+								commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(Sonet.parseDate(comment.getString("published"), BUZZ_DATE_FORMAT), mTime24hr));
 								commentMap.put(getString(R.string.like), getString(R.string.like));
 								mComments.add(commentMap);
 							}

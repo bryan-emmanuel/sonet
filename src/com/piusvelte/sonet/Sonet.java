@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.TimeZone;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -90,6 +91,7 @@ public class Sonet {
 	protected static final String MYSPACE_URL_FEED = "%sstatusmood/@me/@friends/history?count=%s&includeself=true&fields=author,source";
 	protected static final String MYSPACE_URL_STATUSMOOD = "%sstatusmood/@me/@self";
 	protected static final String MYSPACE_URL_STATUSMOODCOMMENTS = "%sstatusmoodcomments/%s/@self/%s?format=json";
+	protected static final String MYSPACE_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
 
 	protected static final int BUZZ = 3;
 	protected static final String BUZZ_BASE_URL = "https://www.googleapis.com/buzz/v1/";
@@ -102,7 +104,7 @@ public class Sonet {
 	protected static final String BUZZ_LIKE = "%sactivities/@me/@liked/%s?alt=json&key=%s";
 	protected static final String BUZZ_GET_LIKE = "%sactivities/@me/@self/%s/@liked?alt=json&key=%s";
 	protected static final String BUZZ_COMMENT = "%sactivities/@me/@self/%s/@comments?alt=json&key=%s";
-	protected static final String BUZZ_ACTIVITY = "%sactivities/@me/@self/%s?alt=json&key=%s";
+	protected static final String BUZZ_ACTIVITY = "%sactivities/@me/@self?alt=json&key=%s";
 	protected static final String BUZZ_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 
 	protected static final int FOURSQUARE = 4;
@@ -365,8 +367,27 @@ public class Sonet {
 				}
 				break;
 			default:
-				Log.e(TAG,"http request: "+httpRequest.getURI().toString());
-				Log.e(TAG,"http error: "+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
+				Log.e(TAG,httpRequest.getURI().toString());
+				Log.e(TAG,""+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
+				if (entity != null) {
+					InputStream is = entity.getContent();
+					BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+					StringBuilder sb = new StringBuilder();
+
+					String line = null;
+					try {
+						while ((line = reader.readLine()) != null) sb.append(line + "\n");
+					} catch (IOException e) {
+						e.printStackTrace();
+					} finally {
+						try {
+							is.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+					Log.e(TAG,"response:"+sb.toString());
+				}
 				break;
 			}
 		} catch (ClientProtocolException e) {
@@ -379,12 +400,14 @@ public class Sonet {
 
 	protected static long parseDate(String date, String format) {
 		SimpleDateFormat msformat = new SimpleDateFormat(format);
+		// all dates should be GMT/UTC
+		msformat.setTimeZone(TimeZone.getTimeZone("GMT"));
 		Date created;
 		try {
 			created = msformat.parse(date);
 		} catch (ParseException e) {
 			created = new Date();
-			Log.e(TAG,e.toString()); //Sun Mar 13 01:34:20 +0000 2011
+			Log.e(TAG,e.toString());
 		}
 		return created.getTime();
 	}

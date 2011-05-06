@@ -361,7 +361,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		String text = mPost.getText().toString();
 		int count = text.length();
 		mCount.setText(Integer.toString(count));
-		mSend.setEnabled((count > 0) || (mPlaceId != null));
 		if ((mService == TWITTER) && (count > 140)) {
 			mPost.setText(text.substring(0, 140));
 			mCount.setText("140");
@@ -696,9 +695,12 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 
 								@Override
 								protected void onPostExecute(String response) {
-									Log.v(TAG,"myspace:"+response);
-									//TODO: handle response to user
-									(Toast.makeText(SonetCreatePost.this, getString(R.string.myspace) + " " + getString(response != null ? R.string.success : R.string.failure), Toast.LENGTH_LONG)).show();
+									// warn users about myspace permissions
+									if (response != null) {
+										(Toast.makeText(SonetCreatePost.this, getString(R.string.myspace) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+									} else {
+										(Toast.makeText(SonetCreatePost.this, getString(R.string.myspace) + " " + getString(R.string.failure) + " " + getString(R.string.myspace_permissions_message), Toast.LENGTH_LONG)).show();
+									}
 									finish();
 								}
 							};
@@ -716,11 +718,12 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									try {
 										HttpPost httpPost;
 										if (mSid != null) {
+											//TODO: need to confirm commenting
 											httpPost = new HttpPost(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, mSid, BUZZ_API_KEY));
-											httpPost.setEntity(new StringEntity("{\"data\":{\"object\":{\"type\":\"note\",\"content\":\"" + mPost.getText().toString() + "\"}}}"));
-										} else {
-											httpPost = new HttpPost(String.format(BUZZ_ACTIVITY, BUZZ_BASE_URL, "", BUZZ_API_KEY));
 											httpPost.setEntity(new StringEntity("{\"data\":{\"content\":\"" + mPost.getText().toString() + "\"}}"));
+										} else {
+											httpPost = new HttpPost(String.format(BUZZ_ACTIVITY, BUZZ_BASE_URL, BUZZ_API_KEY));
+											httpPost.setEntity(new StringEntity("{\"data\":{\"object\":{\"type\":\"note\",\"content\":\"" + mPost.getText().toString() + "\"}}}"));
 										}
 										httpPost.addHeader(new BasicHeader("Content-Type", "application/json"));
 										return sonetOAuth.httpResponse(httpPost);
@@ -732,8 +735,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 
 								@Override
 								protected void onPostExecute(String response) {
-									Log.v(TAG,"buzz:"+response);
-									//TODO: handle response to user
 									(Toast.makeText(SonetCreatePost.this, getString(R.string.buzz) + " " + getString(response != null ? R.string.success : R.string.failure), Toast.LENGTH_LONG)).show();
 									finish();
 								}
@@ -796,7 +797,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 
 								@Override
 								protected void onPostExecute(String response) {
-									Log.v(TAG,"buzz:"+response);
+									Log.v(TAG,"linkedin:"+response);
 									//TODO: handle response to user
 									(Toast.makeText(SonetCreatePost.this, getString(R.string.linkedin) + " " + getString(response != null ? R.string.success : R.string.failure), Toast.LENGTH_LONG)).show();
 									finish();

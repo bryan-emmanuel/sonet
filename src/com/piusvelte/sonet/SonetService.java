@@ -35,6 +35,7 @@ import static com.piusvelte.sonet.Sonet.MYSPACE_URL_ME;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
+import static com.piusvelte.sonet.Sonet.MYSPACE_DATE_FORMAT;
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.ACTION_BUILD_SCROLL;
 
@@ -676,7 +677,7 @@ public class SonetService extends Service {
 													for (int e = 0; e < entries.length(); e++) {
 														JSONObject entry = entries.getJSONObject(e);
 														JSONObject authorObj = entry.getJSONObject(author);
-														long epoch = Sonet.parseDate(entry.getString(moodStatusLastUpdated), "yyyy-MM-dd'T'HH:mm:ss'Z'");
+														long epoch = Sonet.parseDate(entry.getString(moodStatusLastUpdated), MYSPACE_DATE_FORMAT);
 														addStatusItem(epoch,
 																authorObj.getString(displayName),
 																authorObj.getString(thumbnailUrl),

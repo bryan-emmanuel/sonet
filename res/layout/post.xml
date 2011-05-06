@@ -36,7 +36,7 @@
 		android:layout_alignParentBottom="true">
 		<Button android:id="@+id/send" android:layout_width="wrap_content"
 			android:layout_height="wrap_content" android:text="@string/send"
-			android:layout_alignParentRight="true" android:enabled="false" />
+			android:layout_alignParentRight="true" />
 		<Button android:id="@+id/like" android:layout_width="wrap_content"
 			android:layout_height="wrap_content" android:text="@string/like"
 			android:layout_toLeftOf="@id/send" android:enabled="false" />
