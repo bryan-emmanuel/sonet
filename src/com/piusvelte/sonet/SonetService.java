@@ -38,6 +38,7 @@ import static com.piusvelte.sonet.Sonet.MYSPACE;
 import static com.piusvelte.sonet.Sonet.MYSPACE_DATE_FORMAT;
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.ACTION_BUILD_SCROLL;
+import static com.piusvelte.sonet.Sonet.SID_FORMAT;
 
 import static com.piusvelte.sonet.SonetTokens.TWITTER_KEY;
 import static com.piusvelte.sonet.SonetTokens.TWITTER_SECRET;
@@ -194,9 +195,7 @@ public class SonetService extends Service {
 								response = sonetOAuth.httpResponse(new HttpGet("http://api.twitter.com/1/account/verify_credentials.json"));
 								if (response != null) {
 									JSONObject jobj = new JSONObject(response);
-									ContentValues values = new ContentValues();
-									values.put(Accounts.SID, jobj.getString("id"));
-									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
+									updateAccount(Integer.toString(account_updates.getInt(iid)), jobj.getString("id"));
 								}
 							} catch (JSONException e) {
 								Log.e(TAG, service + ":" + e.toString());
@@ -207,9 +206,7 @@ public class SonetService extends Service {
 							if (response != null) {
 								try {
 									JSONObject jobj = new JSONObject(response);
-									ContentValues values = new ContentValues();
-									values.put(Accounts.SID, jobj.getString("id"));
-									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
+									updateAccount(Integer.toString(account_updates.getInt(iid)), jobj.getString("id"));
 								} catch (JSONException e) {
 									Log.e(TAG, service + ":" + e.toString());
 								}
@@ -221,9 +218,7 @@ public class SonetService extends Service {
 								response = sonetOAuth.httpResponse(new HttpGet(String.format(MYSPACE_URL_ME, MYSPACE_BASE_URL)));
 								if (response != null) {
 									JSONObject jobj = (new JSONObject(response)).getJSONObject("person");
-									ContentValues values = new ContentValues();
-									values.put(Accounts.SID, jobj.getString("id"));
-									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
+									updateAccount(Integer.toString(account_updates.getInt(iid)), jobj.getString("id"));
 								}
 							} catch (JSONException e) {
 								Log.e(TAG, service + ":" + e.toString());
@@ -235,9 +230,7 @@ public class SonetService extends Service {
 								response = sonetOAuth.httpResponse(new HttpGet(String.format(BUZZ_URL_ME, BUZZ_BASE_URL, BUZZ_API_KEY)));
 								if (response != null) {
 									JSONObject jobj = (new JSONObject(response)).getJSONObject("data");
-									ContentValues values = new ContentValues();
-									values.put(Accounts.SID, jobj.getString("id"));
-									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
+									updateAccount(Integer.toString(account_updates.getInt(iid)), jobj.getString("id"));
 								}
 							} catch (JSONException e) {
 								Log.e(TAG, service + ":" + e.toString());
@@ -248,9 +241,7 @@ public class SonetService extends Service {
 							if (response != null) {
 								try {
 									JSONObject jobj = (new JSONObject(response)).getJSONObject("response").getJSONObject("user");
-									ContentValues values = new ContentValues();
-									values.put(Accounts.SID, jobj.getString("id"));
-									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
+									updateAccount(Integer.toString(account_updates.getInt(iid)), jobj.getString("id"));
 								} catch (JSONException e) {
 									Log.e(TAG, service + ":" + e.toString());
 									Log.e(TAG, response);
@@ -265,9 +256,7 @@ public class SonetService extends Service {
 								response = sonetOAuth.httpResponse(httpGet);
 								if (response != null) {
 									JSONObject jobj = new JSONObject(response);
-									ContentValues values = new ContentValues();
-									values.put(Accounts.SID, jobj.getString("id"));
-									this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Integer.toString(account_updates.getInt(iid))});
+									updateAccount(Integer.toString(account_updates.getInt(iid)), jobj.getString("id"));
 								}
 							} catch (JSONException e) {
 								Log.e(TAG, service + ":" + e.toString());
@@ -1296,6 +1285,12 @@ public class SonetService extends Service {
 	public IBinder onBind(Intent intent) {
 		return null;
 	}
+	
+	private void updateAccount(String accountId, String sid) {
+		ContentValues values = new ContentValues();
+		values.put(Accounts.SID, String.format(SID_FORMAT, sid));
+		this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{accountId});
+	}
 
 	private void addStatusItem(long created, String friend, String url, String message, String service, boolean time24hr, String appWidgetId, String accountId, String sid, String esid) {
 		long id;
@@ -1314,7 +1309,7 @@ public class SonetService extends Service {
 		if (entity.moveToFirst()) id = entity.getInt(entity.getColumnIndex(Entities._ID));
 		else {
 			ContentValues values = new ContentValues();
-			values.put(Entities.ESID, esid);
+			values.put(Entities.ESID, String.format(SID_FORMAT, esid));
 			values.put(Entities.FRIEND, friend);
 			values.put(Entities.PROFILE, profile);
 			values.put(Entities.ACCOUNT, accountId);
@@ -1329,7 +1324,7 @@ public class SonetService extends Service {
 		values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(created, time24hr));
 		values.put(Statuses.WIDGET, Integer.parseInt(appWidgetId));
 		values.put(Statuses.ACCOUNT, Integer.parseInt(accountId));
-		values.put(Statuses.SID, sid);
+		values.put(Statuses.SID, String.format(SID_FORMAT, sid));
 		this.getContentResolver().insert(Statuses.CONTENT_URI, values);
 	}
 

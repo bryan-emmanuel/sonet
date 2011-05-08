@@ -57,6 +57,7 @@ public class Sonet {
 	protected static final long INVALID_ACCOUNT_ID = -1;
 	protected static final int RESULT_REFRESH = 1;
 	protected static final String GOOGLE_AD_ID = "a14d5598b4afd11";
+	protected static final String SID_FORMAT = "_%s";
 
 	protected static final int TWITTER = 0;
 	protected static final String TWITTER_BASE_URL = "http://api.twitter.com/";
@@ -92,6 +93,8 @@ public class Sonet {
 	protected static final String MYSPACE_URL_STATUSMOOD = "%sstatusmood/@me/@self";
 	protected static final String MYSPACE_URL_STATUSMOODCOMMENTS = "%sstatusmoodcomments/%s/@self/%s?format=json";
 	protected static final String MYSPACE_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+	protected static final String MYSPACE_STATUSMOOD_BODY = "{\"status\":\"%s\"}";
+	protected static final String MYSPACE_STATUSMOODCOMMENTS_BODY = "{\"body\":\"%s\"}";
 
 	protected static final int BUZZ = 3;
 	protected static final String BUZZ_BASE_URL = "https://www.googleapis.com/buzz/v1/";
@@ -106,6 +109,8 @@ public class Sonet {
 	protected static final String BUZZ_COMMENT = "%sactivities/@me/@self/%s/@comments?alt=json&key=%s";
 	protected static final String BUZZ_ACTIVITY = "%sactivities/@me/@self?alt=json&key=%s";
 	protected static final String BUZZ_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+	protected static final String BUZZ_COMMENT_BODY = "{\"data\":{\"content\":\"%s\"}}";
+	protected static final String BUZZ_ACTIVITY_BODY = "{\"data\":{\"object\":{\"type\":\"note\",\"content\":\"%s\"}}}";
 
 	protected static final int FOURSQUARE = 4;
 	protected static final String FOURSQUARE_BASE_URL = "https://api.foursquare.com/v2/";
@@ -344,6 +349,7 @@ public class Sonet {
 			switch(statusLine.getStatusCode()) {
 			case 200:
 			case 201:
+			case 204:
 				if (entity != null) {
 					InputStream is = entity.getContent();
 					BufferedReader reader = new BufferedReader(new InputStreamReader(is));
@@ -364,6 +370,8 @@ public class Sonet {
 						}
 					}
 					response = sb.toString();
+				} else {
+					response = "OK";
 				}
 				break;
 			default:
@@ -484,6 +492,13 @@ public class Sonet {
 		} else {
 			return a;
 		}
+	}
+	
+	protected static String removeUnderscore(String sid) {
+		// this is a fix for an issue where inserting a big integer, such as the id's from BUZZ into sqlite,
+		// causing the value to convert to scientific notation. to avoid that, an underscore is prepended
+		// this must be removed when querying the column
+		return (sid != null) && (sid.length() != 0) && sid.substring(0, 1).equals("_") ? sid.substring(1) : sid;
 	}
 
 }

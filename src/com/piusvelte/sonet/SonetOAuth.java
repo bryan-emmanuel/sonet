@@ -105,6 +105,7 @@ public class SonetOAuth {
 			switch(statusLine.getStatusCode()) {
 			case 200:
 			case 201:
+			case 204:
 				if (entity != null) {
 					InputStream is = entity.getContent();
 					BufferedReader reader = new BufferedReader(new InputStreamReader(is));
@@ -123,6 +124,8 @@ public class SonetOAuth {
 						}
 					}
 					response = sb.toString();
+				} else {
+					response = "OK";
 				}
 				break;
 			default:

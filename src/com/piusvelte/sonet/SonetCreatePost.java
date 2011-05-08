@@ -34,8 +34,6 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpParams;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -49,6 +47,8 @@ import static com.piusvelte.sonet.Sonet.BUZZ_BASE_URL;
 import static com.piusvelte.sonet.Sonet.BUZZ_COMMENT;
 import static com.piusvelte.sonet.Sonet.BUZZ_LIKE;
 import static com.piusvelte.sonet.Sonet.BUZZ_GET_LIKE;
+import static com.piusvelte.sonet.Sonet.BUZZ_ACTIVITY_BODY;
+import static com.piusvelte.sonet.Sonet.BUZZ_COMMENT_BODY;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_LIKES;
@@ -68,6 +68,8 @@ import static com.piusvelte.sonet.Sonet.MYSPACE;
 import static com.piusvelte.sonet.Sonet.MYSPACE_BASE_URL;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOOD;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOODCOMMENTS;
+import static com.piusvelte.sonet.Sonet.MYSPACE_STATUSMOOD_BODY;
+import static com.piusvelte.sonet.Sonet.MYSPACE_STATUSMOODCOMMENTS_BODY;
 import static com.piusvelte.sonet.Sonet.SALESFORCE;
 import static com.piusvelte.sonet.Sonet.TOKEN;
 import static com.piusvelte.sonet.Sonet.TWITTER;
@@ -170,8 +172,8 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				if (status.moveToFirst()) {
 					mService = status.getInt(status.getColumnIndex(Statuses_styles.SERVICE));
 					mAccount = status.getInt(status.getColumnIndex(Statuses_styles.ACCOUNT));
-					mSid = status.getString(status.getColumnIndex(Statuses_styles.SID));
-					mEsid = status.getString(status.getColumnIndex(Statuses_styles.ESID));
+					mSid = Sonet.removeUnderscore(status.getString(status.getColumnIndex(Statuses_styles.SID)));
+					mEsid = Sonet.removeUnderscore(status.getString(status.getColumnIndex(Statuses_styles.ESID)));
 					mAppWidgetId = status.getInt(status.getColumnIndex(Statuses_styles.WIDGET));
 					mAccountsToPost = new int[1];
 					mAccountsToPost[0] = mAccount;
@@ -221,7 +223,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					mComments.setOnClickListener(this);
 					account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 					if (account.moveToFirst()) {
-						final String sid = account.getString(account.getColumnIndex(Accounts.SID));
+						final String sid = Sonet.removeUnderscore(account.getString(account.getColumnIndex(Accounts.SID)));
 						asyncTask = new AsyncTask<String, Void, String>() {
 							@Override
 							protected String doInBackground(String... arg0) {
@@ -258,9 +260,9 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				case BUZZ:
 					mComments.setEnabled(true);
 					mComments.setOnClickListener(this);
-					//TODO: check if liked
 					account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 					if (account.moveToFirst()) {
+						final String sid = Sonet.removeUnderscore(account.getString(account.getColumnIndex(Accounts.SID)));
 						asyncTask = new AsyncTask<String, Void, String>() {
 							@Override
 							protected String doInBackground(String... arg0) {
@@ -272,9 +274,18 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 							protected void onPostExecute(String response) {
 								boolean liked = false;
 								if (response != null) {
-									Log.v(TAG,"response:"+response);
 									try {
 										JSONObject data = new JSONObject(response).getJSONObject("data");
+										if (data.has("entry")) {
+											JSONArray entries = data.getJSONArray("entry");
+											for (int i = 0; i < entries.length(); i++) {
+												JSONObject entry = entries.getJSONObject(i);
+												if (entry.getString("id").equals(sid)) {
+													liked = true;
+													break;
+												}
+											}
+										}
 									} catch (JSONException e) {
 										Log.e(TAG,e.toString());
 									}
@@ -680,11 +691,11 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									try {
 										if ((mEsid != null) && (mSid != null)) {
 											HttpPost httpPost = new HttpPost(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mEsid, mSid));
-											httpPost.setEntity(new StringEntity("{\"body\":\"" + mPost.getText().toString() + "\"}"));
+											httpPost.setEntity(new StringEntity(String.format(MYSPACE_STATUSMOODCOMMENTS_BODY, mPost.getText().toString())));
 											return sonetOAuth.httpResponse(httpPost);
 										} else {
 											HttpPut httpPut = new HttpPut(String.format(MYSPACE_URL_STATUSMOOD, MYSPACE_BASE_URL));
-											httpPut.setEntity(new StringEntity("{\"status\":\"" + mPost.getText().toString() + "\"}"));
+											httpPut.setEntity(new StringEntity(String.format(MYSPACE_STATUSMOOD_BODY, mPost.getText().toString())));
 											return sonetOAuth.httpResponse(httpPut);
 										}
 									} catch (IOException e) {
@@ -720,10 +731,10 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 										if (mSid != null) {
 											//TODO: need to confirm commenting
 											httpPost = new HttpPost(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, mSid, BUZZ_API_KEY));
-											httpPost.setEntity(new StringEntity("{\"data\":{\"content\":\"" + mPost.getText().toString() + "\"}}"));
+											httpPost.setEntity(new StringEntity(String.format(BUZZ_COMMENT_BODY, mPost.getText().toString())));
 										} else {
 											httpPost = new HttpPost(String.format(BUZZ_ACTIVITY, BUZZ_BASE_URL, BUZZ_API_KEY));
-											httpPost.setEntity(new StringEntity("{\"data\":{\"object\":{\"type\":\"note\",\"content\":\"" + mPost.getText().toString() + "\"}}}"));
+											httpPost.setEntity(new StringEntity(String.format(BUZZ_ACTIVITY_BODY, mPost.getText().toString())));
 										}
 										httpPost.addHeader(new BasicHeader("Content-Type", "application/json"));
 										return sonetOAuth.httpResponse(httpPost);
@@ -885,134 +896,126 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				.show();
 			}
 			c.close();
-		} else if (v == mLike) {
+		} else if ((v == mLike) && (mSid != null)) {
 			Cursor account;
 			AsyncTask<String, Void, String> asyncTask;
 			switch (mService) {
 			case TWITTER:
 				// retweet
-				if (mSid != null) {
-					account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-					if (account.moveToFirst()) {
-						asyncTask = new AsyncTask<String, Void, String>() {
-							@Override
-							protected String doInBackground(String... arg0) {
-								SonetOAuth sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, arg0[0], arg0[1]);
-								HttpPost httpPost = new HttpPost(String.format(TWITTER_RETWEET, TWITTER_BASE_URL, mSid));
-								// resolve Error 417 Expectation by Twitter
-								httpPost.getParams().setBooleanParameter("http.protocol.expect-continue", false);
-								return sonetOAuth.httpResponse(httpPost);
-							}
+				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				if (account.moveToFirst()) {
+					asyncTask = new AsyncTask<String, Void, String>() {
+						@Override
+						protected String doInBackground(String... arg0) {
+							SonetOAuth sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, arg0[0], arg0[1]);
+							HttpPost httpPost = new HttpPost(String.format(TWITTER_RETWEET, TWITTER_BASE_URL, mSid));
+							// resolve Error 417 Expectation by Twitter
+							httpPost.getParams().setBooleanParameter("http.protocol.expect-continue", false);
+							return sonetOAuth.httpResponse(httpPost);
+						}
 
-							@Override
-							protected void onPostExecute(String response) {
-								if (response != null) {
-									mLike.setText(R.string.retweet);
-									Log.v(TAG,"retweet:"+response);
-									//TODO: handle response to user
-									(Toast.makeText(SonetCreatePost.this, getString(R.string.retweet) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-								}
+						@Override
+						protected void onPostExecute(String response) {
+							if (response != null) {
+								mLike.setText(R.string.retweet);
+								Log.v(TAG,"retweet:"+response);
+								//TODO: handle response to user
+								(Toast.makeText(SonetCreatePost.this, getString(R.string.retweet) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
 							}
-						};
-						mLike.setEnabled(false);
-						asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
-					}
-					account.close();
+						}
+					};
+					mLike.setEnabled(false);
+					asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
 				}
+				account.close();
 				break;
 			case FACEBOOK:
-				if (mSid != null) {
-					account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-					if (account.moveToFirst()) {
-						asyncTask = new AsyncTask<String, Void, String>() {
-							@Override
-							protected String doInBackground(String... arg0) {
-								return Sonet.httpResponse(mLike.getText().equals(getString(R.string.like)) ? new HttpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mSid, TOKEN, arg0[0])) : new HttpDelete(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mSid, TOKEN, arg0[0])));
-							}
+				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				if (account.moveToFirst()) {
+					asyncTask = new AsyncTask<String, Void, String>() {
+						@Override
+						protected String doInBackground(String... arg0) {
+							return Sonet.httpResponse(mLike.getText().equals(getString(R.string.like)) ? new HttpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mSid, TOKEN, arg0[0])) : new HttpDelete(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mSid, TOKEN, arg0[0])));
+						}
 
-							@Override
-							protected void onPostExecute(String response) {
-								// TODO: handle failed response
-								if (response != null) {
-									(Toast.makeText(SonetCreatePost.this, getString(R.string.facebook) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-									mLike.setText(R.string.unlike);
-								} else {
-									(Toast.makeText(SonetCreatePost.this, getString(R.string.facebook) + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
-								}
-								mLike.setEnabled(true);
+						@Override
+						protected void onPostExecute(String response) {
+							if (response != null) {
+								(Toast.makeText(SonetCreatePost.this, getString(R.string.facebook) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+								mLike.setText(mLike.getText().equals(getString(R.string.like)) ? R.string.unlike : R.string.like);
+							} else {
+								(Toast.makeText(SonetCreatePost.this, getString(R.string.facebook) + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
 							}
-						};
-						mLike.setEnabled(false);
-						asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)));
-					}
-					account.close();
+							mLike.setEnabled(true);
+						}
+					};
+					mLike.setEnabled(false);
+					asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)));
 				}
+				account.close();
 				break;
 			case BUZZ:
-				//TODO:like
-				if (mSid != null) {
-					account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-					if (account.moveToFirst()) {
-						asyncTask = new AsyncTask<String, Void, String>() {
-							@Override
-							protected String doInBackground(String... arg0) {
-								SonetOAuth sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, arg0[0], arg0[1]);
-								return sonetOAuth.httpResponse(mLike.getText() == getString(R.string.like) ? new HttpPut(String.format(BUZZ_LIKE, BUZZ_BASE_URL, mSid, BUZZ_API_KEY)) :  new HttpDelete(String.format(BUZZ_LIKE, BUZZ_BASE_URL, mSid, BUZZ_API_KEY)));
-							}
+				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				if (account.moveToFirst()) {
+					asyncTask = new AsyncTask<String, Void, String>() {
+						@Override
+						protected String doInBackground(String... arg0) {
+							SonetOAuth sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, arg0[0], arg0[1]);
+							return sonetOAuth.httpResponse(mLike.getText().equals(getString(R.string.like)) ? new HttpPut(String.format(BUZZ_LIKE, BUZZ_BASE_URL, mSid, BUZZ_API_KEY)) :  new HttpDelete(String.format(BUZZ_LIKE, BUZZ_BASE_URL, mSid, BUZZ_API_KEY)));
+						}
 
-							@Override
-							protected void onPostExecute(String response) {
-								Log.v(TAG,"buzz like:"+response);
-								if (response != null) {
-									//TODO: handle response to user
-									(Toast.makeText(SonetCreatePost.this, getString(R.string.buzz) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-									mLike.setText(R.string.unlike);
-									mLike.setEnabled(true);
-								}
+						@Override
+						protected void onPostExecute(String response) {
+							if (response != null) {
+								(Toast.makeText(SonetCreatePost.this, getString(R.string.buzz) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+								mLike.setText(mLike.getText().equals(getString(R.string.like)) ? R.string.unlike : R.string.like);
+							} else {
+								(Toast.makeText(SonetCreatePost.this, getString(R.string.buzz) + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
 							}
-						};
-						mLike.setEnabled(false);
-						asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
-					}
-					account.close();
+							mLike.setEnabled(true);
+						}
+					};
+					mLike.setEnabled(false);
+					asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
 				}
+				account.close();
 				break;
 			case LINKEDIN:
 				//TODO:like
-				if (mSid != null) {
-					account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-					if (account.moveToFirst()) {
-						asyncTask = new AsyncTask<String, Void, String>() {
-							@Override
-							protected String doInBackground(String... arg0) {
-								SonetOAuth sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, arg0[0], arg0[1]);
-								HttpPut httpPut = new HttpPut(String.format(LINKEDIN_IS_LIKED, LINKEDIN_BASE_URL, mSid));
-								httpPut.addHeader(new BasicHeader("Content-Type", "application/xml"));
-								try {
-									httpPut.setEntity(new StringEntity(String.format(LINKEDIN_LIKE_BODY, Boolean.toString(mLike.getText() == getString(R.string.like)))));
-									return sonetOAuth.httpResponse(httpPut);
-								} catch (UnsupportedEncodingException e) {
-									Log.e(TAG, e.toString());
-								}
-								return null;
+				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				if (account.moveToFirst()) {
+					asyncTask = new AsyncTask<String, Void, String>() {
+						@Override
+						protected String doInBackground(String... arg0) {
+							SonetOAuth sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, arg0[0], arg0[1]);
+							HttpPut httpPut = new HttpPut(String.format(LINKEDIN_IS_LIKED, LINKEDIN_BASE_URL, mSid));
+							httpPut.addHeader(new BasicHeader("Content-Type", "application/xml"));
+							try {
+								httpPut.setEntity(new StringEntity(String.format(LINKEDIN_LIKE_BODY, Boolean.toString(mLike.getText() == getString(R.string.like)))));
+								return sonetOAuth.httpResponse(httpPut);
+							} catch (UnsupportedEncodingException e) {
+								Log.e(TAG, e.toString());
 							}
+							return null;
+						}
 
-							@Override
-							protected void onPostExecute(String response) {
-								Log.v(TAG,"linkedin like:"+response);
-								if (response != null) {
-									//TODO: handle response to user
-									(Toast.makeText(SonetCreatePost.this, getString(R.string.linkedin) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-									mLike.setText(R.string.unlike);
-									mLike.setEnabled(true);
-								}
+						@Override
+						protected void onPostExecute(String response) {
+							Log.v(TAG,"linkedin like:"+response);
+							if (response != null) {
+								//TODO: handle response to user
+								(Toast.makeText(SonetCreatePost.this, getString(R.string.linkedin) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+								mLike.setText(mLike.getText().equals(getString(R.string.like)) ? R.string.unlike : R.string.like);
+							} else {
+								(Toast.makeText(SonetCreatePost.this, getString(R.string.buzz) + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
 							}
-						};
-						mLike.setEnabled(false);
-						asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
-					}
-					account.close();
+							mLike.setEnabled(true);
+						}
+					};
+					mLike.setEnabled(false);
+					asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
 				}
+				account.close();
 				break;
 			}
 		}

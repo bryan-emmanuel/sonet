@@ -29,6 +29,7 @@ import static com.piusvelte.sonet.Sonet.TWITTER_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_REQUEST;
 import static com.piusvelte.sonet.SonetTokens.TWITTER_KEY;
 import static com.piusvelte.sonet.SonetTokens.TWITTER_SECRET;
+import static com.piusvelte.sonet.Sonet.SID_FORMAT;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -208,11 +209,13 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 		values.put(Accounts.EXPIRY, expiry);
 		values.put(Accounts.SERVICE, service);
 		values.put(Accounts.WIDGET, mWidgetId);
-		values.put(Accounts.SID, sid);
+		values.put(Accounts.SID, String.format(SID_FORMAT, sid));
 		if (mAccountId != Sonet.INVALID_ACCOUNT_ID) {
 			accountId = Long.toString(mAccountId);
 			getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Long.toString(mAccountId)});
-		} else accountId = getContentResolver().insert(Accounts.CONTENT_URI, values).getLastPathSegment();
+		} else {
+			accountId = getContentResolver().insert(Accounts.CONTENT_URI, values).getLastPathSegment();
+		}
 		setResult(RESULT_OK);
 		return accountId;
 	}
@@ -260,7 +263,9 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 								String response = Sonet.httpResponse(new HttpGet(String.format(FOURSQUARE_URL_ME, FOURSQUARE_BASE_URL, token)));
 								if (response != null) {
 									JSONObject jobj = (new JSONObject(response)).getJSONObject("response").getJSONObject("user");
-									if (jobj.has("firstName") && jobj.has("id")) addAccount(jobj.getString("firstName") + " " + jobj.getString("lastName"), token, "", 0, FOURSQUARE, jobj.getString("id"));
+									if (jobj.has("firstName") && jobj.has("id")) {
+										addAccount(jobj.getString("firstName") + " " + jobj.getString("lastName"), token, "", 0, FOURSQUARE, jobj.getString("id"));
+									}
 								}
 							} else if (FACEBOOK_CALLBACK.getHost().equals(uri.getHost())) {
 								url = url.replace("fbconnect", "http");
@@ -276,7 +281,9 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 								String response = Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_URL_ME, FACEBOOK_BASE_URL, TOKEN, token)));
 								if (response != null) {
 									JSONObject jobj = new JSONObject(response);
-									if (jobj.has("name") && jobj.has("id")) addAccount(jobj.getString("name"), token, "", expiry, FACEBOOK, jobj.getString("id"));
+									if (jobj.has("name") && jobj.has("id")) {
+										addAccount(jobj.getString("name"), token, "", expiry, FACEBOOK, jobj.getString("id"));
+									}
 								}
 							} else if (MYSPACE_CALLBACK.getHost().equals(uri.getHost())) {
 								if (mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER))) {
@@ -284,7 +291,9 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 									if (response != null) {
 										JSONObject jobj = new JSONObject(response);
 										JSONObject person = jobj.getJSONObject("person");
-										if (person.has("displayName") && person.has("id")) addAccount(person.getString("displayName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, MYSPACE, person.getString("id"));
+										if (person.has("displayName") && person.has("id")) {
+											addAccount(person.getString("displayName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, MYSPACE, person.getString("id"));
+										}
 									}
 								}
 							} else if (BUZZ_CALLBACK.getHost().equals(uri.getHost())) {
@@ -293,7 +302,9 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 									String response = mSonetOAuth.httpResponse(new HttpGet(String.format(BUZZ_URL_ME, BUZZ_BASE_URL, BUZZ_API_KEY)));
 									if (response != null) {
 										JSONObject data = new JSONObject(response).getJSONObject("data");
-										if (data.has("displayName") && data.has("id")) addAccount(data.getString("displayName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, BUZZ, data.getString("id"));
+										if (data.has("displayName") && data.has("id")) {
+											addAccount(data.getString("displayName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, BUZZ, data.getString("id"));
+										}
 									}
 								}
 								//							} else if (SALESFORCE_CALLBACK.getHost().equals(uri.getHost())) {

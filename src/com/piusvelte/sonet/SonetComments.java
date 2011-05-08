@@ -109,8 +109,8 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 			if (c.moveToFirst()) {
 				mService = c.getInt(c.getColumnIndex(Statuses_styles.SERVICE));
 				mAccount = c.getLong(c.getColumnIndex(Statuses_styles.ACCOUNT));
-				mSid = c.getString(c.getColumnIndex(Statuses_styles.SID));
-				mEsid = c.getString(c.getColumnIndex(Statuses_styles.ESID));
+				mSid = Sonet.removeUnderscore(c.getString(c.getColumnIndex(Statuses_styles.SID)));
+				mEsid = Sonet.removeUnderscore(c.getString(c.getColumnIndex(Statuses_styles.ESID)));
 				Cursor widget = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(c.getInt(c.getColumnIndex(Statuses_styles.WIDGET))), Long.toString(mAccount)}, null);
 				mTime24hr = widget.moveToFirst() ? widget.getInt(widget.getColumnIndex(Widgets.TIME24HR)) == 1 : false;
 				widget.close();
@@ -149,7 +149,7 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 									JSONArray likes = new JSONObject(response2).getJSONArray("data");
 									for (int l = 0; l < likes.length(); l++) {
 										JSONObject like2 = likes.getJSONObject(l);
-										if (like2.getString("id").equals(account.getString(account.getColumnIndex(Accounts.SID)))) {
+										if (like2.getString("id").equals(Sonet.removeUnderscore(account.getString(account.getColumnIndex(Accounts.SID))))) {
 											like = false;
 											break;
 										}
