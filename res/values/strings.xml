@@ -100,4 +100,6 @@
 	<string name="linkedin">LinkedIn</string>
 	<string name="success">success</string>
 	<string name="failure">failure</string>
+	<string name="uncommentable">uncommentable</string>
+	<string name="unlikable">unlikable</string>
 </resources>

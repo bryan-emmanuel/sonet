@@ -131,7 +131,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 	private String mSid = null;
 	private String mEsid;
 	private Uri mData;
-	private EditText mPost;
+	private EditText mMessage;
 	private Button mSend;
 	private Button mLocation;
 	private Button mComments;
@@ -154,7 +154,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		((LinearLayout) findViewById(R.id.ad)).addView(adView);
 		adView.loadAd(new AdRequest());
 
-		mPost = (EditText) findViewById(R.id.post);
+		mMessage = (EditText) findViewById(R.id.message);
 		mSend = (Button) findViewById(R.id.send);
 		mLocation = (Button) findViewById(R.id.location);
 		mComments = (Button) findViewById(R.id.comments);
@@ -200,23 +200,24 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									try {
 										JSONArray users = new JSONArray(response);
 										if (users.length() > 0) {
-											mPost.append("@" + users.getJSONObject(0).getString("screen_name") + " ");
+											mMessage.setText("");
+											mMessage.append("@" + users.getJSONObject(0).getString("screen_name") + " ");
 										}
 									} catch (JSONException e) {
 										Log.e(TAG,e.toString());
 									}
 								}
-								mPost.setEnabled(true);
+								mMessage.setEnabled(true);
 							}
 						};
-						mPost.setEnabled(false);
-						mPost.setText(R.string.loading);
+						mMessage.setEnabled(false);
+						mMessage.setText(R.string.loading);
 						asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
 					}
 					account.close();
 					mLike.setText(R.string.retweet);
 					mLike.setEnabled(true);
-					mLike.setOnClickListener(SonetCreatePost.this);
+					mLike.setOnClickListener(this);
 					break;
 				case FACEBOOK:
 					mComments.setEnabled(true);
@@ -301,9 +302,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					account.close();
 					break;
 				case LINKEDIN:
-					mComments.setEnabled(true);
-					mComments.setOnClickListener(this);
-					//TODO: check if liked
 					account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 					if (account.moveToFirst()) {
 						asyncTask = new AsyncTask<String, Void, String>() {
@@ -317,11 +315,30 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 
 							@Override
 							protected void onPostExecute(String response) {
-								Log.v(TAG,"linkedin update:"+response);
-								//TODO: handle response
-								//								mLike.setText(liked ? R.string.unlike : R.string.like);
-								mLike.setEnabled(true);
-								mLike.setOnClickListener(SonetCreatePost.this);
+								boolean liked = false;
+								if (response != null) {
+									try {
+										JSONObject data = new JSONObject(response);
+										if (data.has("isCommentable") && data.getBoolean("isCommentable")) {
+											mComments.setEnabled(true);
+											mComments.setOnClickListener(SonetCreatePost.this);
+										} else {
+											mSend.setEnabled(false);
+											mMessage.setEnabled(false);
+											mMessage.setText(R.string.uncommentable);
+										}
+										if (data.has("isLikable")) {
+											liked = data.has("isLiked") && data.getBoolean("isLiked");
+											mLike.setEnabled(true);
+											mLike.setOnClickListener(SonetCreatePost.this);
+										} else {
+											mLike.setText(R.string.unlikable);
+										}
+									} catch (JSONException e) {
+										Log.e(TAG,e.toString());
+									}
+								}
+								mLike.setText(liked ? R.string.unlike : R.string.like);
 							}
 						};
 						mLike.setEnabled(false);
@@ -363,18 +380,18 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				}
 			}
 		}
-		mPost.setOnKeyListener(this);
+		mMessage.setOnKeyListener(this);
 		mSend.setOnClickListener(this);
 	}
 
 	@Override
 	public boolean onKey(View v, int keyCode, KeyEvent event) {
 		// track the post length, if TWITTER and >140, truncate
-		String text = mPost.getText().toString();
+		String text = mMessage.getText().toString();
 		int count = text.length();
 		mCount.setText(Integer.toString(count));
 		if ((mService == TWITTER) && (count > 140)) {
-			mPost.setText(text.substring(0, 140));
+			mMessage.setText(text.substring(0, 140));
 			mCount.setText("140");
 		} else {
 			mCount.setText(Integer.toString(count));
@@ -601,8 +618,8 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				break;
 			}
 		} else if (v == mSend) {
-			if ((mPlaceId != null) || ((mPost.getText().toString() != null) && (mPost.getText().toString() != ""))) {
-				for (int accountId : mAccountsToPost) {
+			if ((mPlaceId != null) || ((mMessage.getText().toString() != null) && (mMessage.getText().toString() != ""))) {
+				for (final int accountId : mAccountsToPost) {
 					// post or comment!
 					Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Integer.toString(accountId)}, null);
 					if (account.moveToFirst()) {
@@ -617,11 +634,11 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									// resolve Error 417 Expectation by Twitter
 									httpPost.getParams().setBooleanParameter("http.protocol.expect-continue", false);
 									List<NameValuePair> params = new ArrayList<NameValuePair>();
-									params.add(new BasicNameValuePair("status", mPost.getText().toString()));
+									params.add(new BasicNameValuePair("status", mMessage.getText().toString()));
 									if (mSid != null) {
 										params.add(new BasicNameValuePair("in_reply_to_status_id", mSid));
 									}
-									if (mPlaceId != null) {
+									if ((accountId == mAccount) && (mPlaceId != null)) {
 										params.add(new BasicNameValuePair("place_id", mPlaceId));
 										params.add(new BasicNameValuePair("lat", mLat));
 										params.add(new BasicNameValuePair("long", mLong));
@@ -641,7 +658,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									finish();
 								}
 							};
-							mPost.setEnabled(false);
+							mMessage.setEnabled(false);
 							mSend.setEnabled(false);
 							mAccounts.setEnabled(false);
 							mLocation.setEnabled(false);
@@ -655,14 +672,14 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									List<NameValuePair> params = new ArrayList<NameValuePair>();
 									if (mSid != null) {
 										httpPost = new HttpPost(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, mSid, TOKEN, arg0[0]));
-									} else if (mPlaceId != null) {
+									} else if ((accountId == mAccount) && (mPlaceId != null)) {
 										httpPost = new HttpPost(String.format(FACEBOOK_CHECKIN, FACEBOOK_BASE_URL, TOKEN, arg0[0]));
 										params.add(new BasicNameValuePair("place", mPlaceId));
 										params.add(new BasicNameValuePair("coordinates", String.format(FACEBOOK_COORDINATES, mLat, mLong)));
 									} else {
 										httpPost = new HttpPost(String.format(FACEBOOK_POST, FACEBOOK_BASE_URL, TOKEN, arg0[0]));
 									}
-									params.add(new BasicNameValuePair("message", mPost.getText().toString()));
+									params.add(new BasicNameValuePair("message", mMessage.getText().toString()));
 									try {
 										httpPost.setEntity(new UrlEncodedFormEntity(params));
 										return Sonet.httpResponse(httpPost);
@@ -678,7 +695,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									finish();
 								}
 							};
-							mPost.setEnabled(false);
+							mMessage.setEnabled(false);
 							mSend.setEnabled(false);
 							mAccounts.setEnabled(false);
 							mLocation.setEnabled(false);
@@ -692,11 +709,11 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									try {
 										if ((mEsid != null) && (mSid != null)) {
 											HttpPost httpPost = new HttpPost(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mEsid, mSid));
-											httpPost.setEntity(new StringEntity(String.format(MYSPACE_STATUSMOODCOMMENTS_BODY, mPost.getText().toString())));
+											httpPost.setEntity(new StringEntity(String.format(MYSPACE_STATUSMOODCOMMENTS_BODY, mMessage.getText().toString())));
 											return sonetOAuth.httpResponse(httpPost);
 										} else {
 											HttpPut httpPut = new HttpPut(String.format(MYSPACE_URL_STATUSMOOD, MYSPACE_BASE_URL));
-											httpPut.setEntity(new StringEntity(String.format(MYSPACE_STATUSMOOD_BODY, mPost.getText().toString())));
+											httpPut.setEntity(new StringEntity(String.format(MYSPACE_STATUSMOOD_BODY, mMessage.getText().toString())));
 											return sonetOAuth.httpResponse(httpPut);
 										}
 									} catch (IOException e) {
@@ -716,7 +733,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									finish();
 								}
 							};
-							mPost.setEnabled(false);
+							mMessage.setEnabled(false);
 							mSend.setEnabled(false);
 							mAccounts.setEnabled(false);
 							mLocation.setEnabled(false);
@@ -732,10 +749,10 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 										if (mSid != null) {
 											//TODO: need to confirm commenting
 											httpPost = new HttpPost(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, mSid, BUZZ_API_KEY));
-											httpPost.setEntity(new StringEntity(String.format(BUZZ_COMMENT_BODY, mPost.getText().toString())));
+											httpPost.setEntity(new StringEntity(String.format(BUZZ_COMMENT_BODY, mMessage.getText().toString())));
 										} else {
 											httpPost = new HttpPost(String.format(BUZZ_ACTIVITY, BUZZ_BASE_URL, BUZZ_API_KEY));
-											httpPost.setEntity(new StringEntity(String.format(BUZZ_ACTIVITY_BODY, mPost.getText().toString())));
+											httpPost.setEntity(new StringEntity(String.format(BUZZ_ACTIVITY_BODY, mMessage.getText().toString())));
 										}
 										httpPost.addHeader(new BasicHeader("Content-Type", "application/json"));
 										return sonetOAuth.httpResponse(httpPost);
@@ -751,7 +768,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									finish();
 								}
 							};
-							mPost.setEnabled(false);
+							mMessage.setEnabled(false);
 							mSend.setEnabled(false);
 							mAccounts.setEnabled(false);
 							mLocation.setEnabled(false);
@@ -762,8 +779,18 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 								@Override
 								protected String doInBackground(String... arg0) {
 									try {
-										String message = URLEncoder.encode(mPost.getText().toString(), "UTF-8");
-										return Sonet.httpResponse(mSid != null ? new HttpPost(String.format(FOURSQUARE_ADDCOMMENT, FOURSQUARE_BASE_URL, mSid, message, arg0[0])) : new HttpPost(String.format(FOURSQUARE_CHECKIN, FOURSQUARE_BASE_URL, mPlaceId, message, mLat, mLong, arg0[0])));
+										String message = URLEncoder.encode(mMessage.getText().toString(), "UTF-8");
+										HttpPost httpPost;
+										if (mSid != null) {
+											httpPost = new HttpPost(String.format(FOURSQUARE_ADDCOMMENT, FOURSQUARE_BASE_URL, mSid, message, arg0[0]));
+										} else {
+											if ((accountId == mAccount) && (mPlaceId != null)) {
+												httpPost = new HttpPost(String.format(FOURSQUARE_CHECKIN, FOURSQUARE_BASE_URL, mPlaceId, message, mLat, mLong, arg0[0]));
+											} else {
+												httpPost = new HttpPost(String.format(FOURSQUARE_CHECKIN, FOURSQUARE_BASE_URL, "", message, mLat, mLong, arg0[0]));
+											}
+										}
+										return Sonet.httpResponse(httpPost);
 									} catch (UnsupportedEncodingException e) {
 										Log.e(TAG, e.toString());
 									}
@@ -772,13 +799,11 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 
 								@Override
 								protected void onPostExecute(String response) {
-									Log.v(TAG,"foursquare post:"+response);
-									//TODO: handle response to user
 									(Toast.makeText(SonetCreatePost.this, getString(R.string.foursquare) + " " + getString(response != null ? R.string.success : R.string.failure), Toast.LENGTH_LONG)).show();
 									finish();
 								}
 							};
-							mPost.setEnabled(false);
+							mMessage.setEnabled(false);
 							mSend.setEnabled(false);
 							mAccounts.setEnabled(false);
 							mLocation.setEnabled(false);
@@ -793,10 +818,10 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 										HttpPost httpPost;
 										if (mSid != null) {
 											httpPost = new HttpPost(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, mSid));
-											httpPost.setEntity(new StringEntity(String.format(LINKEDIN_COMMENT_BODY, mPost.getText().toString())));
+											httpPost.setEntity(new StringEntity(String.format(LINKEDIN_COMMENT_BODY, mMessage.getText().toString())));
 										} else {
 											httpPost = new HttpPost(String.format(LINKEDIN_POST, LINKEDIN_BASE_URL));
-											httpPost.setEntity(new StringEntity(String.format(LINKEDIN_POST_BODY, "", mPost.getText().toString())));
+											httpPost.setEntity(new StringEntity(String.format(LINKEDIN_POST_BODY, "", mMessage.getText().toString())));
 										}
 										httpPost.addHeader(new BasicHeader("Content-Type", "application/xml"));
 										return sonetOAuth.httpResponse(httpPost);
@@ -812,7 +837,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									finish();
 								}
 							};
-							mPost.setEnabled(false);
+							mMessage.setEnabled(false);
 							mSend.setEnabled(false);
 							mAccounts.setEnabled(false);
 							mLocation.setEnabled(false);
@@ -823,7 +848,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				}
 			} else {
 				(Toast.makeText(SonetCreatePost.this, "error parsing message body", Toast.LENGTH_LONG)).show();
-				mPost.setEnabled(true);
+				mMessage.setEnabled(true);
 				mSend.setEnabled(true);
 				if (mSid == null) {
 					mAccounts.setEnabled(true);
@@ -859,32 +884,30 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					public void onClick(DialogInterface dialog, int which, boolean isChecked) {
 						if (isChecked) {
 							mAccountsToPost = Sonet.arrayAdd(mAccountsToPost, accountIndexes[which]);
-							// if there's only one account, change the default
-							if (mAccountsToPost.length == 1) {
-								mAccount = mAccountsToPost[0];
-								mService = accountServices[which];
-								String text = mPost.getText().toString();
-								if ((mService == TWITTER) && (text.length() > 140)) {
-									mPost.setText(text.substring(0, 140));
-									mCount.setText("140");
-								}
-								mAccounts.setText(accounts[which]);
-								// the place is now invalid
-								mPlaceId = null;
-								mLat = null;
-								mLong = null;
-							}
 						} else {
 							mAccountsToPost = Sonet.arrayRemove(mAccountsToPost, accountIndexes[which]);
-							if (mAccountsToPost.length == 0) {
-								mAccount = (int) Sonet.INVALID_ACCOUNT_ID;
-								mService = (int) Sonet.INVALID_ACCOUNT_ID;
-								mAccounts.setText(getString(R.string.accounts));
-								// the place is now invalid
-								mPlaceId = null;
-								mLat = null;
-								mLong = null;								
+						}
+						if (mAccountsToPost.length == 0) {
+							mAccount = (int) Sonet.INVALID_ACCOUNT_ID;
+							mService = (int) Sonet.INVALID_ACCOUNT_ID;
+							mAccounts.setText(getString(R.string.accounts));
+							// the place is now invalid
+							mPlaceId = null;
+							mLat = null;
+							mLong = null;								
+						} else if ((mAccountsToPost.length == 1) && (mAccount != mAccountsToPost[0])) {
+							mAccount = mAccountsToPost[0];
+							mService = accountServices[isChecked ? which : Sonet.arrayIndex(accountIndexes, mAccountsToPost[0])];
+							String text = mMessage.getText().toString();
+							if ((mService == TWITTER) && (text.length() > 140)) {
+								mMessage.setText(text.substring(0, 140));
+								mCount.setText("140");
 							}
+							mAccounts.setText(accounts[isChecked ? which : Sonet.arrayIndex(accountIndexes, mAccountsToPost[0])]);
+							// the place is now invalid
+							mPlaceId = null;
+							mLat = null;
+							mLong = null;
 						}
 					}
 				})
@@ -982,7 +1005,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				account.close();
 				break;
 			case LINKEDIN:
-				//TODO:like
 				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 				if (account.moveToFirst()) {
 					asyncTask = new AsyncTask<String, Void, String>() {
@@ -1002,9 +1024,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 
 						@Override
 						protected void onPostExecute(String response) {
-							Log.v(TAG,"linkedin like:"+response);
 							if (response != null) {
-								//TODO: handle response to user
 								(Toast.makeText(SonetCreatePost.this, getString(R.string.linkedin) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
 								mLike.setText(mLike.getText().equals(getString(R.string.like)) ? R.string.unlike : R.string.like);
 							} else {

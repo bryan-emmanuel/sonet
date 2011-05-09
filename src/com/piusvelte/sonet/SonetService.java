@@ -389,8 +389,7 @@ public class SonetService extends Service {
 													for (int e = 0; e < entries.length(); e++) {
 														JSONObject entry = entries.getJSONObject(e);
 														JSONObject user = entry.getJSONObject("user");
-														long epoch = Sonet.parseDate(entry.getString("created_at"), "EEE MMM dd HH:mm:ss z yyyy");
-														addStatusItem(epoch,
+														addStatusItem(Sonet.parseDate(entry.getString("created_at"), "EEE MMM dd HH:mm:ss z yyyy"),
 																user.getString("name"),
 																user.getString("profile_image_url"),
 																entry.getString("text"),
@@ -536,7 +535,7 @@ public class SonetService extends Service {
 																}
 																String esid = f.getString(id);
 																addStatusItem(
-																		Long.parseLong(o.getString(created_time)) * 1000,
+																		o.getLong(created_time) * 1000,
 																		friend,
 																		String.format(profile, esid),
 																		o.getString(message),
@@ -667,8 +666,7 @@ public class SonetService extends Service {
 													for (int e = 0; e < entries.length(); e++) {
 														JSONObject entry = entries.getJSONObject(e);
 														JSONObject authorObj = entry.getJSONObject(author);
-														long epoch = Sonet.parseDate(entry.getString(moodStatusLastUpdated), MYSPACE_DATE_FORMAT);
-														addStatusItem(epoch,
+														addStatusItem(Sonet.parseDate(entry.getString(moodStatusLastUpdated), MYSPACE_DATE_FORMAT),
 																authorObj.getString(displayName),
 																authorObj.getString(thumbnailUrl),
 																entry.getString(status),
@@ -814,11 +812,10 @@ public class SonetService extends Service {
 													for (int e = 0; e < entries.length(); e++) {
 														JSONObject entry = entries.getJSONObject(e);
 														if (entry.has("published") && entry.has("actor") && entry.has("object")) {
-															long epoch = Sonet.parseDate(entry.getString("published"), BUZZ_DATE_FORMAT);
 															JSONObject actor = entry.getJSONObject("actor");
 															JSONObject object = entry.getJSONObject("object");
 															if (actor.has("name") && actor.has("thumbnailUrl") && object.has("originalContent")) {
-																addStatusItem(epoch,
+																addStatusItem(Sonet.parseDate(entry.getString("published"), BUZZ_DATE_FORMAT),
 																		actor.getString("name"),
 																		actor.getString("thumbnailUrl"),
 																		object.getString("originalContent"),
@@ -943,10 +940,17 @@ public class SonetService extends Service {
 													for (int e = 0; e < checkins.length(); e++) {
 														JSONObject checkin = checkins.getJSONObject(e);
 														JSONObject user = checkin.getJSONObject("user");
-														JSONObject venue = checkin.getJSONObject("venue");
-														String shout = (checkin.has("shout") ? checkin.getString("shout") + "\n" : "") + "@" + venue.getString("name");
-														long epoch = Long.parseLong(checkin.getString("createdAt")) * 1000;
-														addStatusItem(epoch,
+														String shout = "";
+														if (checkin.has("shout")) {
+															shout = checkin.getString("shout") + "\n";
+														}
+														if (checkin.has("venue")) {
+															JSONObject venue = checkin.getJSONObject("venue");
+															if (venue.has("name")) {
+																shout += "@" + venue.getString("name");																
+															}
+														}
+														addStatusItem(checkin.getLong("createdAt") * 1000,
 																user.getString("firstName") + " " + user.getString("lastName"),
 																user.getString("photo"),
 																shout,
@@ -1076,7 +1080,6 @@ public class SonetService extends Service {
 														String updateType = value.getString("updateType");
 														JSONObject updateContent = value.getJSONObject("updateContent");
 														if (LINKEDIN_UPDATETYPES.containsKey(updateType) && updateContent.has("person")) {
-															long epoch = Long.parseLong(value.getString("timestamp"));
 															JSONObject person = updateContent.getJSONObject("person");
 															String update = LINKEDIN_UPDATETYPES.get(updateType);
 															if (updateType.equals("APPS")) {
@@ -1130,7 +1133,7 @@ public class SonetService extends Service {
 																	}
 																}
 															}
-															addStatusItem(epoch,
+															addStatusItem(value.getLong("timestamp"),
 																	person.getString("firstName") + " " + person.getString("lastName"),
 																	person.has("pictureUrl") ? person.getString("pictureUrl") : null,
 																			update,

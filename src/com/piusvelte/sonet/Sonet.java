@@ -118,9 +118,10 @@ public class Sonet {
 	protected static final String FOURSQUARE_URL_AUTHORIZE = "https://foursquare.com/oauth2/authorize?client_id=%s&response_type=token&redirect_uri=%s&display=touch";
 	protected static final String FOURSQUARE_URL_ME = "%susers/self?oauth_token=%s";
 	protected static final String FOURSQUARE_URL_FEED = "%scheckins/recent?limit=%s&oauth_token=%s";
-	protected static final String FOURSQUARE_CHECKIN = "%scheckins/add?venueID=%s&shout=%s&ll=%s,%s&broadcast=public&oauth_token=%s";
+	protected static final String FOURSQUARE_CHECKIN = "%scheckins/add?venueId=%s&shout=%s&ll=%s,%s&broadcast=public&oauth_token=%s";
 	protected static final String FOURSQUARE_ADDCOMMENT = "%scheckins/%s/addcomment?text=%s&oauth_token=%s";
 	protected static final String FOURSQUARE_SEARCH = "%svenues/search?ll=%s,%s&intent=checkin&oauth_token=%s";
+	protected static final String FOURSQUARE_GET_CHECKIN = "%scheckins/%s?oauth_token=%s";
 
 	protected static final int LINKEDIN = 5;
 	protected static final String LINKEDIN_BASE_URL = "https://api.linkedin.com/v1/people/~";
@@ -461,7 +462,7 @@ public class Sonet {
 	}
 
 	protected static int[] arrayAdd(int[] a, int b) {
-		if (Sonet.arrayContains(a, b)) {
+		if (!Sonet.arrayContains(a, b)) {
 			int[] c = new int[a.length];
 			for (int i = 0; i < a.length; i++) {
 				c[i] = a[i];
@@ -499,6 +500,17 @@ public class Sonet {
 		} else {
 			return a;
 		}
+	}
+	
+	protected static int arrayIndex(int[] a, int b) {
+		int c = -1;
+		for (int i = 0; i < a.length; i++) {
+			if (a[i] == b) {
+				c = i;
+				break;
+			}
+		}
+		return c;
 	}
 	
 	protected static String removeUnderscore(String sid) {
