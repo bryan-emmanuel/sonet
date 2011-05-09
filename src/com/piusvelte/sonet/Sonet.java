@@ -144,6 +144,13 @@ public class Sonet {
 	protected static final String[] MONTHS = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 	protected static HashMap<Integer, Context> sWidgetsContext;
 
+	protected static final String ACCOUNTS_QUERY = "(case when " + Accounts.SERVICE + "='" + TWITTER + "' then 'Twitter: ' when "
+	+ Accounts.SERVICE + "='" + FACEBOOK + "' then 'Facebook: ' when "
+	+ Accounts.SERVICE + "='" + MYSPACE + "' then 'MySpace: ' when "
+	+ Accounts.SERVICE + "='" + BUZZ + "' then 'Buzz: ' when "
+	+ Accounts.SERVICE + "='" + LINKEDIN + "' then 'LinkedIn: ' when "
+	+ Accounts.SERVICE + "='" + FOURSQUARE + "' then 'Foursquare: ' else '' end)||" + Accounts.USERNAME + " as " + Accounts.USERNAME;
+
 	private static final String POWER_SERVICE = Context.POWER_SERVICE;
 	private static WakeLock sWakeLock;
 	static boolean hasLock() {
@@ -183,11 +190,11 @@ public class Sonet {
 		sWidgetsContext = new HashMap<Integer, Context>();
 	}
 
-	protected static final int SALESFORCE = 6;
-	protected static final String SALESFORCE_URL_REQUEST = "https://login.salesforce.com/_nc_external/system/security/oauth/RequestTokenHandler";
-	protected static final String SALESFORCE_URL_AUTHORIZE = "https://login.salesforce.com/setup/secur/RemoteAccessAuthorizationPage.apexp";
-	protected static final String SALESFORCE_URL_ACCESS = "https://login.salesforce.com/_nc_external/system/security/oauth/AccessTokenHandler";
-	protected static final String SALESFORCE_FEED = "";
+//	protected static final int SALESFORCE = 6;
+//	protected static final String SALESFORCE_URL_REQUEST = "https://login.salesforce.com/_nc_external/system/security/oauth/RequestTokenHandler";
+//	protected static final String SALESFORCE_URL_AUTHORIZE = "https://login.salesforce.com/setup/secur/RemoteAccessAuthorizationPage.apexp";
+//	protected static final String SALESFORCE_URL_ACCESS = "https://login.salesforce.com/_nc_external/system/security/oauth/AccessTokenHandler";
+//	protected static final String SALESFORCE_FEED = "";
 
 	protected static final int INVALID_SERVICE = -1;
 

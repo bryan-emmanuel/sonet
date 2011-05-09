@@ -41,6 +41,7 @@ import org.json.JSONObject;
 import com.google.ads.*;
 import com.piusvelte.sonet.Sonet.Accounts;
 
+import static com.piusvelte.sonet.Sonet.ACCOUNTS_QUERY;
 import static com.piusvelte.sonet.Sonet.BUZZ;
 import static com.piusvelte.sonet.Sonet.BUZZ_ACTIVITY;
 import static com.piusvelte.sonet.Sonet.BUZZ_BASE_URL;
@@ -70,7 +71,6 @@ import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOOD;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOODCOMMENTS;
 import static com.piusvelte.sonet.Sonet.MYSPACE_STATUSMOOD_BODY;
 import static com.piusvelte.sonet.Sonet.MYSPACE_STATUSMOODCOMMENTS_BODY;
-import static com.piusvelte.sonet.Sonet.SALESFORCE;
 import static com.piusvelte.sonet.Sonet.TOKEN;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.TWITTER_BASE_URL;
@@ -335,13 +335,14 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				}
 			} else {
 				// default to the account passed in, but allow selecting additional accounts
-				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SERVICE, Accounts.WIDGET}, Accounts._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
+				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SERVICE, Accounts.WIDGET, ACCOUNTS_QUERY}, Accounts._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
 				if (account.moveToFirst()) {
 					mAccount = account.getInt(account.getColumnIndex(Accounts._ID));
 					mService = account.getInt(account.getColumnIndex(Accounts.SERVICE));
 					mAppWidgetId = account.getInt(account.getColumnIndex(Accounts.WIDGET));
 					mAccountsToPost = new int[1];
 					mAccountsToPost[0] = mAccount;
+					mAccounts.setText(account.getString(account.getColumnIndex(Accounts.USERNAME)));
 				}
 				account.close();
 				mAccounts.setEnabled(true);
@@ -795,7 +796,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 											httpPost.setEntity(new StringEntity(String.format(LINKEDIN_COMMENT_BODY, mPost.getText().toString())));
 										} else {
 											httpPost = new HttpPost(String.format(LINKEDIN_POST, LINKEDIN_BASE_URL));
-											// TODO: need locale
 											httpPost.setEntity(new StringEntity(String.format(LINKEDIN_POST_BODY, "", mPost.getText().toString())));
 										}
 										httpPost.addHeader(new BasicHeader("Content-Type", "application/xml"));
@@ -808,8 +808,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 
 								@Override
 								protected void onPostExecute(String response) {
-									Log.v(TAG,"linkedin:"+response);
-									//TODO: handle response to user
 									(Toast.makeText(SonetCreatePost.this, getString(R.string.linkedin) + " " + getString(response != null ? R.string.success : R.string.failure), Toast.LENGTH_LONG)).show();
 									finish();
 								}
@@ -836,14 +834,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 			this.startActivity(new Intent(this, SonetComments.class).setData(mData));
 		}
 		else if (v == mAccounts) {
-			Cursor c = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID,
-					"(case when " + Accounts.SERVICE + "='" + TWITTER + "' then 'Twitter: ' when "
-					+ Accounts.SERVICE + "='" + FACEBOOK + "' then 'Facebook: ' when "
-					+ Accounts.SERVICE + "='" + MYSPACE + "' then 'MySpace: ' when "
-					+ Accounts.SERVICE + "='" + BUZZ + "' then 'Buzz: ' when "
-					+ Accounts.SERVICE + "='" + LINKEDIN + "' then 'LinkedIn: ' when "
-					+ Accounts.SERVICE + "='" + SALESFORCE + "' then 'Salesforce: ' when "
-					+ Accounts.SERVICE + "='" + FOURSQUARE + "' then 'Foursquare: ' else '' end)||" + Accounts.USERNAME + " as " + Accounts.USERNAME, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)}, null);
+			Cursor c = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)}, null);
 			if (c.moveToFirst()) {
 				int iid = c.getColumnIndex(Accounts._ID),
 				iusername = c.getColumnIndex(Accounts.USERNAME),
@@ -858,7 +849,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					accountIndexes[i] = id;
 					accounts[i] = c.getString(iusername);
 					accountServices[i] = c.getInt(iservice);
-					defaults[i++] = id == mAccount;
+					defaults[i++] = Sonet.arrayContains(mAccountsToPost, id);
 					c.moveToNext();
 				}
 				AlertDialog.Builder dialog = new AlertDialog.Builder(this);
@@ -877,6 +868,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									mPost.setText(text.substring(0, 140));
 									mCount.setText("140");
 								}
+								mAccounts.setText(accounts[which]);
 								// the place is now invalid
 								mPlaceId = null;
 								mLat = null;
@@ -884,6 +876,15 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 							}
 						} else {
 							mAccountsToPost = Sonet.arrayRemove(mAccountsToPost, accountIndexes[which]);
+							if (mAccountsToPost.length == 0) {
+								mAccount = (int) Sonet.INVALID_ACCOUNT_ID;
+								mService = (int) Sonet.INVALID_ACCOUNT_ID;
+								mAccounts.setText(getString(R.string.accounts));
+								// the place is now invalid
+								mPlaceId = null;
+								mLat = null;
+								mLong = null;								
+							}
 						}
 					}
 				})

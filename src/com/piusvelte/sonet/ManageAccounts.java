@@ -21,13 +21,7 @@ package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
-import static com.piusvelte.sonet.Sonet.TWITTER;
-import static com.piusvelte.sonet.Sonet.FACEBOOK;
-import static com.piusvelte.sonet.Sonet.MYSPACE;
-import static com.piusvelte.sonet.Sonet.FOURSQUARE;
-import static com.piusvelte.sonet.Sonet.LINKEDIN;
-import static com.piusvelte.sonet.Sonet.BUZZ;
-import static com.piusvelte.sonet.Sonet.SALESFORCE;
+import static com.piusvelte.sonet.Sonet.ACCOUNTS_QUERY;
 
 import com.google.ads.*;
 import com.piusvelte.sonet.Sonet.Accounts;
@@ -182,14 +176,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 
 	private void listAccounts() {
 		// prepend service name to username
-		Cursor c = this.managedQuery(Accounts.CONTENT_URI, new String[]{Accounts._ID,
-				"(case when " + Accounts.SERVICE + "='" + TWITTER + "' then 'Twitter: ' when "
-				+ Accounts.SERVICE + "='" + FACEBOOK + "' then 'Facebook: ' when "
-				+ Accounts.SERVICE + "='" + MYSPACE + "' then 'MySpace: ' when "
-				+ Accounts.SERVICE + "='" + BUZZ + "' then 'Buzz: ' when "
-				+ Accounts.SERVICE + "='" + LINKEDIN + "' then 'LinkedIn: ' when "
-				+ Accounts.SERVICE + "='" + SALESFORCE + "' then 'Salesforce: ' when "
-				+ Accounts.SERVICE + "='" + FOURSQUARE + "' then 'Foursquare: ' else '' end)||" + Accounts.USERNAME + " as " + Accounts.USERNAME, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)}, null);
+		Cursor c = this.managedQuery(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)}, null);
 		mHasAccounts = c.getCount() != 0;
 		setListAdapter(new SimpleCursorAdapter(ManageAccounts.this, R.layout.accounts_row, c, new String[] {Accounts.USERNAME}, new int[] {R.id.account_username}));
 	}
