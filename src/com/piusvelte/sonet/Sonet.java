@@ -91,7 +91,7 @@ public class Sonet {
 	protected static final String MYSPACE_URL_ME = "%speople/@me/@self";
 	protected static final String MYSPACE_URL_FEED = "%sstatusmood/@me/@friends/history?count=%s&includeself=true&fields=author,source";
 	protected static final String MYSPACE_URL_STATUSMOOD = "%sstatusmood/@me/@self";
-	protected static final String MYSPACE_URL_STATUSMOODCOMMENTS = "%sstatusmoodcomments/%s/@self/%s?format=json";
+	protected static final String MYSPACE_URL_STATUSMOODCOMMENTS = "%sstatusmoodcomments/%s/@self/%s?format=json&includeself=true&fields=author";
 	protected static final String MYSPACE_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
 	protected static final String MYSPACE_STATUSMOOD_BODY = "{\"status\":\"%s\"}";
 	protected static final String MYSPACE_STATUSMOODCOMMENTS_BODY = "{\"body\":\"%s\"}";

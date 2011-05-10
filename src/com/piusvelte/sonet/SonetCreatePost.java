@@ -747,7 +747,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									try {
 										HttpPost httpPost;
 										if (mSid != null) {
-											//TODO: need to confirm commenting
 											httpPost = new HttpPost(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, mSid, BUZZ_API_KEY));
 											httpPost.setEntity(new StringEntity(String.format(BUZZ_COMMENT_BODY, mMessage.getText().toString())));
 										} else {
@@ -940,12 +939,8 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 
 						@Override
 						protected void onPostExecute(String response) {
-							if (response != null) {
-								mLike.setText(R.string.retweet);
-								Log.v(TAG,"retweet:"+response);
-								//TODO: handle response to user
-								(Toast.makeText(SonetCreatePost.this, getString(R.string.retweet) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-							}
+							(Toast.makeText(SonetCreatePost.this, getString(R.string.retweet) + " " + getString(response != null ? R.string.success : R.string.failure), Toast.LENGTH_LONG)).show();
+							mLike.setEnabled(true);
 						}
 					};
 					mLike.setEnabled(false);
@@ -959,7 +954,13 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					asyncTask = new AsyncTask<String, Void, String>() {
 						@Override
 						protected String doInBackground(String... arg0) {
-							return Sonet.httpResponse(mLike.getText().equals(getString(R.string.like)) ? new HttpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mSid, TOKEN, arg0[0])) : new HttpDelete(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mSid, TOKEN, arg0[0])));
+							if (mLike.getText().equals(getString(R.string.like))) {
+								return Sonet.httpResponse(new HttpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mSid, TOKEN, arg0[0])));
+							} else {
+								HttpDelete httpDelete = new HttpDelete(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mSid, TOKEN, arg0[0]));
+								httpDelete.setHeader("Content-Length", "0");
+								return Sonet.httpResponse(httpDelete);
+							}
 						}
 
 						@Override

@@ -26,7 +26,6 @@ import java.util.List;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,8 +40,6 @@ import com.piusvelte.sonet.Sonet.Widgets;
 import static com.piusvelte.sonet.Sonet.BUZZ_BASE_URL;
 import static com.piusvelte.sonet.Sonet.BUZZ_COMMENT;
 import static com.piusvelte.sonet.Sonet.BUZZ_DATE_FORMAT;
-import static com.piusvelte.sonet.Sonet.BUZZ_GET_LIKE;
-import static com.piusvelte.sonet.Sonet.BUZZ_LIKE;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.BUZZ;
 import static com.piusvelte.sonet.Sonet.LINKEDIN;
@@ -54,7 +51,6 @@ import static com.piusvelte.sonet.Sonet.LINKEDIN_HEADERS;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATE_COMMENTS;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
 import static com.piusvelte.sonet.Sonet.MYSPACE_BASE_URL;
-import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOOD;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOODCOMMENTS;
 import static com.piusvelte.sonet.Sonet.MYSPACE_DATE_FORMAT;
 import static com.piusvelte.sonet.SonetTokens.BUZZ_API_KEY;
@@ -73,7 +69,6 @@ import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.database.Cursor;
@@ -81,13 +76,15 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
-public class SonetComments extends ListActivity implements OnClickListener, OnCancelListener {
+public class SonetComments extends ListActivity implements OnClickListener {
 	private static final String TAG = "SonetComments";
 	private int mService = 0;
 	private long mAccount = Sonet.INVALID_ACCOUNT_ID;
@@ -95,7 +92,6 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 	private String mEsid;
 	private Uri mData;
 	private List<HashMap<String, String>> mComments = new ArrayList<HashMap<String, String>>();
-	private ProgressDialog mLoadingDialog;
 	private boolean mTime24hr = false;
 
 	@Override
@@ -125,176 +121,24 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 	@Override
 	protected void onResume() {
 		super.onResume();
-		mLoadingDialog = new ProgressDialog(this);
-		mLoadingDialog.setMessage(getString(R.string.loading));
-		mLoadingDialog.setCancelable(true);
-		mLoadingDialog.setOnCancelListener(this);
-		mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), this);
-		mLoadingDialog.show();
-		Cursor account;
-		SonetOAuth sonetOAuth;
-		switch (mService) {
-		case FACEBOOK:
-			account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-			if (account.moveToFirst()) {
-				String token = account.getString(account.getColumnIndex(Accounts.TOKEN));
-				String response = Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, mSid, TOKEN, token)));
-				if (response != null) {
-					try {
-						JSONArray comments = new JSONObject(response).getJSONArray("data");
-						for (int i = 0; i < comments.length(); i++) {
-							JSONObject comment = comments.getJSONObject(i);
-							String id = comment.getString("id");
-							boolean like = true;
-							String response2 = Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mSid, TOKEN, token)));
-							if (response2 != null) {
-								try {
-									JSONArray likes = new JSONObject(response2).getJSONArray("data");
-									for (int l = 0; l < likes.length(); l++) {
-										JSONObject like2 = likes.getJSONObject(l);
-										if (like2.getString("id").equals(Sonet.removeUnderscore(account.getString(account.getColumnIndex(Accounts.SID))))) {
-											like = false;
-											break;
-										}
-									}
-								} catch (JSONException e) {
-									Log.e(TAG,e.toString());
-								}
-							}
-							HashMap<String, String> commentMap = new HashMap<String, String>();
-							commentMap.put(Statuses.SID, id);
-							commentMap.put(Entities.FRIEND, comment.getJSONObject("from").getString("name"));
-							commentMap.put(Statuses.MESSAGE, comment.getString("message"));
-							commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(comment.getLong("created_time") * 1000, mTime24hr));
-							commentMap.put(getString(R.string.like), getString(like ? R.string.like : R.string.unlike));
-							mComments.add(commentMap);
-						}
-					} catch (JSONException e) {
-						Log.e(TAG, e.toString());
-					}
-				}
-			}
-			account.close();
-			break;
-		case MYSPACE:
-			account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-			if (account.moveToFirst()) {
-				sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
-				String response;
-				try {
-					response = sonetOAuth.httpResponse(new HttpGet(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mEsid, mSid)));
-					if (response != null) {
-						JSONArray entries = new JSONObject(response).getJSONArray("entry");
-						for (int i = 0; i < entries.length(); i++) {
-							JSONObject entry = entries.getJSONObject(i);
-							HashMap<String, String> commentMap = new HashMap<String, String>();
-							commentMap.put(Statuses.SID, entry.getString("commentId"));
-							//TODO: get user name
-							commentMap.put(Entities.FRIEND, entry.getJSONObject("author").getString("id"));
-							commentMap.put(Statuses.MESSAGE, entry.getString("body"));
-							commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(Sonet.parseDate(entry.getString("postedDate"), MYSPACE_DATE_FORMAT), mTime24hr));
-							commentMap.put(getString(R.string.like), "");
-							mComments.add(commentMap);
-						}
-					}
-				} catch (JSONException e) {
-					Log.e(TAG, e.toString());
-				}
-			}
-			account.close();
-			break;
-		case BUZZ:
-			//TODO:
-			account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-			if (account.moveToFirst()) {
-				sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
-				String response = sonetOAuth.httpResponse(new HttpGet(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, mSid, BUZZ_API_KEY)));
-				if (response != null) {
-					Log.v(TAG,"response:"+response);
-					try {
-						JSONObject data = new JSONObject(response).getJSONObject("data");
-						if (data.has("items")) {
-							JSONArray items = data.getJSONArray("items");
-							for (int i = 0; i < items.length(); i++) {
-								JSONObject comment = items.getJSONObject(i);
-								String id = comment.getString("id");
-								HashMap<String, String> commentMap = new HashMap<String, String>();
-								commentMap.put(Statuses.SID, id);
-								commentMap.put(Entities.FRIEND, comment.getJSONObject("actor").getString("name"));
-								commentMap.put(Statuses.MESSAGE, comment.getString("content"));
-								commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(Sonet.parseDate(comment.getString("published"), BUZZ_DATE_FORMAT), mTime24hr));
-								commentMap.put(getString(R.string.like), getString(R.string.like));
-								mComments.add(commentMap);
-							}
-						}
-					} catch (JSONException e) {
-						Log.e(TAG,e.toString());
-					}
-				}
-			}
-			account.close();
-			break;
-		case LINKEDIN:
-			account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-			if (account.moveToFirst()) {
-				sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
-				HttpGet httpGet = new HttpGet(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, mSid));
-				for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
-				String response = sonetOAuth.httpResponse(httpGet);
-				if (response != null) {
-					Log.v(TAG,"response:"+response);
-					try {
-						JSONObject data = new JSONObject(response);
-						if (data.has("_total") && (data.getInt("_total") != 0)) {
-							JSONArray values = data.getJSONArray("values");
-							for (int i = 0; i < values.length(); i++) {
-								JSONObject comment = values.getJSONObject(i);
-								JSONObject person = comment.getJSONObject("person");
-								HashMap<String, String> commentMap = new HashMap<String, String>();
-								commentMap.put(Statuses.SID, comment.getString("id"));
-								commentMap.put(Entities.FRIEND, person.getString("firstName") + " " + person.getString("lastName"));
-								commentMap.put(Statuses.MESSAGE, comment.getString("comment"));
-								commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(comment.getLong("timestamp"), mTime24hr));
-								commentMap.put(getString(R.string.like), "");
-								mComments.add(commentMap);
-							}
-						}
-					} catch (JSONException e) {
-						Log.e(TAG,e.toString());
-					}
-				}
-			}
-			account.close();
-			break;
-		case FOURSQUARE:
-			account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-			if (account.moveToFirst()) {
-				String token = account.getString(account.getColumnIndex(Accounts.TOKEN));
-				String response = Sonet.httpResponse(new HttpGet(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, mSid, token)));
-				if (response != null) {
-					try {
-						JSONArray comments = new JSONObject(response).getJSONObject("response").getJSONObject("checkin").getJSONObject("comments").getJSONArray("items");
-						for (int i = 0; i < comments.length(); i++) {
-							JSONObject comment = comments.getJSONObject(i);
-							JSONObject user = comment.getJSONObject("user");
-							HashMap<String, String> commentMap = new HashMap<String, String>();
-							commentMap.put(Statuses.SID, comment.getString("id"));
-							commentMap.put(Entities.FRIEND, user.getString("firstName") + " " + user.getString("lastName"));
-							commentMap.put(Statuses.MESSAGE, comment.getString("text"));
-							commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(comment.getLong("createdAt") * 1000, mTime24hr));
-							commentMap.put(getString(R.string.like), "");
-							mComments.add(commentMap);
-						}
-					} catch (JSONException e) {
-						Log.e(TAG, e.toString());
-					}
-				}
-			}
-			account.close();
-			break;
+		loadComments();
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		boolean result = super.onCreateOptionsMenu(menu);
+		menu.add(0, Menu.FIRST, 0, getString(R.string.button_refresh)).setIcon(android.R.drawable.ic_menu_rotate);
+		return result;
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case Menu.FIRST:
+			loadComments();
+			return true;
 		}
-		mLoadingDialog.dismiss();
-		this.setListAdapter(new SimpleAdapter(this, mComments, R.layout.comment, new String[]{Entities.FRIEND, Statuses.MESSAGE, Statuses.CREATEDTEXT, getString(R.string.like)}, new int[]{R.id.friend, R.id.message, R.id.created, R.id.like}));
+		return super.onOptionsItemSelected(item);
 	}
 
 	@Override
@@ -303,6 +147,8 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 		AlertDialog.Builder dialog;
 		switch (mService) {
 		case FACEBOOK:
+			final String sid = mComments.get(position).get(Statuses.SID);
+			final String liked = mComments.get(position).get(getString(R.string.like));
 			dialog = new AlertDialog.Builder(this);
 			dialog.setMessage(mComments.get(position).get(getString(R.string.like)) == getString(R.string.like) ? R.string.like : R.string.unlike)
 			.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -310,61 +156,37 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 				public void onClick(DialogInterface dialog, int which) {
 					Cursor c = SonetComments.this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 					if (c.moveToFirst()) {
-						//TODO: show progress dialog, confirm liked/unliked
 						AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
 							@Override
 							protected String doInBackground(String... arg0) {
-								return Sonet.httpResponse(arg0[2] == getString(R.string.like) ?
-										new HttpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, arg0[1], TOKEN, arg0[0]))
-								: new HttpDelete(String.format(FACEBOOK_LIKES, arg0[1], TOKEN, arg0[0])));
+								if (arg0[1].equals(getString(R.string.like))) {
+									return Sonet.httpResponse(new HttpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, sid, TOKEN, arg0[0])));
+								} else {
+									HttpDelete httpDelete = new HttpDelete(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, sid, TOKEN, arg0[0]));
+									httpDelete.setHeader("Content-Length", "0");
+									return Sonet.httpResponse(httpDelete);
+								}
 							}
 
 							@Override
 							protected void onPostExecute(String response) {
-								boolean liked = false;
 								if (response != null) {
-									//TODO: check response, update the listview
-									(Toast.makeText(SonetComments.this, getString(R.string.facebook) + " " + getString((response != null) && (response == "true") ? R.string.success : R.string.failure), Toast.LENGTH_LONG)).show();
+									for (int i = 0; i < mComments.size(); i++) {
+										HashMap<String, String> comment = mComments.get(i);
+										if (comment.get(Accounts.SID).equals(sid)) {
+											comment.put(getString(R.string.like), getString(comment.get(getString(R.string.like)).equals(getString(R.string.like)) ? R.string.unlike : R.string.like));
+											mComments.set(i, comment);
+											setListAdapter(new SimpleAdapter(SonetComments.this, mComments, R.layout.comment, new String[]{Entities.FRIEND, Statuses.MESSAGE, Statuses.CREATEDTEXT, getString(R.string.like)}, new int[]{R.id.friend, R.id.message, R.id.created, R.id.like}));
+											break;
+										}
+									}
+									(Toast.makeText(SonetComments.this, getString(R.string.facebook) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
+								} else {
+									(Toast.makeText(SonetComments.this, getString(R.string.facebook) + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
 								}
 							}
 						};
-						asyncTask.execute(c.getString(c.getColumnIndex(Accounts.TOKEN)), mComments.get(which).get(Statuses.SID), mComments.get(which).get(getString(R.string.like)));
-					}
-					c.close();
-				}
-			})
-			.setNegativeButton(android.R.string.cancel, this)
-			.show();
-			break;
-		case BUZZ:
-			dialog = new AlertDialog.Builder(this);
-			dialog.setMessage(mComments.get(position).get(getString(R.string.like)) == getString(R.string.like) ? R.string.like : R.string.unlike)
-			.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					Cursor c = SonetComments.this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-					if (c.moveToFirst()) {
-						//TODO: show progress dialog, confirm liked/unliked
-						AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
-							@Override
-							protected String doInBackground(String... arg0) {
-								SonetOAuth sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, arg0[0], arg0[1]);
-								return sonetOAuth.httpResponse(arg0[3] == getString(R.string.like) ?
-										new HttpPut(String.format(BUZZ_LIKE, BUZZ_BASE_URL, arg0[2], BUZZ_API_KEY))
-								: new HttpDelete(String.format(BUZZ_LIKE, BUZZ_BASE_URL, arg0[2], BUZZ_API_KEY)));
-							}
-
-							@Override
-							protected void onPostExecute(String response) {
-								boolean liked = false;
-								if (response != null) {
-									//TODO: check response, update the listview
-									Log.v(TAG,"like:"+response);
-									(Toast.makeText(SonetComments.this, getString(R.string.buzz) + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-								}
-							}
-						};
-						asyncTask.execute(c.getString(c.getColumnIndex(Accounts.TOKEN)), c.getString(c.getColumnIndex(Accounts.SECRET)), mComments.get(which).get(Statuses.SID), mComments.get(which).get(getString(R.string.like)));
+						asyncTask.execute(c.getString(c.getColumnIndex(Accounts.TOKEN)), liked);
 					}
 					c.close();
 				}
@@ -379,9 +201,144 @@ public class SonetComments extends ListActivity implements OnClickListener, OnCa
 	public void onClick(DialogInterface dialog, int which) {
 		dialog.cancel();
 	}
+	
+	private void loadComments() {
+		mComments = new ArrayList<HashMap<String, String>>();
+		final ProgressDialog loadingDialog = new ProgressDialog(this);
+		final AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
+			@Override
+			protected String doInBackground(String... arg0) {
+				String response = null;
+				Cursor account = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				if (account.moveToFirst()) {
+					SonetOAuth sonetOAuth;
+					switch (mService) {
+					case FACEBOOK:
+						response = Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, mSid, TOKEN, account.getString(account.getColumnIndex(Accounts.TOKEN)))));
+						break;
+					case MYSPACE:
+						sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+						response = sonetOAuth.httpResponse(new HttpGet(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mEsid, mSid)));
+						break;
+					case BUZZ:
+						sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+						response = sonetOAuth.httpResponse(new HttpGet(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, mSid, BUZZ_API_KEY)));
+						break;
+					case LINKEDIN:
+						sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+						HttpGet httpGet = new HttpGet(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, mSid));
+						for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
+						response = sonetOAuth.httpResponse(httpGet);
+						break;
+					case FOURSQUARE:
+						response = Sonet.httpResponse(new HttpGet(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, mSid, account.getString(account.getColumnIndex(Accounts.TOKEN)))));
+						break;
+					}
+				}
+				account.close();
+				return response;
+			}
 
-	@Override
-	public void onCancel(DialogInterface arg0) {
-		finish();
+			@Override
+			protected void onPostExecute(String response) {
+				if (response != null) {
+					try {
+						JSONArray comments;
+						switch (mService) {
+						case FACEBOOK:
+							comments = new JSONObject(response).getJSONArray("data");
+							for (int i = 0; i < comments.length(); i++) {
+								JSONObject comment = comments.getJSONObject(i);
+								HashMap<String, String> commentMap = new HashMap<String, String>();
+								commentMap.put(Statuses.SID, comment.getString("id"));
+								commentMap.put(Entities.FRIEND, comment.getJSONObject("from").getString("name"));
+								commentMap.put(Statuses.MESSAGE, comment.getString("message"));
+								commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(comment.getLong("created_time") * 1000, mTime24hr));
+								commentMap.put(getString(R.string.like), getString(comment.has("user_likes") && comment.getBoolean("user_likes") ? R.string.unlike : R.string.like));
+								mComments.add(commentMap);
+							}
+							break;
+						case MYSPACE:
+							comments = new JSONObject(response).getJSONArray("entry");
+							for (int i = 0; i < comments.length(); i++) {
+								JSONObject entry = comments.getJSONObject(i);
+								HashMap<String, String> commentMap = new HashMap<String, String>();
+								commentMap.put(Statuses.SID, entry.getString("commentId"));
+								commentMap.put(Entities.FRIEND, entry.getJSONObject("author").getString("displayName"));
+								commentMap.put(Statuses.MESSAGE, entry.getString("body"));
+								commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(Sonet.parseDate(entry.getString("postedDate"), MYSPACE_DATE_FORMAT), mTime24hr));
+								commentMap.put(getString(R.string.like), "");
+								mComments.add(commentMap);
+							}
+							break;
+						case BUZZ:
+							JSONObject data = new JSONObject(response).getJSONObject("data");
+							if (data.has("items")) {
+								comments = data.getJSONArray("items");
+								for (int i = 0; i < comments.length(); i++) {
+									JSONObject comment = comments.getJSONObject(i);
+									String id = comment.getString("id");
+									HashMap<String, String> commentMap = new HashMap<String, String>();
+									commentMap.put(Statuses.SID, id);
+									commentMap.put(Entities.FRIEND, comment.getJSONObject("actor").getString("name"));
+									commentMap.put(Statuses.MESSAGE, comment.getString("content"));
+									commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(Sonet.parseDate(comment.getString("published"), BUZZ_DATE_FORMAT), mTime24hr));
+									commentMap.put(getString(R.string.like), "");
+									mComments.add(commentMap);
+								}
+							}
+							break;
+						case LINKEDIN:
+							JSONObject jsonResponse = new JSONObject(response);
+							if (jsonResponse.has("_total") && (jsonResponse.getInt("_total") != 0)) {
+								comments = jsonResponse.getJSONArray("values");
+								for (int i = 0; i < comments.length(); i++) {
+									JSONObject comment = comments.getJSONObject(i);
+									JSONObject person = comment.getJSONObject("person");
+									HashMap<String, String> commentMap = new HashMap<String, String>();
+									commentMap.put(Statuses.SID, comment.getString("id"));
+									commentMap.put(Entities.FRIEND, person.getString("firstName") + " " + person.getString("lastName"));
+									commentMap.put(Statuses.MESSAGE, comment.getString("comment"));
+									commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(comment.getLong("timestamp"), mTime24hr));
+									commentMap.put(getString(R.string.like), "");
+									mComments.add(commentMap);
+								}
+							}
+							break;
+						case FOURSQUARE:
+							comments = new JSONObject(response).getJSONObject("response").getJSONObject("checkin").getJSONObject("comments").getJSONArray("items");
+							for (int i = 0; i < comments.length(); i++) {
+								JSONObject comment = comments.getJSONObject(i);
+								JSONObject user = comment.getJSONObject("user");
+								HashMap<String, String> commentMap = new HashMap<String, String>();
+								commentMap.put(Statuses.SID, comment.getString("id"));
+								commentMap.put(Entities.FRIEND, user.getString("firstName") + " " + user.getString("lastName"));
+								commentMap.put(Statuses.MESSAGE, comment.getString("text"));
+								commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(comment.getLong("createdAt") * 1000, mTime24hr));
+								commentMap.put(getString(R.string.like), "");
+								mComments.add(commentMap);
+							}
+							break;
+						}
+					} catch (JSONException e) {
+						Log.e(TAG, e.toString());
+					}
+				}
+				setListAdapter(new SimpleAdapter(SonetComments.this, mComments, R.layout.comment, new String[]{Entities.FRIEND, Statuses.MESSAGE, Statuses.CREATEDTEXT, getString(R.string.like)}, new int[]{R.id.friend, R.id.message, R.id.created, R.id.like}));
+				loadingDialog.dismiss();
+			}
+		};
+		loadingDialog.setMessage(getString(R.string.loading));
+		loadingDialog.setCancelable(true);
+		loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+			@Override
+			public void onCancel(DialogInterface dialog) {
+				asyncTask.cancel(true);
+				dialog.dismiss();
+			}
+		});
+		loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), this);
+		loadingDialog.show();
+		asyncTask.execute();
 	}
 }
