@@ -43,6 +43,7 @@ public class SonetWidget extends AppWidgetProvider {
 
 	@Override
 	public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
+		Log.v(TAG,"onUpdate");
 		Sonet.acquire(context);
 		context.startService(new Intent(context, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds));
 	}
@@ -50,6 +51,7 @@ public class SonetWidget extends AppWidgetProvider {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		String action = intent.getAction();
+		Log.v(TAG,"action="+action);
 		if (action.equals(ACTION_REFRESH)) {
 			int[] appWidgetIds;
 			if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) appWidgetIds = new int[]{intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)};

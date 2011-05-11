@@ -1459,10 +1459,12 @@ public class SonetService extends Service {
 			}
 			accounts.close();
 			if ((widget != null) && (views != null)) {
+				Log.v(TAG,"updateAppWidget");
 				AppWidgetManager.getInstance(this).updateAppWidget(Integer.parseInt(widget), views);
 			}
 			// replace with scrollable widget
 			if (scrollable) {
+				Log.v(TAG,"scrollable sendBroadcast");
 				this.sendBroadcast(new Intent(this, SonetWidget.class).setAction(ACTION_BUILD_SCROLL).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, Integer.parseInt(widget)));			
 			}
 		}

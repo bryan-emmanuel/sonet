@@ -114,6 +114,8 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -125,7 +127,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class SonetCreatePost extends Activity implements OnKeyListener, OnClickListener {
+public class SonetCreatePost extends Activity implements OnKeyListener, OnClickListener, TextWatcher {
 	private static final String TAG = "SonetCreatePost";
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private HashMap<Integer, String> mAccountsToPost = new HashMap<Integer, String>();
@@ -364,26 +366,24 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				account.close();
 			}
 		}
+		mMessage.addTextChangedListener(this);
 		mMessage.setOnKeyListener(this);
 		mSend.setOnClickListener(this);
 	}
 
-	@Override
-	public boolean onKey(View v, int keyCode, KeyEvent event) {
-		mCount.setText(Integer.toString(mMessage.getText().toString().length()));
-		return false;
-	}
-
 	private void setLocation(final int accountId) {
 		final AsyncTask<String, Void, String> asyncTask;
-		Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Integer.toString(accountId)}, null);
+		Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SERVICE, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Integer.toString(accountId)}, null);
 		if (account.moveToFirst()) {
 			switch (account.getInt(account.getColumnIndex(Accounts.SERVICE))) {
 			case TWITTER:
 				asyncTask = new AsyncTask<String, Void, String>() {
 					@Override
 					protected String doInBackground(String... arg0) {
-						return Sonet.httpResponse(new HttpGet(String.format(TWITTER_SEARCH, TWITTER_BASE_URL, mLat, mLong)));
+						// anonymous requests are rate limited to 150 per hour
+						// authenticated requests are rate limited to 350 per hour, so authenticate this!
+						SonetOAuth sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, arg0[0], arg0[1]);
+						return sonetOAuth.httpResponse(new HttpGet(String.format(TWITTER_SEARCH, TWITTER_BASE_URL, mLat, mLong)));
 					}
 					@Override
 					protected void onPostExecute(String response) {
@@ -499,7 +499,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					}
 				});
 				mLoadingDialog.show();
-				asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)));
+				asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
 				break;
 			case FOURSQUARE:
 				asyncTask = new AsyncTask<String, Void, String>() {
@@ -631,6 +631,10 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 			}
 		} else if (v == mSend) {
 			if ((mMessage.getText().toString() != null) && (mMessage.getText().toString().length() > 0)) {
+				mMessage.setEnabled(false);
+				mSend.setEnabled(false);
+				mAccounts.setEnabled(false);
+				mLocation.setEnabled(false);
 				Iterator<Map.Entry<Integer, String>> entrySet = mAccountsToPost.entrySet().iterator();
 				while (entrySet.hasNext()) {
 					Map.Entry<Integer, String> entry = entrySet.next();
@@ -648,8 +652,21 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 								final String send;
 								final boolean finish;
 								if (message.length() > 140) {
-									send = message.substring(0, 140);
-									message = message.substring(141);
+									// need to break on a word
+									int end = 0;
+									int nextSpace = 0;
+									for (int i = 0; i < message.length(); i++) {
+										end = nextSpace;
+										if (message.substring(i, i + 1).equals(" ")) {
+											nextSpace = i;
+										}
+									}
+									// in case there are no spaces, just break on 140
+									if (end == 0) {
+										end = 140;
+									}
+									send = message.substring(0, end);
+									message = message.substring(end + 1);
 									finish = false;
 								} else {
 									send = message;
@@ -667,8 +684,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 										params.add(new BasicNameValuePair("status", send));
 										if (mSid != null) {
 											params.add(new BasicNameValuePair("in_reply_to_status_id", mSid));
-										}
-										if (placeId != null) {
+										} else if (placeId != null) {
 											params.add(new BasicNameValuePair("place_id", placeId));
 											params.add(new BasicNameValuePair("lat", mLat));
 											params.add(new BasicNameValuePair("long", mLong));
@@ -690,10 +706,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 										}
 									}
 								};
-								mMessage.setEnabled(false);
-								mSend.setEnabled(false);
-								mAccounts.setEnabled(false);
-								mLocation.setEnabled(false);
 								task.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
 							}
 							break;
@@ -728,10 +740,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									finish();
 								}
 							};
-							mMessage.setEnabled(false);
-							mSend.setEnabled(false);
-							mAccounts.setEnabled(false);
-							mLocation.setEnabled(false);
 							asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)));
 							break;
 						case MYSPACE:
@@ -766,10 +774,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									finish();
 								}
 							};
-							mMessage.setEnabled(false);
-							mSend.setEnabled(false);
-							mAccounts.setEnabled(false);
-							mLocation.setEnabled(false);
 							asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
 							break;
 						case BUZZ:
@@ -800,10 +804,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									finish();
 								}
 							};
-							mMessage.setEnabled(false);
-							mSend.setEnabled(false);
-							mAccounts.setEnabled(false);
-							mLocation.setEnabled(false);
 							asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
 							break;
 						case FOURSQUARE:
@@ -835,10 +835,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									finish();
 								}
 							};
-							mMessage.setEnabled(false);
-							mSend.setEnabled(false);
-							mAccounts.setEnabled(false);
-							mLocation.setEnabled(false);
 							asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)));
 							break;
 						case LINKEDIN:
@@ -869,10 +865,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									finish();
 								}
 							};
-							mMessage.setEnabled(false);
-							mSend.setEnabled(false);
-							mAccounts.setEnabled(false);
-							mLocation.setEnabled(false);
 							asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
 						}
 					}
@@ -915,14 +907,30 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					@Override
 					public void onClick(DialogInterface dialog, int which, boolean isChecked) {
 						if (isChecked) {
-							mAccountsToPost.put(accountIndexes[which], null);
+							final int accountId = accountIndexes[which];
+							mAccountsToPost.put(accountId, null);
+							mAccounts.setText(accounts[which]);
+							// set location
+							AlertDialog.Builder locationDialog = new AlertDialog.Builder(SonetCreatePost.this);
+							locationDialog.setTitle(R.string.set_location)
+							.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									setLocation(accountId);
+									dialog.dismiss();
+								}
+							})
+							.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									dialog.dismiss();
+								}
+							})
+							.show();
 						} else {
 							mAccountsToPost.remove(accountIndexes[which]);
-						}
-						if (mAccountsToPost.size() == 0) {
-							mAccounts.setText(getString(R.string.accounts));
-						} else if (mAccountsToPost.size() == 1) {
-							mAccounts.setText(accounts[isChecked ? which : Sonet.arrayIndex(accountIndexes, mAccountsToPost.keySet().iterator().next())]);
+							mAccounts.setText(mAccountsToPost.size() == 0 ? getString(R.string.accounts) : accounts[Sonet.arrayIndex(accountIndexes, mAccountsToPost.keySet().iterator().next())]);
+							mLocation.setText(R.string.location);
 						}
 					}
 				})
@@ -1044,6 +1052,25 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 			}
 			account.close();
 		}
+	}
+
+	@Override
+	public boolean onKey(View v, int keyCode, KeyEvent event) {
+		mCount.setText(Integer.toString(mMessage.getText().toString().length()));
+		return false;
+	}
+
+	@Override
+	public void afterTextChanged(Editable arg0) {
+		mCount.setText(Integer.toString(arg0.toString().length()));
+	}
+
+	@Override
+	public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {
+	}
+
+	@Override
+	public void onTextChanged(CharSequence s, int start, int before, int count) {
 	}
 
 }
