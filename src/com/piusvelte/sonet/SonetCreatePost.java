@@ -351,27 +351,15 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				status.close();
 			} else {
 				// default to the account passed in, but allow selecting additional accounts
-				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SERVICE, Accounts.WIDGET, ACCOUNTS_QUERY}, Accounts._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
+				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.WIDGET, ACCOUNTS_QUERY}, Accounts._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
 				if (account.moveToFirst()) {
 					mAppWidgetId = account.getInt(account.getColumnIndex(Accounts.WIDGET));
 					mAccountsToPost.put(account.getInt(account.getColumnIndex(Accounts._ID)), null);
 					mAccounts.setText(account.getString(account.getColumnIndex(Accounts.USERNAME)));
 					mAccounts.setEnabled(true);
 					mAccounts.setOnClickListener(this);
-					switch (account.getInt(account.getColumnIndex(Accounts.SERVICE))) {
-					case TWITTER:
-						mLocation.setEnabled(true);
-						mLocation.setOnClickListener(this);
-						break;
-					case FACEBOOK:
-						mLocation.setEnabled(true);
-						mLocation.setOnClickListener(this);
-						break;
-					case FOURSQUARE:
-						mLocation.setEnabled(true);
-						mLocation.setOnClickListener(this);
-						break;
-					}
+					mLocation.setEnabled(true);
+					mLocation.setOnClickListener(this);
 				}
 				account.close();
 			}
