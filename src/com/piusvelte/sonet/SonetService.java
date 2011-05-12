@@ -1230,6 +1230,7 @@ public class SonetService extends Service {
 								icreated = statuses.getColumnIndex(Statuses.CREATED);
 								while (!statuses.isAfterLast()) {
 									values = new ContentValues();
+									//TODO: the created time may be stored in scientific notation, and will need to be converted
 									values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(statuses.getInt(icreated), time24hr));
 									this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses._ID + "=?", new String[]{Integer.toString(statuses.getInt(iid))});
 									statuses.moveToNext();
@@ -1455,7 +1456,7 @@ public class SonetService extends Service {
 				}
 				statuses_styles.close();
 			} else {
-				views.setTextViewText(map_message[0], this.getString(R.string.no_accounts));
+				views.setTextViewText(map_message[0], this.getString(R.string.loading));
 			}
 			accounts.close();
 			if ((widget != null) && (views != null)) {
