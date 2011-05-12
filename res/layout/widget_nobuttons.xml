@@ -66,7 +66,7 @@
 				android:paddingRight="4dip" android:paddingBottom="4dip" />
 			<ImageView android:id="@+id/icon0" android:layout_width="16dip"
 				android:layout_height="16dip" android:layout_alignParentRight="true"
-				android:layout_alignParentBottom="true" android:paddingBottom="4dip"
+				android:layout_alignParentBottom="@id/message_bg_clear0" android:paddingBottom="4dip"
 				android:paddingRight="4dip" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item1"
@@ -100,7 +100,7 @@
 				android:singleLine="true" android:layout_toRightOf="@id/profile1"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
 				android:layout_alignParentTop="true" android:textStyle="bold"
-				android:layout_alignParentBottom="true" android:paddingBottom="4dip" />
+				android:paddingTop="4dip" />
 			<TextView android:gravity="right" android:id="@+id/created1"
 				android:singleLine="true" android:layout_toRightOf="@id/friend1"
 				android:layout_alignParentRight="true" android:layout_width="fill_parent"
@@ -112,7 +112,7 @@
 				android:paddingBottom="4dip" />
 			<ImageView android:id="@+id/icon1" android:layout_width="16dip"
 				android:layout_height="16dip" android:layout_alignParentRight="true"
-				android:layout_alignParentBottom="true" android:paddingBottom="4dip"
+				android:layout_alignParentBottom="@id/message_bg_clear1" android:paddingBottom="4dip"
 				android:paddingRight="4dip" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item2"
@@ -158,7 +158,7 @@
 				android:paddingBottom="4dip" />
 			<ImageView android:id="@+id/icon2" android:layout_width="16dip"
 				android:layout_height="16dip" android:layout_alignParentRight="true"
-				android:layout_alignParentBottom="true" android:paddingBottom="4dip"
+				android:layout_alignParentBottom="@id/message_bg_clear2" android:paddingBottom="4dip"
 				android:paddingRight="4dip" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item3"
@@ -204,7 +204,7 @@
 				android:paddingBottom="4dip" />
 			<ImageView android:id="@+id/icon3" android:layout_width="16dip"
 				android:layout_height="16dip" android:layout_alignParentRight="true"
-				android:layout_alignParentBottom="true" android:paddingBottom="4dip"
+				android:layout_alignParentBottom="@id/message_bg_clear3" android:paddingBottom="4dip"
 				android:paddingRight="4dip" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item4"
@@ -250,7 +250,7 @@
 				android:paddingBottom="4dip" />
 			<ImageView android:id="@+id/icon4" android:layout_width="16dip"
 				android:layout_height="16dip" android:layout_alignParentRight="true"
-				android:layout_alignParentBottom="true" android:paddingBottom="4dip"
+				android:layout_alignParentBottom="@id/message_bg_clear4" android:paddingBottom="4dip"
 				android:paddingRight="4dip" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item5"
@@ -296,7 +296,7 @@
 				android:paddingBottom="4dip" />
 			<ImageView android:id="@+id/icon5" android:layout_width="16dip"
 				android:layout_height="16dip" android:layout_alignParentRight="true"
-				android:layout_alignParentBottom="true" android:paddingBottom="4dip"
+				android:layout_alignParentBottom="@id/message_bg_clear5" android:paddingBottom="4dip"
 				android:paddingRight="4dip" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item6"
@@ -342,7 +342,7 @@
 				android:paddingBottom="4dip" />
 			<ImageView android:id="@+id/icon6" android:layout_width="16dip"
 				android:layout_height="16dip" android:layout_alignParentRight="true"
-				android:layout_alignParentBottom="true" android:paddingBottom="4dip"
+				android:layout_alignParentBottom="@id/message_bg_clear6" android:paddingBottom="4dip"
 				android:paddingRight="4dip" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item7"
@@ -388,7 +388,7 @@
 				android:paddingBottom="4dip" />
 			<ImageView android:id="@+id/icon7" android:layout_width="16dip"
 				android:layout_height="16dip" android:layout_alignParentRight="true"
-				android:layout_alignParentBottom="true" android:paddingBottom="4dip"
+				android:layout_alignParentBottom="@id/message_bg_clear7" android:paddingBottom="4dip"
 				android:paddingRight="4dip" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item8"
@@ -434,7 +434,7 @@
 				android:paddingBottom="4dip" />
 			<ImageView android:id="@+id/icon8" android:layout_width="16dip"
 				android:layout_height="16dip" android:layout_alignParentRight="true"
-				android:layout_alignParentBottom="true" android:paddingBottom="4dip"
+				android:layout_alignParentBottom="@id/message_bg_clear8" android:paddingBottom="4dip"
 				android:paddingRight="4dip" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item9"
@@ -480,7 +480,7 @@
 				android:paddingBottom="4dip" />
 			<ImageView android:id="@+id/icon9" android:layout_width="16dip"
 				android:layout_height="16dip" android:layout_alignParentRight="true"
-				android:layout_alignParentBottom="true" android:paddingBottom="4dip"
+				android:layout_alignParentBottom="@id/message_bg_clear9" android:paddingBottom="4dip"
 				android:paddingRight="4dip" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item10"
@@ -526,7 +526,7 @@
 				android:paddingBottom="4dip" />
 			<ImageView android:id="@+id/icon10" android:layout_width="16dip"
 				android:layout_height="16dip" android:layout_alignParentRight="true"
-				android:layout_alignParentBottom="true" android:paddingBottom="4dip"
+				android:layout_alignParentBottom="@id/message_bg_clear10" android:paddingBottom="4dip"
 				android:paddingRight="4dip" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item11"
@@ -572,7 +572,7 @@
 				android:paddingBottom="4dip" />
 			<ImageView android:id="@+id/icon11" android:layout_width="16dip"
 				android:layout_height="16dip" android:layout_alignParentRight="true"
-				android:layout_alignParentBottom="true" android:paddingBottom="4dip"
+				android:layout_alignParentBottom="@id/message_bg_clear11" android:paddingBottom="4dip"
 				android:paddingRight="4dip" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item12"
@@ -618,7 +618,7 @@
 				android:paddingBottom="4dip" />
 			<ImageView android:id="@+id/icon12" android:layout_width="16dip"
 				android:layout_height="16dip" android:layout_alignParentRight="true"
-				android:layout_alignParentBottom="true" android:paddingBottom="4dip"
+				android:layout_alignParentBottom="@id/message_bg_clear12" android:paddingBottom="4dip"
 				android:paddingRight="4dip" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item13"
@@ -664,7 +664,7 @@
 				android:paddingBottom="4dip" />
 			<ImageView android:id="@+id/icon13" android:layout_width="16dip"
 				android:layout_height="16dip" android:layout_alignParentRight="true"
-				android:layout_alignParentBottom="true" android:paddingBottom="4dip"
+				android:layout_alignParentBottom="@id/message_bg_clear13" android:paddingBottom="4dip"
 				android:paddingRight="4dip" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item14"
@@ -710,7 +710,7 @@
 				android:paddingBottom="4dip" />
 			<ImageView android:id="@+id/icon14" android:layout_width="16dip"
 				android:layout_height="16dip" android:layout_alignParentRight="true"
-				android:layout_alignParentBottom="true" android:paddingBottom="4dip"
+				android:layout_alignParentBottom="@id/message_bg_clear14" android:paddingBottom="4dip"
 				android:paddingRight="4dip" />
 		</RelativeLayout>
 		<RelativeLayout android:id="@+id/item15"
@@ -756,7 +756,7 @@
 				android:paddingBottom="4dip" />
 			<ImageView android:id="@+id/icon15" android:layout_width="16dip"
 				android:layout_height="16dip" android:layout_alignParentRight="true"
-				android:layout_alignParentBottom="true" android:paddingBottom="4dip"
+				android:layout_alignParentBottom="@id/message_bg_clear15" android:paddingBottom="4dip"
 				android:paddingRight="4dip" />
 		</RelativeLayout>
 	</LinearLayout>

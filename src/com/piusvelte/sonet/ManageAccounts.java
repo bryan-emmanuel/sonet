@@ -59,7 +59,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		android.util.Log.v("ManageAccounts","onCreate");
 
 		this.setResult(RESULT_CANCELED);
 
@@ -80,12 +79,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		((Button) findViewById(R.id.button_add_account)).setOnClickListener(this);
 		
 		if (mAppWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) finish();
-	}
-	
-	@Override
-	protected void onNewIntent(Intent intent) {
-		super.onNewIntent(intent);
-		android.util.Log.v("ManageAccounts","onNewIntent");
 	}
 
 	@Override
@@ -160,7 +153,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		if (mUpdateWidget && mHasAccounts) {
 			Intent resultValue = new Intent();
 			resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
-			android.util.Log.v("ManageAccounts","RESULT_OK");
 			setResult(RESULT_OK, resultValue);
 		}
 	}
@@ -180,7 +172,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 		if ((requestCode == RESULT_REFRESH) && (resultCode == RESULT_OK)) {
-			android.util.Log.v("ManageAccounts","mUpdateWidget=true");
 			mUpdateWidget = true;
 		}
 	}

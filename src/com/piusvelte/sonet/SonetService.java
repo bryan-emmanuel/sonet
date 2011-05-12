@@ -81,6 +81,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import mobi.intuitit.android.content.LauncherIntent;
+
 import org.apache.http.client.methods.HttpGet;
 
 import org.json.JSONArray;
@@ -140,7 +142,7 @@ public class SonetService extends Service {
 			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) SonetService.updateWidgets(new String[]{Integer.toString(intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID))});
 		}
 		synchronized (sLock) {
-			boolean hasConnection = (mConnectivityManager.getActiveNetworkInfo() != null) && mConnectivityManager.getActiveNetworkInfo().isConnected();
+//			boolean hasConnection = (mConnectivityManager.getActiveNetworkInfo() != null) && mConnectivityManager.getActiveNetworkInfo().isConnected();
 			while (updatesQueued()) {
 				// first handle deletes, then scroll updates, finally regular updates
 				String appWidgetId = getNextUpdate();
@@ -310,7 +312,7 @@ public class SonetService extends Service {
 						String account = Integer.toString(accounts.getInt(iaccountid)),
 						service = Integer.toString(accounts.getInt(iservice));
 						// if no connection, only update the status_bg and icons
-						if (hasConnection) {
+						if ((mConnectivityManager.getActiveNetworkInfo() != null) && mConnectivityManager.getActiveNetworkInfo().isConnected()) {
 							AsyncTask<String, Void, String> task;
 							switch (Integer.parseInt(service)) {
 							case TWITTER:
@@ -408,7 +410,9 @@ public class SonetService extends Service {
 											values.put(Statuses.STATUS_BG, status_bg);
 											values.put(Statuses.ICON, icon ? getBlob(BitmapFactory.decodeResource(getResources(), map_icons[Integer.parseInt(service)])) : null);
 											SonetService.this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
-										} else updateCreatedText = true;
+										} else {
+											updateCreatedText = true;
+										}
 										if (updateCreatedText) {
 											Cursor statuses = SonetService.this.getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID, Statuses.CREATED},Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account}, null);
 											if (statuses.moveToFirst()) {
@@ -556,7 +560,9 @@ public class SonetService extends Service {
 											values.put(Statuses.STATUS_BG, status_bg);
 											values.put(Statuses.ICON, icon ? getBlob(BitmapFactory.decodeResource(getResources(), map_icons[Integer.parseInt(service)])) : null);
 											SonetService.this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
-										} else updateCreatedText = true;
+										} else {
+											updateCreatedText = true;
+										}
 										if (updateCreatedText) {
 											Cursor statuses = SonetService.this.getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID, Statuses.CREATED},Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account}, null);
 											if (statuses.moveToFirst()) {
@@ -685,7 +691,9 @@ public class SonetService extends Service {
 											values.put(Statuses.STATUS_BG, status_bg);
 											values.put(Statuses.ICON, icon ? getBlob(BitmapFactory.decodeResource(getResources(), map_icons[Integer.parseInt(service)])) : null);
 											SonetService.this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
-										} else updateCreatedText = true;
+										} else {
+											updateCreatedText = true;
+										}
 										if (updateCreatedText) {
 											Cursor statuses = SonetService.this.getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID, Statuses.CREATED},Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account}, null);
 											if (statuses.moveToFirst()) {
@@ -827,7 +835,9 @@ public class SonetService extends Service {
 															}
 														}
 													}
-												} else updateCreatedText = true;
+												} else {
+													updateCreatedText = true;
+												}
 											} catch (JSONException e) {
 												Log.e(TAG, service + ":" + e.toString());
 											}
@@ -960,7 +970,9 @@ public class SonetService extends Service {
 																checkin.getString(id),
 																user.getString(id));
 													}
-												} else updateCreatedText = true;
+												} else {
+													updateCreatedText = true;
+												}
 											} catch (JSONException e) {
 												Log.e(TAG, service + ":" + e.toString());
 												Log.e(TAG, response);
@@ -1144,7 +1156,9 @@ public class SonetService extends Service {
 																					person.getString(id));
 														}
 													}
-												} else updateCreatedText = true;
+												} else {
+													updateCreatedText = true;
+												}
 											} catch (JSONException e) {
 												Log.e(TAG, service + ":" + e.toString());
 											}
@@ -1230,8 +1244,7 @@ public class SonetService extends Service {
 								icreated = statuses.getColumnIndex(Statuses.CREATED);
 								while (!statuses.isAfterLast()) {
 									values = new ContentValues();
-									//TODO: the created time may be stored in scientific notation, and will need to be converted
-									values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(statuses.getInt(icreated), time24hr));
+									values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(statuses.getLong(icreated), time24hr));
 									this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses._ID + "=?", new String[]{Integer.toString(statuses.getInt(iid))});
 									statuses.moveToNext();
 								}
@@ -1373,7 +1386,7 @@ public class SonetService extends Service {
 				views.setImageViewBitmap(R.id.buttons_bg, buttons_bg);
 				views.setTextColor(R.id.buttons_bg_clear, buttons_bg_color);
 				views.setFloat(R.id.buttons_bg_clear, "setTextSize", buttons_textsize);
-				views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, new Intent(this, SonetCreatePost.class), 0));
+				views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, new Intent(this, SonetCreatePost.class).setAction(LauncherIntent.Action.ACTION_VIEW_CLICK).setData(Uri.withAppendedPath(Widgets.CONTENT_URI, widget)), 0));
 				views.setTextColor(R.id.button_post, buttons_color);
 				views.setFloat(R.id.button_post, "setTextSize", buttons_textsize);
 				views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, new Intent(this, ManageAccounts.class).setAction(widget), 0));
@@ -1460,12 +1473,10 @@ public class SonetService extends Service {
 			}
 			accounts.close();
 			if ((widget != null) && (views != null)) {
-				Log.v(TAG,"updateAppWidget");
 				AppWidgetManager.getInstance(this).updateAppWidget(Integer.parseInt(widget), views);
 			}
 			// replace with scrollable widget
 			if (scrollable) {
-				Log.v(TAG,"scrollable sendBroadcast");
 				this.sendBroadcast(new Intent(this, SonetWidget.class).setAction(ACTION_BUILD_SCROLL).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, Integer.parseInt(widget)));			
 			}
 		}

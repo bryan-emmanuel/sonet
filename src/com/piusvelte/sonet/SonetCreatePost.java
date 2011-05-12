@@ -170,7 +170,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 			// if the uri is Accounts, then this is a post or tweet
 			Cursor account;
 			if (mData.toString().contains(Statuses_styles.CONTENT_URI.toString())) {
-				Cursor status = this.getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.ACCOUNT, Statuses_styles.SID, Statuses_styles.ESID, Statuses_styles.WIDGET}, Statuses_styles._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
+				Cursor status = this.getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.ACCOUNT, Statuses_styles.SID, Statuses_styles.ESID, Statuses_styles.WIDGET, Statuses_styles.SERVICE}, Statuses_styles._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
 				if (status.moveToFirst()) {
 					final int service = status.getInt(status.getColumnIndex(Statuses_styles.SERVICE));
 					final int accountId = status.getInt(status.getColumnIndex(Statuses_styles.ACCOUNT));
@@ -352,18 +352,23 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				}
 				status.close();
 			} else {
-				// default to the account passed in, but allow selecting additional accounts
-				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.WIDGET, ACCOUNTS_QUERY}, Accounts._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
-				if (account.moveToFirst()) {
-					mAppWidgetId = account.getInt(account.getColumnIndex(Accounts.WIDGET));
-					mAccountsToPost.put(account.getInt(account.getColumnIndex(Accounts._ID)), null);
-					mAccounts.setText(account.getString(account.getColumnIndex(Accounts.USERNAME)));
-					mAccounts.setEnabled(true);
-					mAccounts.setOnClickListener(this);
-					mLocation.setEnabled(true);
-					mLocation.setOnClickListener(this);
+				if (mData.toString().contains(Accounts.CONTENT_URI.toString())) {
+					// default to the account passed in, but allow selecting additional accounts
+					account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.WIDGET, ACCOUNTS_QUERY}, Accounts._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
+					if (account.moveToFirst()) {
+						mAppWidgetId = account.getInt(account.getColumnIndex(Accounts.WIDGET));
+						mAccountsToPost.put(account.getInt(account.getColumnIndex(Accounts._ID)), null);
+						mAccounts.setText(account.getString(account.getColumnIndex(Accounts.USERNAME)));
+					}
+					account.close();
+				} else {
+					// default widget post
+					mAppWidgetId = Integer.parseInt(mData.getLastPathSegment());
 				}
-				account.close();
+				mAccounts.setEnabled(true);
+				mAccounts.setOnClickListener(this);
+				mLocation.setEnabled(true);
+				mLocation.setOnClickListener(this);
 			}
 		}
 		mMessage.addTextChangedListener(this);
@@ -630,7 +635,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				}
 			}
 		} else if (v == mSend) {
-			if ((mMessage.getText().toString() != null) && (mMessage.getText().toString().length() > 0)) {
+			if ((mMessage.getText().toString() != null) && (mMessage.getText().toString().length() > 0) && (mAccountsToPost.size() > 0)) {
 				mMessage.setEnabled(false);
 				mSend.setEnabled(false);
 				mAccounts.setEnabled(false);
