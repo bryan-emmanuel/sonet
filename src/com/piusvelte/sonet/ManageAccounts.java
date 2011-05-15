@@ -77,6 +77,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		registerForContextMenu(getListView());
 		((Button) findViewById(R.id.default_widget_settings)).setOnClickListener(this);
 		((Button) findViewById(R.id.button_add_account)).setOnClickListener(this);
+		((Button) findViewById(R.id.save)).setOnClickListener(this);
 		
 		if (mAppWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) finish();
 	}
@@ -141,6 +142,9 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		case R.id.default_widget_settings:
 			mAddingAccount = true;
 			startActivityForResult(new Intent(this, Settings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId), RESULT_REFRESH);
+			break;
+		case R.id.save:
+			finish();
 			break;
 		}
 	}

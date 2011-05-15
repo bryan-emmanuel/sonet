@@ -26,5 +26,5 @@ min dip size = (#cells*74dip)-2dip
   android:minWidth="294dip"
   android:minHeight="146dip"
   android:updatePeriodMillis="0"
-  android:initialLayout="@layout/widget"
+  android:initialLayout="@layout/widget_nobuttons"
   android:configure="com.piusvelte.sonet.ManageAccounts" />

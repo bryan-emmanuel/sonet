@@ -23,34 +23,25 @@
 	android:layout_width="fill_parent" android:layout_height="fill_parent">
 	<LinearLayout android:id="@+id/ad" android:layout_width="fill_parent"
 		android:layout_height="wrap_content" />
-	<Button android:id="@+id/comments" android:layout_width="wrap_content"
-		android:layout_height="wrap_content" android:text="@string/comments"
-		android:layout_below="@id/ad" android:enabled="false"
-		android:layout_alignParentRight="true" />
 	<Button android:id="@+id/accounts" android:layout_width="fill_parent"
 		android:layout_below="@id/ad" android:layout_height="wrap_content"
 		android:text="@string/accounts" android:enabled="false"
-		android:layout_toLeftOf="@id/comments" android:layout_alignParentLeft="true" />
+		android:layout_alignParentLeft="true" />
 	<RelativeLayout android:id="@+id/buttons"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
 		android:layout_alignParentBottom="true">
 		<Button android:id="@+id/send" android:layout_width="wrap_content"
 			android:layout_height="wrap_content" android:text="@string/send"
 			android:layout_alignParentRight="true" />
-		<Button android:id="@+id/like" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:text="@string/like"
+		<Button android:id="@+id/count" android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:text="0"
 			android:layout_toLeftOf="@id/send" android:enabled="false" />
 		<Button android:id="@+id/location" android:layout_width="fill_parent"
 			android:layout_height="wrap_content" android:text="@string/location"
-			android:layout_alignParentLeft="true" android:layout_toLeftOf="@id/like"
+			android:layout_alignParentLeft="true" android:layout_toLeftOf="@id/count"
 			android:enabled="false" />
 	</RelativeLayout>
 	<EditText android:id="@+id/message" android:layout_width="fill_parent"
 		android:layout_height="fill_parent" android:layout_below="@id/accounts"
 		android:layout_above="@id/buttons" android:gravity="top" />
-	<TextView android:id="@+id/count" android:layout_width="wrap_content"
-		android:layout_height="wrap_content" android:layout_alignBottom="@id/message"
-		android:layout_alignParentRight="true" android:padding="8dip"
-		android:background="#33000000" android:textColor="#66000000"
-		android:textStyle="bold" android:text="0" />
 </RelativeLayout>

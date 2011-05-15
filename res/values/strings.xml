@@ -103,4 +103,5 @@
 	<string name="uncommentable">uncommentable</string>
 	<string name="unlikable">unlikable</string>
 	<string name="set_location">Set Location?</string>
+	<string name="save">Save</string>
 </resources>

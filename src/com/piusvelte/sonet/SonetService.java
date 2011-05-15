@@ -142,7 +142,6 @@ public class SonetService extends Service {
 			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) SonetService.updateWidgets(new String[]{Integer.toString(intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID))});
 		}
 		synchronized (sLock) {
-//			boolean hasConnection = (mConnectivityManager.getActiveNetworkInfo() != null) && mConnectivityManager.getActiveNetworkInfo().isConnected();
 			while (updatesQueued()) {
 				// first handle deletes, then scroll updates, finally regular updates
 				String appWidgetId = getNextUpdate();
@@ -1363,7 +1362,7 @@ public class SonetService extends Service {
 			}
 		}
 		if (widgetUpdateReady) {
-			boolean hasbuttons = true,
+			boolean hasbuttons = false,
 			scrollable = false;
 			int buttons_bg_color = Sonet.default_buttons_bg_color,
 			buttons_color = Sonet.default_buttons_color,

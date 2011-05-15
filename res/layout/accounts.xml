@@ -29,9 +29,13 @@
 	<Button android:id="@+id/button_add_account" android:text="@string/button_add_account"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
 		android:layout_below="@id/default_widget_settings" />
+	<Button android:id="@+id/save" android:text="@string/save"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:layout_alignParentBottom="true" />
 	<ListView android:id="@android:id/list" android:layout_width="fill_parent"
-		android:layout_height="fill_parent" android:layout_below="@id/button_add_account" />
+		android:layout_height="fill_parent" android:layout_below="@id/button_add_account"
+		android:layout_above="@id/save" />
 	<TextView android:id="@android:id/empty" android:layout_width="fill_parent"
 		android:layout_height="fill_parent" android:layout_below="@id/button_add_account"
-		android:text="@string/no_accounts" />
+		android:layout_above="@id/save" android:text="@string/no_accounts" />
 </RelativeLayout>
