@@ -67,6 +67,7 @@ public class SonetWidget extends AppWidgetProvider {
 				context.startService(new Intent(context, SonetScrollableBuilder.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widget));
 			}
 		} else if (Sonet.ACTION_BUILD_SCROLL.equals(action)) {
+			//TODO: does this get called on boot, but not ACTION_READY or ACTION_REFRESH or onUpdate? that's a problem
 			int widget = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 			Sonet.sWidgetsContext.put(widget, context);
 			context.startService(new Intent(context, SonetScrollableBuilder.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widget));

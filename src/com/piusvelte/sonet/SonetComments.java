@@ -809,7 +809,17 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 	}
 	
 	private void loadComments() {
-		mComments = new ArrayList<HashMap<String, String>>();
+		//TODO:
+		Log.v(TAG,"loadComments");
+		mComments.clear();
+		HashMap<String, String> commentMap = new HashMap<String, String>();
+		commentMap.put(Statuses.SID, "");
+		commentMap.put(Entities.FRIEND, "");
+		commentMap.put(Statuses.MESSAGE, getString(R.string.loading));
+		commentMap.put(Statuses.CREATEDTEXT, "");
+		commentMap.put(getString(R.string.like), "");
+		mComments.add(commentMap);
+		setListAdapter(new SimpleAdapter(SonetComments.this, mComments, R.layout.comment, new String[]{Entities.FRIEND, Statuses.MESSAGE, Statuses.CREATEDTEXT, getString(R.string.like)}, new int[]{R.id.friend, R.id.message, R.id.created, R.id.like}));
 		final ProgressDialog loadingDialog = new ProgressDialog(this);
 		final AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
 			@Override
@@ -853,6 +863,11 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 						switch (mService) {
 						case FACEBOOK:
 							comments = new JSONObject(response).getJSONArray("data");
+							//TODO:
+							Log.v(TAG,"found comments:"+comments.length());
+							if (comments.length() > 0) {
+								mComments.clear();
+							}
 							for (int i = 0; i < comments.length(); i++) {
 								JSONObject comment = comments.getJSONObject(i);
 								HashMap<String, String> commentMap = new HashMap<String, String>();
@@ -866,6 +881,9 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							break;
 						case MYSPACE:
 							comments = new JSONObject(response).getJSONArray("entry");
+							if (comments.length() > 0) {
+								mComments.clear();
+							}
 							for (int i = 0; i < comments.length(); i++) {
 								JSONObject entry = comments.getJSONObject(i);
 								HashMap<String, String> commentMap = new HashMap<String, String>();
@@ -881,6 +899,9 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							JSONObject data = new JSONObject(response).getJSONObject("data");
 							if (data.has("items")) {
 								comments = data.getJSONArray("items");
+								if (comments.length() > 0) {
+									mComments.clear();
+								}
 								for (int i = 0; i < comments.length(); i++) {
 									JSONObject comment = comments.getJSONObject(i);
 									String id = comment.getString("id");
@@ -898,6 +919,9 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							JSONObject jsonResponse = new JSONObject(response);
 							if (jsonResponse.has("_total") && (jsonResponse.getInt("_total") != 0)) {
 								comments = jsonResponse.getJSONArray("values");
+								if (comments.length() > 0) {
+									mComments.clear();
+								}
 								for (int i = 0; i < comments.length(); i++) {
 									JSONObject comment = comments.getJSONObject(i);
 									JSONObject person = comment.getJSONObject("person");
@@ -913,6 +937,9 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							break;
 						case FOURSQUARE:
 							comments = new JSONObject(response).getJSONObject("response").getJSONObject("checkin").getJSONObject("comments").getJSONArray("items");
+							if (comments.length() > 0) {
+								mComments.clear();
+							}
 							for (int i = 0; i < comments.length(); i++) {
 								JSONObject comment = comments.getJSONObject(i);
 								JSONObject user = comment.getJSONObject("user");

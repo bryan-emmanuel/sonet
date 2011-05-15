@@ -32,13 +32,12 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.Menu;
 
 public class StatusDialog extends Activity implements DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private long mAccount = Sonet.INVALID_ACCOUNT_ID;
 	private Uri mData;
-	private static final int COMMENT = Menu.FIRST;
+	private static final int COMMENT = 0;
 	private static final int POST = COMMENT + 1;
 	private static final int SETTINGS = POST + 1;
 	private static final int REFRESH = SETTINGS + 1;
@@ -69,10 +68,10 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 	public void onClick(DialogInterface dialog, int which) {
 		switch (which) {
 		case COMMENT:
-			startActivity(new Intent(this, SonetCreatePost.class).setData(mData));
+			startActivity(new Intent(this, SonetComments.class).setData(mData));
 			break;
 		case POST:
-			startActivity(new Intent(this, SonetComments.class).setData(Uri.withAppendedPath(Accounts.CONTENT_URI, Long.toString(mAccount))));
+			startActivity(new Intent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.CONTENT_URI, Long.toString(mAccount))));
 			break;
 		case SETTINGS:
 			startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));

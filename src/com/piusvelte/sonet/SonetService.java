@@ -160,7 +160,7 @@ public class SonetService extends Service {
 					ContentValues values = new ContentValues();
 					values.put(Widgets.INTERVAL, Integer.parseInt((String) sp.getString(getString(R.string.key_interval), Integer.toString(Sonet.default_interval))));
 					values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-					values.put(Widgets.HASBUTTONS, sp.getBoolean(getString(R.string.key_display_buttons), true) ? 1 : 0);
+					values.put(Widgets.HASBUTTONS, sp.getBoolean(getString(R.string.key_display_buttons), false) ? 1 : 0);
 					values.put(Widgets.BUTTONS_BG_COLOR, Integer.parseInt(sp.getString(getString(R.string.key_head_background), Integer.toString(Sonet.default_buttons_bg_color))));
 					values.put(Widgets.BUTTONS_COLOR, Integer.parseInt(sp.getString(getString(R.string.key_head_text), Integer.toString(Sonet.default_buttons_color))));
 					values.put(Widgets.BUTTONS_TEXTSIZE, Integer.parseInt(sp.getString(getString(R.string.key_buttons_textsize), Integer.toString(Sonet.default_buttons_textsize))));

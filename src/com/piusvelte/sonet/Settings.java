@@ -190,7 +190,7 @@ public class Settings extends Activity implements View.OnClickListener, OnChecke
 			values.put(Widgets.FRIEND_TEXTSIZE, mFriend_textsize_value);
 			values.put(Widgets.CREATED_COLOR, mCreated_color_value);
 			values.put(Widgets.CREATED_TEXTSIZE, mCreated_textsize_value);
-			values.put(Widgets.HASBUTTONS, 1);
+			values.put(Widgets.HASBUTTONS, 0);
 			values.put(Widgets.TIME24HR, 0);
 			values.put(Widgets.ICON, 1);
 			values.put(Widgets.STATUSES_PER_ACCOUNT, mStatuses_per_account_value);
