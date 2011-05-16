@@ -52,14 +52,21 @@ public class SonetWidget extends AppWidgetProvider {
 		String action = intent.getAction();
 		if (action.equals(ACTION_REFRESH)) {
 			int[] appWidgetIds;
-			if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) appWidgetIds = new int[]{intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)};
-			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) appWidgetIds = intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS);
-			else appWidgetIds = new int[]{AppWidgetManager.INVALID_APPWIDGET_ID};
+			if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
+				appWidgetIds = new int[]{intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)};
+			} else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) {
+				appWidgetIds = intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS);
+			} else {
+				appWidgetIds = new int[]{AppWidgetManager.INVALID_APPWIDGET_ID};
+			}
 			context.startService(new Intent(context, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds));
 		} else if (AppWidgetManager.ACTION_APPWIDGET_DELETED.equals(action)) {
 			final int appWidgetId = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
-			if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) onDeleted(context, new int[]{appWidgetId});
-			else super.onReceive(context, intent);
+			if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+				onDeleted(context, new int[]{appWidgetId});
+			} else {
+				super.onReceive(context, intent);
+			}
 		} else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_READY)) {
 			if (intent.getExtras().getInt(LauncherIntent.Extra.EXTRA_API_VERSION, 1) >= 2) {
 				int widget = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
@@ -67,16 +74,17 @@ public class SonetWidget extends AppWidgetProvider {
 				context.startService(new Intent(context, SonetScrollableBuilder.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widget));
 			}
 		} else if (Sonet.ACTION_BUILD_SCROLL.equals(action)) {
-			//TODO: does this get called on boot, but not ACTION_READY or ACTION_REFRESH or onUpdate? that's a problem
 			int widget = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 			Sonet.sWidgetsContext.put(widget, context);
 			context.startService(new Intent(context, SonetScrollableBuilder.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widget));
-		} else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_FINISH)) {
-		} else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_VIEW_CLICK)) {
+		} else if (action.equals(LauncherIntent.Action.ACTION_FINISH)) {
+		} else if (action.equals(LauncherIntent.Action.ACTION_VIEW_CLICK)) {
 			onClick(context, intent);
-		} else if (TextUtils.equals(action, LauncherIntent.Error.ERROR_SCROLL_CURSOR)) {
+		} else if (action.equals(LauncherIntent.Error.ERROR_SCROLL_CURSOR)) {
 			Log.d(TAG, intent.getStringExtra(LauncherIntent.Extra.EXTRA_ERROR_MESSAGE) + "");
-		} else super.onReceive(context, intent);
+		} else {
+			super.onReceive(context, intent);
+		}
 	}
 
 	@Override

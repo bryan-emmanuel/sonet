@@ -135,11 +135,17 @@ public class SonetService extends Service {
 		if (intent != null) {
 			if (intent.getAction() != null) {
 				if (intent.getAction().equals(ACTION_REFRESH)) {
-					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
+					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) {
+						SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
+					}
 				}
-			} else if (intent.getData() != null) SonetService.updateWidgets(new String[] {intent.getData().getLastPathSegment()});
-			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
-			else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) SonetService.updateWidgets(new String[]{Integer.toString(intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID))});
+			} else if (intent.getData() != null) {
+				SonetService.updateWidgets(new String[] {intent.getData().getLastPathSegment()});
+			} else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) {
+				SonetService.updateWidgets(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
+			} else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
+				SonetService.updateWidgets(new String[]{Integer.toString(intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID))});
+			}
 		}
 		synchronized (sLock) {
 			while (updatesQueued()) {
@@ -430,7 +436,9 @@ public class SonetService extends Service {
 											ArrayList<AsyncTask<String, Void, String>> tasks = SonetService.sWidgetsTasks.get(widget);
 											if (tasks != null) {
 												SonetService.sWidgetsTasks.get(widget).remove(this);
-												if (tasks.isEmpty()) SonetService.sWidgetsTasks.remove(tasks);
+												if (tasks.isEmpty()) {
+													SonetService.sWidgetsTasks.remove(tasks);
+												}
 											}				
 										}
 										// see if the tasks are finished
@@ -532,7 +540,9 @@ public class SonetService extends Service {
 																	JSONObject t = o.getJSONObject(to);
 																	if (t.has(data)) {
 																		JSONObject n = t.getJSONArray(data).getJSONObject(0);
-																		if (n.has(name)) friend += " > " + n.getString(name);
+																		if (n.has(name)) {
+																			friend += " > " + n.getString(name);
+																		}
 																	}												
 																}
 																String esid = f.getString(id);
@@ -580,7 +590,9 @@ public class SonetService extends Service {
 											ArrayList<AsyncTask<String, Void, String>> tasks = SonetService.sWidgetsTasks.get(widget);
 											if (tasks != null) {
 												SonetService.sWidgetsTasks.get(widget).remove(this);
-												if (tasks.isEmpty()) SonetService.sWidgetsTasks.remove(tasks);
+												if (tasks.isEmpty()) {
+													SonetService.sWidgetsTasks.remove(tasks);
+												}
 											}				
 										}
 										// see if the tasks are finished
@@ -733,7 +745,9 @@ public class SonetService extends Service {
 											ArrayList<AsyncTask<String, Void, String>> tasks = SonetService.sWidgetsTasks.get(widget);
 											if (tasks != null) {
 												SonetService.sWidgetsTasks.get(widget).remove(this);
-												if (tasks.isEmpty()) SonetService.sWidgetsTasks.remove(tasks);
+												if (tasks.isEmpty()) {
+													SonetService.sWidgetsTasks.remove(tasks);
+												}
 											}				
 										}
 										// see if the tasks are finished
@@ -845,7 +859,9 @@ public class SonetService extends Service {
 											values.put(Statuses.STATUS_BG, status_bg);
 											values.put(Statuses.ICON, icon ? getBlob(BitmapFactory.decodeResource(getResources(), map_icons[Integer.parseInt(service)])) : null);
 											SonetService.this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
-										} else updateCreatedText = true;
+										} else {
+											updateCreatedText = true;
+										}
 										if (updateCreatedText) {
 											Cursor statuses = SonetService.this.getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID, Statuses.CREATED},Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account}, null);
 											if (statuses.moveToFirst()) {
@@ -864,7 +880,9 @@ public class SonetService extends Service {
 											ArrayList<AsyncTask<String, Void, String>> tasks = SonetService.sWidgetsTasks.get(widget);
 											if (tasks != null) {
 												SonetService.sWidgetsTasks.get(widget).remove(this);
-												if (tasks.isEmpty()) SonetService.sWidgetsTasks.remove(tasks);
+												if (tasks.isEmpty()) {
+													SonetService.sWidgetsTasks.remove(tasks);
+												}
 											}				
 										}
 										// see if the tasks are finished
@@ -981,7 +999,9 @@ public class SonetService extends Service {
 											values.put(Statuses.STATUS_BG, status_bg);
 											values.put(Statuses.ICON, icon ? getBlob(BitmapFactory.decodeResource(getResources(), map_icons[Integer.parseInt(service)])) : null);
 											SonetService.this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
-										} else updateCreatedText = true;
+										} else {
+											updateCreatedText = true;
+										}
 										if (updateCreatedText) {
 											Cursor statuses = SonetService.this.getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID, Statuses.CREATED},Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account}, null);
 											if (statuses.moveToFirst()) {
@@ -1000,7 +1020,9 @@ public class SonetService extends Service {
 											ArrayList<AsyncTask<String, Void, String>> tasks = SonetService.sWidgetsTasks.get(widget);
 											if (tasks != null) {
 												SonetService.sWidgetsTasks.get(widget).remove(this);
-												if (tasks.isEmpty()) SonetService.sWidgetsTasks.remove(tasks);
+												if (tasks.isEmpty()) {
+													SonetService.sWidgetsTasks.remove(tasks);
+												}
 											}				
 										}
 										// see if the tasks are finished
@@ -1166,7 +1188,9 @@ public class SonetService extends Service {
 											values.put(Statuses.STATUS_BG, status_bg);
 											values.put(Statuses.ICON, icon ? getBlob(BitmapFactory.decodeResource(getResources(), map_icons[Integer.parseInt(service)])) : null);
 											SonetService.this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
-										} else updateCreatedText = true;
+										} else {
+											updateCreatedText = true;
+										}
 										if (updateCreatedText) {
 											Cursor statuses = SonetService.this.getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID, Statuses.CREATED},Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account}, null);
 											if (statuses.moveToFirst()) {
@@ -1185,7 +1209,9 @@ public class SonetService extends Service {
 											ArrayList<AsyncTask<String, Void, String>> tasks = SonetService.sWidgetsTasks.get(widget);
 											if (tasks != null) {
 												SonetService.sWidgetsTasks.get(widget).remove(this);
-												if (tasks.isEmpty()) SonetService.sWidgetsTasks.remove(tasks);
+												if (tasks.isEmpty()) {
+													SonetService.sWidgetsTasks.remove(tasks);
+												}
 											}				
 										}
 										// see if the tasks are finished
@@ -1272,14 +1298,18 @@ public class SonetService extends Service {
 
 	public static void updateWidgets(int[] appWidgetIds) {
 		String[] widgetIds = new String[appWidgetIds.length];
-		for (int i = 0; i < widgetIds.length; i++) widgetIds[i] = Integer.toString(appWidgetIds[i]);
+		for (int i = 0; i < widgetIds.length; i++) {
+			widgetIds[i] = Integer.toString(appWidgetIds[i]);
+		}
 		SonetService.updateWidgets(widgetIds);
 	}
 
 	public static void updateWidgets(String[] appWidgetIds) {
 		synchronized (sLock) {
 			for (String appWidgetId : appWidgetIds) {
-				if (!sAppWidgetIds.contains(appWidgetId)) sAppWidgetIds.add(appWidgetId);
+				if (!sAppWidgetIds.contains(appWidgetId)) {
+					sAppWidgetIds.add(appWidgetId);
+				}
 			}
 		}
 	}
@@ -1292,8 +1322,11 @@ public class SonetService extends Service {
 
 	private static String getNextUpdate() {
 		synchronized (sLock) {
-			if (sAppWidgetIds.peek() == null) return Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID);
-			else return sAppWidgetIds.poll();
+			if (sAppWidgetIds.peek() == null) {
+				return Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID);
+			} else {
+				return sAppWidgetIds.poll();
+			}
 		}
 	}
 
@@ -1322,8 +1355,9 @@ public class SonetService extends Service {
 			profile = getBlob(bmp);
 		}
 		Cursor entity = this.getContentResolver().query(Entities.CONTENT_URI, new String[]{Entities._ID}, Entities.ACCOUNT + "=? and " + Entities.ESID + "=?", new String[]{accountId, sid}, null);
-		if (entity.moveToFirst()) id = entity.getInt(entity.getColumnIndex(Entities._ID));
-		else {
+		if (entity.moveToFirst()) {
+			id = entity.getInt(entity.getColumnIndex(Entities._ID));
+		} else {
 			ContentValues values = new ContentValues();
 			values.put(Entities.ESID, String.format(SID_FORMAT, esid));
 			values.put(Entities.FRIEND, friend);
@@ -1346,7 +1380,9 @@ public class SonetService extends Service {
 
 	private byte[] getBlob(Bitmap bmp) {
 		ByteArrayOutputStream blob = new ByteArrayOutputStream();
-		if (bmp != null) bmp.compress(Bitmap.CompressFormat.PNG, 100, blob);
+		if (bmp != null) {
+			bmp.compress(Bitmap.CompressFormat.PNG, 100, blob);
+		}
 		return blob.toByteArray();		
 	}
 
@@ -1355,10 +1391,13 @@ public class SonetService extends Service {
 		boolean widgetUpdateReady = SonetService.sWidgetsTasks.isEmpty() || !SonetService.sWidgetsTasks.containsKey(widget);
 		if (!widgetUpdateReady) {
 			ArrayList<AsyncTask<String, Void, String>> tasks = SonetService.sWidgetsTasks.get(widget);
-			if (tasks.isEmpty()) widgetUpdateReady = true;
-			else {
+			if (tasks.isEmpty()) {
+				widgetUpdateReady = true;
+			} else {
 				Iterator<AsyncTask<String, Void, String>> itr = tasks.iterator();
-				while (itr.hasNext() && !widgetUpdateReady) widgetUpdateReady = itr.next().getStatus() == AsyncTask.Status.FINISHED;
+				while (itr.hasNext() && !widgetUpdateReady) {
+					widgetUpdateReady = itr.next().getStatus() == AsyncTask.Status.FINISHED;
+				}
 			}
 		}
 		if (widgetUpdateReady) {

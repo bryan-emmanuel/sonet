@@ -60,8 +60,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		this.setResult(RESULT_CANCELED);
-
 		setContentView(R.layout.accounts);
 		AdView adView = new AdView(this, AdSize.BANNER, Sonet.GOOGLE_AD_ID);
 		((LinearLayout) findViewById(R.id.ad)).addView(adView);
@@ -70,16 +68,27 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		Intent intent = getIntent();
 		if (intent != null) {
 			Bundle extras = intent.getExtras();
-			if (extras != null) mAppWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+			if (extras != null) {
+				mAppWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+			}
 			// if called from widget, the id is set in the action, as pendingintents must have a unique action
-			else if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH)) && (!intent.getAction().equals(Intent.ACTION_VIEW))) mAppWidgetId = Integer.parseInt(intent.getAction());
+			else if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH)) && (!intent.getAction().equals(Intent.ACTION_VIEW))) {
+				mAppWidgetId = Integer.parseInt(intent.getAction());
+			}
 		}
+
+		Intent resultValue = new Intent();
+		resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
+		setResult(RESULT_OK, resultValue);
+		
 		registerForContextMenu(getListView());
 		((Button) findViewById(R.id.default_widget_settings)).setOnClickListener(this);
 		((Button) findViewById(R.id.button_add_account)).setOnClickListener(this);
 		((Button) findViewById(R.id.save)).setOnClickListener(this);
 		
-		if (mAppWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) finish();
+		if (mAppWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+			finish();
+		}
 	}
 
 	@Override
@@ -154,18 +163,14 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		super.onResume();
 		listAccounts();
 		mAddingAccount = false;
-		if (mUpdateWidget && mHasAccounts) {
-			Intent resultValue = new Intent();
-			resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
-			setResult(RESULT_OK, resultValue);
-		}
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
-		if (!mAddingAccount && mUpdateWidget) startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
-		else if (!mHasAccounts) {
+		if (!mAddingAccount && mUpdateWidget) {
+			startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
+		} else if (!mHasAccounts) {
 			// clean up any setup for this widget
 			getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=" + mAppWidgetId, null);
 			getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=" + mAppWidgetId, null);

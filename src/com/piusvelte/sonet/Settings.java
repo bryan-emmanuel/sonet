@@ -437,9 +437,14 @@ public class Settings extends Activity implements View.OnClickListener, OnChecke
 
 	@Override
 	public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-		if (buttonView == mHasButtons) updateDatabase(Widgets.HASBUTTONS, isChecked ? 1 : 0);
-		else if (buttonView == mTime24hr) updateDatabase(Widgets.TIME24HR, isChecked ? 1 : 0);
-		else if (buttonView == mIcon) updateDatabase(Widgets.ICON, isChecked ? 1 : 0);
-		else if (buttonView == mBackgroundUpdate) updateDatabase(Widgets.BACKGROUND_UPDATE, isChecked ? 1 : 0);
+		if (buttonView == mHasButtons) {
+			updateDatabase(Widgets.HASBUTTONS, isChecked ? 1 : 0);
+		} else if (buttonView == mTime24hr) {
+			updateDatabase(Widgets.TIME24HR, isChecked ? 1 : 0);
+		} else if (buttonView == mIcon) {
+			updateDatabase(Widgets.ICON, isChecked ? 1 : 0);
+		} else if (buttonView == mBackgroundUpdate) {
+			updateDatabase(Widgets.BACKGROUND_UPDATE, isChecked ? 1 : 0);
+		}
 	}
 }

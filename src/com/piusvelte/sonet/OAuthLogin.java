@@ -275,8 +275,11 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 								String[] parameters = (u.getQuery() + "&" + u.getRef()).split("&");
 								for (String parameter : parameters) {
 									String[] param = parameter.split("=");
-									if (TOKEN.equals(param[0])) token = param[1];
-									else if (EXPIRES.equals(param[0])) expiry = param[1] == "0" ? 0 : (int) System.currentTimeMillis() + Integer.parseInt(param[1]) * 1000;
+									if (TOKEN.equals(param[0])) {
+										token = param[1];
+									} else if (EXPIRES.equals(param[0])) {
+										expiry = param[1] == "0" ? 0 : (int) System.currentTimeMillis() + Integer.parseInt(param[1]) * 1000;
+									}
 								}
 								String response = Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_URL_ME, FACEBOOK_BASE_URL, TOKEN, token)));
 								if (response != null) {
@@ -320,14 +323,18 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 									String response = mSonetOAuth.httpResponse(httpGet);
 									if (response != null) {
 										JSONObject jobj = new JSONObject(response);
-										if (jobj.has("firstName") && jobj.has("id")) addAccount(jobj.getString("firstName") + " " + jobj.getString("lastName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, LINKEDIN, jobj.getString("id"));
+										if (jobj.has("firstName") && jobj.has("id")) {
+											addAccount(jobj.getString("firstName") + " " + jobj.getString("lastName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, LINKEDIN, jobj.getString("id"));
+										}
 									}
 								}
 								//							} else if (uri.getHost().contains("salesforce.com") && (uri.getQueryParameter("oauth_consumer_key") == null)) {
 								//								Log.v(TAG,"load:"+url + "&oauth_consumer_key=" + SALESFORCE_KEY);
 								//								view.loadUrl(url + "&oauth_consumer_key=" + SALESFORCE_KEY);
 								//								return true;
-							} else return false;// allow google to redirect
+							} else {
+								return false;// allow google to redirect
+							}
 						} catch (JSONException e) {
 							Log.e(TAG, e.getMessage());
 						} catch (IOException e) {
@@ -346,8 +353,11 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 		}
 
 		public void open(String url) {
-			if (url != null) mWebView.loadUrl(url);
-			else OAuthLogin.this.finish();
+			if (url != null) {
+				mWebView.loadUrl(url);
+			} else {
+				OAuthLogin.this.finish();
+			}
 		}
 
 	}

@@ -69,8 +69,12 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 		((LinearLayout) findViewById(R.id.ad)).addView(adView);
 		adView.loadAd(new AdRequest());
 		Intent i = getIntent();
-		if (i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
-		if (i.hasExtra(Sonet.EXTRA_ACCOUNT_ID)) mAccountId = i.getLongExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID);
+		if (i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
+			mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
+		}
+		if (i.hasExtra(Sonet.EXTRA_ACCOUNT_ID)) {
+			mAccountId = i.getLongExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID);
+		}
 
 		mMessages_bg_color = (Button) findViewById(R.id.messages_bg_color);
 		mMessages_color = (Button) findViewById(R.id.messages_color);
@@ -352,7 +356,10 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 
 	@Override
 	public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-		if (buttonView == mTime24hr) updateDatabase(Widgets.TIME24HR, isChecked ? 1 : 0);
-		else if (buttonView == mIcon) updateDatabase(Widgets.ICON, isChecked ? 1 : 0);
+		if (buttonView == mTime24hr) {
+			updateDatabase(Widgets.TIME24HR, isChecked ? 1 : 0);
+		} else if (buttonView == mIcon) {
+			updateDatabase(Widgets.ICON, isChecked ? 1 : 0);
+		}
 	}
 }

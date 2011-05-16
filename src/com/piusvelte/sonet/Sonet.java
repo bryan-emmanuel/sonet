@@ -200,9 +200,9 @@ public class Sonet {
 	protected static final int INVALID_SERVICE = -1;
 
 	protected static final int default_interval = 3600000;
-	protected static final int default_buttons_bg_color = 0x99000000;
+	protected static final int default_buttons_bg_color = 0xAA000000;
 	protected static final int default_buttons_color = -1;
-	protected static final int default_message_bg_color = 0x99000000;
+	protected static final int default_message_bg_color = 0xAA000000;
 	protected static final int default_message_color = -1;
 	protected static final int default_friend_color = -1;
 	protected static final int default_created_color = -1;
