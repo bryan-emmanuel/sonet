@@ -20,8 +20,8 @@
 package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
+import static com.piusvelte.sonet.SonetAccountManager.ACCOUNTS_URI;
 
-import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
 
 import android.app.Activity;
@@ -71,7 +71,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 			startActivity(new Intent(this, SonetComments.class).setData(mData));
 			break;
 		case POST:
-			startActivity(new Intent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.CONTENT_URI, Long.toString(mAccount))));
+			startActivity(new Intent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(ACCOUNTS_URI, Long.toString(mAccount))));
 			break;
 		case SETTINGS:
 			startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));

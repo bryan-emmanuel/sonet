@@ -19,6 +19,8 @@
  */
 package com.piusvelte.sonet;
 
+import static com.piusvelte.sonet.SonetAccountManager.ACCOUNTS_URI;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -111,15 +113,16 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 	private static final String TAG = "SonetCreatePost";
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private HashMap<Integer, String> mAccountsToPost = new HashMap<Integer, String>();
-	private Uri mData;
 	private EditText mMessage;
 	private Button mSend;
 	private Button mLocation;
 	private Button mAccounts;
 	private TextView mCount;
 	private ProgressDialog mLoadingDialog;
+	private String mAccount;
 	private String mLat = null,
 	mLong = null;
+	SonetAccountManager mSonetAccountManager;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -131,7 +134,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		AdView adView = new AdView(this, AdSize.BANNER, Sonet.GOOGLE_AD_ID);
 		((LinearLayout) findViewById(R.id.ad)).addView(adView);
 		adView.loadAd(new AdRequest());
-
+		
 		mMessage = (EditText) findViewById(R.id.message);
 		mSend = (Button) findViewById(R.id.send);
 		mLocation = (Button) findViewById(R.id.location);
@@ -139,20 +142,14 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		mCount = (TextView) findViewById(R.id.count);
 		Intent intent = getIntent();
 		if (intent != null) {
-			mData = intent.getData();
-			Cursor account;
-			if (mData.toString().contains(Accounts.CONTENT_URI.toString())) {
-				// default to the account passed in, but allow selecting additional accounts
-				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.WIDGET, ACCOUNTS_QUERY}, Accounts._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
-				if (account.moveToFirst()) {
-					mAppWidgetId = account.getInt(account.getColumnIndex(Accounts.WIDGET));
-					mAccountsToPost.put(account.getInt(account.getColumnIndex(Accounts._ID)), null);
-					mAccounts.setText(account.getString(account.getColumnIndex(Accounts.USERNAME)));
-				}
-				account.close();
+			Uri data = intent.getData();
+			// match uri
+			if (data.toString().contains(ACCOUNTS_URI.toString())) {
+				mAccount = data.getLastPathSegment();
 			} else {
 				// default widget post
-				mAppWidgetId = Integer.parseInt(mData.getLastPathSegment());
+				mAccount = null;
+				mAppWidgetId = Integer.parseInt(data.getLastPathSegment());
 			}
 			mAccounts.setEnabled(true);
 			mAccounts.setOnClickListener(this);
@@ -163,10 +160,33 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		mMessage.setOnKeyListener(this);
 		mSend.setOnClickListener(this);
 	}
+	
+	@Override
+	protected void onResume() {
+		mSonetAccountManager = new SonetAccountManager(this);
+		if (mAccount != null) {
+			// default to the account passed in, but allow selecting additional accounts
+			Cursor account = mSonetAccountManager.query(new String[]{Accounts._ID, Accounts.WIDGET, ACCOUNTS_QUERY}, Accounts._ID + "=?", new String[]{mAccount}, null);
+			if (account.moveToFirst()) {
+				mAppWidgetId = account.getInt(account.getColumnIndex(Accounts.WIDGET));
+				mAccountsToPost.put(account.getInt(account.getColumnIndex(Accounts._ID)), null);
+				mAccounts.setText(account.getString(account.getColumnIndex(Accounts.USERNAME)));
+			}
+			account.close();
+		}
+	}
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		if (mSonetAccountManager != null) {
+			mSonetAccountManager.close();
+		}		
+	}
 
 	private void setLocation(final int accountId) {
 		final AsyncTask<String, Void, String> asyncTask;
-		Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SERVICE, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Integer.toString(accountId)}, null);
+		Cursor account = mSonetAccountManager.query(new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SERVICE, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Integer.toString(accountId)}, null);
 		if (account.moveToFirst()) {
 			switch (account.getInt(account.getColumnIndex(Accounts.SERVICE))) {
 			case TWITTER:
@@ -383,7 +403,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					Iterator<Integer> accountIds = mAccountsToPost.keySet().iterator();
 					HashMap<Integer, String> accountEntries = new HashMap<Integer, String>();
 					while (accountIds.hasNext()) {
-						Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Integer.toString(accountIds.next())}, null);
+						Cursor account = mSonetAccountManager.query(new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Integer.toString(accountIds.next())}, null);
 						if (account.moveToFirst()) {
 							int service = account.getInt(account.getColumnIndex(Accounts.SERVICE));
 							// only get accounts which have been selected and are supported for location
@@ -434,7 +454,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					final int accountId = entry.getKey();
 					final String placeId = entry.getValue();
 					// post or comment!
-					Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Integer.toString(accountId)}, null);
+					Cursor account = mSonetAccountManager.query(new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Integer.toString(accountId)}, null);
 					if (account.moveToFirst()) {
 						AsyncTask<String, Void, String> asyncTask;
 						switch (account.getInt(account.getColumnIndex(Accounts.SERVICE))) {
@@ -645,7 +665,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				mLocation.setEnabled(true);
 			}
 		} else if (v == mAccounts) {
-			Cursor c = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)}, null);
+			Cursor c = mSonetAccountManager.query(new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)}, null);
 			if (c.moveToFirst()) {
 				int iid = c.getColumnIndex(Accounts._ID),
 				iusername = c.getColumnIndex(Accounts.USERNAME),

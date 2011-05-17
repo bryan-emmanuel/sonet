@@ -121,12 +121,14 @@ public class SonetService extends Service {
 	private static HashMap<String, ArrayList<AsyncTask<String, Void, String>>> sWidgetsTasks = new HashMap<String, ArrayList<AsyncTask<String, Void, String>>>();
 	private AlarmManager mAlarmManager;
 	private ConnectivityManager mConnectivityManager;
+	private SonetAccountManager mSonetAccountManager = new SonetAccountManager(this);
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
 		mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 		mConnectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+		mSonetAccountManager = new SonetAccountManager(this);
 	}
 
 	@Override
@@ -185,7 +187,7 @@ public class SonetService extends Service {
 					this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 				}
 				settings.close();
-				Cursor account_updates = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE}, Accounts.SID + " is null or " + Accounts.SID + "=\"\"", null, null);
+				Cursor account_updates = mSonetAccountManager.query(new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE}, Accounts.SID + " is null or " + Accounts.SID + "=\"\"", null, null);
 				if (account_updates.moveToFirst()) {
 					int iid = account_updates.getColumnIndex(Accounts._ID),
 					itoken = account_updates.getColumnIndex(Accounts.TOKEN),
@@ -278,11 +280,11 @@ public class SonetService extends Service {
 				/* get statuses for all accounts
 				 * then sort them by datetime, descending
 				 */
-				Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{appWidgetId}, null);
+				Cursor accounts = mSonetAccountManager.query(new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{appWidgetId}, null);
 				if (!accounts.moveToFirst()) {
 					// check for old accounts without appwidgetid
 					accounts.close();
-					accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{""}, null);
+					accounts = mSonetAccountManager.query(new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{""}, null);
 					if (accounts.moveToFirst()) {
 						// upgrade the accounts, adding the appwidgetid
 						int username = accounts.getColumnIndex(Accounts.USERNAME),
@@ -299,13 +301,13 @@ public class SonetService extends Service {
 							values.put(Accounts.EXPIRY, accounts.getInt(expiry));
 							values.put(Accounts.WIDGET, appWidgetId);
 							values.put(Accounts.SID, "");
-							this.getContentResolver().insert(Accounts.CONTENT_URI, values);
+							mSonetAccountManager.insert(values);
 							accounts.moveToNext();
 						}
 					}
 					accounts.close();
-					this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=?", new String[]{""});
-					accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{appWidgetId}, null);
+					mSonetAccountManager.delete(Accounts._ID + "=?", new String[]{""});
+					accounts = mSonetAccountManager.query(new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{appWidgetId}, null);
 				}
 				if (accounts.moveToFirst()) {
 					// load the updates
@@ -1286,6 +1288,12 @@ public class SonetService extends Service {
 			}
 		}
 	}
+	
+	@Override
+	public void onDestroy() {
+		mSonetAccountManager.close();
+		super.onDestroy();
+	}
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -1338,7 +1346,7 @@ public class SonetService extends Service {
 	private void updateAccount(String accountId, String sid) {
 		ContentValues values = new ContentValues();
 		values.put(Accounts.SID, String.format(SID_FORMAT, sid));
-		this.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{accountId});
+		mSonetAccountManager.update(values, Accounts._ID + "=?", new String[]{accountId});
 	}
 
 	private void addStatusItem(long created, String friend, String url, String message, String service, boolean time24hr, String appWidgetId, String accountId, String sid, String esid) {
@@ -1443,7 +1451,7 @@ public class SonetService extends Service {
 			map_friend_bg_clear = {R.id.friend_bg_clear0, R.id.friend_bg_clear1, R.id.friend_bg_clear2, R.id.friend_bg_clear3, R.id.friend_bg_clear4, R.id.friend_bg_clear5, R.id.friend_bg_clear6, R.id.friend_bg_clear7, R.id.friend_bg_clear8, R.id.friend_bg_clear9, R.id.friend_bg_clear10, R.id.friend_bg_clear11, R.id.friend_bg_clear12, R.id.friend_bg_clear13, R.id.friend_bg_clear14, R.id.friend_bg_clear15},
 			map_message_bg_clear = {R.id.message_bg_clear0, R.id.message_bg_clear1, R.id.message_bg_clear2, R.id.message_bg_clear3, R.id.message_bg_clear4, R.id.message_bg_clear5, R.id.message_bg_clear6, R.id.message_bg_clear7, R.id.message_bg_clear8, R.id.message_bg_clear9, R.id.message_bg_clear10, R.id.message_bg_clear11, R.id.message_bg_clear12, R.id.message_bg_clear13, R.id.message_bg_clear14, R.id.message_bg_clear15},
 			map_icon = {R.id.icon0, R.id.icon1, R.id.icon2, R.id.icon3, R.id.icon4, R.id.icon5, R.id.icon6, R.id.icon7, R.id.icon8, R.id.icon9, R.id.icon10, R.id.icon11, R.id.icon12, R.id.icon13, R.id.icon14, R.id.icon15};
-			Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID}, Accounts.WIDGET + "=?", new String[]{widget}, null);
+			Cursor accounts = mSonetAccountManager.query(new String[]{Accounts._ID}, Accounts.WIDGET + "=?", new String[]{widget}, null);
 			if (accounts.moveToFirst()) {
 				Cursor statuses_styles = this.getContentResolver().query(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, widget), new String[]{Statuses_styles._ID, Statuses_styles.CREATED, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.SERVICE, Statuses_styles.CREATEDTEXT, Statuses_styles.WIDGET, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON}, null, null, Statuses_styles.CREATED + " desc");
 				if (statuses_styles.moveToFirst()) {

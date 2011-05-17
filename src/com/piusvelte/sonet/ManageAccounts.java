@@ -55,6 +55,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	private boolean mHasAccounts = false,
 	mAddingAccount,
 	mUpdateWidget = false;
+	SonetAccountManager mSonetAccountManager;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -89,6 +90,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		if (mAppWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
 			finish();
 		}
+		
 	}
 
 	@Override
@@ -104,7 +106,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 				switch (which) {
 				case REAUTH_ID:
 					// need the account id if reauthenticating
-					Cursor c = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(item)}, null);
+					Cursor c = mSonetAccountManager.query(new String[]{Accounts._ID, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(item)}, null);
 					if (c.moveToFirst()) {
 						mAddingAccount = true;
 						startActivityForResult(new Intent(ManageAccounts.this, OAuthLogin.class).putExtra(Accounts.SERVICE, c.getInt(c.getColumnIndex(Accounts.SERVICE))).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, item), RESULT_REFRESH);
@@ -131,7 +133,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	public boolean onContextItemSelected(MenuItem item) {
 		if (item.getItemId() == DELETE_ID) {
 			mUpdateWidget = true;
-			getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=?", new String[]{Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
+			mSonetAccountManager.delete(Accounts._ID + "=?", new String[]{Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
 			// need to delete the statuses and settings for this account
 			getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
 			getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
@@ -161,6 +163,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	@Override
 	protected void onResume() {
 		super.onResume();
+		mSonetAccountManager = new SonetAccountManager(this);
 		listAccounts();
 		mAddingAccount = false;
 	}
@@ -175,6 +178,9 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=" + mAppWidgetId, null);
 			getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=" + mAppWidgetId, null);
 		}
+		if (mSonetAccountManager != null) {
+			mSonetAccountManager.close();
+		}
 	}
 	
 	@Override
@@ -187,7 +193,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 
 	private void listAccounts() {
 		// prepend service name to username
-		Cursor c = this.managedQuery(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)}, null);
+		Cursor c = mSonetAccountManager.query(new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)}, null);
 		mHasAccounts = c.getCount() != 0;
 		setListAdapter(new SimpleCursorAdapter(ManageAccounts.this, R.layout.accounts_row, c, new String[] {Accounts.USERNAME}, new int[] {R.id.account_username}));
 	}
