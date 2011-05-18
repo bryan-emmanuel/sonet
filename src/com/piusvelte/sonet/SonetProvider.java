@@ -247,9 +247,6 @@ public class SonetProvider extends ContentProvider {
 	@Override
 	public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String orderBy) {
 		SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
-		
-		//TODO:
-		android.util.Log.v("SonetProvider","path:"+uri.toString());
 
 		switch (sUriMatcher.match(uri)) {
 		case ACCOUNTS:

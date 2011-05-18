@@ -19,8 +19,8 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.piusvelte.sonet" android:versionCode="232"
-	android:versionName="2.3.2" android:installLocation="auto">
+	package="com.piusvelte.sonet" android:versionCode="234"
+	android:versionName="2.3.4" android:installLocation="auto">
 	<application android:icon="@drawable/icon" android:label="@string/app_name">
 		<activity android:name=".About" android:label="@string/app_name">
 			<intent-filter>
@@ -88,8 +88,7 @@
 		<service android:name=".SonetService" />
 		<service android:name=".SonetScrollableBuilder" />
 		<provider android:name=".SonetProvider" android:authorities="com.piusvelte.sonet.SonetProvider"
-			android:multiprocess="true" android:grantUriPermissions="true">
-		</provider>
+			android:multiprocess="true" android:grantUriPermissions="true" />
 	</application>
 
 	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />

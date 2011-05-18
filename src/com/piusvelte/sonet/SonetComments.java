@@ -707,14 +707,14 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 			account.close();
 		}
 	}
-	
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		boolean result = super.onCreateOptionsMenu(menu);
 		menu.add(0, Menu.FIRST, 0, getString(R.string.button_refresh)).setIcon(android.R.drawable.ic_menu_rotate);
 		return result;
 	}
-	
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
@@ -804,7 +804,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 	@Override
 	public void onTextChanged(CharSequence s, int start, int before, int count) {
 	}
-	
+
 	private void loadComments() {
 		mComments.clear();
 		HashMap<String, String> commentMap = new HashMap<String, String>();
@@ -852,6 +852,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 
 			@Override
 			protected void onPostExecute(String response) {
+				mComments.clear();
 				if (response != null) {
 					try {
 						JSONArray comments;
@@ -859,31 +860,45 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 						case FACEBOOK:
 							comments = new JSONObject(response).getJSONArray("data");
 							if (comments.length() > 0) {
-								mComments.clear();
-							}
-							for (int i = 0; i < comments.length(); i++) {
-								JSONObject comment = comments.getJSONObject(i);
+								for (int i = 0; i < comments.length(); i++) {
+									JSONObject comment = comments.getJSONObject(i);
+									HashMap<String, String> commentMap = new HashMap<String, String>();
+									commentMap.put(Statuses.SID, comment.getString("id"));
+									commentMap.put(Entities.FRIEND, comment.getJSONObject("from").getString("name"));
+									commentMap.put(Statuses.MESSAGE, comment.getString("message"));
+									commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(comment.getLong("created_time") * 1000, mTime24hr));
+									commentMap.put(getString(R.string.like), getString(comment.has("user_likes") && comment.getBoolean("user_likes") ? R.string.unlike : R.string.like));
+									mComments.add(commentMap);
+								}
+							} else {
 								HashMap<String, String> commentMap = new HashMap<String, String>();
-								commentMap.put(Statuses.SID, comment.getString("id"));
-								commentMap.put(Entities.FRIEND, comment.getJSONObject("from").getString("name"));
-								commentMap.put(Statuses.MESSAGE, comment.getString("message"));
-								commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(comment.getLong("created_time") * 1000, mTime24hr));
-								commentMap.put(getString(R.string.like), getString(comment.has("user_likes") && comment.getBoolean("user_likes") ? R.string.unlike : R.string.like));
+								commentMap.put(Statuses.SID, "");
+								commentMap.put(Entities.FRIEND, "");
+								commentMap.put(Statuses.MESSAGE, getString(R.string.no_comments));
+								commentMap.put(Statuses.CREATEDTEXT, "");
+								commentMap.put(getString(R.string.like), "");
 								mComments.add(commentMap);
 							}
 							break;
 						case MYSPACE:
 							comments = new JSONObject(response).getJSONArray("entry");
 							if (comments.length() > 0) {
-								mComments.clear();
-							}
-							for (int i = 0; i < comments.length(); i++) {
-								JSONObject entry = comments.getJSONObject(i);
+								for (int i = 0; i < comments.length(); i++) {
+									JSONObject entry = comments.getJSONObject(i);
+									HashMap<String, String> commentMap = new HashMap<String, String>();
+									commentMap.put(Statuses.SID, entry.getString("commentId"));
+									commentMap.put(Entities.FRIEND, entry.getJSONObject("author").getString("displayName"));
+									commentMap.put(Statuses.MESSAGE, entry.getString("body"));
+									commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(Sonet.parseDate(entry.getString("postedDate"), MYSPACE_DATE_FORMAT), mTime24hr));
+									commentMap.put(getString(R.string.like), "");
+									mComments.add(commentMap);
+								}
+							} else {
 								HashMap<String, String> commentMap = new HashMap<String, String>();
-								commentMap.put(Statuses.SID, entry.getString("commentId"));
-								commentMap.put(Entities.FRIEND, entry.getJSONObject("author").getString("displayName"));
-								commentMap.put(Statuses.MESSAGE, entry.getString("body"));
-								commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(Sonet.parseDate(entry.getString("postedDate"), MYSPACE_DATE_FORMAT), mTime24hr));
+								commentMap.put(Statuses.SID, "");
+								commentMap.put(Entities.FRIEND, "");
+								commentMap.put(Statuses.MESSAGE, getString(R.string.no_comments));
+								commentMap.put(Statuses.CREATEDTEXT, "");
 								commentMap.put(getString(R.string.like), "");
 								mComments.add(commentMap);
 							}
@@ -893,16 +908,23 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							if (data.has("items")) {
 								comments = data.getJSONArray("items");
 								if (comments.length() > 0) {
-									mComments.clear();
-								}
-								for (int i = 0; i < comments.length(); i++) {
-									JSONObject comment = comments.getJSONObject(i);
-									String id = comment.getString("id");
+									for (int i = 0; i < comments.length(); i++) {
+										JSONObject comment = comments.getJSONObject(i);
+										String id = comment.getString("id");
+										HashMap<String, String> commentMap = new HashMap<String, String>();
+										commentMap.put(Statuses.SID, id);
+										commentMap.put(Entities.FRIEND, comment.getJSONObject("actor").getString("name"));
+										commentMap.put(Statuses.MESSAGE, comment.getString("content"));
+										commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(Sonet.parseDate(comment.getString("published"), BUZZ_DATE_FORMAT), mTime24hr));
+										commentMap.put(getString(R.string.like), "");
+										mComments.add(commentMap);
+									}
+								} else {
 									HashMap<String, String> commentMap = new HashMap<String, String>();
-									commentMap.put(Statuses.SID, id);
-									commentMap.put(Entities.FRIEND, comment.getJSONObject("actor").getString("name"));
-									commentMap.put(Statuses.MESSAGE, comment.getString("content"));
-									commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(Sonet.parseDate(comment.getString("published"), BUZZ_DATE_FORMAT), mTime24hr));
+									commentMap.put(Statuses.SID, "");
+									commentMap.put(Entities.FRIEND, "");
+									commentMap.put(Statuses.MESSAGE, getString(R.string.no_comments));
+									commentMap.put(Statuses.CREATEDTEXT, "");
 									commentMap.put(getString(R.string.like), "");
 									mComments.add(commentMap);
 								}
@@ -913,16 +935,23 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							if (jsonResponse.has("_total") && (jsonResponse.getInt("_total") != 0)) {
 								comments = jsonResponse.getJSONArray("values");
 								if (comments.length() > 0) {
-									mComments.clear();
-								}
-								for (int i = 0; i < comments.length(); i++) {
-									JSONObject comment = comments.getJSONObject(i);
-									JSONObject person = comment.getJSONObject("person");
+									for (int i = 0; i < comments.length(); i++) {
+										JSONObject comment = comments.getJSONObject(i);
+										JSONObject person = comment.getJSONObject("person");
+										HashMap<String, String> commentMap = new HashMap<String, String>();
+										commentMap.put(Statuses.SID, comment.getString("id"));
+										commentMap.put(Entities.FRIEND, person.getString("firstName") + " " + person.getString("lastName"));
+										commentMap.put(Statuses.MESSAGE, comment.getString("comment"));
+										commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(comment.getLong("timestamp"), mTime24hr));
+										commentMap.put(getString(R.string.like), "");
+										mComments.add(commentMap);
+									}
+								} else {
 									HashMap<String, String> commentMap = new HashMap<String, String>();
-									commentMap.put(Statuses.SID, comment.getString("id"));
-									commentMap.put(Entities.FRIEND, person.getString("firstName") + " " + person.getString("lastName"));
-									commentMap.put(Statuses.MESSAGE, comment.getString("comment"));
-									commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(comment.getLong("timestamp"), mTime24hr));
+									commentMap.put(Statuses.SID, "");
+									commentMap.put(Entities.FRIEND, "");
+									commentMap.put(Statuses.MESSAGE, getString(R.string.no_comments));
+									commentMap.put(Statuses.CREATEDTEXT, "");
 									commentMap.put(getString(R.string.like), "");
 									mComments.add(commentMap);
 								}
@@ -931,16 +960,23 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 						case FOURSQUARE:
 							comments = new JSONObject(response).getJSONObject("response").getJSONObject("checkin").getJSONObject("comments").getJSONArray("items");
 							if (comments.length() > 0) {
-								mComments.clear();
-							}
-							for (int i = 0; i < comments.length(); i++) {
-								JSONObject comment = comments.getJSONObject(i);
-								JSONObject user = comment.getJSONObject("user");
+								for (int i = 0; i < comments.length(); i++) {
+									JSONObject comment = comments.getJSONObject(i);
+									JSONObject user = comment.getJSONObject("user");
+									HashMap<String, String> commentMap = new HashMap<String, String>();
+									commentMap.put(Statuses.SID, comment.getString("id"));
+									commentMap.put(Entities.FRIEND, user.getString("firstName") + " " + user.getString("lastName"));
+									commentMap.put(Statuses.MESSAGE, comment.getString("text"));
+									commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(comment.getLong("createdAt") * 1000, mTime24hr));
+									commentMap.put(getString(R.string.like), "");
+									mComments.add(commentMap);
+								}
+							} else {
 								HashMap<String, String> commentMap = new HashMap<String, String>();
-								commentMap.put(Statuses.SID, comment.getString("id"));
-								commentMap.put(Entities.FRIEND, user.getString("firstName") + " " + user.getString("lastName"));
-								commentMap.put(Statuses.MESSAGE, comment.getString("text"));
-								commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(comment.getLong("createdAt") * 1000, mTime24hr));
+								commentMap.put(Statuses.SID, "");
+								commentMap.put(Entities.FRIEND, "");
+								commentMap.put(Statuses.MESSAGE, getString(R.string.no_comments));
+								commentMap.put(Statuses.CREATEDTEXT, "");
 								commentMap.put(getString(R.string.like), "");
 								mComments.add(commentMap);
 							}
