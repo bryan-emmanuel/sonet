@@ -54,6 +54,7 @@ public class Sonet {
 	protected static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
 	protected static final String ACTION_BUILD_SCROLL = "com.piusvelte.sonet.Sonet.BUILD_SCROLL";
 	protected static final String EXTRA_ACCOUNT_ID = "com.piusvelte.sonet.Sonet.ACCOUNT_ID";
+	protected static final String EXTRA_SCROLLABLE_VERSION = "com.piusvelte.sonet.Sonet.SCROLLABLE_VERSION";
 	protected static final long INVALID_ACCOUNT_ID = -1;
 	protected static final int RESULT_REFRESH = 1;
 	protected static final String GOOGLE_AD_ID = "a14d5598b4afd11";
@@ -120,6 +121,7 @@ public class Sonet {
 	protected static final String FOURSQUARE_URL_FEED = "%scheckins/recent?limit=%s&oauth_token=%s";
 	protected static final String FOURSQUARE_CHECKIN = "%scheckins/add?venueId=%s&shout=%s&ll=%s,%s&broadcast=public&oauth_token=%s";
 	protected static final String FOURSQUARE_CHECKIN_NO_VENUE = "%scheckins/add?shout=%s&broadcast=public&oauth_token=%s";
+	protected static final String FOURSQUARE_CHECKIN_NO_SHOUT = "%scheckins/add?venueId=%s&ll=%s,%s&broadcast=public&oauth_token=%s";
 	protected static final String FOURSQUARE_ADDCOMMENT = "%scheckins/%s/addcomment?text=%s&oauth_token=%s";
 	protected static final String FOURSQUARE_SEARCH = "%svenues/search?ll=%s,%s&intent=checkin&oauth_token=%s";
 	protected static final String FOURSQUARE_GET_CHECKIN = "%scheckins/%s?oauth_token=%s";
@@ -302,6 +304,7 @@ public class Sonet {
 		}
 
 		public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/statuses_styles");
+		public static final Uri CONTENT_URI_V1 = Uri.parse("content://" + SonetProvider.AUTHORITY + "/statuses_styles_v1");
 
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.statuses_styles";
 

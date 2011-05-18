@@ -172,6 +172,7 @@ public class Settings extends Activity implements View.OnClickListener, OnChecke
 				values.put(Widgets.ICON, 1);
 				values.put(Widgets.STATUSES_PER_ACCOUNT, mStatuses_per_account_value);
 				values.put(Widgets.BACKGROUND_UPDATE, 1);
+				values.put(Widgets.SCROLLABLE, 0);
 				this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 			}
 			d.close();
@@ -195,6 +196,7 @@ public class Settings extends Activity implements View.OnClickListener, OnChecke
 			values.put(Widgets.ICON, 1);
 			values.put(Widgets.STATUSES_PER_ACCOUNT, mStatuses_per_account_value);
 			values.put(Widgets.BACKGROUND_UPDATE, 1);
+			values.put(Widgets.SCROLLABLE, 0);
 			mWidgetSettingsId = this.getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
 		}
 		c.close();

@@ -20,6 +20,7 @@
 package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
+import static com.piusvelte.sonet.Sonet.EXTRA_SCROLLABLE_VERSION;
 
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
@@ -50,6 +51,8 @@ public class SonetWidget extends AppWidgetProvider {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		String action = intent.getAction();
+		//TODO
+		Log.v(TAG, "action:"+action);
 		if (action.equals(ACTION_REFRESH)) {
 			int[] appWidgetIds;
 			if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
@@ -68,11 +71,11 @@ public class SonetWidget extends AppWidgetProvider {
 				super.onReceive(context, intent);
 			}
 		} else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_READY)) {
-			if (intent.getExtras().getInt(LauncherIntent.Extra.EXTRA_API_VERSION, 1) >= 2) {
-				int widget = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
-				Sonet.sWidgetsContext.put(widget, context);
-				context.startService(new Intent(context, SonetScrollableBuilder.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widget));
-			}
+			//TODO: find out which launchers support what features
+			Log.v(TAG,"version:"+intent.getExtras().getInt(LauncherIntent.Extra.EXTRA_API_VERSION, 1));
+			int widget = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+			Sonet.sWidgetsContext.put(widget, context);
+			context.startService(new Intent(context, SonetScrollableBuilder.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widget).putExtra(EXTRA_SCROLLABLE_VERSION, intent.getExtras().getInt(LauncherIntent.Extra.EXTRA_API_VERSION, 1)));
 		} else if (Sonet.ACTION_BUILD_SCROLL.equals(action)) {
 			int widget = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 			Sonet.sWidgetsContext.put(widget, context);
@@ -100,6 +103,8 @@ public class SonetWidget extends AppWidgetProvider {
 
 	private void onClick(Context context, Intent intent) {
 		// send all onClick events to StatusDialog
+		//TODO
+		Log.v(TAG,"onClick");
 		context.startActivity(new Intent(context, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, intent.getStringExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 	}
 

@@ -58,6 +58,7 @@ import static com.piusvelte.sonet.Sonet.FOURSQUARE;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_BASE_URL;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_CHECKIN;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_CHECKIN_NO_VENUE;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE_CHECKIN_NO_SHOUT;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_SEARCH;
 import static com.piusvelte.sonet.Sonet.LINKEDIN;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
@@ -153,11 +154,11 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				// default widget post
 				mAppWidgetId = Integer.parseInt(data.getLastPathSegment());
 			}
-			mAccounts.setEnabled(true);
-			mAccounts.setOnClickListener(this);
-			mLocation.setEnabled(true);
-			mLocation.setOnClickListener(this);
 		}
+		mAccounts.setEnabled(true);
+		mAccounts.setOnClickListener(this);
+		mLocation.setEnabled(true);
+		mLocation.setOnClickListener(this);
 		mMessage.addTextChangedListener(this);
 		mMessage.setOnKeyListener(this);
 		mSend.setOnClickListener(this);
@@ -373,52 +374,56 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 			if (mAccountsToPost.size() > 0) {
 				LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
 				Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-				mLat = Double.toString(location.getLatitude());
-				mLong = Double.toString(location.getLongitude());
-				if (mAccountsToPost.size() == 1) {
-					setLocation(mAccountsToPost.keySet().iterator().next());
+				if (location != null) {
+					mLat = Double.toString(location.getLatitude());
+					mLong = Double.toString(location.getLongitude());
+					if (mAccountsToPost.size() == 1) {
+						setLocation(mAccountsToPost.keySet().iterator().next());
+					} else {
+						// dialog to select an account
+						Iterator<Integer> accountIds = mAccountsToPost.keySet().iterator();
+						HashMap<Integer, String> accountEntries = new HashMap<Integer, String>();
+						while (accountIds.hasNext()) {
+							Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Integer.toString(accountIds.next())}, null);
+							if (account.moveToFirst()) {
+								int service = account.getInt(account.getColumnIndex(Accounts.SERVICE));
+								// only get accounts which have been selected and are supported for location
+								if ((service == TWITTER) || (service == FACEBOOK) || (service == FOURSQUARE)) {
+									accountEntries.put(account.getInt(account.getColumnIndex(Accounts._ID)), account.getString(account.getColumnIndex(Accounts.USERNAME)));
+								}
+							}
+						}
+						int size = accountEntries.size();
+						if (size != 0) {
+							final int[] accountIndexes = new int[size];
+							final String[] accounts = new String[size];
+							int i = 0;
+							Iterator<Map.Entry<Integer, String>> entries = accountEntries.entrySet().iterator();
+							while (entries.hasNext()) {
+								Map.Entry<Integer, String> entry = entries.next();
+								accountIndexes[i] = entry.getKey();
+								accounts[i++] = entry.getValue();
+							}
+							AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+							dialog.setTitle(R.string.accounts)
+							.setSingleChoiceItems(accounts, -1, new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									setLocation(accountIndexes[which]);
+									dialog.dismiss();
+								}
+							})
+							.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									dialog.dismiss();
+								}
+							})
+							.show();
+						}
+					}
 				} else {
-					// dialog to select an account
-					Iterator<Integer> accountIds = mAccountsToPost.keySet().iterator();
-					HashMap<Integer, String> accountEntries = new HashMap<Integer, String>();
-					while (accountIds.hasNext()) {
-						Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Integer.toString(accountIds.next())}, null);
-						if (account.moveToFirst()) {
-							int service = account.getInt(account.getColumnIndex(Accounts.SERVICE));
-							// only get accounts which have been selected and are supported for location
-							if ((service == TWITTER) || (service == FACEBOOK) || (service == FOURSQUARE)) {
-								accountEntries.put(account.getInt(account.getColumnIndex(Accounts._ID)), account.getString(account.getColumnIndex(Accounts.USERNAME)));
-							}
-						}
-					}
-					int size = accountEntries.size();
-					if (size != 0) {
-						final int[] accountIndexes = new int[size];
-						final String[] accounts = new String[size];
-						int i = 0;
-						Iterator<Map.Entry<Integer, String>> entries = accountEntries.entrySet().iterator();
-						while (entries.hasNext()) {
-							Map.Entry<Integer, String> entry = entries.next();
-							accountIndexes[i] = entry.getKey();
-							accounts[i++] = entry.getValue();
-						}
-						AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-						dialog.setTitle(R.string.accounts)
-						.setSingleChoiceItems(accounts, -1, new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								setLocation(accountIndexes[which]);
-								dialog.dismiss();
-							}
-						})
-						.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								dialog.dismiss();
-							}
-						})
-						.show();
-					}
+					(Toast.makeText(this, getString(R.string.location_unavailable), Toast.LENGTH_LONG)).show();
 				}
 			}
 		} else if (v == mSend) {
@@ -590,7 +595,11 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 										String message = URLEncoder.encode(mMessage.getText().toString(), "UTF-8");
 										HttpPost httpPost;
 										if (placeId != null) {
-											httpPost = new HttpPost(String.format(FOURSQUARE_CHECKIN, FOURSQUARE_BASE_URL, placeId, message, mLat, mLong, arg0[0]));
+											if ((message != null) && (message.length() > 0)) {
+												httpPost = new HttpPost(String.format(FOURSQUARE_CHECKIN, FOURSQUARE_BASE_URL, placeId, message, mLat, mLong, arg0[0]));
+											} else {
+												httpPost = new HttpPost(String.format(FOURSQUARE_CHECKIN_NO_SHOUT, FOURSQUARE_BASE_URL, placeId, mLat, mLong, arg0[0]));												
+											}
 										} else {
 											httpPost = new HttpPost(String.format(FOURSQUARE_CHECKIN_NO_VENUE, FOURSQUARE_BASE_URL, message, arg0[0]));
 										}
@@ -672,22 +681,32 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 							mAccountsToPost.put(accountId, null);
 							mAccounts.setText(accounts[which]);
 							// set location
-							AlertDialog.Builder locationDialog = new AlertDialog.Builder(SonetCreatePost.this);
-							locationDialog.setTitle(R.string.set_location)
-							.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									setLocation(accountId);
-									dialog.dismiss();
-								}
-							})
-							.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									dialog.dismiss();
-								}
-							})
-							.show();
+							if (mLat == null) {
+								LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
+								Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+								if (location != null) {
+									mLat = Double.toString(location.getLatitude());
+									mLong = Double.toString(location.getLongitude());
+								}										
+							}
+							if ((mLat != null) && (mLong != null)) {
+								AlertDialog.Builder locationDialog = new AlertDialog.Builder(SonetCreatePost.this);
+								locationDialog.setTitle(R.string.set_location)
+								.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										setLocation(accountId);
+										dialog.dismiss();
+									}
+								})
+								.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										dialog.dismiss();
+									}
+								})
+								.show();
+							}
 						} else {
 							mAccountsToPost.remove(accountIndexes[which]);
 							mAccounts.setText(mAccountsToPost.size() == 0 ? getString(R.string.accounts) : accounts[Sonet.arrayIndex(accountIndexes, mAccountsToPost.keySet().iterator().next())]);

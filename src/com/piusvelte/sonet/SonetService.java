@@ -182,6 +182,7 @@ public class SonetService extends Service {
 					values.put(Widgets.TIME24HR, 0);
 					values.put(Widgets.STATUSES_PER_ACCOUNT, Sonet.default_statuses_per_account);
 					values.put(Widgets.BACKGROUND_UPDATE, 1);
+					values.put(Widgets.SCROLLABLE, 0);
 					this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 				}
 				settings.close();
@@ -1412,7 +1413,7 @@ public class SonetService extends Service {
 				buttons_bg_color = settings.getInt(settings.getColumnIndex(Widgets.BUTTONS_BG_COLOR));
 				buttons_color = settings.getInt(settings.getColumnIndex(Widgets.BUTTONS_COLOR));
 				buttons_textsize = settings.getInt(settings.getColumnIndex(Widgets.BUTTONS_TEXTSIZE));
-				scrollable = settings.getInt(settings.getColumnIndex(Widgets.SCROLLABLE)) == 1;
+				scrollable = settings.getInt(settings.getColumnIndex(Widgets.SCROLLABLE)) > 0;
 			}
 			settings.close();
 			// Push update for this widget to the home screen

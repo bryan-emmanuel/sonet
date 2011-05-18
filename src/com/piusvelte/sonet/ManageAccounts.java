@@ -31,6 +31,7 @@ import com.piusvelte.sonet.Sonet.Widgets;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.appwidget.AppWidgetManager;
+import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -77,15 +78,42 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			}
 		}
 
+		Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID}, Widgets.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)}, null);
+		if (!c.moveToFirst()) {
+			// create widget default settings
+			ContentValues values = new ContentValues();
+			values.put(Widgets.WIDGET, mAppWidgetId);
+			values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
+			values.put(Widgets.INTERVAL, Sonet.default_interval);
+			values.put(Widgets.BUTTONS_BG_COLOR, Sonet.default_buttons_bg_color);
+			values.put(Widgets.BUTTONS_COLOR, Sonet.default_buttons_color);
+			values.put(Widgets.BUTTONS_TEXTSIZE, Sonet.default_buttons_textsize);
+			values.put(Widgets.MESSAGES_BG_COLOR, Sonet.default_message_bg_color);
+			values.put(Widgets.MESSAGES_COLOR, Sonet.default_message_color);
+			values.put(Widgets.MESSAGES_TEXTSIZE, Sonet.default_messages_textsize);
+			values.put(Widgets.FRIEND_COLOR, Sonet.default_friend_color);
+			values.put(Widgets.FRIEND_TEXTSIZE, Sonet.default_friend_textsize);
+			values.put(Widgets.CREATED_COLOR, Sonet.default_created_color);
+			values.put(Widgets.CREATED_TEXTSIZE, Sonet.default_created_textsize);
+			values.put(Widgets.HASBUTTONS, 0);
+			values.put(Widgets.TIME24HR, 0);
+			values.put(Widgets.ICON, 1);
+			values.put(Widgets.STATUSES_PER_ACCOUNT, Sonet.default_statuses_per_account);
+			values.put(Widgets.BACKGROUND_UPDATE, 1);
+			values.put(Widgets.SCROLLABLE, 0);
+			this.getContentResolver().insert(Widgets.CONTENT_URI, values);
+		}
+		c.close();
+
 		Intent resultValue = new Intent();
 		resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
 		setResult(RESULT_OK, resultValue);
-		
+
 		registerForContextMenu(getListView());
 		((Button) findViewById(R.id.default_widget_settings)).setOnClickListener(this);
 		((Button) findViewById(R.id.button_add_account)).setOnClickListener(this);
 		((Button) findViewById(R.id.save)).setOnClickListener(this);
-		
+
 		if (mAppWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
 			finish();
 		}
@@ -176,7 +204,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=" + mAppWidgetId, null);
 		}
 	}
-	
+
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
@@ -191,7 +219,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		mHasAccounts = c.getCount() != 0;
 		setListAdapter(new SimpleCursorAdapter(ManageAccounts.this, R.layout.accounts_row, c, new String[] {Accounts.USERNAME}, new int[] {R.id.account_username}));
 	}
-	
+
 
 	public void onClick(DialogInterface dialog, int which) {
 		mAddingAccount = true;

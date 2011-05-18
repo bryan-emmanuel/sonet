@@ -50,9 +50,10 @@ public class SonetProvider extends ContentProvider {
 	private static final int STATUSES_STYLES = 3;
 	private static final int STATUSES_STYLES_WIDGET = 4;
 	private static final int ENTITIES = 5;
+	private static final int STATUSES_STYLES_WIDGET_V1 = 6;
 
 	private static final String DATABASE_NAME = "sonet.db";
-	private static final int DATABASE_VERSION = 12;
+	private static final int DATABASE_VERSION = 13;
 
 	private static final String TABLE_ACCOUNTS = "accounts";
 	private static HashMap<String, String> accountsProjectionMap;
@@ -69,6 +70,9 @@ public class SonetProvider extends ContentProvider {
 	private static final String TABLE_ENTITIES = "entities";
 	private static HashMap<String, String> entitiesProjectionMap;
 
+	private static final String VIEW_STATUSES_STYLES_V1 = "statuses_styles_v1";
+	private static HashMap<String, String> statuses_styles_v1ProjectionMap;
+	
 	private DatabaseHelper mDatabaseHelper;
 
 	static {
@@ -156,10 +160,26 @@ public class SonetProvider extends ContentProvider {
 		entitiesProjectionMap.put(Entities.FRIEND, Entities.FRIEND);
 		entitiesProjectionMap.put(Entities.PROFILE, Entities.PROFILE);
 		entitiesProjectionMap.put(Entities.ACCOUNT, Entities.ACCOUNT);
+		
+		// resolve IMAGEBLOB issue for older launchers
+		sUriMatcher.addURI(AUTHORITY, VIEW_STATUSES_STYLES_V1 + "/*", STATUSES_STYLES_WIDGET_V1);
+
+		statuses_styles_v1ProjectionMap = new HashMap<String, String>();
+		statuses_styles_v1ProjectionMap.put(Statuses_styles._ID, Statuses_styles._ID);
+		statuses_styles_v1ProjectionMap.put(Statuses_styles.FRIEND, Statuses_styles.FRIEND);
+		statuses_styles_v1ProjectionMap.put(Statuses_styles.PROFILE, Statuses_styles.PROFILE);
+		statuses_styles_v1ProjectionMap.put(Statuses_styles.MESSAGE, Statuses_styles.MESSAGE);
+		statuses_styles_v1ProjectionMap.put(Statuses_styles.CREATEDTEXT, Statuses_styles.CREATEDTEXT);
+		statuses_styles_v1ProjectionMap.put(Statuses_styles.STATUS_BG, Statuses_styles.STATUS_BG);
+		statuses_styles_v1ProjectionMap.put(Statuses_styles.ICON, Statuses_styles.ICON);
 	}
 	
 	public enum StatusesStylesColumns {
 		_id, friend, profile, message, createdtext, messages_color, friend_color, created_color, messages_textsize, friend_textsize, created_textsize, status_bg, icon
+	}
+	
+	public enum StatusesStylesColumnsV1 {
+		_id, friend, profile, message, createdtext, status_bg, icon
 	}
 
 	@Override
@@ -247,7 +267,8 @@ public class SonetProvider extends ContentProvider {
 	@Override
 	public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String orderBy) {
 		SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
-
+		SQLiteDatabase db = mDatabaseHelper.getReadableDatabase();
+		Cursor c;		
 		switch (sUriMatcher.match(uri)) {
 		case ACCOUNTS:
 			qb.setTables(TABLE_ACCOUNTS);
@@ -275,11 +296,14 @@ public class SonetProvider extends ContentProvider {
 			qb.setTables(TABLE_ENTITIES);
 			qb.setProjectionMap(entitiesProjectionMap);
 			break;
+		case STATUSES_STYLES_WIDGET_V1:
+			qb.setTables(VIEW_STATUSES_STYLES);
+			qb.setProjectionMap(statuses_styles_v1ProjectionMap);
+			break;
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
 		}
-		SQLiteDatabase db = mDatabaseHelper.getReadableDatabase();
-		Cursor c = qb.query(db, projection, selection, selectionArgs, null, null, orderBy);
+		c = qb.query(db, projection, selection, selectionArgs, null, null, orderBy);
 		c.setNotificationUri(getContext().getContentResolver(), uri);
 		return c;
 	}
@@ -1060,6 +1084,15 @@ public class SonetProvider extends ContentProvider {
 						+ Widgets.ICON + ","
 						+ Widgets.STATUSES_PER_ACCOUNT + ",1 from " + TABLE_WIDGETS + "_bkp;");
 				db.execSQL("drop table if exists " + TABLE_WIDGETS + "_bkp;");
+			}
+			if (oldVersion < 13) {
+				// scrollable will now store the version rather than being a boolean, so moving 1 > 2, as the default supported version is 2
+				ContentValues values = new ContentValues();
+				values.put(Widgets.SCROLLABLE, 0);
+				db.update(TABLE_WIDGETS, values, Widgets.SCROLLABLE + "!=?", new String[]{"1"});
+				values = new ContentValues();
+				values.put(Widgets.SCROLLABLE, 2);
+				db.update(TABLE_WIDGETS, values, Widgets.SCROLLABLE + "=?", new String[]{"1"});
 			}
 		}
 
