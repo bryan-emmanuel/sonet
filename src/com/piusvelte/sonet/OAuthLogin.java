@@ -210,14 +210,12 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 		values.put(Accounts.SERVICE, service);
 		values.put(Accounts.WIDGET, mWidgetId);
 		values.put(Accounts.SID, String.format(SID_FORMAT, sid));
-		SonetAccountManager accountManager = new SonetAccountManager(this);
 		if (mAccountId != Sonet.INVALID_ACCOUNT_ID) {
 			accountId = Long.toString(mAccountId);
-			accountManager.update(values, Accounts._ID + "=?", new String[]{Long.toString(mAccountId)});
+			getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Long.toString(mAccountId)});
 		} else {
-			accountId = accountManager.insert(values).getLastPathSegment();
+			accountId = getContentResolver().insert(Accounts.CONTENT_URI, values).getLastPathSegment();
 		}
-		accountManager.close();
 		setResult(RESULT_OK);
 		return accountId;
 	}

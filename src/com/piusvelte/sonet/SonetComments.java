@@ -143,7 +143,6 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 	mLong = null;
 	private List<HashMap<String, String>> mComments = new ArrayList<HashMap<String, String>>();
 	private boolean mTime24hr = false;
-	SonetAccountManager mSonetAccountManager;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -183,7 +182,6 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 	@Override
 	protected void onResume() {
 		super.onResume();
-		mSonetAccountManager = new SonetAccountManager(this);
 		// allow comment viewing for services that having commenting
 		// loading liking/retweeting
 		Cursor account;
@@ -191,7 +189,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 		switch (mService) {
 		case TWITTER:
 			// reply, load the user's name @username
-			account = mSonetAccountManager.query(new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+			account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 			if (account.moveToFirst()) {
 				asyncTask = new AsyncTask<String, Void, String>() {
 					@Override
@@ -226,7 +224,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 			mLike.setOnClickListener(this);
 			break;
 		case FACEBOOK:
-			account = mSonetAccountManager.query(new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+			account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 			if (account.moveToFirst()) {
 				final String sid = Sonet.removeUnderscore(account.getString(account.getColumnIndex(Accounts.SID)));
 				asyncTask = new AsyncTask<String, Void, String>() {
@@ -263,7 +261,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 			account.close();
 			break;
 		case BUZZ:
-			account = mSonetAccountManager.query(new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+			account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 			if (account.moveToFirst()) {
 				final String sid = Sonet.removeUnderscore(account.getString(account.getColumnIndex(Accounts.SID)));
 				asyncTask = new AsyncTask<String, Void, String>() {
@@ -304,7 +302,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 			account.close();
 			break;
 		case LINKEDIN:
-			account = mSonetAccountManager.query(new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+			account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 			if (account.moveToFirst()) {
 				asyncTask = new AsyncTask<String, Void, String>() {
 					@Override
@@ -352,14 +350,6 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 		}
 		loadComments();
 	}
-	
-	@Override
-	protected void onPause() {
-		super.onPause();
-		if (mSonetAccountManager != null) {
-			mSonetAccountManager.close();
-		}		
-	}
 
 	@Override
 	public void onClick(View v) {
@@ -373,7 +363,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					final int accountId = entry.getKey();
 					final String placeId = entry.getValue();
 					// post or comment!
-					Cursor account = mSonetAccountManager.query(new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Integer.toString(accountId)}, null);
+					Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Integer.toString(accountId)}, null);
 					if (account.moveToFirst()) {
 						AsyncTask<String, Void, String> asyncTask;
 						switch (account.getInt(account.getColumnIndex(Accounts.SERVICE))) {
@@ -608,7 +598,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 				mSend.setEnabled(true);
 			}
 		} else if ((v == mLike) && (mSid != null)) {
-			Cursor account = mSonetAccountManager.query(new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Integer.toString(mAccountsToPost.keySet().iterator().next())}, null);
+			Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Integer.toString(mAccountsToPost.keySet().iterator().next())}, null);
 			if (account.moveToFirst()) {
 				AsyncTask<String, Void, String> asyncTask;
 				switch (account.getInt(account.getColumnIndex(Accounts.SERVICE))) {
@@ -748,7 +738,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 			.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					Cursor c = mSonetAccountManager.query(new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+					Cursor c = SonetComments.this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 					if (c.moveToFirst()) {
 						AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
 							@Override
@@ -830,7 +820,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 			@Override
 			protected String doInBackground(String... arg0) {
 				String response = null;
-				Cursor account = mSonetAccountManager.query(new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				Cursor account = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 				if (account.moveToFirst()) {
 					SonetOAuth sonetOAuth;
 					switch (mService) {
@@ -959,6 +949,14 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					} catch (JSONException e) {
 						Log.e(TAG, e.toString());
 					}
+				} else {
+					HashMap<String, String> commentMap = new HashMap<String, String>();
+					commentMap.put(Statuses.SID, "");
+					commentMap.put(Entities.FRIEND, "");
+					commentMap.put(Statuses.MESSAGE, getString(R.string.no_comments));
+					commentMap.put(Statuses.CREATEDTEXT, "");
+					commentMap.put(getString(R.string.like), "");
+					mComments.add(commentMap);
 				}
 				setListAdapter(new SimpleAdapter(SonetComments.this, mComments, R.layout.comment, new String[]{Entities.FRIEND, Statuses.MESSAGE, Statuses.CREATEDTEXT, getString(R.string.like)}, new int[]{R.id.friend, R.id.message, R.id.created, R.id.like}));
 				loadingDialog.dismiss();
