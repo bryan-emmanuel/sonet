@@ -105,7 +105,6 @@ import com.piusvelte.sonet.Sonet.Statuses_styles;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
-import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -815,8 +814,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 		commentMap.put(getString(R.string.like), "");
 		mComments.add(commentMap);
 		setListAdapter(new SimpleAdapter(SonetComments.this, mComments, R.layout.comment, new String[]{Entities.FRIEND, Statuses.MESSAGE, Statuses.CREATEDTEXT, getString(R.string.like)}, new int[]{R.id.friend, R.id.message, R.id.created, R.id.like}));
-		final ProgressDialog loadingDialog = new ProgressDialog(this);
-		final AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
+		AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
 			@Override
 			protected String doInBackground(String... arg0) {
 				String response = null;
@@ -995,20 +993,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					mComments.add(commentMap);
 				}
 				setListAdapter(new SimpleAdapter(SonetComments.this, mComments, R.layout.comment, new String[]{Entities.FRIEND, Statuses.MESSAGE, Statuses.CREATEDTEXT, getString(R.string.like)}, new int[]{R.id.friend, R.id.message, R.id.created, R.id.like}));
-				loadingDialog.dismiss();
 			}
 		};
-		loadingDialog.setMessage(getString(R.string.loading));
-		loadingDialog.setCancelable(true);
-		loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-			@Override
-			public void onCancel(DialogInterface dialog) {
-				asyncTask.cancel(true);
-				dialog.dismiss();
-			}
-		});
-		loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), this);
-		loadingDialog.show();
 		asyncTask.execute();
 	}
 

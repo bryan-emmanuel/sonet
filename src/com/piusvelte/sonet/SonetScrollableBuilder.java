@@ -63,16 +63,16 @@ public class SonetScrollableBuilder extends Service {
 				replaceDummy.putExtra(LauncherIntent.Extra.EXTRA_APPWIDGET_ID, appWidgetId);
 				replaceDummy.putExtra(LauncherIntent.Extra.EXTRA_VIEW_ID, R.id.messages);
 				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_LAYOUT_ID, R.layout.widget_listview);
-				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_CHILDREN_CLICKABLE, true);
-
-				// provider
-				Uri uri = null;
-				String[] projection = null;
+				
+				// provider uri
+				Uri uri = Uri.withAppendedPath(Statuses_styles.CONTENT_URI, widgetId);
+				
+				// onclick
+//				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_CHILDREN_CLICKABLE, false);
+				//TODO: when this is set, the Intent is not sent to SonetWidget
+				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_ACTION_VIEW_URI_INDEX, SonetProvider.StatusesStylesColumns._id.ordinal());
 
 				if (scrollableVersion == 1) {
-					// provider
-					uri = Uri.withAppendedPath(Statuses_styles.CONTENT_URI_V1, widgetId);
-					projection = new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.CREATEDTEXT, Statuses_styles.STATUS_BG, Statuses_styles.ICON};
 					// mapping for views
 					replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_ID, R.layout.widget_item);
 					int[] cursorIndices = new int[8];
@@ -81,49 +81,49 @@ public class SonetScrollableBuilder extends Service {
 					int[] defaultResource = new int[8];
 					boolean[] clickable = new boolean[8];
 					// R.id.friend_bg_clear
-					cursorIndices[0] = SonetProvider.StatusesStylesColumnsV1.friend.ordinal();
+					cursorIndices[0] = SonetProvider.StatusesStylesColumns.friend.ordinal();
 					viewTypes[0] = LauncherIntent.Extra.Scroll.Types.TEXTVIEW;
 					layoutIds[0] = R.id.friend_bg_clear;
 					defaultResource[0] = 0;
 					clickable[0] = false;
 					// R.id.message_bg_clear
-					cursorIndices[1] = SonetProvider.StatusesStylesColumnsV1.message.ordinal();
+					cursorIndices[1] = SonetProvider.StatusesStylesColumns.message.ordinal();
 					viewTypes[1] = LauncherIntent.Extra.Scroll.Types.TEXTVIEW;
 					layoutIds[1] = R.id.message_bg_clear;
 					defaultResource[1] = 0;
 					clickable[1] = false;
 					// R.id.status_bg
-					cursorIndices[2] = SonetProvider.StatusesStylesColumnsV1.status_bg.ordinal();
+					cursorIndices[2] = SonetProvider.StatusesStylesColumns.status_bg.ordinal();
 					viewTypes[2] = LauncherIntent.Extra.Scroll.Types.IMAGEBLOB;
 					layoutIds[2] = R.id.status_bg;
 					defaultResource[2] = 0;
 					clickable[2] = false;
 					// R.id.profile
-					cursorIndices[3] = SonetProvider.StatusesStylesColumnsV1.profile.ordinal();
+					cursorIndices[3] = SonetProvider.StatusesStylesColumns.profile.ordinal();
 					viewTypes[3] = LauncherIntent.Extra.Scroll.Types.IMAGEBLOB;
 					layoutIds[3] = R.id.profile;
 					defaultResource[3] = 0;
 					clickable[3] = false;
 					// R.id.friend
-					cursorIndices[4] = SonetProvider.StatusesStylesColumnsV1.friend.ordinal();
+					cursorIndices[4] = SonetProvider.StatusesStylesColumns.friend.ordinal();
 					viewTypes[4] = LauncherIntent.Extra.Scroll.Types.TEXTVIEW;
 					layoutIds[4] = R.id.friend;
 					defaultResource[4] = 0;
 					clickable[4] = false;
 					// R.id.created
-					cursorIndices[5] = SonetProvider.StatusesStylesColumnsV1.createdtext.ordinal();
+					cursorIndices[5] = SonetProvider.StatusesStylesColumns.createdtext.ordinal();
 					viewTypes[5] = LauncherIntent.Extra.Scroll.Types.TEXTVIEW;
 					layoutIds[5] = R.id.created;
 					defaultResource[5] = 0;
 					clickable[5] = false;
 					// R.id.message
-					cursorIndices[6] = SonetProvider.StatusesStylesColumnsV1.message.ordinal();
+					cursorIndices[6] = SonetProvider.StatusesStylesColumns.message.ordinal();
 					viewTypes[6] = LauncherIntent.Extra.Scroll.Types.TEXTVIEW;
 					layoutIds[6] = R.id.message;
 					defaultResource[6] = 0;
 					clickable[6] = false;
 					// R.id.icon
-					cursorIndices[7] = SonetProvider.StatusesStylesColumnsV1.icon.ordinal();
+					cursorIndices[7] = SonetProvider.StatusesStylesColumns.icon.ordinal();
 					viewTypes[7] = LauncherIntent.Extra.Scroll.Types.IMAGEBLOB;
 					layoutIds[7] = R.id.icon;
 					defaultResource[7] = 0;
@@ -135,26 +135,20 @@ public class SonetScrollableBuilder extends Service {
 					replaceDummy.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_DEFAULT_RESOURCES, defaultResource);
 					replaceDummy.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_VIEW_CLICKABLE, clickable);
 				} else {
-					// provider
-					uri = Uri.withAppendedPath(Statuses_styles.CONTENT_URI, widgetId);
-					projection = new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON};
-					
 					// Put widget info
 					replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_PROVIDER_ALLOW_REQUERY, true);
 
 					BoundRemoteViews itemViews = new BoundRemoteViews(R.layout.widget_item);
 					
-					// onclick
-
-					Intent i = new Intent(context, SonetWidget.class)
-					.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
-					.setData(uri)
-					.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-					PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
-					
-					// mapping
-
-					itemViews.SetBoundOnClickIntent(R.id.item, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.StatusesStylesColumns._id.ordinal());
+//					// onclick
+//					Intent i = new Intent(context, SonetWidget.class)
+//					.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
+//					.setData(uri)
+//					.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+//					PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
+//					
+//					// mapping
+//					itemViews.SetBoundOnClickIntent(R.id.item, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.StatusesStylesColumns._id.ordinal());
 
 					itemViews.setBoundCharSequence(R.id.friend_bg_clear, "setText", SonetProvider.StatusesStylesColumns.friend.ordinal(), 0);
 					itemViews.setBoundFloat(R.id.friend_bg_clear, "setTextSize", SonetProvider.StatusesStylesColumns.friend_textsize.ordinal());
@@ -183,6 +177,8 @@ public class SonetScrollableBuilder extends Service {
 				}
 				
 				// provider
+				String[] projection = new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON};
+				
 				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_URI, uri.toString());
 				// Other arguments for managed query
 				String whereClause = Statuses_styles.WIDGET + "=?";

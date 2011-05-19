@@ -304,7 +304,6 @@ public class Sonet {
 		}
 
 		public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/statuses_styles");
-		public static final Uri CONTENT_URI_V1 = Uri.parse("content://" + SonetProvider.AUTHORITY + "/statuses_styles_v1");
 
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.statuses_styles";
 

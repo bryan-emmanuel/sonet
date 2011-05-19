@@ -81,7 +81,7 @@ public class SonetWidget extends AppWidgetProvider {
 			Sonet.sWidgetsContext.put(widget, context);
 			context.startService(new Intent(context, SonetScrollableBuilder.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widget));
 		} else if (action.equals(LauncherIntent.Action.ACTION_FINISH)) {
-		} else if (action.equals(LauncherIntent.Action.ACTION_VIEW_CLICK)) {
+		} else if (action.equals(LauncherIntent.Action.ACTION_VIEW_CLICK) || action.equals(LauncherIntent.Action.ACTION_ITEM_CLICK)) {
 			onClick(context, intent);
 		} else if (action.equals(LauncherIntent.Error.ERROR_SCROLL_CURSOR)) {
 			Log.d(TAG, intent.getStringExtra(LauncherIntent.Extra.EXTRA_ERROR_MESSAGE) + "");

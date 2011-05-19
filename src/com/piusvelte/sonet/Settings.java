@@ -95,8 +95,10 @@ public class Settings extends Activity implements View.OnClickListener, OnChecke
 		mIcon = (CheckBox) findViewById(R.id.icon);
 		mStatuses_per_account = (Button) findViewById(R.id.statuses_per_account);
 		mBackgroundUpdate = (CheckBox) findViewById(R.id.background_update);
+		
+		int scrollableVersion = 0;
 
-		Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.BACKGROUND_UPDATE}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+		Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.BACKGROUND_UPDATE, Widgets.SCROLLABLE}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 
 		if (c.moveToFirst()) {
 			mWidgetSettingsId = Integer.toString(c.getInt(c.getColumnIndex(Widgets._ID)));
@@ -116,6 +118,7 @@ public class Settings extends Activity implements View.OnClickListener, OnChecke
 			mIcon.setChecked(c.getInt(c.getColumnIndex(Widgets.ICON)) == 1);
 			mStatuses_per_account_value = c.getInt(c.getColumnIndex(Widgets.STATUSES_PER_ACCOUNT));
 			mBackgroundUpdate.setChecked(c.getInt(c.getColumnIndex(Widgets.BACKGROUND_UPDATE)) == 1);
+			scrollableVersion = c.getInt(c.getColumnIndex(Widgets.SCROLLABLE));
 		} else {
 			Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.BACKGROUND_UPDATE}, Widgets.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
 			if (d.moveToFirst()) {
@@ -172,7 +175,7 @@ public class Settings extends Activity implements View.OnClickListener, OnChecke
 				values.put(Widgets.ICON, 1);
 				values.put(Widgets.STATUSES_PER_ACCOUNT, mStatuses_per_account_value);
 				values.put(Widgets.BACKGROUND_UPDATE, 1);
-				values.put(Widgets.SCROLLABLE, 0);
+				values.put(Widgets.SCROLLABLE, scrollableVersion);
 				this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 			}
 			d.close();
@@ -196,7 +199,7 @@ public class Settings extends Activity implements View.OnClickListener, OnChecke
 			values.put(Widgets.ICON, 1);
 			values.put(Widgets.STATUSES_PER_ACCOUNT, mStatuses_per_account_value);
 			values.put(Widgets.BACKGROUND_UPDATE, 1);
-			values.put(Widgets.SCROLLABLE, 0);
+			values.put(Widgets.SCROLLABLE, scrollableVersion);
 			mWidgetSettingsId = this.getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
 		}
 		c.close();
@@ -206,17 +209,27 @@ public class Settings extends Activity implements View.OnClickListener, OnChecke
 		mButtons_color.setOnClickListener(Settings.this);
 		mButtons_textsize.setOnClickListener(Settings.this);
 		mMessages_bg_color.setOnClickListener(Settings.this);
-		mMessages_color.setOnClickListener(Settings.this);
-		mMessages_textsize.setOnClickListener(Settings.this);
-		mFriend_color.setOnClickListener(Settings.this);
-		mFriend_textsize.setOnClickListener(Settings.this);
-		mCreated_color.setOnClickListener(Settings.this);
-		mCreated_textsize.setOnClickListener(Settings.this);
 		mHasButtons.setOnCheckedChangeListener(Settings.this);
 		mTime24hr.setOnCheckedChangeListener(Settings.this);
 		mIcon.setOnCheckedChangeListener(Settings.this);
 		mStatuses_per_account.setOnClickListener(Settings.this);
 		mBackgroundUpdate.setOnClickListener(Settings.this);
+		
+		if (scrollableVersion == 1) {
+			mMessages_color.setEnabled(false);
+			mMessages_textsize.setEnabled(false);
+			mFriend_color.setEnabled(false);
+			mFriend_textsize.setEnabled(false);
+			mCreated_color.setEnabled(false);
+			mCreated_textsize.setEnabled(false);			
+		} else {
+			mMessages_color.setOnClickListener(Settings.this);
+			mMessages_textsize.setOnClickListener(Settings.this);
+			mFriend_color.setOnClickListener(Settings.this);
+			mFriend_textsize.setOnClickListener(Settings.this);
+			mCreated_color.setOnClickListener(Settings.this);
+			mCreated_textsize.setOnClickListener(Settings.this);			
+		}
 
 	}
 

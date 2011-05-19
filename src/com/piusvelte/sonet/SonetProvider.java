@@ -50,7 +50,6 @@ public class SonetProvider extends ContentProvider {
 	private static final int STATUSES_STYLES = 3;
 	private static final int STATUSES_STYLES_WIDGET = 4;
 	private static final int ENTITIES = 5;
-	private static final int STATUSES_STYLES_WIDGET_V1 = 6;
 
 	private static final String DATABASE_NAME = "sonet.db";
 	private static final int DATABASE_VERSION = 13;
@@ -63,16 +62,13 @@ public class SonetProvider extends ContentProvider {
 
 	private static final String TABLE_STATUSES = "statuses";
 	private static HashMap<String, String> statusesProjectionMap;
-	
+
 	private static final String VIEW_STATUSES_STYLES = "statuses_styles";
 	private static HashMap<String, String> statuses_stylesProjectionMap;
-	
+
 	private static final String TABLE_ENTITIES = "entities";
 	private static HashMap<String, String> entitiesProjectionMap;
 
-	private static final String VIEW_STATUSES_STYLES_V1 = "statuses_styles_v1";
-	private static HashMap<String, String> statuses_styles_v1ProjectionMap;
-	
 	private DatabaseHelper mDatabaseHelper;
 
 	static {
@@ -151,35 +147,20 @@ public class SonetProvider extends ContentProvider {
 		statuses_stylesProjectionMap.put(Statuses_styles.SID, Statuses_styles.SID);
 		statuses_stylesProjectionMap.put(Statuses_styles.ENTITY, Statuses_styles.ENTITY);
 		statuses_stylesProjectionMap.put(Statuses_styles.ESID, Statuses_styles.ESID);
-		
+
 		sUriMatcher.addURI(AUTHORITY, TABLE_ENTITIES, ENTITIES);
-		
+
 		entitiesProjectionMap = new HashMap<String, String>();
 		entitiesProjectionMap.put(Entities._ID, Entities._ID);
 		entitiesProjectionMap.put(Entities.ESID, Entities.ESID);
 		entitiesProjectionMap.put(Entities.FRIEND, Entities.FRIEND);
 		entitiesProjectionMap.put(Entities.PROFILE, Entities.PROFILE);
 		entitiesProjectionMap.put(Entities.ACCOUNT, Entities.ACCOUNT);
-		
-		// resolve IMAGEBLOB issue for older launchers
-		sUriMatcher.addURI(AUTHORITY, VIEW_STATUSES_STYLES_V1 + "/*", STATUSES_STYLES_WIDGET_V1);
 
-		statuses_styles_v1ProjectionMap = new HashMap<String, String>();
-		statuses_styles_v1ProjectionMap.put(Statuses_styles._ID, Statuses_styles._ID);
-		statuses_styles_v1ProjectionMap.put(Statuses_styles.FRIEND, Statuses_styles.FRIEND);
-		statuses_styles_v1ProjectionMap.put(Statuses_styles.PROFILE, Statuses_styles.PROFILE);
-		statuses_styles_v1ProjectionMap.put(Statuses_styles.MESSAGE, Statuses_styles.MESSAGE);
-		statuses_styles_v1ProjectionMap.put(Statuses_styles.CREATEDTEXT, Statuses_styles.CREATEDTEXT);
-		statuses_styles_v1ProjectionMap.put(Statuses_styles.STATUS_BG, Statuses_styles.STATUS_BG);
-		statuses_styles_v1ProjectionMap.put(Statuses_styles.ICON, Statuses_styles.ICON);
 	}
-	
+
 	public enum StatusesStylesColumns {
 		_id, friend, profile, message, createdtext, messages_color, friend_color, created_color, messages_textsize, friend_textsize, created_textsize, status_bg, icon
-	}
-	
-	public enum StatusesStylesColumnsV1 {
-		_id, friend, profile, message, createdtext, status_bg, icon
 	}
 
 	@Override
@@ -252,7 +233,7 @@ public class SonetProvider extends ContentProvider {
 			rowId = db.insert(TABLE_STATUSES, Statuses._ID, values);
 			returnUri = ContentUris.withAppendedId(Statuses.CONTENT_URI, rowId);
 			// many statuses will be inserted at once, so don't trigger a refresh for each one
-//			getContext().getContentResolver().notifyChange(returnUri, null);
+			//			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case ENTITIES:
 			rowId = db.insert(TABLE_ENTITIES, Entities._ID, values);
@@ -289,16 +270,16 @@ public class SonetProvider extends ContentProvider {
 		case STATUSES_STYLES_WIDGET:
 			qb.setTables(VIEW_STATUSES_STYLES);
 			qb.setProjectionMap(statuses_stylesProjectionMap);
-			selection = Statuses_styles.WIDGET + "=?";
-			selectionArgs = new String[]{uri.getLastPathSegment()};
+			//TODO
+			android.util.Log.v("SonetProvider","widget="+uri.getLastPathSegment());
+			if ((selection == null) || (selectionArgs == null)) {
+				selection = Statuses_styles.WIDGET + "=?";
+				selectionArgs = new String[]{uri.getLastPathSegment()};
+			}
 			break;
 		case ENTITIES:
 			qb.setTables(TABLE_ENTITIES);
 			qb.setProjectionMap(entitiesProjectionMap);
-			break;
-		case STATUSES_STYLES_WIDGET_V1:
-			qb.setTables(VIEW_STATUSES_STYLES);
-			qb.setProjectionMap(statuses_styles_v1ProjectionMap);
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);

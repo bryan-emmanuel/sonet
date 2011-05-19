@@ -87,8 +87,10 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 		mIcon = (CheckBox) findViewById(R.id.icon);
 		mStatuses_per_account = (Button) findViewById(R.id.statuses_per_account);
 
+		int scrollableVersion = 0;
+		
 		// get this account/widgets settings, falling back on the defaults...
-		Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(mAccountId)}, null);
+		Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SCROLLABLE}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(mAccountId)}, null);
 		if (c.moveToFirst()) {
 			mWidgetAccountSettingsId = Integer.toString(c.getInt(c.getColumnIndex(Widgets._ID)));
 			mMessages_bg_color_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
@@ -101,9 +103,10 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 			mTime24hr.setChecked(c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1);
 			mIcon.setChecked(c.getInt(c.getColumnIndex(Widgets.ICON)) == 1);
 			mStatuses_per_account_value = c.getInt(c.getColumnIndex(Widgets.STATUSES_PER_ACCOUNT));
+			scrollableVersion = c.getInt(c.getColumnIndex(Widgets.SCROLLABLE));
 		} else {
 			// fall back on widget settings
-			Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+			Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SCROLLABLE}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 			if (d.moveToFirst()) {
 				mMessages_bg_color_value = d.getInt(d.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
 				mMessages_color_value = d.getInt(d.getColumnIndex(Widgets.MESSAGES_COLOR));
@@ -115,6 +118,7 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 				mTime24hr.setChecked(d.getInt(d.getColumnIndex(Widgets.TIME24HR)) == 1);
 				mIcon.setChecked(d.getInt(d.getColumnIndex(Widgets.ICON)) == 1);
 				mStatuses_per_account_value = d.getInt(d.getColumnIndex(Widgets.STATUSES_PER_ACCOUNT));
+				scrollableVersion = d.getInt(d.getColumnIndex(Widgets.SCROLLABLE));
 			} else {
 				// fall back on user defaults
 				Cursor e = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT}, Widgets.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
@@ -155,6 +159,7 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 					values.put(Widgets.TIME24HR, false);
 					values.put(Widgets.ICON, true);
 					values.put(Widgets.STATUSES_PER_ACCOUNT, mStatuses_per_account_value);
+					values.put(Widgets.SCROLLABLE, scrollableVersion);
 					this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 				}
 				e.close();
@@ -172,6 +177,7 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 				values.put(Widgets.TIME24HR, false);
 				values.put(Widgets.ICON, true);
 				values.put(Widgets.STATUSES_PER_ACCOUNT, mStatuses_per_account_value);
+				values.put(Widgets.SCROLLABLE, scrollableVersion);
 				this.getContentResolver().insert(Widgets.CONTENT_URI, values);
 			}
 			d.close();
@@ -189,20 +195,31 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 			values.put(Widgets.TIME24HR, false);
 			values.put(Widgets.ICON, true);
 			values.put(Widgets.STATUSES_PER_ACCOUNT, mStatuses_per_account_value);
+			values.put(Widgets.SCROLLABLE, scrollableVersion);
 			mWidgetAccountSettingsId = this.getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
 		}
 		c.close();
 
 		mMessages_bg_color.setOnClickListener(AccountSettings.this);
-		mMessages_color.setOnClickListener(AccountSettings.this);
-		mMessages_textsize.setOnClickListener(AccountSettings.this);
-		mFriend_color.setOnClickListener(AccountSettings.this);
-		mFriend_textsize.setOnClickListener(AccountSettings.this);
-		mCreated_color.setOnClickListener(AccountSettings.this);
-		mCreated_textsize.setOnClickListener(AccountSettings.this);
 		mTime24hr.setOnCheckedChangeListener(this);
 		mIcon.setOnCheckedChangeListener(this);
 		mStatuses_per_account.setOnClickListener(AccountSettings.this);
+
+		if (scrollableVersion == 1) {
+			mMessages_color.setEnabled(false);
+			mMessages_textsize.setEnabled(false);
+			mFriend_color.setEnabled(false);
+			mFriend_textsize.setEnabled(false);
+			mCreated_color.setEnabled(false);
+			mCreated_textsize.setEnabled(false);			
+		} else {
+			mMessages_color.setOnClickListener(AccountSettings.this);
+			mMessages_textsize.setOnClickListener(AccountSettings.this);
+			mFriend_color.setOnClickListener(AccountSettings.this);
+			mFriend_textsize.setOnClickListener(AccountSettings.this);
+			mCreated_color.setOnClickListener(AccountSettings.this);
+			mCreated_textsize.setOnClickListener(AccountSettings.this);			
+		}
 
 	}
 
