@@ -68,12 +68,12 @@ public class SonetScrollableBuilder extends Service {
 				Uri uri = Uri.withAppendedPath(Statuses_styles.CONTENT_URI, widgetId);
 				
 				// onclick
-//				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_CHILDREN_CLICKABLE, false);
-				//TODO: when this is set, the Intent is not sent to SonetWidget
-				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_ACTION_VIEW_URI_INDEX, SonetProvider.StatusesStylesColumns._id.ordinal());
+				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_CHILDREN_CLICKABLE, true);
 
-				if (scrollableVersion == 1) {
+				switch (scrollableVersion) {
+				case 1:
 					// mapping for views
+					replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_ACTION_VIEW_URI_INDEX, SonetProvider.StatusesStylesColumns._id.ordinal());
 					replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_ID, R.layout.widget_item);
 					int[] cursorIndices = new int[8];
 					int[] viewTypes = new int[8];
@@ -97,7 +97,7 @@ public class SonetScrollableBuilder extends Service {
 					viewTypes[2] = LauncherIntent.Extra.Scroll.Types.IMAGEBLOB;
 					layoutIds[2] = R.id.status_bg;
 					defaultResource[2] = 0;
-					clickable[2] = false;
+					clickable[2] = true;
 					// R.id.profile
 					cursorIndices[3] = SonetProvider.StatusesStylesColumns.profile.ordinal();
 					viewTypes[3] = LauncherIntent.Extra.Scroll.Types.IMAGEBLOB;
@@ -134,21 +134,22 @@ public class SonetScrollableBuilder extends Service {
 					replaceDummy.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_VIEW_IDS, layoutIds);
 					replaceDummy.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_DEFAULT_RESOURCES, defaultResource);
 					replaceDummy.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_VIEW_CLICKABLE, clickable);
-				} else {
+					break;
+				case 2:
 					// Put widget info
 					replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_PROVIDER_ALLOW_REQUERY, true);
 
 					BoundRemoteViews itemViews = new BoundRemoteViews(R.layout.widget_item);
 					
-//					// onclick
-//					Intent i = new Intent(context, SonetWidget.class)
-//					.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
-//					.setData(uri)
-//					.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-//					PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
-//					
-//					// mapping
-//					itemViews.SetBoundOnClickIntent(R.id.item, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.StatusesStylesColumns._id.ordinal());
+					// onclick
+					Intent i = new Intent(context, SonetWidget.class)
+					.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
+					.setData(uri)
+					.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+					PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
+					
+					// mapping
+					itemViews.SetBoundOnClickIntent(R.id.item, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.StatusesStylesColumns._id.ordinal());
 
 					itemViews.setBoundCharSequence(R.id.friend_bg_clear, "setText", SonetProvider.StatusesStylesColumns.friend.ordinal(), 0);
 					itemViews.setBoundFloat(R.id.friend_bg_clear, "setTextSize", SonetProvider.StatusesStylesColumns.friend_textsize.ordinal());
@@ -173,7 +174,8 @@ public class SonetScrollableBuilder extends Service {
 
 					itemViews.setBoundBitmap(R.id.icon, "setImageBitmap", SonetProvider.StatusesStylesColumns.icon.ordinal(), 0);
 
-					replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_REMOTEVIEWS, itemViews);					
+					replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_REMOTEVIEWS, itemViews);
+					break;
 				}
 				
 				// provider
@@ -188,7 +190,7 @@ public class SonetScrollableBuilder extends Service {
 				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION, whereClause);
 				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION_ARGUMENTS, selectionArgs);
 				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SORT_ORDER, sortOrder);
-
+				
 				context.sendBroadcast(replaceDummy);
 				Sonet.sWidgetsContext.remove(appWidgetId);
 

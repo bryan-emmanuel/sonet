@@ -53,8 +53,6 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 				mAppWidgetId = c.getInt(c.getColumnIndex(Statuses_styles.WIDGET));
 				mAccount = c.getLong(c.getColumnIndex(Statuses_styles.ACCOUNT));
 			}
-			//TODO
-			android.util.Log.v("StatusDialog","mAppWidgetId="+mAppWidgetId);
 			c.close();
 		} 
 		// offer options for Comment, Post, Settings and Refresh

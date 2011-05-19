@@ -270,8 +270,6 @@ public class SonetProvider extends ContentProvider {
 		case STATUSES_STYLES_WIDGET:
 			qb.setTables(VIEW_STATUSES_STYLES);
 			qb.setProjectionMap(statuses_stylesProjectionMap);
-			//TODO
-			android.util.Log.v("SonetProvider","widget="+uri.getLastPathSegment());
 			if ((selection == null) || (selectionArgs == null)) {
 				selection = Statuses_styles.WIDGET + "=?";
 				selectionArgs = new String[]{uri.getLastPathSegment()};
