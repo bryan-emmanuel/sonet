@@ -32,6 +32,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.widget.Toast;
 
 public class StatusDialog extends Activity implements DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
@@ -54,14 +55,24 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 				mAccount = c.getLong(c.getColumnIndex(Statuses_styles.ACCOUNT));
 			}
 			c.close();
-		} 
-		// offer options for Comment, Post, Settings and Refresh
-		// loading the likes/retweet and other options takes too long, so load them in the SonetCreatePost.class
-		(new AlertDialog.Builder(this))
-		.setItems(new String[]{getString(R.string.comment), getString(R.string.button_post), getString(R.string.settings), getString(R.string.button_refresh)}, this)
-		.setCancelable(true)
-		.setOnCancelListener(this)
-		.show();
+		}
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		if (mAccount != Sonet.INVALID_ACCOUNT_ID) {
+			// offer options for Comment, Post, Settings and Refresh
+			// loading the likes/retweet and other options takes too long, so load them in the SonetCreatePost.class
+			(new AlertDialog.Builder(this))
+			.setItems(new String[]{getString(R.string.comment), getString(R.string.button_post), getString(R.string.settings), getString(R.string.button_refresh)}, this)
+			.setCancelable(true)
+			.setOnCancelListener(this)
+			.show();
+		} else {
+			(Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
+			finish();
+		}
 	}
 
 	@Override

@@ -105,4 +105,5 @@
 	<string name="set_location">Set Location?</string>
 	<string name="save">Save</string>
 	<string name="location_unavailable">current location is unavailable</string>
+	<string name="error_status">Error getting status info</string>
 </resources>
