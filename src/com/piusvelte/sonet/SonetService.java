@@ -315,7 +315,7 @@ public class SonetService extends Service {
 					itoken = accounts.getColumnIndex(Accounts.TOKEN),
 					isecret = accounts.getColumnIndex(Accounts.SECRET);
 					while (!accounts.isAfterLast()) {
-						String account = Integer.toString(accounts.getInt(iaccountid)),
+						String account = Long.toString(accounts.getLong(iaccountid)),
 						service = Integer.toString(accounts.getInt(iservice));
 						// if no connection, only update the status_bg and icons
 						if ((mConnectivityManager.getActiveNetworkInfo() != null) && mConnectivityManager.getActiveNetworkInfo().isConnected()) {

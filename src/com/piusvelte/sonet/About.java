@@ -109,11 +109,13 @@ DialogInterface.OnClickListener {
 							: providerName == SonetWidget_4x3.class
 							.getName() ? "4x3" : "4x4") + ")";
 				}
-				(new AlertDialog.Builder(this)).setItems(widgets, this)
-				.setCancelable(true).show();
-			} else
-				Toast.makeText(this, getString(R.string.nowidgets),
-						Toast.LENGTH_LONG).show();
+				(new AlertDialog.Builder(this))
+				.setItems(widgets, this)
+				.setCancelable(true)
+				.show();
+			} else {
+				Toast.makeText(this, getString(R.string.nowidgets),	Toast.LENGTH_LONG).show();
+			}
 			break;
 		case R.id.refreshall:
 			startService(new Intent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
@@ -136,8 +138,7 @@ DialogInterface.OnClickListener {
 
 	@Override
 	public void onClick(DialogInterface dialog, int which) {
-		startActivity(new Intent(this, ManageAccounts.class).putExtra(
-				AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[which]));
+		startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[which]));
 		dialog.cancel();
 	}
 }

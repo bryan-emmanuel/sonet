@@ -516,6 +516,17 @@ public class Sonet {
 		return c;
 	}
 	
+	protected static int arrayIndex(long[] a, long b) {
+		int c = -1;
+		for (int i = 0; i < a.length; i++) {
+			if (a[i] == b) {
+				c = i;
+				break;
+			}
+		}
+		return c;
+	}
+	
 	protected static String removeUnderscore(String sid) {
 		// this is a fix for an issue where inserting a big integer, such as the id's from BUZZ into sqlite,
 		// causing the value to convert to scientific notation. to avoid that, an underscore is prepended

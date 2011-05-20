@@ -89,7 +89,6 @@ import android.app.ProgressDialog;
 import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.database.Cursor;
 import android.location.Location;
 import android.location.LocationManager;
@@ -112,7 +111,7 @@ import android.widget.Toast;
 public class SonetCreatePost extends Activity implements OnKeyListener, OnClickListener, TextWatcher {
 	private static final String TAG = "SonetCreatePost";
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
-	private HashMap<Integer, String> mAccountsToPost = new HashMap<Integer, String>();
+	private HashMap<Long, String> mAccountsToPost = new HashMap<Long, String>();
 	private EditText mMessage;
 	private Button mSend;
 	private Button mLocation;
@@ -138,15 +137,14 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		mLocation = (Button) findViewById(R.id.location);
 		mAccounts = (Button) findViewById(R.id.accounts);
 		mCount = (TextView) findViewById(R.id.count);
-		Intent intent = getIntent();
-		if (intent != null) {
-			Uri data = intent.getData();
+		if ((getIntent() != null) && (getIntent().getData() != null)) {
+			Uri data = getIntent().getData();
 			if (data.toString().contains(Accounts.CONTENT_URI.toString())) {
 				// default to the account passed in, but allow selecting additional accounts
 				Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.WIDGET, ACCOUNTS_QUERY}, Accounts._ID + "=?", new String[]{data.getLastPathSegment()}, null);
 				if (account.moveToFirst()) {
 					mAppWidgetId = account.getInt(account.getColumnIndex(Accounts.WIDGET));
-					mAccountsToPost.put(account.getInt(account.getColumnIndex(Accounts._ID)), null);
+					mAccountsToPost.put(account.getLong(account.getColumnIndex(Accounts._ID)), null);
 					mAccounts.setText(account.getString(account.getColumnIndex(Accounts.USERNAME)));
 				}
 				account.close();
@@ -164,9 +162,9 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		mSend.setOnClickListener(this);
 	}
 
-	private void setLocation(final int accountId) {
+	private void setLocation(final long accountId) {
 		final AsyncTask<String, Void, String> asyncTask;
-		Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SERVICE, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Integer.toString(accountId)}, null);
+		Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SERVICE, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
 		if (account.moveToFirst()) {
 			switch (account.getInt(account.getColumnIndex(Accounts.SERVICE))) {
 			case TWITTER:
@@ -231,7 +229,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					}
 				});
 				mLoadingDialog.show();
-				asyncTask.execute();
+				asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
 				break;
 			case FACEBOOK:
 				asyncTask = new AsyncTask<String, Void, String>() {
@@ -381,26 +379,26 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 						setLocation(mAccountsToPost.keySet().iterator().next());
 					} else {
 						// dialog to select an account
-						Iterator<Integer> accountIds = mAccountsToPost.keySet().iterator();
-						HashMap<Integer, String> accountEntries = new HashMap<Integer, String>();
+						Iterator<Long> accountIds = mAccountsToPost.keySet().iterator();
+						HashMap<Long, String> accountEntries = new HashMap<Long, String>();
 						while (accountIds.hasNext()) {
-							Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Integer.toString(accountIds.next())}, null);
+							Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(accountIds.next())}, null);
 							if (account.moveToFirst()) {
 								int service = account.getInt(account.getColumnIndex(Accounts.SERVICE));
 								// only get accounts which have been selected and are supported for location
 								if ((service == TWITTER) || (service == FACEBOOK) || (service == FOURSQUARE)) {
-									accountEntries.put(account.getInt(account.getColumnIndex(Accounts._ID)), account.getString(account.getColumnIndex(Accounts.USERNAME)));
+									accountEntries.put(account.getLong(account.getColumnIndex(Accounts._ID)), account.getString(account.getColumnIndex(Accounts.USERNAME)));
 								}
 							}
 						}
 						int size = accountEntries.size();
 						if (size != 0) {
-							final int[] accountIndexes = new int[size];
+							final long[] accountIndexes = new long[size];
 							final String[] accounts = new String[size];
 							int i = 0;
-							Iterator<Map.Entry<Integer, String>> entries = accountEntries.entrySet().iterator();
+							Iterator<Map.Entry<Long, String>> entries = accountEntries.entrySet().iterator();
 							while (entries.hasNext()) {
-								Map.Entry<Integer, String> entry = entries.next();
+								Map.Entry<Long, String> entry = entries.next();
 								accountIndexes[i] = entry.getKey();
 								accounts[i++] = entry.getValue();
 							}
@@ -432,13 +430,13 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				mSend.setEnabled(false);
 				mAccounts.setEnabled(false);
 				mLocation.setEnabled(false);
-				Iterator<Map.Entry<Integer, String>> entrySet = mAccountsToPost.entrySet().iterator();
+				Iterator<Map.Entry<Long, String>> entrySet = mAccountsToPost.entrySet().iterator();
 				while (entrySet.hasNext()) {
-					Map.Entry<Integer, String> entry = entrySet.next();
-					final int accountId = entry.getKey();
+					Map.Entry<Long, String> entry = entrySet.next();
+					final long accountId = entry.getKey();
 					final String placeId = entry.getValue();
 					// post or comment!
-					Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Integer.toString(accountId)}, null);
+					Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
 					if (account.moveToFirst()) {
 						AsyncTask<String, Void, String> asyncTask;
 						switch (account.getInt(account.getColumnIndex(Accounts.SERVICE))) {
@@ -659,12 +657,12 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				iusername = c.getColumnIndex(Accounts.USERNAME),
 				iservice = c.getColumnIndex(Accounts.SERVICE),
 				i = 0;
-				final int[] accountIndexes = new int[c.getCount()];
+				final long[] accountIndexes = new long[c.getCount()];
 				final String[] accounts = new String[c.getCount()];
 				final boolean[] defaults = new boolean[c.getCount()];
 				final int[] accountServices = new int[c.getCount()];
 				while (!c.isAfterLast()) {
-					int id = c.getInt(iid);
+					long id = c.getLong(iid);
 					accountIndexes[i] = id;
 					accounts[i] = c.getString(iusername);
 					accountServices[i] = c.getInt(iservice);
@@ -677,7 +675,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					@Override
 					public void onClick(DialogInterface dialog, int which, boolean isChecked) {
 						if (isChecked) {
-							final int accountId = accountIndexes[which];
+							final long accountId = accountIndexes[which];
 							mAccountsToPost.put(accountId, null);
 							mAccounts.setText(accounts[which]);
 							// set location
