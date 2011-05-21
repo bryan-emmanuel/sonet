@@ -52,7 +52,6 @@ public class Sonet {
 	protected static final String TOKEN = "access_token";
 	protected static final String EXPIRES = "expires_in";
 	protected static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
-	protected static final String ACTION_BUILD_SCROLL = "com.piusvelte.sonet.Sonet.BUILD_SCROLL";
 	protected static final String EXTRA_ACCOUNT_ID = "com.piusvelte.sonet.Sonet.ACCOUNT_ID";
 	protected static final String EXTRA_SCROLLABLE_VERSION = "com.piusvelte.sonet.Sonet.SCROLLABLE_VERSION";
 	protected static final long INVALID_ACCOUNT_ID = -1;
@@ -146,7 +145,6 @@ public class Sonet {
 	protected static final String AM = "a.m.";
 	protected static final String PM = "p.m.";
 	protected static final String[] MONTHS = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-	protected static HashMap<Integer, Context> sWidgetsContext;
 
 	protected static final String ACCOUNTS_QUERY = "(case when " + Accounts.SERVICE + "='" + TWITTER + "' then 'Twitter: ' when "
 	+ Accounts.SERVICE + "='" + FACEBOOK + "' then 'Facebook: ' when "
@@ -191,7 +189,6 @@ public class Sonet {
 		LINKEDIN_UPDATETYPES.put("VIRL", "updated the viral ");
 		LINKEDIN_UPDATETYPES.put("PICU", "updated their profile picture");
 
-		sWidgetsContext = new HashMap<Integer, Context>();
 	}
 
 //	protected static final int SALESFORCE = 6;

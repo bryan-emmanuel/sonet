@@ -56,8 +56,6 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 		super.onCreate(savedInstanceState);
 		if ((getIntent() != null) && (getIntent().getData() != null)) {
 			mData = getIntent().getData();
-			//TODO
-			android.util.Log.v("StatusDialog","data="+mData.getLastPathSegment());
 			Cursor c = this.getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.WIDGET, Statuses_styles.ACCOUNT, Statuses_styles.SID, Statuses_styles.ESID}, Statuses_styles._ID + "=?", new String[] {mData.getLastPathSegment()}, null);
 			if (c.moveToFirst()) {
 				mAppWidgetId = c.getInt(c.getColumnIndex(Statuses_styles.WIDGET));
@@ -67,9 +65,6 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 			}
 			c.close();
 		}
-		//TODO
-		android.util.Log.v("StatusDialog","widget="+mAppWidgetId);
-		android.util.Log.v("StatusDialog","account="+mAccount);
 	}
 
 	@Override
