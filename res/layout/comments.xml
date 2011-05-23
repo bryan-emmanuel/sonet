@@ -31,18 +31,15 @@
 		android:text="@string/no_comments" />
 	<EditText android:id="@+id/message" android:layout_width="fill_parent"
 		android:layout_height="0dip" android:gravity="top"
-		android:layout_weight="2" />
+		android:layout_weight="1" />
 	<RelativeLayout android:id="@+id/buttons"
 		android:layout_width="fill_parent" android:layout_height="wrap_content">
 		<Button android:id="@+id/send" android:layout_width="wrap_content"
 			android:layout_height="wrap_content" android:text="@string/send"
 			android:layout_alignParentRight="true" />
-		<Button android:id="@+id/count" android:layout_width="wrap_content"
+		<Button android:id="@+id/count" android:layout_width="fill_parent"
 			android:layout_height="wrap_content" android:text="0"
-			android:layout_toLeftOf="@id/send" android:enabled="false" />
-		<Button android:id="@+id/like" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:text="@string/like"
-			android:layout_alignParentLeft="true" android:layout_toLeftOf="@id/count"
-			android:enabled="false" />
+			android:layout_toLeftOf="@id/send" android:enabled="false"
+			android:gravity="right|center_vertical" />
 	</RelativeLayout>
 </LinearLayout>
