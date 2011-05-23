@@ -587,9 +587,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 	private void loadComments() {
 		// the first comment is the post itself
 		// remove all others to reload them
-		int size = mComments.size();
-		for (int i = 1; i < size; i++) {
-			mComments.remove(i);
+		while (mComments.size() > 1) {
+			mComments.remove(1);
 		}
 		HashMap<String, String> commentMap = new HashMap<String, String>();
 		commentMap.put(Statuses.SID, "");
@@ -793,9 +792,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 
 			@Override
 			protected void onPostExecute(String response) {
-				int size = mComments.size();
-				for (int i = 1; i < size; i++) {
-					mComments.remove(i);
+				while (mComments.size() > 1) {
+					mComments.remove(1);
 				}
 				if (response != null) {
 					try {
