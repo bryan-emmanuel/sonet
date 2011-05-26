@@ -414,7 +414,6 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 								AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
 									@Override
 									protected String doInBackground(String... arg0) {
-										setCommentStatus(0, getString(R.string.loading));
 										SonetOAuth sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, arg0[0], arg0[1]);
 										HttpPost httpPost = new HttpPost(String.format(TWITTER_RETWEET, TWITTER_BASE_URL, sid));
 										// resolve Error 417 Expectation by Twitter
@@ -428,6 +427,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 										(Toast.makeText(SonetComments.this, getString(R.string.twitter) + " " + getString(response != null ? R.string.success : R.string.failure), Toast.LENGTH_LONG)).show();
 									}
 								};
+								setCommentStatus(0, getString(R.string.loading));
 								asyncTask.execute(c.getString(c.getColumnIndex(Accounts.TOKEN)), c.getString(c.getColumnIndex(Accounts.SECRET)));
 							}
 							c.close();
@@ -448,7 +448,6 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
 								@Override
 								protected String doInBackground(String... arg0) {
-									setCommentStatus(position, getString(R.string.loading));
 									if (liked.equals(getString(R.string.like))) {
 										return Sonet.httpResponse(new HttpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, sid, TOKEN, arg0[0])));
 									} else {
@@ -469,6 +468,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 									}
 								}
 							};
+							setCommentStatus(position, getString(R.string.loading));
 							asyncTask.execute(c.getString(c.getColumnIndex(Accounts.TOKEN)));
 						}
 						c.close();
@@ -489,7 +489,6 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 								AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
 									@Override
 									protected String doInBackground(String... arg0) {
-										setCommentStatus(position, getString(R.string.loading));
 										SonetOAuth sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, arg0[0], arg0[1]);
 										return sonetOAuth.httpResponse(liked.equals(getString(R.string.like)) ? new HttpPut(String.format(BUZZ_LIKE, BUZZ_BASE_URL, mSid, BUZZ_API_KEY)) :  new HttpDelete(String.format(BUZZ_LIKE, BUZZ_BASE_URL, mSid, BUZZ_API_KEY)));
 									}
@@ -505,6 +504,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 										}
 									}
 								};
+								setCommentStatus(position, getString(R.string.loading));
 								asyncTask.execute(c.getString(c.getColumnIndex(Accounts.TOKEN)), c.getString(c.getColumnIndex(Accounts.SECRET)));
 							}
 							c.close();
@@ -527,7 +527,6 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 								AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
 									@Override
 									protected String doInBackground(String... arg0) {
-										setCommentStatus(position, getString(R.string.loading));
 										SonetOAuth sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, arg0[0], arg0[1]);
 										HttpPut httpPut = new HttpPut(String.format(LINKEDIN_IS_LIKED, LINKEDIN_BASE_URL, mSid));
 										httpPut.addHeader(new BasicHeader("Content-Type", "application/xml"));
@@ -551,6 +550,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 										}
 									}
 								};
+								setCommentStatus(position, getString(R.string.loading));
 								asyncTask.execute(c.getString(c.getColumnIndex(Accounts.TOKEN)), c.getString(c.getColumnIndex(Accounts.SECRET)));
 							}
 							c.close();
@@ -760,6 +760,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					}
 				};
 				setCommentStatus(0, getString(R.string.loading));
+				asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
 			}
 			account.close();
 			break;

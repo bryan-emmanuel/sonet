@@ -416,7 +416,9 @@ public class SonetService extends Service {
 																entry.getString(id),
 																user.getString(id));
 													}
-												} else updateCreatedText = true;
+												} else {
+													updateCreatedText = true;
+												}
 											} catch (JSONException e) {
 												Log.e(TAG, service + ":" + e.toString());
 											}
@@ -434,7 +436,7 @@ public class SonetService extends Service {
 												int icreated = statuses.getColumnIndex(Statuses.CREATED);
 												while (!statuses.isAfterLast()) {
 													ContentValues values = new ContentValues();
-													values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(statuses.getInt(icreated), time24hr));
+													values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(statuses.getLong(icreated), time24hr));
 													SonetService.this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
 													statuses.moveToNext();
 												}
@@ -588,7 +590,7 @@ public class SonetService extends Service {
 												int icreated = statuses.getColumnIndex(Statuses.CREATED);
 												while (!statuses.isAfterLast()) {
 													ContentValues values = new ContentValues();
-													values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(statuses.getInt(icreated), time24hr));
+													values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(statuses.getLong(icreated), time24hr));
 													SonetService.this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
 													statuses.moveToNext();
 												}
@@ -721,7 +723,7 @@ public class SonetService extends Service {
 												int icreated = statuses.getColumnIndex(Statuses.CREATED);
 												while (!statuses.isAfterLast()) {
 													ContentValues values = new ContentValues();
-													values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(statuses.getInt(icreated), time24hr));
+													values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(statuses.getLong(icreated), time24hr));
 													SonetService.this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
 													statuses.moveToNext();
 												}
@@ -878,7 +880,7 @@ public class SonetService extends Service {
 												int icreated = statuses.getColumnIndex(Statuses.CREATED);
 												while (!statuses.isAfterLast()) {
 													ContentValues values = new ContentValues();
-													values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(statuses.getInt(icreated), time24hr));
+													values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(statuses.getLong(icreated), time24hr));
 													SonetService.this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
 													statuses.moveToNext();
 												}
@@ -1018,7 +1020,7 @@ public class SonetService extends Service {
 												int icreated = statuses.getColumnIndex(Statuses.CREATED);
 												while (!statuses.isAfterLast()) {
 													ContentValues values = new ContentValues();
-													values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(statuses.getInt(icreated), time24hr));
+													values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(statuses.getLong(icreated), time24hr));
 													SonetService.this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
 													statuses.moveToNext();
 												}
@@ -1207,7 +1209,7 @@ public class SonetService extends Service {
 												int icreated = statuses.getColumnIndex(Statuses.CREATED);
 												while (!statuses.isAfterLast()) {
 													ContentValues values = new ContentValues();
-													values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(statuses.getInt(icreated), time24hr));
+													values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(statuses.getLong(icreated), time24hr));
 													SonetService.this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, service, account});
 													statuses.moveToNext();
 												}
