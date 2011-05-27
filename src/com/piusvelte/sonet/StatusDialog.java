@@ -157,6 +157,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 		case SETTINGS:
 			if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
 				startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
+				dialog.cancel();
 			} else {
 				// no widget sent in, dialog to select one
 				String[] widgets = getAllWidgets();
@@ -186,6 +187,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 		case REFRESH:
 			if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
 				startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
+				dialog.cancel();
 			} else {
 				// no widget sent in, dialog to select one
 				String[] widgets = getAllWidgets();
