@@ -92,7 +92,7 @@ public class SonetWidget extends AppWidgetProvider {
 	}
 
 	private void onClick(Context context, Intent intent) {
-		// send all onClick events to SonetStatusDialog
+		// send all onClick events to StatusDialog
 		context.startActivity(new Intent(context, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, intent.getStringExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 	}
 

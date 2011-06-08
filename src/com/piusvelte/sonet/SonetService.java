@@ -1316,7 +1316,7 @@ public class SonetService extends Service {
 							views.setTextViewText(map_message[count_status], statuses_styles.getString(imessage));
 							views.setTextColor(map_message[count_status], messages_color);
 							views.setFloat(map_message[count_status], "setTextSize", messages_textsize);
-							views.setOnClickPendingIntent(map_message[count_status], PendingIntent.getActivity(this, 0, new Intent(this, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, Integer.toString(statuses_styles.getInt(iid)))), 0));
+							views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(this, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, Integer.toString(statuses_styles.getInt(iid)))), 0));
 							views.setTextViewText(map_screenname[count_status], statuses_styles.getString(ifriend));
 							views.setTextColor(map_screenname[count_status], friend_color);
 							views.setFloat(map_screenname[count_status], "setTextSize", friend_textsize);
@@ -1324,9 +1324,8 @@ public class SonetService extends Service {
 							views.setTextColor(map_created[count_status], created_color);
 							views.setFloat(map_created[count_status], "setTextSize", created_textsize);
 							byte[] profile = statuses_styles.getBlob(iprofile);
-							Bitmap profilebmp = null;
 							if (profile != null) {
-								profilebmp = BitmapFactory.decodeByteArray(profile, 0, profile.length);
+								Bitmap profilebmp = BitmapFactory.decodeByteArray(profile, 0, profile.length);
 								if (profilebmp != null) {
 									views.setImageViewBitmap(map_profile[count_status], profilebmp);						
 								}
