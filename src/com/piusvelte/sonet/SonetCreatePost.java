@@ -117,7 +117,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 	private Button mLocation;
 	private Button mAccounts;
 	private TextView mCount;
-	private ProgressDialog mLoadingDialog;
+	//	private ProgressDialog loadingDialog;
 	private String mLat = null,
 	mLong = null;
 
@@ -166,6 +166,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		final AsyncTask<String, Void, String> asyncTask;
 		Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SERVICE, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
 		if (account.moveToFirst()) {
+			final ProgressDialog loadingDialog = new ProgressDialog(this);
 			switch (account.getInt(account.getColumnIndex(Accounts.SERVICE))) {
 			case TWITTER:
 				asyncTask = new AsyncTask<String, Void, String>() {
@@ -178,7 +179,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					}
 					@Override
 					protected void onPostExecute(String response) {
-						if (mLoadingDialog.isShowing()) mLoadingDialog.dismiss();
+						if (loadingDialog.isShowing()) loadingDialog.dismiss();
 						if (response != null) {
 							try {
 								JSONArray places = new JSONObject(response).getJSONObject("result").getJSONArray("places");
@@ -213,22 +214,21 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 						}
 					}
 				};
-				mLoadingDialog = new ProgressDialog(this);
-				mLoadingDialog.setMessage(getString(R.string.loading));
-				mLoadingDialog.setCancelable(true);
-				mLoadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+				loadingDialog.setMessage(getString(R.string.loading));
+				loadingDialog.setCancelable(true);
+				loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
 					@Override
 					public void onCancel(DialogInterface dialog) {
 						if (!asyncTask.isCancelled()) asyncTask.cancel(true);
 					}
 				});
-				mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+				loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.cancel();
 					}
 				});
-				mLoadingDialog.show();
+				loadingDialog.show();
 				asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
 				break;
 			case FACEBOOK:
@@ -239,7 +239,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					}
 					@Override
 					protected void onPostExecute(String response) {
-						if (mLoadingDialog.isShowing()) mLoadingDialog.dismiss();
+						if (loadingDialog.isShowing()) loadingDialog.dismiss();
 						if (response != null) {
 							try {
 								JSONArray places = new JSONObject(response).getJSONArray("data");
@@ -274,22 +274,21 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 						}
 					}
 				};
-				mLoadingDialog = new ProgressDialog(this);
-				mLoadingDialog.setMessage(getString(R.string.loading));
-				mLoadingDialog.setCancelable(true);
-				mLoadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+				loadingDialog.setMessage(getString(R.string.loading));
+				loadingDialog.setCancelable(true);
+				loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
 					@Override
 					public void onCancel(DialogInterface dialog) {
 						if (!asyncTask.isCancelled()) asyncTask.cancel(true);
 					}
 				});
-				mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+				loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.cancel();
 					}
 				});
-				mLoadingDialog.show();
+				loadingDialog.show();
 				asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
 				break;
 			case FOURSQUARE:
@@ -300,7 +299,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 					}
 					@Override
 					protected void onPostExecute(String response) {
-						if (mLoadingDialog.isShowing()) mLoadingDialog.dismiss();
+						if (loadingDialog.isShowing()) loadingDialog.dismiss();
 						if (response != null) {
 							try {
 								JSONArray groups = new JSONObject(response).getJSONObject("response").getJSONArray("groups");
@@ -342,22 +341,21 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 						}
 					}
 				};
-				mLoadingDialog = new ProgressDialog(this);
-				mLoadingDialog.setMessage(getString(R.string.loading));
-				mLoadingDialog.setCancelable(true);
-				mLoadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+				loadingDialog.setMessage(getString(R.string.loading));
+				loadingDialog.setCancelable(true);
+				loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
 					@Override
 					public void onCancel(DialogInterface dialog) {
 						if (!asyncTask.isCancelled()) asyncTask.cancel(true);
 					}
 				});
-				mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+				loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.cancel();
 					}
 				});
-				mLoadingDialog.show();
+				loadingDialog.show();
 				asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)));
 				break;
 			}
@@ -678,32 +676,37 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 							final long accountId = accountIndexes[which];
 							mAccountsToPost.put(accountId, null);
 							mAccounts.setText(accounts[which]);
-							// set location
-							if (mLat == null) {
-								LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
-								Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-								if (location != null) {
-									mLat = Double.toString(location.getLatitude());
-									mLong = Double.toString(location.getLongitude());
-								}										
-							}
-							if ((mLat != null) && (mLong != null)) {
-								AlertDialog.Builder locationDialog = new AlertDialog.Builder(SonetCreatePost.this);
-								locationDialog.setTitle(R.string.set_location)
-								.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-									@Override
-									public void onClick(DialogInterface dialog, int which) {
-										setLocation(accountId);
-										dialog.dismiss();
-									}
-								})
-								.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-									@Override
-									public void onClick(DialogInterface dialog, int which) {
-										dialog.dismiss();
-									}
-								})
-								.show();
+							// set location, only for supported services, TWITTER, FACEBOOK, FOURSQUARE
+							switch (accountServices[which]) {
+							case TWITTER:
+							case FACEBOOK:
+							case FOURSQUARE:
+								if (mLat == null) {
+									LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
+									Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+									if (location != null) {
+										mLat = Double.toString(location.getLatitude());
+										mLong = Double.toString(location.getLongitude());
+									}										
+								}
+								if ((mLat != null) && (mLong != null)) {
+									AlertDialog.Builder locationDialog = new AlertDialog.Builder(SonetCreatePost.this);
+									locationDialog.setTitle(R.string.set_location)
+									.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+										@Override
+										public void onClick(DialogInterface dialog, int which) {
+											setLocation(accountId);
+											dialog.dismiss();
+										}
+									})
+									.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+										@Override
+										public void onClick(DialogInterface dialog, int which) {
+											dialog.dismiss();
+										}
+									})
+									.show();
+								}
 							}
 						} else {
 							mAccountsToPost.remove(accountIndexes[which]);

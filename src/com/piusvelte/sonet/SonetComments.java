@@ -772,7 +772,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 			@Override
 			protected String doInBackground(String... arg0) {
 				String response = null;
-				Cursor account = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				Cursor account = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 				if (account.moveToFirst()) {
 					SonetOAuth sonetOAuth;
 					switch (mService) {

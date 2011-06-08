@@ -70,18 +70,20 @@ public class Sonet {
 	protected static final String TWITTER_USER = "%s1/users/lookup.json?user_id=%s";
 	protected static final String TWITTER_UPDATE = "%s1/statuses/update.json";
 	protected static final String TWITTER_SEARCH = "%s1/geo/search.json?lat=%s&long=%s";
+	protected static final String TWITTER_PROFILE = "http://twitter.com/%s";
 
 	protected static final int FACEBOOK = 1;
 	protected static final String FACEBOOK_BASE_URL = "https://graph.facebook.com/";
-	protected static final String FACEBOOK_URL_AUTHORIZE = "%Soauth/authorize?client_id=%s&scope=offline_access,read_stream,publish_stream,publish_checkins&type=user_agent&redirect_uri=%s&display=touch&sdk=android";
-	protected static final String FACEBOOK_URL_ME = "%Sme?format=json&sdk=android&%s=%s";
-	protected static final String FACEBOOK_URL_FEED = "%Sme/home?date_format=U&format=json&sdk=android&limit=%s&%s=%s&fields=actions,link,type,from,message,created_time,to";
+	protected static final String FACEBOOK_URL_AUTHORIZE = "%soauth/authorize?client_id=%s&scope=offline_access,read_stream,publish_stream,publish_checkins&type=user_agent&redirect_uri=%s&display=touch&sdk=android";
+	protected static final String FACEBOOK_URL_ME = "%sme?format=json&sdk=android&%s=%s";
+	protected static final String FACEBOOK_URL_FEED = "%sme/home?date_format=U&format=json&sdk=android&limit=%s&%s=%s&fields=actions,link,type,from,message,created_time,to,comments";
 	protected static final String FACEBOOK_POST = "%sme/feed?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_CHECKIN = "%sme/checkins?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_LIKES = "%s%s/likes?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_COMMENTS = "%s%s/comments?date_format=U&format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_SEARCH = "%ssearch?type=place&center=%s,%s&distance=1000&format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_COORDINATES = "{\"latitude\":\"%s\",\"longitude\":\"%s\"}";
+	protected static final String FACEBOOK_USER = "%s%s?format=json&sdk=android&%s=%s";
 
 	protected static final int MYSPACE = 2;
 	protected static final String MYSPACE_BASE_URL = "http://api.myspace.com/1.0/";
@@ -95,6 +97,7 @@ public class Sonet {
 	protected static final String MYSPACE_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
 	protected static final String MYSPACE_STATUSMOOD_BODY = "{\"status\":\"%s\"}";
 	protected static final String MYSPACE_STATUSMOODCOMMENTS_BODY = "{\"body\":\"%s\"}";
+	protected static final String MYSPACE_USER = "%speople/%s/@self";
 
 	protected static final int BUZZ = 3;
 	protected static final String BUZZ_BASE_URL = "https://www.googleapis.com/buzz/v1/";
@@ -103,6 +106,7 @@ public class Sonet {
 	protected static final String BUZZ_URL_ACCESS = "https://www.google.com/accounts/OAuthGetAccessToken";
 	protected static final String BUZZ_SCOPE = "https://www.googleapis.com/auth/buzz";
 	protected static final String BUZZ_URL_ME = "%speople/@me/@self?alt=json&key=%s";
+	protected static final String BUZZ_URL_USER = "%speople/%s/@self?alt=json&key=%s";
 	protected static final String BUZZ_URL_FEED = "%sactivities/@me/@consumption?alt=json&max-results=%s&key=%s";
 	protected static final String BUZZ_LIKE = "%sactivities/@me/@liked/%s?alt=json&key=%s";
 	protected static final String BUZZ_GET_LIKE = "%sactivities/@me/@self/%s/@liked?alt=json&key=%s";
@@ -117,6 +121,8 @@ public class Sonet {
 	protected static final String FOURSQUARE_URL_ACCESS = "https://foursquare.com/oauth2/access_token";
 	protected static final String FOURSQUARE_URL_AUTHORIZE = "https://foursquare.com/oauth2/authorize?client_id=%s&response_type=token&redirect_uri=%s&display=touch";
 	protected static final String FOURSQUARE_URL_ME = "%susers/self?oauth_token=%s";
+	protected static final String FOURSQUARE_URL_USER = "%susers/%s?oauth_token=%s";
+	protected static final String FOURSQUARE_URL_PROFILE = "https://foursquare.com/user/%s";
 	protected static final String FOURSQUARE_URL_FEED = "%scheckins/recent?limit=%s&oauth_token=%s";
 	protected static final String FOURSQUARE_CHECKIN = "%scheckins/add?venueId=%s&shout=%s&ll=%s,%s&broadcast=public&oauth_token=%s";
 	protected static final String FOURSQUARE_CHECKIN_NO_VENUE = "%scheckins/add?shout=%s&broadcast=public&oauth_token=%s";
@@ -131,6 +137,7 @@ public class Sonet {
 	protected static final String LINKEDIN_URL_AUTHORIZE = "https://www.linkedin.com/uas/oauth/authorize";
 	protected static final String LINKEDIN_URL_ACCESS = "https://api.linkedin.com/uas/oauth/accessToken";
 	protected static final String LINKEDIN_URL_ME = "%s:(id,first-name,last-name)";
+	protected static final String LINKEDIN_URL_USER = "https://api.linkedin.com/v1/people/id=%s";
 	protected static final String LINKEDIN_URL_FEED = "%s/network/updates?type=APPS&type=CMPY&type=CONN&type=JOBS&type=JGRP&type=PICT&type=PRFU&type=RECU&type=PRFX&type=ANSW&type=QSTN&type=SHAR&type=VIRL&count=%s";
 	protected static final String[][] LINKEDIN_HEADERS = new String[][] {{"x-li-format", "json"}};
 	protected static final HashMap<String, String> LINKEDIN_UPDATETYPES;
@@ -190,12 +197,6 @@ public class Sonet {
 		LINKEDIN_UPDATETYPES.put("PICU", "updated their profile picture");
 
 	}
-
-//	protected static final int SALESFORCE = 6;
-//	protected static final String SALESFORCE_URL_REQUEST = "https://login.salesforce.com/_nc_external/system/security/oauth/RequestTokenHandler";
-//	protected static final String SALESFORCE_URL_AUTHORIZE = "https://login.salesforce.com/setup/secur/RemoteAccessAuthorizationPage.apexp";
-//	protected static final String SALESFORCE_URL_ACCESS = "https://login.salesforce.com/_nc_external/system/security/oauth/AccessTokenHandler";
-//	protected static final String SALESFORCE_FEED = "";
 
 	protected static final int INVALID_SERVICE = -1;
 

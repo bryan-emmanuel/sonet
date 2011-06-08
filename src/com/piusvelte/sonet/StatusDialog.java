@@ -21,6 +21,42 @@ package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.ACCOUNTS_QUERY;
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
+import static com.piusvelte.sonet.Sonet.BUZZ;
+import static com.piusvelte.sonet.Sonet.BUZZ_BASE_URL;
+import static com.piusvelte.sonet.Sonet.BUZZ_URL_USER;
+import static com.piusvelte.sonet.Sonet.FACEBOOK;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_USER;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_PROFILE;
+import static com.piusvelte.sonet.Sonet.LINKEDIN;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_HEADERS;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_USER;
+import static com.piusvelte.sonet.Sonet.MYSPACE;
+import static com.piusvelte.sonet.Sonet.MYSPACE_BASE_URL;
+import static com.piusvelte.sonet.Sonet.MYSPACE_USER;
+import static com.piusvelte.sonet.Sonet.TOKEN;
+import static com.piusvelte.sonet.Sonet.TWITTER;
+import static com.piusvelte.sonet.Sonet.TWITTER_BASE_URL;
+import static com.piusvelte.sonet.Sonet.TWITTER_PROFILE;
+import static com.piusvelte.sonet.Sonet.TWITTER_USER;
+import static com.piusvelte.sonet.SonetTokens.BUZZ_API_KEY;
+import static com.piusvelte.sonet.SonetTokens.BUZZ_KEY;
+import static com.piusvelte.sonet.SonetTokens.BUZZ_SECRET;
+import static com.piusvelte.sonet.SonetTokens.LINKEDIN_KEY;
+import static com.piusvelte.sonet.SonetTokens.LINKEDIN_SECRET;
+import static com.piusvelte.sonet.SonetTokens.MYSPACE_KEY;
+import static com.piusvelte.sonet.SonetTokens.MYSPACE_SECRET;
+import static com.piusvelte.sonet.SonetTokens.TWITTER_KEY;
+import static com.piusvelte.sonet.SonetTokens.TWITTER_SECRET;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.http.client.methods.HttpGet;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
@@ -29,6 +65,7 @@ import com.piusvelte.sonet.Sonet.Widgets;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ComponentName;
@@ -38,10 +75,13 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 public class StatusDialog extends Activity implements DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
+	private static final String TAG = "StatusDialog";
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private long mAccount = Sonet.INVALID_ACCOUNT_ID;
 	private Uri mData;
@@ -49,21 +89,47 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 	private static final int POST = COMMENT + 1;
 	private static final int SETTINGS = POST + 1;
 	private static final int REFRESH = SETTINGS + 1;
+	private static final int PROFILE = REFRESH + 1;
 	private int[] mAppWidgetIds;
+	private String[] items;
+	private String mEsid;
+	private int mService;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		if ((getIntent() != null) && (getIntent().getData() != null)) {
 			mData = getIntent().getData();
-			Cursor c = this.getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.WIDGET, Statuses_styles.ACCOUNT, Statuses_styles.SID, Statuses_styles.ESID}, Statuses_styles._ID + "=?", new String[] {mData.getLastPathSegment()}, null);
+			Cursor c = this.getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.WIDGET, Statuses_styles.ACCOUNT, Statuses_styles.ESID, Statuses_styles.MESSAGE, Statuses_styles.FRIEND, Statuses_styles.SERVICE}, Statuses_styles._ID + "=?", new String[] {mData.getLastPathSegment()}, null);
 			if (c.moveToFirst()) {
 				mAppWidgetId = c.getInt(c.getColumnIndex(Statuses_styles.WIDGET));
 				mAccount = c.getLong(c.getColumnIndex(Statuses_styles.ACCOUNT));
+				mEsid = Sonet.removeUnderscore(c.getString(c.getColumnIndex(Statuses_styles.ESID)));
+				mService = c.getInt(c.getColumnIndex(Statuses_styles.SERVICE));
+				// parse any links
+				Matcher m = Pattern.compile("\\bhttp(s)?://\\S+\\b", Pattern.CASE_INSENSITIVE).matcher(c.getString(c.getColumnIndex(Statuses_styles.MESSAGE)));
+				int count = 0;
+				while (m.find()) {
+					count++;
+				}
+				items = new String[PROFILE + count + 1];
+				items[COMMENT] = getString(R.string.comment);
+				items[POST] = getString(R.string.button_post);
+				items[SETTINGS] = getString(R.string.settings);
+				items[REFRESH] = getString(R.string.button_refresh);
+				items[PROFILE] = String.format(getString(R.string.userProfile), c.getString(c.getColumnIndex(Statuses_styles.FRIEND)));
+				count = PROFILE + 1;
+				m.reset();
+				while (m.find()) {
+					items[count++] = m.group();
+				}
 			} else {
 				mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
+				items = new String[]{getString(R.string.comment), getString(R.string.button_post), getString(R.string.settings), getString(R.string.button_refresh)};
 			}
 			c.close();
+		} else {
+			items = new String[]{getString(R.string.comment), getString(R.string.button_post), getString(R.string.settings), getString(R.string.button_refresh)};
 		}
 	}
 
@@ -73,10 +139,15 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 		// offer options for Comment, Post, Settings and Refresh
 		// loading the likes/retweet and other options takes too long, so load them in the SonetCreatePost.class
 		(new AlertDialog.Builder(this))
-		.setItems(new String[]{getString(R.string.comment), getString(R.string.button_post), getString(R.string.settings), getString(R.string.button_refresh)}, this)
+		.setItems(items, this)
 		.setCancelable(true)
 		.setOnCancelListener(this)
 		.show();
+	}
+	
+	private void onErrorExit(String serviceName) {
+		(Toast.makeText(StatusDialog.this, serviceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
+		StatusDialog.this.finish();
 	}
 
 	@Override
@@ -221,6 +292,248 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 				}
 			}
 			break;
+		case PROFILE:
+			Cursor account;
+			final AsyncTask<String, Void, String> asyncTask;
+			// get the resources
+			switch (mService) {
+			case TWITTER:
+				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				if (account.moveToFirst()) {
+					final ProgressDialog loadingDialog = new ProgressDialog(this);
+					asyncTask = new AsyncTask<String, Void, String>() {
+						@Override
+						protected String doInBackground(String... arg0) {
+							SonetOAuth sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, arg0[0], arg0[1]);
+							return sonetOAuth.httpResponse(new HttpGet(String.format(TWITTER_USER, TWITTER_BASE_URL, mEsid)));
+						}
+
+						@Override
+						protected void onPostExecute(String response) {
+							if (loadingDialog.isShowing()) loadingDialog.dismiss();
+							if (response != null) {
+								try {
+									JSONArray users = new JSONArray(response);
+									if (users.length() > 0) {
+										startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(TWITTER_PROFILE, users.getJSONObject(0).getString("screen_name")))));
+									}
+								} catch (JSONException e) {
+									Log.e(TAG, e.toString());
+									onErrorExit(getString(R.string.twitter));
+								}
+							} else {
+								onErrorExit(getString(R.string.twitter));
+							}
+						}
+					};
+					loadingDialog.setMessage(getString(R.string.loading));
+					loadingDialog.setCancelable(true);
+					loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+						@Override
+						public void onCancel(DialogInterface dialog) {
+							if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+						}
+					});
+					loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.cancel();
+						}
+					});
+					loadingDialog.show();
+					asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+				}
+				account.close();
+				break;
+			case FACEBOOK:
+				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				if (account.moveToFirst()) {
+					final ProgressDialog loadingDialog = new ProgressDialog(this);
+					asyncTask = new AsyncTask<String, Void, String>() {
+						@Override
+						protected String doInBackground(String... arg0) {
+							return Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_USER, FACEBOOK_BASE_URL, mEsid, TOKEN, arg0[0])));
+						}
+
+						@Override
+						protected void onPostExecute(String response) {
+							if (loadingDialog.isShowing()) loadingDialog.dismiss();
+							if (response != null) {
+								try {
+									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getString("link"))));
+								} catch (JSONException e) {
+									Log.e(TAG, e.toString());
+									onErrorExit(getString(R.string.facebook));
+								}
+							} else {
+								onErrorExit(getString(R.string.facebook));
+							}
+						}
+					};
+					loadingDialog.setMessage(getString(R.string.loading));
+					loadingDialog.setCancelable(true);
+					loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+						@Override
+						public void onCancel(DialogInterface dialog) {
+							if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+						}
+					});
+					loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.cancel();
+						}
+					});
+					loadingDialog.show();
+					asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)));
+				}
+				account.close();
+				break;
+			case MYSPACE:
+				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				if (account.moveToFirst()) {
+					final ProgressDialog loadingDialog = new ProgressDialog(this);
+					asyncTask = new AsyncTask<String, Void, String>() {
+						@Override
+						protected String doInBackground(String... arg0) {
+							SonetOAuth sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, arg0[0], arg0[1]);
+							return sonetOAuth.httpResponse(new HttpGet(String.format(MYSPACE_USER, MYSPACE_BASE_URL, mEsid)));
+						}
+
+						@Override
+						protected void onPostExecute(String response) {
+							if (loadingDialog.isShowing()) loadingDialog.dismiss();
+							if (response != null) {
+								try {
+									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getJSONObject("person").getString("profileUrl"))));
+								} catch (JSONException e) {
+									Log.e(TAG, e.toString());
+									onErrorExit(getString(R.string.myspace));
+								}
+							} else {
+								onErrorExit(getString(R.string.myspace));
+							}
+						}
+					};
+					loadingDialog.setMessage(getString(R.string.loading));
+					loadingDialog.setCancelable(true);
+					loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+						@Override
+						public void onCancel(DialogInterface dialog) {
+							if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+						}
+					});
+					loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.cancel();
+						}
+					});
+					loadingDialog.show();
+					asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+				}
+				account.close();
+				break;
+			case BUZZ:
+				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				if (account.moveToFirst()) {
+					final ProgressDialog loadingDialog = new ProgressDialog(this);
+					asyncTask = new AsyncTask<String, Void, String>() {
+						@Override
+						protected String doInBackground(String... arg0) {
+							SonetOAuth sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, arg0[0], arg0[1]);
+							return sonetOAuth.httpResponse(new HttpGet(String.format(BUZZ_URL_USER, BUZZ_BASE_URL, mEsid, BUZZ_API_KEY)));
+						}
+
+						@Override
+						protected void onPostExecute(String response) {
+							if (loadingDialog.isShowing()) loadingDialog.dismiss();
+							if (response != null) {
+								try {
+									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getJSONObject("data").getString("profileUrl"))));
+								} catch (JSONException e) {
+									Log.e(TAG, e.toString());
+									onErrorExit(getString(R.string.buzz));
+								}
+							} else {
+								onErrorExit(getString(R.string.buzz));
+							}
+						}
+					};
+					loadingDialog.setMessage(getString(R.string.loading));
+					loadingDialog.setCancelable(true);
+					loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+						@Override
+						public void onCancel(DialogInterface dialog) {
+							if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+						}
+					});
+					loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.cancel();
+						}
+					});
+					loadingDialog.show();
+					asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+				}
+				account.close();
+				break;
+			case FOURSQUARE:
+				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(FOURSQUARE_URL_PROFILE, mEsid))));
+				break;
+			case LINKEDIN:
+				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				if (account.moveToFirst()) {
+					final ProgressDialog loadingDialog = new ProgressDialog(this);
+					asyncTask = new AsyncTask<String, Void, String>() {
+						@Override
+						protected String doInBackground(String... arg0) {
+							SonetOAuth sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, arg0[0], arg0[1]);
+							HttpGet httpGet = new HttpGet(String.format(LINKEDIN_URL_USER, mEsid));
+							for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
+							return sonetOAuth.httpResponse(httpGet);
+						}
+
+						@Override
+						protected void onPostExecute(String response) {
+							if (loadingDialog.isShowing()) loadingDialog.dismiss();
+							if (response != null) {
+								try {
+									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getJSONObject("siteStandardProfileRequest").getString("url").replaceAll("\\\\", ""))));
+								} catch (JSONException e) {
+									Log.e(TAG, e.toString());
+									onErrorExit(getString(R.string.linkedin));
+								}
+							} else {
+								onErrorExit(getString(R.string.linkedin));
+							}
+						}
+					};
+					loadingDialog.setMessage(getString(R.string.loading));
+					loadingDialog.setCancelable(true);
+					loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+						@Override
+						public void onCancel(DialogInterface dialog) {
+							if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+						}
+					});
+					loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.cancel();
+						}
+					});
+					loadingDialog.show();
+					asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+				}
+				account.close();
+				break;
+			}
+			break;
+		default:
+			// open link
+			startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
 		}
 	}
 
