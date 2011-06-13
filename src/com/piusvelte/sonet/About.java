@@ -22,7 +22,7 @@ package com.piusvelte.sonet;
 import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 
 import com.google.ads.*;
-import com.piusvelte.sonet.Sonet.Accounts;
+import com.piusvelte.sonet.Sonet.Widget_accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Widgets;
 
@@ -64,10 +64,8 @@ DialogInterface.OnClickListener {
 								mAppWidgetManager.getAppWidgetIds(new ComponentName(this,
 										SonetWidget_4x4.class)));
 		int[] removeAppWidgets = new int[0];
-		this.getContentResolver().delete(Widgets.CONTENT_URI,
-				Widgets.WIDGET + "=?", new String[] { "" });
-		this.getContentResolver().delete(Accounts.CONTENT_URI,
-				Accounts.WIDGET + "=?", new String[] { "" });
+		this.getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=?", new String[] { "" });
+		this.getContentResolver().delete(Widget_accounts.CONTENT_URI, Widget_accounts.WIDGET + "=?", new String[] { "" });
 		Cursor widgets = this.getContentResolver().query(Widgets.CONTENT_URI, new String[] {Widgets._ID, Widgets.WIDGET}, Widgets.ACCOUNT + "=?", new String[] { Long.toString(Sonet.INVALID_ACCOUNT_ID) }, null);
 		if (widgets.moveToFirst()) {
 			int iwidget = widgets.getColumnIndex(Widgets.WIDGET), appWidgetId;
@@ -82,7 +80,7 @@ DialogInterface.OnClickListener {
 			// remove phantom widgets
 			for (int appWidgetId : removeAppWidgets) {
 				this.getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
-				this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
+				this.getContentResolver().delete(Widget_accounts.CONTENT_URI, Widget_accounts.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
 				this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
 			}
 		}

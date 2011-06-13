@@ -86,7 +86,7 @@ import static com.piusvelte.sonet.SonetTokens.LINKEDIN_SECRET;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.appwidget.AppWidgetManager;
+//import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.database.Cursor;
@@ -110,7 +110,7 @@ import android.widget.Toast;
 
 public class SonetCreatePost extends Activity implements OnKeyListener, OnClickListener, TextWatcher {
 	private static final String TAG = "SonetCreatePost";
-	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
+//	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private HashMap<Long, String> mAccountsToPost = new HashMap<Long, String>();
 	private EditText mMessage;
 	private Button mSend;
@@ -141,16 +141,16 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 			Uri data = getIntent().getData();
 			if (data.toString().contains(Accounts.CONTENT_URI.toString())) {
 				// default to the account passed in, but allow selecting additional accounts
-				Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.WIDGET, ACCOUNTS_QUERY}, Accounts._ID + "=?", new String[]{data.getLastPathSegment()}, null);
+				Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID,/* Accounts.WIDGET,*/ ACCOUNTS_QUERY}, Accounts._ID + "=?", new String[]{data.getLastPathSegment()}, null);
 				if (account.moveToFirst()) {
-					mAppWidgetId = account.getInt(account.getColumnIndex(Accounts.WIDGET));
+//					mAppWidgetId = account.getInt(account.getColumnIndex(Accounts.WIDGET));
 					mAccountsToPost.put(account.getLong(account.getColumnIndex(Accounts._ID)), null);
 					mAccounts.setText(account.getString(account.getColumnIndex(Accounts.USERNAME)));
 				}
 				account.close();
-			} else {
-				// default widget post
-				mAppWidgetId = Integer.parseInt(data.getLastPathSegment());
+//			} else {
+//				// default widget post
+//				mAppWidgetId = Integer.parseInt(data.getLastPathSegment());
 			}
 		}
 		mAccounts.setEnabled(true);
@@ -649,7 +649,9 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				mLocation.setEnabled(true);
 			}
 		} else if (v == mAccounts) {
-			Cursor c = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)}, null);
+			// don't limit accounts to the widget...
+//			Cursor c = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)}, null);
+			Cursor c = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, null, null, null);
 			if (c.moveToFirst()) {
 				int iid = c.getColumnIndex(Accounts._ID),
 				iusername = c.getColumnIndex(Accounts.USERNAME),

@@ -62,6 +62,7 @@ import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
 import com.piusvelte.sonet.Sonet.Widgets;
+import com.piusvelte.sonet.Sonet.Widget_accounts;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -174,7 +175,9 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 						@Override
 						public void onClick(DialogInterface arg0, int arg1) {
 							// no account, dialog to select one
-							Cursor c = StatusDialog.this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY}, Accounts.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetIds[arg1])}, null);
+							// don't limit accounts to the widget
+//							Cursor c = StatusDialog.this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY}, Accounts.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetIds[arg1])}, null);
+							Cursor c = StatusDialog.this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY}, null, null, null);
 							if (c.moveToFirst()) {
 								int iid = c.getColumnIndex(Accounts._ID),
 								iusername = c.getColumnIndex(Accounts.USERNAME),
@@ -549,10 +552,8 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 								appWidgetManager.getAppWidgetIds(new ComponentName(this,
 										SonetWidget_4x4.class)));
 		int[] removeAppWidgets = new int[0];
-		this.getContentResolver().delete(Widgets.CONTENT_URI,
-				Widgets.WIDGET + "=?", new String[] { "" });
-		this.getContentResolver().delete(Accounts.CONTENT_URI,
-				Accounts.WIDGET + "=?", new String[] { "" });
+		this.getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=?", new String[] { "" });
+		this.getContentResolver().delete(Widget_accounts.CONTENT_URI, Widget_accounts.WIDGET + "=?", new String[] { "" });
 		Cursor widgets = this.getContentResolver().query(Widgets.CONTENT_URI, new String[] {Widgets._ID, Widgets.WIDGET}, Widgets.ACCOUNT + "=?", new String[] { Long.toString(Sonet.INVALID_ACCOUNT_ID) }, null);
 		if (widgets.moveToFirst()) {
 			int iwidget = widgets.getColumnIndex(Widgets.WIDGET), appWidgetId;
@@ -567,7 +568,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 			// remove phantom widgets
 			for (int appWidgetId : removeAppWidgets) {
 				this.getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
-				this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
+				this.getContentResolver().delete(Widget_accounts.CONTENT_URI, Widget_accounts.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
 				this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
 			}
 		}

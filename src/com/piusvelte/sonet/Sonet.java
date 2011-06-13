@@ -230,12 +230,58 @@ public class Sonet {
 		public static final String SECRET = "secret";
 		public static final String SERVICE = "service";
 		public static final String EXPIRY = "expiry";
-		public static final String WIDGET = "widget";
+//		public static final String WIDGET = "widget";
 		// service id for posting and linking
 		public static final String SID = "sid";
 
 	}
+	
+	public static final class Widget_accounts implements BaseColumns {
+		
+		private Widget_accounts() {
+		}
 
+		public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/widget_accounts");
+
+		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.widget_accounts";
+
+		public static final String ACCOUNT = "account";
+		public static final String WIDGET = "widget";
+	}
+	
+	public static final class Widget_accounts_view implements BaseColumns {
+		
+		private Widget_accounts_view() {
+		}
+
+		public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/widget_accounts_view");
+
+		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.widget_accounts_view";
+
+		public static final String ACCOUNT = "account";
+		public static final String WIDGET = "widget";
+		public static final String USERNAME = "username";
+		public static final String TOKEN = "token";
+		public static final String SECRET = "secret";
+		public static final String SERVICE = "service";
+		public static final String EXPIRY = "expiry";
+		public static final String SID = "sid";
+	}
+
+	public static final class Accounts_usage_view implements BaseColumns {
+		
+		private Accounts_usage_view() {
+		}
+
+		public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/accounts_usage_view");
+
+		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.accounts_usage_view";
+
+		public static final String WIDGET = "widget";
+		public static final String USERNAME = "username";
+		public static final String ISENABLED = "isenabled";
+	}
+	
 	public static final class Widgets implements BaseColumns {
 
 		private Widgets() {

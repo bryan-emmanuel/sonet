@@ -43,6 +43,7 @@ import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
@@ -51,7 +52,8 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 public class ManageAccounts extends ListActivity implements OnClickListener, DialogInterface.OnClickListener {
 	private static final int REAUTH_ID = Menu.FIRST;
 	private static final int SETTINGS_ID = Menu.FIRST + 1;
-	private static final int DELETE_ID = Menu.FIRST + 2;
+	private static final int ENABLE_ID = Menu.FIRST + 2;
+	private static final int DELETE_ID = Menu.FIRST + 3;
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private boolean mHasAccounts = false,
 	mAddingAccount,
@@ -118,6 +120,19 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			finish();
 		}
 	}
+	
+	private final SimpleCursorAdapter.ViewBinder mViewBinder = new SimpleCursorAdapter.ViewBinder() {
+		@Override
+		public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
+			if (columnIndex == cursor.getColumnIndex(Networks.MANAGE)) {
+				((CheckBox) view).setChecked(cursor.getInt(columnIndex) == 1);
+				return true;
+			} else if (columnIndex == cursor.getColumnIndex(Ranges.MANAGE_CELL)) {
+				((CheckBox) view).setChecked(cursor.getInt(columnIndex) == 1);
+				return true;
+			} else return false;
+		}
+	};
 
 	@Override
 	protected void onListItemClick(ListView list, View view, int position, long id) {
@@ -142,6 +157,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 				case SETTINGS_ID:
 					mAddingAccount = true;
 					startActivityForResult(new Intent(ManageAccounts.this, AccountSettings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, item), RESULT_REFRESH);
+					break;
+				case ENABLE_ID:
 					break;
 				}
 				dialog.cancel();
@@ -214,10 +231,13 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	}
 
 	private void listAccounts() {
+		// list all accounts, checking the checkbox if they are enabled for this widget
 		// prepend service name to username
 		Cursor c = this.managedQuery(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)}, null);
 		mHasAccounts = c.getCount() != 0;
-		setListAdapter(new SimpleCursorAdapter(ManageAccounts.this, R.layout.accounts_row, c, new String[] {Accounts.USERNAME}, new int[] {R.id.account_username}));
+		SimpleCursorAdapter sca = new SimpleCursorAdapter(ManageAccounts.this, R.layout.accounts_row, c, new String[] {Accounts.USERNAME}, new int[] {R.id.account_username});
+		sca.setViewBinder(mViewBinder);
+		setListAdapter(sca);
 	}
 
 

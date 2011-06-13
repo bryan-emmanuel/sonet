@@ -92,6 +92,7 @@ import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_ME;
 import static oauth.signpost.OAuth.OAUTH_VERIFIER;
 
 import com.piusvelte.sonet.Sonet.Accounts;
+import com.piusvelte.sonet.Sonet.Widget_accounts;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -208,13 +209,19 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 		values.put(Accounts.SECRET, secret);
 		values.put(Accounts.EXPIRY, expiry);
 		values.put(Accounts.SERVICE, service);
-		values.put(Accounts.WIDGET, mWidgetId);
+//		values.put(Accounts.WIDGET, mWidgetId);
 		values.put(Accounts.SID, String.format(SID_FORMAT, sid));
 		if (mAccountId != Sonet.INVALID_ACCOUNT_ID) {
+			// re-authenticating
 			accountId = Long.toString(mAccountId);
 			getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Long.toString(mAccountId)});
 		} else {
+			// new account
 			accountId = getContentResolver().insert(Accounts.CONTENT_URI, values).getLastPathSegment();
+			values.clear();
+			values.put(Widget_accounts.ACCOUNT, accountId);
+			values.put(Widget_accounts.WIDGET, mWidgetId);
+			getContentResolver().insert(Widget_accounts.CONTENT_URI, values);
 		}
 		setResult(RESULT_OK);
 		return accountId;

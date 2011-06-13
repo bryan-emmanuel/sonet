@@ -86,6 +86,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.piusvelte.sonet.Sonet.Accounts;
+import com.piusvelte.sonet.Sonet.Widget_accounts_view;
 import com.piusvelte.sonet.Sonet.Entities;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
@@ -283,41 +284,42 @@ public class SonetService extends Service {
 				/* get statuses for all accounts
 				 * then sort them by datetime, descending
 				 */
-				Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{appWidgetId}, null);
-				if (!accounts.moveToFirst()) {
-					// check for old accounts without appwidgetid
-					accounts.close();
-					accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{""}, null);
-					if (accounts.moveToFirst()) {
-						// upgrade the accounts, adding the appwidgetid
-						int username = accounts.getColumnIndex(Accounts.USERNAME),
-						token = accounts.getColumnIndex(Accounts.TOKEN),
-						secret = accounts.getColumnIndex(Accounts.SECRET),
-						service = accounts.getColumnIndex(Accounts.SERVICE),
-						expiry = accounts.getColumnIndex(Accounts.EXPIRY);
-						while (!accounts.isAfterLast()) {
-							ContentValues values = new ContentValues();
-							values.put(Accounts.USERNAME, accounts.getString(username));
-							values.put(Accounts.TOKEN, accounts.getString(token));
-							values.put(Accounts.SECRET, accounts.getString(secret));
-							values.put(Accounts.SERVICE, accounts.getInt(service));
-							values.put(Accounts.EXPIRY, accounts.getInt(expiry));
-							values.put(Accounts.WIDGET, appWidgetId);
-							values.put(Accounts.SID, "");
-							this.getContentResolver().insert(Accounts.CONTENT_URI, values);
-							accounts.moveToNext();
-						}
-					}
-					accounts.close();
-					this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=?", new String[]{""});
-					accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{appWidgetId}, null);
-				}
+				Cursor accounts = this.getContentResolver().query(Widget_accounts_view.CONTENT_URI, new String[]{Widget_accounts_view._ID, Widget_accounts_view.USERNAME, Widget_accounts_view.TOKEN, Widget_accounts_view.SECRET, Widget_accounts_view.SERVICE, Widget_accounts_view.EXPIRY}, Widget_accounts_view.WIDGET + "=?", new String[]{appWidgetId}, null);
+				// this code is no longer supported, old accounts will no longer be migrated forward
+//				if (!accounts.moveToFirst()) {
+//					// check for old accounts without appwidgetid
+//					accounts.close();
+//					accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{""}, null);
+//					if (accounts.moveToFirst()) {
+//						// upgrade the accounts, adding the appwidgetid
+//						int username = accounts.getColumnIndex(Accounts.USERNAME),
+//						token = accounts.getColumnIndex(Accounts.TOKEN),
+//						secret = accounts.getColumnIndex(Accounts.SECRET),
+//						service = accounts.getColumnIndex(Accounts.SERVICE),
+//						expiry = accounts.getColumnIndex(Accounts.EXPIRY);
+//						while (!accounts.isAfterLast()) {
+//							ContentValues values = new ContentValues();
+//							values.put(Accounts.USERNAME, accounts.getString(username));
+//							values.put(Accounts.TOKEN, accounts.getString(token));
+//							values.put(Accounts.SECRET, accounts.getString(secret));
+//							values.put(Accounts.SERVICE, accounts.getInt(service));
+//							values.put(Accounts.EXPIRY, accounts.getInt(expiry));
+//							values.put(Accounts.WIDGET, appWidgetId);
+//							values.put(Accounts.SID, "");
+//							this.getContentResolver().insert(Accounts.CONTENT_URI, values);
+//							accounts.moveToNext();
+//						}
+//					}
+//					accounts.close();
+//					this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=?", new String[]{""});
+//					accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{appWidgetId}, null);
+//				}
 				if (accounts.moveToFirst()) {
 					// load the updates
-					int iaccountid = accounts.getColumnIndex(Accounts._ID),
-					iservice = accounts.getColumnIndex(Accounts.SERVICE),
-					itoken = accounts.getColumnIndex(Accounts.TOKEN),
-					isecret = accounts.getColumnIndex(Accounts.SECRET);
+					int iaccountid = accounts.getColumnIndex(Widget_accounts_view._ID),
+					iservice = accounts.getColumnIndex(Widget_accounts_view.SERVICE),
+					itoken = accounts.getColumnIndex(Widget_accounts_view.TOKEN),
+					isecret = accounts.getColumnIndex(Widget_accounts_view.SECRET);
 					while (!accounts.isAfterLast()) {
 						String account = Long.toString(accounts.getLong(iaccountid)),
 						service = Integer.toString(accounts.getInt(iservice));
@@ -1277,7 +1279,7 @@ public class SonetService extends Service {
 			map_friend_bg_clear = {R.id.friend_bg_clear0, R.id.friend_bg_clear1, R.id.friend_bg_clear2, R.id.friend_bg_clear3, R.id.friend_bg_clear4, R.id.friend_bg_clear5, R.id.friend_bg_clear6, R.id.friend_bg_clear7, R.id.friend_bg_clear8, R.id.friend_bg_clear9, R.id.friend_bg_clear10, R.id.friend_bg_clear11, R.id.friend_bg_clear12, R.id.friend_bg_clear13, R.id.friend_bg_clear14, R.id.friend_bg_clear15},
 			map_message_bg_clear = {R.id.message_bg_clear0, R.id.message_bg_clear1, R.id.message_bg_clear2, R.id.message_bg_clear3, R.id.message_bg_clear4, R.id.message_bg_clear5, R.id.message_bg_clear6, R.id.message_bg_clear7, R.id.message_bg_clear8, R.id.message_bg_clear9, R.id.message_bg_clear10, R.id.message_bg_clear11, R.id.message_bg_clear12, R.id.message_bg_clear13, R.id.message_bg_clear14, R.id.message_bg_clear15},
 			map_icon = {R.id.icon0, R.id.icon1, R.id.icon2, R.id.icon3, R.id.icon4, R.id.icon5, R.id.icon6, R.id.icon7, R.id.icon8, R.id.icon9, R.id.icon10, R.id.icon11, R.id.icon12, R.id.icon13, R.id.icon14, R.id.icon15};
-			Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID}, Accounts.WIDGET + "=?", new String[]{widget}, null);
+			Cursor accounts = this.getContentResolver().query(Widget_accounts_view.CONTENT_URI, new String[]{Widget_accounts_view._ID}, Widget_accounts_view.WIDGET + "=?", new String[]{widget}, null);
 			if (accounts.moveToFirst()) {
 				Cursor statuses_styles = this.getContentResolver().query(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, widget), new String[]{Statuses_styles._ID, Statuses_styles.CREATED, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.SERVICE, Statuses_styles.CREATEDTEXT, Statuses_styles.WIDGET, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON}, null, null, Statuses_styles.CREATED + " desc");
 				if (statuses_styles.moveToFirst()) {
@@ -1339,7 +1341,7 @@ public class SonetService extends Service {
 				}
 				statuses_styles.close();
 			} else {
-				views.setTextViewText(map_message[0], this.getString(R.string.loading));
+				views.setTextViewText(map_message[0], this.getString(R.string.no_accounts));
 			}
 			accounts.close();
 			if ((widget != null) && (views != null)) {

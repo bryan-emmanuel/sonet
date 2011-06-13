@@ -22,6 +22,9 @@ package com.piusvelte.sonet;
 import java.util.HashMap;
 
 import com.piusvelte.sonet.Sonet.Accounts;
+import com.piusvelte.sonet.Sonet.Widget_accounts;
+import com.piusvelte.sonet.Sonet.Widget_accounts_view;
+import com.piusvelte.sonet.Sonet.Accounts_usage_view;
 import com.piusvelte.sonet.Sonet.Entities;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
 import com.piusvelte.sonet.Sonet.Widgets;
@@ -50,6 +53,9 @@ public class SonetProvider extends ContentProvider {
 	private static final int STATUSES_STYLES = 3;
 	private static final int STATUSES_STYLES_WIDGET = 4;
 	private static final int ENTITIES = 5;
+	private static final int WIDGET_ACCOUNTS = 6;
+	private static final int WIDGET_ACCOUNTS_VIEW = 7;
+	private static final int ACCOUNTS_USAGE_VIEW = 8;
 
 	private static final String DATABASE_NAME = "sonet.db";
 	private static final int DATABASE_VERSION = 13;
@@ -68,6 +74,15 @@ public class SonetProvider extends ContentProvider {
 
 	private static final String TABLE_ENTITIES = "entities";
 	private static HashMap<String, String> entitiesProjectionMap;
+	
+	private static final String TABLE_WIDGET_ACCOUNTS = "widget_accounts";
+	private static HashMap<String, String> widget_accountsProjectionMap;
+	
+	private static final String VIEW_WIDGET_ACCOUNTS = "widget_accounts_view";
+	private static HashMap<String, String> widget_accounts_viewProjectionMap;
+	
+	private static final String VIEW_ACCOUNTS_USAGE = "accounts_usage_view";
+	private static HashMap<String, String> accounts_usage_viewProjectionMap;
 
 	private DatabaseHelper mDatabaseHelper;
 
@@ -83,9 +98,37 @@ public class SonetProvider extends ContentProvider {
 		accountsProjectionMap.put(Accounts.SECRET, Accounts.SECRET);
 		accountsProjectionMap.put(Accounts.SERVICE, Accounts.SERVICE);
 		accountsProjectionMap.put(Accounts.EXPIRY, Accounts.EXPIRY);
-		accountsProjectionMap.put(Accounts.WIDGET, Accounts.WIDGET);
+//		accountsProjectionMap.put(Accounts.WIDGET, Accounts.WIDGET);
 		accountsProjectionMap.put(Accounts.SID, Accounts.SID);
 
+		sUriMatcher.addURI(AUTHORITY, TABLE_WIDGET_ACCOUNTS, WIDGET_ACCOUNTS);
+
+		widget_accountsProjectionMap = new HashMap<String, String>();
+		widget_accountsProjectionMap.put(Widget_accounts._ID, Widget_accounts._ID);
+		widget_accountsProjectionMap.put(Widget_accounts.ACCOUNT, Widget_accounts.ACCOUNT);
+		widget_accountsProjectionMap.put(Widget_accounts.WIDGET, Widget_accounts.WIDGET);
+
+		sUriMatcher.addURI(AUTHORITY, VIEW_WIDGET_ACCOUNTS, WIDGET_ACCOUNTS_VIEW);
+
+		widget_accounts_viewProjectionMap = new HashMap<String, String>();
+		widget_accounts_viewProjectionMap.put(Widget_accounts_view._ID, Widget_accounts_view._ID);
+		widget_accounts_viewProjectionMap.put(Widget_accounts_view.ACCOUNT, Widget_accounts_view.ACCOUNT);
+		widget_accounts_viewProjectionMap.put(Widget_accounts_view.WIDGET, Widget_accounts_view.WIDGET);
+		widget_accounts_viewProjectionMap.put(Widget_accounts_view.USERNAME, Widget_accounts_view.USERNAME);
+		widget_accounts_viewProjectionMap.put(Widget_accounts_view.TOKEN, Widget_accounts_view.TOKEN);
+		widget_accounts_viewProjectionMap.put(Widget_accounts_view.SECRET, Widget_accounts_view.SECRET);
+		widget_accounts_viewProjectionMap.put(Widget_accounts_view.SERVICE, Widget_accounts_view.SERVICE);
+		widget_accounts_viewProjectionMap.put(Widget_accounts_view.EXPIRY, Widget_accounts_view.EXPIRY);
+		widget_accounts_viewProjectionMap.put(Widget_accounts_view.SID, Widget_accounts_view.SID);
+
+
+		sUriMatcher.addURI(AUTHORITY, VIEW_ACCOUNTS_USAGE, ACCOUNTS_USAGE_VIEW);
+
+		accounts_usage_viewProjectionMap = new HashMap<String, String>();
+		accounts_usage_viewProjectionMap.put(Accounts_usage_view._ID, Accounts_usage_view._ID);
+		accounts_usage_viewProjectionMap.put(Accounts_usage_view.WIDGET, Accounts_usage_view.WIDGET);
+		accounts_usage_viewProjectionMap.put(Accounts_usage_view.USERNAME, Accounts_usage_view.USERNAME);
+		
 		sUriMatcher.addURI(AUTHORITY, TABLE_WIDGETS, WIDGETS);
 
 		widgetsProjectionMap = new HashMap<String, String>();
@@ -174,6 +217,12 @@ public class SonetProvider extends ContentProvider {
 		switch (sUriMatcher.match(uri)) {
 		case ACCOUNTS:
 			return Accounts.CONTENT_TYPE;
+		case WIDGET_ACCOUNTS:
+			return Widget_accounts.CONTENT_TYPE;
+		case WIDGET_ACCOUNTS_VIEW:
+			return Widget_accounts_view.CONTENT_TYPE;
+		case ACCOUNTS_USAGE_VIEW:
+			return Accounts_usage_view.CONTENT_TYPE;
 		case WIDGETS:
 			return Widgets.CONTENT_TYPE;
 		case STATUSES:
@@ -196,6 +245,9 @@ public class SonetProvider extends ContentProvider {
 		switch (sUriMatcher.match(uri)) {
 		case ACCOUNTS:
 			count = db.delete(TABLE_ACCOUNTS, whereClause, whereArgs);
+			break;
+		case WIDGET_ACCOUNTS:
+			count = db.delete(TABLE_WIDGET_ACCOUNTS, whereClause, whereArgs);
 			break;
 		case WIDGETS:
 			count = db.delete(TABLE_WIDGETS, whereClause, whereArgs);
@@ -222,6 +274,11 @@ public class SonetProvider extends ContentProvider {
 		case ACCOUNTS:
 			rowId = db.insert(TABLE_ACCOUNTS, Accounts._ID, values);
 			returnUri = ContentUris.withAppendedId(Accounts.CONTENT_URI, rowId);
+			getContext().getContentResolver().notifyChange(returnUri, null);
+			break;
+		case WIDGET_ACCOUNTS:
+			rowId = db.insert(TABLE_WIDGET_ACCOUNTS, Widget_accounts._ID, values);
+			returnUri = ContentUris.withAppendedId(Widget_accounts.CONTENT_URI, rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case WIDGETS:
@@ -254,6 +311,18 @@ public class SonetProvider extends ContentProvider {
 		case ACCOUNTS:
 			qb.setTables(TABLE_ACCOUNTS);
 			qb.setProjectionMap(accountsProjectionMap);
+			break;
+		case WIDGET_ACCOUNTS:
+			qb.setTables(TABLE_WIDGET_ACCOUNTS);
+			qb.setProjectionMap(widget_accountsProjectionMap);
+			break;
+		case WIDGET_ACCOUNTS_VIEW:
+			qb.setTables(VIEW_WIDGET_ACCOUNTS);
+			qb.setProjectionMap(widget_accounts_viewProjectionMap);
+			break;
+		case ACCOUNTS_USAGE_VIEW:
+			qb.setTables(VIEW_ACCOUNTS_USAGE);
+			qb.setProjectionMap(accounts_usage_viewProjectionMap);
 			break;
 		case WIDGETS:
 			qb.setTables(TABLE_WIDGETS);
@@ -296,6 +365,9 @@ public class SonetProvider extends ContentProvider {
 		case ACCOUNTS:
 			count = db.update(TABLE_ACCOUNTS, values, selection, selectionArgs);
 			break;
+		case WIDGET_ACCOUNTS:
+			count = db.update(TABLE_WIDGET_ACCOUNTS, values, selection, selectionArgs);
+			break;
 		case WIDGETS:
 			count = db.update(TABLE_WIDGETS, values, selection, selectionArgs);
 			break;
@@ -327,8 +399,39 @@ public class SonetProvider extends ContentProvider {
 					+ Accounts.SECRET + " text, "
 					+ Accounts.SERVICE + " integer, "
 					+ Accounts.EXPIRY + " integer, "
-					+ Accounts.WIDGET + " integer, "
+//					+ Accounts.WIDGET + " integer, "
 					+ Accounts.SID + " text);");
+			db.execSQL("create table if not exists " + TABLE_WIDGET_ACCOUNTS
+					+ " (" + Widget_accounts._ID + " integer primary key autoincrement, "
+					+ Widget_accounts.ACCOUNT + " integer, "
+					+ Widget_accounts.WIDGET + " integer);");
+			db.execSQL("create view if not exists " + VIEW_WIDGET_ACCOUNTS + " as select "
+					+ TABLE_WIDGET_ACCOUNTS + "." + Widget_accounts._ID
+					+ "," + Widget_accounts.ACCOUNT
+					+ "," + Widget_accounts.WIDGET
+					+ "," + Accounts.EXPIRY
+					+ "," + Accounts.SECRET
+					+ "," + Accounts.SERVICE
+					+ "," + Accounts.SID
+					+ "," + Accounts.TOKEN
+					+ "," + Accounts.USERNAME
+					+ " from "
+					+ TABLE_WIDGET_ACCOUNTS
+					+ "," + TABLE_ACCOUNTS
+					+ " where "
+					+ TABLE_ACCOUNTS + "." + Accounts._ID + "=" + Widget_accounts.ACCOUNT
+					+ ";");
+			db.execSQL("create view if not exists " + VIEW_ACCOUNTS_USAGE + " as select "
+					+ TABLE_ACCOUNTS + "." + Accounts._ID
+					+ "," + Widget_accounts.WIDGET
+					+ "," + Accounts.USERNAME
+					+ " from "
+					+ TABLE_ACCOUNTS
+					+ " left join "
+					+ TABLE_WIDGET_ACCOUNTS
+					+ " on "
+					+ TABLE_ACCOUNTS + "." + Accounts._ID + "=" + Widget_accounts.ACCOUNT
+					+ ";");
 			db.execSQL("create table if not exists " + TABLE_WIDGETS
 					+ " (" + Widgets._ID + " integer primary key autoincrement, "
 					+ Widgets.WIDGET + " integer, "
@@ -402,7 +505,7 @@ public class SonetProvider extends ContentProvider {
 					+ TABLE_ENTITIES + "." + Entities._ID + " as " + Statuses_styles.ENTITY + ","
 					+ Entities.ESID + " as " + Statuses_styles.ESID
 					+ " from " + TABLE_STATUSES + "," + TABLE_ENTITIES
-					+ " where " + TABLE_ENTITIES + "." + Entities._ID + "=" + Statuses.ENTITY);
+					+ " where " + TABLE_ENTITIES + "." + Entities._ID + "=" + Statuses.ENTITY + ";");
 		}
 
 		@Override
@@ -451,7 +554,7 @@ public class SonetProvider extends ContentProvider {
 						+ Accounts.SERVICE + " integer, "
 						+ Accounts.EXPIRY + " integer, "
 						+ "timezone integer, "
-						+ Accounts.WIDGET + " integer);");
+						+ "widget integer);");
 				db.execSQL("insert into " + TABLE_ACCOUNTS + " select " + Accounts._ID + "," + Accounts.USERNAME + "," + Accounts.TOKEN + "," + Accounts.SECRET + "," + Accounts.SERVICE + "," + Accounts.EXPIRY + ",timezone,\"\" from " + TABLE_ACCOUNTS + "_bkp;");
 				db.execSQL("drop table if exists " + TABLE_ACCOUNTS + "_bkp;");
 				// move preferences to db
@@ -716,7 +819,7 @@ public class SonetProvider extends ContentProvider {
 						+ Accounts.SERVICE + " integer, "
 						+ Accounts.EXPIRY + " integer, "
 						+ "timezone real, "
-						+ Accounts.WIDGET + " integer);");
+						+ "widget integer);");
 				db.execSQL("insert into " + TABLE_ACCOUNTS
 						+ " select "
 						+ Accounts._ID + ","
@@ -726,7 +829,7 @@ public class SonetProvider extends ContentProvider {
 						+ Accounts.SERVICE + ","
 						+ Accounts.EXPIRY + ","
 						+ "timezone,"
-						+ Accounts.WIDGET + " from " + TABLE_ACCOUNTS + "_bkp;");
+						+ "widget from " + TABLE_ACCOUNTS + "_bkp;");
 				db.execSQL("drop table if exists " + TABLE_ACCOUNTS + "_bkp;");
 			}
 			if (oldVersion < 10) {
@@ -894,7 +997,7 @@ public class SonetProvider extends ContentProvider {
 						+ Accounts.SECRET + " text, "
 						+ Accounts.SERVICE + " integer, "
 						+ Accounts.EXPIRY + " integer, "
-						+ Accounts.WIDGET + " integer);");
+						+ "widget integer);");
 				db.execSQL("insert into " + TABLE_ACCOUNTS
 						+ " select "
 						+ Accounts._ID + ","
@@ -903,7 +1006,7 @@ public class SonetProvider extends ContentProvider {
 						+ Accounts.SECRET + ","
 						+ Accounts.SERVICE + ","
 						+ Accounts.EXPIRY + ","
-						+ Accounts.WIDGET + " from " + TABLE_ACCOUNTS + "_bkp;");
+						+ "widget from " + TABLE_ACCOUNTS + "_bkp;");
 				db.execSQL("drop table if exists " + TABLE_ACCOUNTS + "_bkp;");
 			}
 			if (oldVersion < 12) {
@@ -918,7 +1021,7 @@ public class SonetProvider extends ContentProvider {
 						+ Accounts.SECRET + " text, "
 						+ Accounts.SERVICE + " integer, "
 						+ Accounts.EXPIRY + " integer, "
-						+ Accounts.WIDGET + " integer, "
+						+ "widget integer, "
 						+ Accounts.SID + " integer);");
 				db.execSQL("insert into " + TABLE_ACCOUNTS
 						+ " select "
@@ -928,7 +1031,7 @@ public class SonetProvider extends ContentProvider {
 						+ Accounts.SECRET + ","
 						+ Accounts.SERVICE + ","
 						+ Accounts.EXPIRY + ","
-						+ Accounts.WIDGET + ",\"\" from " + TABLE_ACCOUNTS + "_bkp;");
+						+ "widget,\"\" from " + TABLE_ACCOUNTS + "_bkp;");
 				db.execSQL("drop table if exists " + TABLE_ACCOUNTS + "_bkp;");
 				db.execSQL("drop table if exists " + TABLE_STATUSES + "_bkp;");
 				db.execSQL("create temp table " + TABLE_STATUSES + "_bkp as select * from " + TABLE_STATUSES + ";");
@@ -1072,6 +1175,80 @@ public class SonetProvider extends ContentProvider {
 				values = new ContentValues();
 				values.put(Widgets.SCROLLABLE, 2);
 				db.update(TABLE_WIDGETS, values, Widgets.SCROLLABLE + "=?", new String[]{"1"});
+			}
+			if (oldVersion < 14) {
+				// need to redesign the accounts table so that multiple widgets can use the same accounts
+				db.execSQL("create table if not exists " + TABLE_WIDGET_ACCOUNTS
+						+ " (" + Widget_accounts._ID + " integer primary key autoincrement, "
+						+ Widget_accounts.ACCOUNT + " integer, "
+						+ Widget_accounts.WIDGET + " integer);");
+				// migrate accounts over to widget_accounts
+				db.execSQL("drop table if exists " + TABLE_ACCOUNTS + "_bkp;");
+				db.execSQL("create temp table " + TABLE_ACCOUNTS + "_bkp as select * from " + TABLE_ACCOUNTS + ";");
+				db.execSQL("drop table if exists " + TABLE_ACCOUNTS + ";");
+				db.execSQL("create table if not exists " + TABLE_ACCOUNTS
+						+ " (" + Accounts._ID + " integer primary key autoincrement, "
+						+ Accounts.USERNAME + " text, "
+						+ Accounts.TOKEN + " text, "
+						+ Accounts.SECRET + " text, "
+						+ Accounts.SERVICE + " integer, "
+						+ Accounts.EXPIRY + " integer, "
+//						+ Accounts.WIDGET + " integer, "
+						+ Accounts.SID + " text);");
+				Cursor accounts = db.query(TABLE_ACCOUNTS, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY, "widget", Accounts.SID}, null, null, null, null, null);
+				if (accounts.moveToFirst()) {
+					int iid = accounts.getColumnIndex(Accounts._ID),
+					iusername = accounts.getColumnIndex(Accounts.USERNAME),
+					itoken = accounts.getColumnIndex(Accounts.TOKEN),
+					isecret = accounts.getColumnIndex(Accounts.SECRET),
+					iexpiry = accounts.getColumnIndex(Accounts.EXPIRY),
+					iwidget = accounts.getColumnIndex("widget"),
+					isid = accounts.getColumnIndex(Accounts.SID);
+					while (!accounts.isAfterLast()) {
+						ContentValues values = new ContentValues();
+						values.put(Widget_accounts.ACCOUNT, accounts.getLong(iid));
+						values.put(Widget_accounts.WIDGET, accounts.getInt(iwidget));
+						db.insert(TABLE_WIDGET_ACCOUNTS, Widget_accounts._ID, values);
+						values.clear();
+						values.put(Accounts._ID, accounts.getLong(iid));
+						values.put(Accounts.USERNAME, accounts.getString(iusername));
+						values.put(Accounts.TOKEN, accounts.getString(itoken));
+						values.put(Accounts.SERVICE, accounts.getString(isecret));
+						values.put(Accounts.EXPIRY, accounts.getLong(iexpiry));
+						values.put(Accounts.SID, accounts.getString(isid));
+						db.insert(TABLE_ACCOUNTS, Accounts._ID, values);
+						accounts.moveToNext();
+					}
+				}
+				accounts.close();
+				db.execSQL("drop table if exists " + TABLE_ACCOUNTS + "_bkp;");
+				db.execSQL("create view if not exists " + VIEW_WIDGET_ACCOUNTS + " as select "
+						+ TABLE_WIDGET_ACCOUNTS + "." + Widget_accounts._ID
+						+ "," + Widget_accounts.ACCOUNT
+						+ "," + Widget_accounts.WIDGET
+						+ "," + Accounts.EXPIRY
+						+ "," + Accounts.SECRET
+						+ "," + Accounts.SERVICE
+						+ "," + Accounts.SID
+						+ "," + Accounts.TOKEN
+						+ "," + Accounts.USERNAME
+						+ " from "
+						+ TABLE_WIDGET_ACCOUNTS
+						+ "," + TABLE_ACCOUNTS
+						+ " where "
+						+ TABLE_ACCOUNTS + "." + Accounts._ID + "=" + Widget_accounts.ACCOUNT
+						+ ";");
+				db.execSQL("create view if not exists " + VIEW_ACCOUNTS_USAGE + " as select "
+						+ TABLE_ACCOUNTS + "." + Accounts._ID
+						+ "," + Widget_accounts.WIDGET
+						+ "," + Accounts.USERNAME
+						+ " from "
+						+ TABLE_ACCOUNTS
+						+ " left join "
+						+ TABLE_WIDGET_ACCOUNTS
+						+ " on "
+						+ TABLE_ACCOUNTS + "." + Accounts._ID + "=" + Widget_accounts.ACCOUNT
+						+ ";");
 			}
 		}
 

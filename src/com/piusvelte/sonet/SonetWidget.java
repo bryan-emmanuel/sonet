@@ -22,7 +22,7 @@ package com.piusvelte.sonet;
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.EXTRA_SCROLLABLE_VERSION;
 
-import com.piusvelte.sonet.Sonet.Accounts;
+import com.piusvelte.sonet.Sonet.Widget_accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
 import com.piusvelte.sonet.Sonet.Widgets;
@@ -86,7 +86,7 @@ public class SonetWidget extends AppWidgetProvider {
 		for (int appWidgetId : appWidgetIds) {
 			((AlarmManager) context.getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getService(context, 0, new Intent(context, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
 			context.getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
-			context.getContentResolver().delete(Accounts.CONTENT_URI, Accounts.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
+			context.getContentResolver().delete(Widget_accounts.CONTENT_URI, Widget_accounts.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
 			context.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
 		}
 	}
