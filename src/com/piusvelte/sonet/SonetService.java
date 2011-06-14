@@ -286,34 +286,34 @@ public class SonetService extends Service {
 				 */
 				Cursor accounts = this.getContentResolver().query(Widget_accounts_view.CONTENT_URI, new String[]{Widget_accounts_view._ID, Widget_accounts_view.USERNAME, Widget_accounts_view.TOKEN, Widget_accounts_view.SECRET, Widget_accounts_view.SERVICE, Widget_accounts_view.EXPIRY}, Widget_accounts_view.WIDGET + "=?", new String[]{appWidgetId}, null);
 				// this code is no longer supported, old accounts will no longer be migrated forward
-//				if (!accounts.moveToFirst()) {
-//					// check for old accounts without appwidgetid
-//					accounts.close();
-//					accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{""}, null);
-//					if (accounts.moveToFirst()) {
-//						// upgrade the accounts, adding the appwidgetid
-//						int username = accounts.getColumnIndex(Accounts.USERNAME),
-//						token = accounts.getColumnIndex(Accounts.TOKEN),
-//						secret = accounts.getColumnIndex(Accounts.SECRET),
-//						service = accounts.getColumnIndex(Accounts.SERVICE),
-//						expiry = accounts.getColumnIndex(Accounts.EXPIRY);
-//						while (!accounts.isAfterLast()) {
-//							ContentValues values = new ContentValues();
-//							values.put(Accounts.USERNAME, accounts.getString(username));
-//							values.put(Accounts.TOKEN, accounts.getString(token));
-//							values.put(Accounts.SECRET, accounts.getString(secret));
-//							values.put(Accounts.SERVICE, accounts.getInt(service));
-//							values.put(Accounts.EXPIRY, accounts.getInt(expiry));
-//							values.put(Accounts.WIDGET, appWidgetId);
-//							values.put(Accounts.SID, "");
-//							this.getContentResolver().insert(Accounts.CONTENT_URI, values);
-//							accounts.moveToNext();
-//						}
-//					}
-//					accounts.close();
-//					this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=?", new String[]{""});
-//					accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{appWidgetId}, null);
-//				}
+				//				if (!accounts.moveToFirst()) {
+				//					// check for old accounts without appwidgetid
+				//					accounts.close();
+				//					accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{""}, null);
+				//					if (accounts.moveToFirst()) {
+				//						// upgrade the accounts, adding the appwidgetid
+				//						int username = accounts.getColumnIndex(Accounts.USERNAME),
+				//						token = accounts.getColumnIndex(Accounts.TOKEN),
+				//						secret = accounts.getColumnIndex(Accounts.SECRET),
+				//						service = accounts.getColumnIndex(Accounts.SERVICE),
+				//						expiry = accounts.getColumnIndex(Accounts.EXPIRY);
+				//						while (!accounts.isAfterLast()) {
+				//							ContentValues values = new ContentValues();
+				//							values.put(Accounts.USERNAME, accounts.getString(username));
+				//							values.put(Accounts.TOKEN, accounts.getString(token));
+				//							values.put(Accounts.SECRET, accounts.getString(secret));
+				//							values.put(Accounts.SERVICE, accounts.getInt(service));
+				//							values.put(Accounts.EXPIRY, accounts.getInt(expiry));
+				//							values.put(Accounts.WIDGET, appWidgetId);
+				//							values.put(Accounts.SID, "");
+				//							this.getContentResolver().insert(Accounts.CONTENT_URI, values);
+				//							accounts.moveToNext();
+				//						}
+				//					}
+				//					accounts.close();
+				//					this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=?", new String[]{""});
+				//					accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{appWidgetId}, null);
+				//				}
 				if (accounts.moveToFirst()) {
 					// load the updates
 					int iaccountid = accounts.getColumnIndex(Widget_accounts_view._ID),
@@ -1202,11 +1202,20 @@ public class SonetService extends Service {
 			id = Long.parseLong(this.getContentResolver().insert(Entities.CONTENT_URI, values).getLastPathSegment());
 		}
 		entity.close();
+		// facebook sid comes in as esid_sid, and needs to be split
+		int serviceId = Integer.parseInt(service);
+		if (serviceId == FACEBOOK) {
+			int split = sid.indexOf("_");
+			if ((split > 0) && (split < sid.length())) {
+				sid = sid.substring(sid.indexOf("_") + 1);
+			}
+		}
+		// update the account statuses
 		ContentValues values = new ContentValues();
 		values.put(Statuses.CREATED, created);
 		values.put(Statuses.ENTITY, id);
 		values.put(Statuses.MESSAGE, message);
-		values.put(Statuses.SERVICE, Integer.parseInt(service));
+		values.put(Statuses.SERVICE, serviceId);
 		values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(created, time24hr));
 		values.put(Statuses.WIDGET, Integer.parseInt(appWidgetId));
 		values.put(Statuses.ACCOUNT, Integer.parseInt(accountId));
@@ -1237,119 +1246,124 @@ public class SonetService extends Service {
 			}
 		}
 		if (widgetUpdateReady) {
-			boolean hasbuttons = false;
-			int scrollable = 0;
-			int buttons_bg_color = Sonet.default_buttons_bg_color,
-			buttons_color = Sonet.default_buttons_color,
-			buttons_textsize = Sonet.default_buttons_textsize;
-			Cursor settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.HASBUTTONS, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.BACKGROUND_UPDATE, Widgets.SCROLLABLE}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{widget, Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
-			if (settings.moveToFirst()) {
-				hasbuttons = settings.getInt(settings.getColumnIndex(Widgets.HASBUTTONS)) == 1;
-				buttons_bg_color = settings.getInt(settings.getColumnIndex(Widgets.BUTTONS_BG_COLOR));
-				buttons_color = settings.getInt(settings.getColumnIndex(Widgets.BUTTONS_COLOR));
-				buttons_textsize = settings.getInt(settings.getColumnIndex(Widgets.BUTTONS_TEXTSIZE));
-				scrollable = settings.getInt(settings.getColumnIndex(Widgets.SCROLLABLE));
-			}
-			settings.close();
-			// Push update for this widget to the home screen
-			RemoteViews views = new RemoteViews(this.getPackageName(), hasbuttons ? R.layout.widget : R.layout.widget_nobuttons);
-			if (hasbuttons) {
-				Bitmap buttons_bg = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-				Canvas buttons_bg_canvas = new Canvas(buttons_bg);
-				buttons_bg_canvas.drawColor(buttons_bg_color);
-				views.setImageViewBitmap(R.id.buttons_bg, buttons_bg);
-				views.setTextColor(R.id.buttons_bg_clear, buttons_bg_color);
-				views.setFloat(R.id.buttons_bg_clear, "setTextSize", buttons_textsize);
-				views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, new Intent(this, SonetCreatePost.class).setAction(LauncherIntent.Action.ACTION_VIEW_CLICK).setData(Uri.withAppendedPath(Widgets.CONTENT_URI, widget)), 0));
-				views.setTextColor(R.id.button_post, buttons_color);
-				views.setFloat(R.id.button_post, "setTextSize", buttons_textsize);
-				views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, new Intent(this, ManageAccounts.class).setAction(widget), 0));
-				views.setTextColor(R.id.button_configure, buttons_color);
-				views.setFloat(R.id.button_configure, "setTextSize", buttons_textsize);
-				views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(widget), 0));
-				views.setTextColor(R.id.button_refresh, buttons_color);
-				views.setFloat(R.id.button_refresh, "setTextSize", buttons_textsize);
-			}
-			int[] map_message = {R.id.message0, R.id.message1, R.id.message2, R.id.message3, R.id.message4, R.id.message5, R.id.message6, R.id.message7, R.id.message8, R.id.message9, R.id.message10, R.id.message11, R.id.message12, R.id.message13, R.id.message14, R.id.message15},
-			map_item = {R.id.item0, R.id.item1, R.id.item2, R.id.item3, R.id.item4, R.id.item5, R.id.item6, R.id.item7, R.id.item8, R.id.item9, R.id.item10, R.id.item11, R.id.item12, R.id.item13, R.id.item14, R.id.item15},
-			map_profile = {R.id.profile0, R.id.profile1, R.id.profile2, R.id.profile3, R.id.profile4, R.id.profile5, R.id.profile6, R.id.profile7, R.id.profile8, R.id.profile9, R.id.profile10, R.id.profile11, R.id.profile12, R.id.profile13, R.id.profile14, R.id.profile15},
-			map_screenname = {R.id.friend0, R.id.friend1, R.id.friend2, R.id.friend3, R.id.friend4, R.id.friend5, R.id.friend6, R.id.friend7, R.id.friend8, R.id.friend9, R.id.friend10, R.id.friend11, R.id.friend12, R.id.friend13, R.id.friend14, R.id.friend15},
-			map_created = {R.id.created0, R.id.created1, R.id.created2, R.id.created3, R.id.created4, R.id.created5, R.id.created6, R.id.created7, R.id.created8, R.id.created9, R.id.created10, R.id.created11, R.id.created12, R.id.created13, R.id.created14, R.id.created15},
-			map_status_bg = {R.id.status_bg0, R.id.status_bg1, R.id.status_bg2, R.id.status_bg3, R.id.status_bg4, R.id.status_bg5, R.id.status_bg6, R.id.status_bg7, R.id.status_bg8, R.id.status_bg9, R.id.status_bg10, R.id.status_bg11, R.id.status_bg12, R.id.status_bg13, R.id.status_bg14, R.id.status_bg15},
-			map_friend_bg_clear = {R.id.friend_bg_clear0, R.id.friend_bg_clear1, R.id.friend_bg_clear2, R.id.friend_bg_clear3, R.id.friend_bg_clear4, R.id.friend_bg_clear5, R.id.friend_bg_clear6, R.id.friend_bg_clear7, R.id.friend_bg_clear8, R.id.friend_bg_clear9, R.id.friend_bg_clear10, R.id.friend_bg_clear11, R.id.friend_bg_clear12, R.id.friend_bg_clear13, R.id.friend_bg_clear14, R.id.friend_bg_clear15},
-			map_message_bg_clear = {R.id.message_bg_clear0, R.id.message_bg_clear1, R.id.message_bg_clear2, R.id.message_bg_clear3, R.id.message_bg_clear4, R.id.message_bg_clear5, R.id.message_bg_clear6, R.id.message_bg_clear7, R.id.message_bg_clear8, R.id.message_bg_clear9, R.id.message_bg_clear10, R.id.message_bg_clear11, R.id.message_bg_clear12, R.id.message_bg_clear13, R.id.message_bg_clear14, R.id.message_bg_clear15},
-			map_icon = {R.id.icon0, R.id.icon1, R.id.icon2, R.id.icon3, R.id.icon4, R.id.icon5, R.id.icon6, R.id.icon7, R.id.icon8, R.id.icon9, R.id.icon10, R.id.icon11, R.id.icon12, R.id.icon13, R.id.icon14, R.id.icon15};
-			Cursor accounts = this.getContentResolver().query(Widget_accounts_view.CONTENT_URI, new String[]{Widget_accounts_view._ID}, Widget_accounts_view.WIDGET + "=?", new String[]{widget}, null);
-			if (accounts.moveToFirst()) {
-				Cursor statuses_styles = this.getContentResolver().query(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, widget), new String[]{Statuses_styles._ID, Statuses_styles.CREATED, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.SERVICE, Statuses_styles.CREATEDTEXT, Statuses_styles.WIDGET, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON}, null, null, Statuses_styles.CREATED + " desc");
-				if (statuses_styles.moveToFirst()) {
-					if (scrollable == 0) {
-						int iid = statuses_styles.getColumnIndex(Statuses_styles._ID),
-						iprofile = statuses_styles.getColumnIndex(Statuses_styles.PROFILE),
-						ifriend = statuses_styles.getColumnIndex(Statuses_styles.FRIEND),
-						imessage = statuses_styles.getColumnIndex(Statuses_styles.MESSAGE),
-						icreatedText = statuses_styles.getColumnIndex(Statuses_styles.CREATEDTEXT),
-						istatus_bg = statuses_styles.getColumnIndex(Statuses_styles.STATUS_BG),
-						iicon = statuses_styles.getColumnIndex(Statuses_styles.ICON),
-						count_status = 0;
-						while (!statuses_styles.isAfterLast() && (count_status < map_item.length)) {
-							int friend_color = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.FRIEND_COLOR)),
-							created_color = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.CREATED_COLOR)),
-							friend_textsize = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.FRIEND_TEXTSIZE)),
-							created_textsize = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.CREATED_TEXTSIZE)),
-							messages_color = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.MESSAGES_COLOR)),
-							messages_textsize = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.MESSAGES_TEXTSIZE));
-							// set icons
-							byte[] icon = statuses_styles.getBlob(iicon);
-							Bitmap iconbmp = BitmapFactory.decodeByteArray(icon, 0, icon.length);
-							if (iconbmp != null) {
-								views.setImageViewBitmap(map_icon[count_status], iconbmp);
-							}
-							views.setTextViewText(map_friend_bg_clear[count_status], statuses_styles.getString(ifriend));
-							views.setFloat(map_friend_bg_clear[count_status], "setTextSize", friend_textsize);
-							views.setTextViewText(map_message_bg_clear[count_status], statuses_styles.getString(imessage));
-							views.setFloat(map_message_bg_clear[count_status], "setTextSize", messages_textsize);
-							// set messages background
-							byte[] status_bg = statuses_styles.getBlob(istatus_bg);
-							Bitmap status_bgbmp = BitmapFactory.decodeByteArray(status_bg, 0, status_bg.length);
-							if (status_bgbmp != null) {
-								views.setImageViewBitmap(map_status_bg[count_status], status_bgbmp);
-							}
-							views.setTextViewText(map_message[count_status], statuses_styles.getString(imessage));
-							views.setTextColor(map_message[count_status], messages_color);
-							views.setFloat(map_message[count_status], "setTextSize", messages_textsize);
-							views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(this, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, Integer.toString(statuses_styles.getInt(iid)))), 0));
-							views.setTextViewText(map_screenname[count_status], statuses_styles.getString(ifriend));
-							views.setTextColor(map_screenname[count_status], friend_color);
-							views.setFloat(map_screenname[count_status], "setTextSize", friend_textsize);
-							views.setTextViewText(map_created[count_status], statuses_styles.getString(icreatedText));
-							views.setTextColor(map_created[count_status], created_color);
-							views.setFloat(map_created[count_status], "setTextSize", created_textsize);
-							byte[] profile = statuses_styles.getBlob(iprofile);
-							if (profile != null) {
-								Bitmap profilebmp = BitmapFactory.decodeByteArray(profile, 0, profile.length);
-								if (profilebmp != null) {
-									views.setImageViewBitmap(map_profile[count_status], profilebmp);						
-								}
-							}
-							count_status++;
-							statuses_styles.moveToNext();
-						}
-					}
-				} else {
-					views.setTextViewText(map_message[0], this.getString((mConnectivityManager.getActiveNetworkInfo() != null) && mConnectivityManager.getActiveNetworkInfo().isConnected() ? R.string.no_updates : R.string.no_connection));
+			if (Integer.parseInt(widget) != AppWidgetManager.INVALID_APPWIDGET_ID) {
+				boolean hasbuttons = false;
+				int scrollable = 0;
+				int buttons_bg_color = Sonet.default_buttons_bg_color,
+				buttons_color = Sonet.default_buttons_color,
+				buttons_textsize = Sonet.default_buttons_textsize;
+				Cursor settings = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.HASBUTTONS, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.BACKGROUND_UPDATE, Widgets.SCROLLABLE}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{widget, Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+				if (settings.moveToFirst()) {
+					hasbuttons = settings.getInt(settings.getColumnIndex(Widgets.HASBUTTONS)) == 1;
+					buttons_bg_color = settings.getInt(settings.getColumnIndex(Widgets.BUTTONS_BG_COLOR));
+					buttons_color = settings.getInt(settings.getColumnIndex(Widgets.BUTTONS_COLOR));
+					buttons_textsize = settings.getInt(settings.getColumnIndex(Widgets.BUTTONS_TEXTSIZE));
+					scrollable = settings.getInt(settings.getColumnIndex(Widgets.SCROLLABLE));
 				}
-				statuses_styles.close();
+				settings.close();
+				// Push update for this widget to the home screen
+				RemoteViews views = new RemoteViews(this.getPackageName(), hasbuttons ? R.layout.widget : R.layout.widget_nobuttons);
+				if (hasbuttons) {
+					Bitmap buttons_bg = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+					Canvas buttons_bg_canvas = new Canvas(buttons_bg);
+					buttons_bg_canvas.drawColor(buttons_bg_color);
+					views.setImageViewBitmap(R.id.buttons_bg, buttons_bg);
+					views.setTextColor(R.id.buttons_bg_clear, buttons_bg_color);
+					views.setFloat(R.id.buttons_bg_clear, "setTextSize", buttons_textsize);
+					views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(this, 0, new Intent(this, SonetCreatePost.class).setAction(LauncherIntent.Action.ACTION_VIEW_CLICK).setData(Uri.withAppendedPath(Widgets.CONTENT_URI, widget)), 0));
+					views.setTextColor(R.id.button_post, buttons_color);
+					views.setFloat(R.id.button_post, "setTextSize", buttons_textsize);
+					views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(this, 0, new Intent(this, ManageAccounts.class).setAction(widget), 0));
+					views.setTextColor(R.id.button_configure, buttons_color);
+					views.setFloat(R.id.button_configure, "setTextSize", buttons_textsize);
+					views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(this, 0, new Intent(this, SonetService.class).setAction(widget), 0));
+					views.setTextColor(R.id.button_refresh, buttons_color);
+					views.setFloat(R.id.button_refresh, "setTextSize", buttons_textsize);
+				}
+				int[] map_message = {R.id.message0, R.id.message1, R.id.message2, R.id.message3, R.id.message4, R.id.message5, R.id.message6, R.id.message7, R.id.message8, R.id.message9, R.id.message10, R.id.message11, R.id.message12, R.id.message13, R.id.message14, R.id.message15},
+				map_item = {R.id.item0, R.id.item1, R.id.item2, R.id.item3, R.id.item4, R.id.item5, R.id.item6, R.id.item7, R.id.item8, R.id.item9, R.id.item10, R.id.item11, R.id.item12, R.id.item13, R.id.item14, R.id.item15},
+				map_profile = {R.id.profile0, R.id.profile1, R.id.profile2, R.id.profile3, R.id.profile4, R.id.profile5, R.id.profile6, R.id.profile7, R.id.profile8, R.id.profile9, R.id.profile10, R.id.profile11, R.id.profile12, R.id.profile13, R.id.profile14, R.id.profile15},
+				map_screenname = {R.id.friend0, R.id.friend1, R.id.friend2, R.id.friend3, R.id.friend4, R.id.friend5, R.id.friend6, R.id.friend7, R.id.friend8, R.id.friend9, R.id.friend10, R.id.friend11, R.id.friend12, R.id.friend13, R.id.friend14, R.id.friend15},
+				map_created = {R.id.created0, R.id.created1, R.id.created2, R.id.created3, R.id.created4, R.id.created5, R.id.created6, R.id.created7, R.id.created8, R.id.created9, R.id.created10, R.id.created11, R.id.created12, R.id.created13, R.id.created14, R.id.created15},
+				map_status_bg = {R.id.status_bg0, R.id.status_bg1, R.id.status_bg2, R.id.status_bg3, R.id.status_bg4, R.id.status_bg5, R.id.status_bg6, R.id.status_bg7, R.id.status_bg8, R.id.status_bg9, R.id.status_bg10, R.id.status_bg11, R.id.status_bg12, R.id.status_bg13, R.id.status_bg14, R.id.status_bg15},
+				map_friend_bg_clear = {R.id.friend_bg_clear0, R.id.friend_bg_clear1, R.id.friend_bg_clear2, R.id.friend_bg_clear3, R.id.friend_bg_clear4, R.id.friend_bg_clear5, R.id.friend_bg_clear6, R.id.friend_bg_clear7, R.id.friend_bg_clear8, R.id.friend_bg_clear9, R.id.friend_bg_clear10, R.id.friend_bg_clear11, R.id.friend_bg_clear12, R.id.friend_bg_clear13, R.id.friend_bg_clear14, R.id.friend_bg_clear15},
+				map_message_bg_clear = {R.id.message_bg_clear0, R.id.message_bg_clear1, R.id.message_bg_clear2, R.id.message_bg_clear3, R.id.message_bg_clear4, R.id.message_bg_clear5, R.id.message_bg_clear6, R.id.message_bg_clear7, R.id.message_bg_clear8, R.id.message_bg_clear9, R.id.message_bg_clear10, R.id.message_bg_clear11, R.id.message_bg_clear12, R.id.message_bg_clear13, R.id.message_bg_clear14, R.id.message_bg_clear15},
+				map_icon = {R.id.icon0, R.id.icon1, R.id.icon2, R.id.icon3, R.id.icon4, R.id.icon5, R.id.icon6, R.id.icon7, R.id.icon8, R.id.icon9, R.id.icon10, R.id.icon11, R.id.icon12, R.id.icon13, R.id.icon14, R.id.icon15};
+				Cursor accounts = this.getContentResolver().query(Widget_accounts_view.CONTENT_URI, new String[]{Widget_accounts_view._ID}, Widget_accounts_view.WIDGET + "=?", new String[]{widget}, null);
+				if (accounts.moveToFirst()) {
+					Cursor statuses_styles = this.getContentResolver().query(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, widget), new String[]{Statuses_styles._ID, Statuses_styles.CREATED, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.SERVICE, Statuses_styles.CREATEDTEXT, Statuses_styles.WIDGET, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON}, null, null, Statuses_styles.CREATED + " desc");
+					if (statuses_styles.moveToFirst()) {
+						if (scrollable == 0) {
+							int iid = statuses_styles.getColumnIndex(Statuses_styles._ID),
+							iprofile = statuses_styles.getColumnIndex(Statuses_styles.PROFILE),
+							ifriend = statuses_styles.getColumnIndex(Statuses_styles.FRIEND),
+							imessage = statuses_styles.getColumnIndex(Statuses_styles.MESSAGE),
+							icreatedText = statuses_styles.getColumnIndex(Statuses_styles.CREATEDTEXT),
+							istatus_bg = statuses_styles.getColumnIndex(Statuses_styles.STATUS_BG),
+							iicon = statuses_styles.getColumnIndex(Statuses_styles.ICON),
+							count_status = 0;
+							while (!statuses_styles.isAfterLast() && (count_status < map_item.length)) {
+								int friend_color = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.FRIEND_COLOR)),
+								created_color = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.CREATED_COLOR)),
+								friend_textsize = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.FRIEND_TEXTSIZE)),
+								created_textsize = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.CREATED_TEXTSIZE)),
+								messages_color = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.MESSAGES_COLOR)),
+								messages_textsize = statuses_styles.getInt(statuses_styles.getColumnIndex(Statuses_styles.MESSAGES_TEXTSIZE));
+								// set icons
+								byte[] icon = statuses_styles.getBlob(iicon);
+								Bitmap iconbmp = BitmapFactory.decodeByteArray(icon, 0, icon.length);
+								if (iconbmp != null) {
+									views.setImageViewBitmap(map_icon[count_status], iconbmp);
+								}
+								views.setTextViewText(map_friend_bg_clear[count_status], statuses_styles.getString(ifriend));
+								views.setFloat(map_friend_bg_clear[count_status], "setTextSize", friend_textsize);
+								views.setTextViewText(map_message_bg_clear[count_status], statuses_styles.getString(imessage));
+								views.setFloat(map_message_bg_clear[count_status], "setTextSize", messages_textsize);
+								// set messages background
+								byte[] status_bg = statuses_styles.getBlob(istatus_bg);
+								Bitmap status_bgbmp = BitmapFactory.decodeByteArray(status_bg, 0, status_bg.length);
+								if (status_bgbmp != null) {
+									views.setImageViewBitmap(map_status_bg[count_status], status_bgbmp);
+								}
+								views.setTextViewText(map_message[count_status], statuses_styles.getString(imessage));
+								views.setTextColor(map_message[count_status], messages_color);
+								views.setFloat(map_message[count_status], "setTextSize", messages_textsize);
+								views.setOnClickPendingIntent(map_item[count_status], PendingIntent.getActivity(this, 0, new Intent(this, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, Integer.toString(statuses_styles.getInt(iid)))), 0));
+								views.setTextViewText(map_screenname[count_status], statuses_styles.getString(ifriend));
+								views.setTextColor(map_screenname[count_status], friend_color);
+								views.setFloat(map_screenname[count_status], "setTextSize", friend_textsize);
+								views.setTextViewText(map_created[count_status], statuses_styles.getString(icreatedText));
+								views.setTextColor(map_created[count_status], created_color);
+								views.setFloat(map_created[count_status], "setTextSize", created_textsize);
+								byte[] profile = statuses_styles.getBlob(iprofile);
+								if (profile != null) {
+									Bitmap profilebmp = BitmapFactory.decodeByteArray(profile, 0, profile.length);
+									if (profilebmp != null) {
+										views.setImageViewBitmap(map_profile[count_status], profilebmp);						
+									}
+								}
+								count_status++;
+								statuses_styles.moveToNext();
+							}
+						}
+					} else {
+						views.setTextViewText(map_message[0], this.getString((mConnectivityManager.getActiveNetworkInfo() != null) && mConnectivityManager.getActiveNetworkInfo().isConnected() ? R.string.no_updates : R.string.no_connection));
+					}
+					statuses_styles.close();
+				} else {
+					views.setTextViewText(map_message[0], this.getString(R.string.no_accounts));
+				}
+				accounts.close();
+				if ((widget != null) && (views != null)) {
+					AppWidgetManager.getInstance(this).updateAppWidget(Integer.parseInt(widget), views);
+				}
+				// replace with scrollable widget
+				if (scrollable != 0) {
+					buildScrollable(Integer.parseInt(widget), scrollable);
+				}
 			} else {
-				views.setTextViewText(map_message[0], this.getString(R.string.no_accounts));
-			}
-			accounts.close();
-			if ((widget != null) && (views != null)) {
-				AppWidgetManager.getInstance(this).updateAppWidget(Integer.parseInt(widget), views);
-			}
-			// replace with scrollable widget
-			if (scrollable != 0) {
-				buildScrollable(Integer.parseInt(widget), scrollable);
+				// notify change to About.java
+				this.getContentResolver().notifyChange(Statuses_styles.CONTENT_URI, null);
 			}
 		}
 		if (SonetService.sWidgetsTasks.isEmpty()) {

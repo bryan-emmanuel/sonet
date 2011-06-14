@@ -22,29 +22,43 @@ package com.piusvelte.sonet;
 import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 
 import com.google.ads.*;
+import com.piusvelte.sonet.Sonet.Accounts;
+import com.piusvelte.sonet.Sonet.Statuses_styles;
 import com.piusvelte.sonet.Sonet.Widget_accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Widgets;
 
-import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.ListActivity;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.SimpleCursorAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 
-public class About extends Activity implements View.OnClickListener,
-DialogInterface.OnClickListener {
+public class About extends ListActivity implements DialogInterface.OnClickListener {
 	private int[] mAppWidgetIds;
 	private AppWidgetManager mAppWidgetManager;
 	private boolean mUpdateWidget = false;
+	private static final int REFRESH = Menu.FIRST;
+	private static final int MANAGE_ACCOUNTS = Menu.FIRST + 1;
+	private static final int DEFAULT_SETTINGS = Menu.FIRST + 2;
+	private static final int REFRESH_WIDGETS = Menu.FIRST + 3;
+	private static final int WIDGET_SETTINGS = Menu.FIRST + 4;
+	private static final int ABOUT = Menu.FIRST + 5;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -84,18 +98,45 @@ DialogInterface.OnClickListener {
 				this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
 			}
 		}
-		((Button) findViewById(R.id.defaultsettings)).setOnClickListener(this);
-		((Button) findViewById(R.id.widgets)).setOnClickListener(this);
-		((Button) findViewById(R.id.refreshall)).setOnClickListener(this);
+		Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID}, null, null, null);
+		if (!accounts.moveToFirst()) {
+			Dialog dialog = new Dialog(this);
+			dialog.setContentView(R.layout.about);
+			dialog.setTitle(R.string.about_title);
+			dialog.show();
+		}
+		accounts.close();
+		registerForContextMenu(getListView());
 	}
 
 	@Override
-	public void onClick(View v) {
-		switch (v.getId()) {
-		case R.id.defaultsettings:
+	public boolean onCreateOptionsMenu(Menu menu) {
+		boolean result = super.onCreateOptionsMenu(menu);
+		menu.add(0, REFRESH, 0, R.string.button_refresh).setIcon(android.R.drawable.ic_menu_rotate);
+		menu.add(0, REFRESH_WIDGETS, 0, R.string.refreshallwidgets).setIcon(android.R.drawable.ic_menu_rotate);
+		menu.add(0, WIDGET_SETTINGS, 0, R.string.settings).setIcon(android.R.drawable.ic_menu_preferences);
+		menu.add(0, DEFAULT_SETTINGS, 0, R.string.default_widget_settings).setIcon(android.R.drawable.ic_menu_preferences);
+		menu.add(0, MANAGE_ACCOUNTS, 0, R.string.accounts).setIcon(android.R.drawable.ic_menu_manage);
+		menu.add(0, ABOUT, 0, R.string.about_title).setIcon(android.R.drawable.ic_menu_more);
+		return result;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case REFRESH:
+			startService(new Intent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
+			return true;
+		case MANAGE_ACCOUNTS:
+			startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
+			return true;
+		case DEFAULT_SETTINGS:
 			startActivityForResult(new Intent(this, Settings.class), RESULT_REFRESH);
-			break;
-		case R.id.widgets:
+			return true;
+		case REFRESH_WIDGETS:
+			startService(new Intent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
+			return true;
+		case WIDGET_SETTINGS:
 			if (mAppWidgetIds.length > 0) {
 				String[] widgets = new String[mAppWidgetIds.length];
 				for (int i = 0; i < mAppWidgetIds.length; i++) {
@@ -114,12 +155,21 @@ DialogInterface.OnClickListener {
 			} else {
 				Toast.makeText(this, getString(R.string.nowidgets),	Toast.LENGTH_LONG).show();
 			}
-			break;
-		case R.id.refreshall:
-			startService(new Intent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
-			this.finish();
-			break;
+			return true;
+		case ABOUT:
+			Dialog dialog = new Dialog(this);
+			dialog.setContentView(R.layout.about);
+			dialog.setTitle(R.string.about_title);
+			dialog.show();
+			return true;
 		}
+		return super.onOptionsItemSelected(item);
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		loadStatuses();
 	}
 
 	@Override
@@ -127,7 +177,7 @@ DialogInterface.OnClickListener {
 		super.onPause();
 		if (mUpdateWidget) startService(new Intent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
 	}
-	
+
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
@@ -138,5 +188,87 @@ DialogInterface.OnClickListener {
 	public void onClick(DialogInterface dialog, int which) {
 		startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[which]));
 		dialog.cancel();
+	}
+
+	private final SimpleCursorAdapter.ViewBinder mViewBinder = new SimpleCursorAdapter.ViewBinder() {
+		@Override
+		public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
+			if (columnIndex == cursor.getColumnIndex(Statuses_styles.FRIEND)) {
+				((TextView) view).setText(cursor.getString(columnIndex));
+				return true;
+			} else if (columnIndex == cursor.getColumnIndex(Statuses_styles.FRIEND_TEXTSIZE)) {
+				((TextView) view).setTextSize(cursor.getLong(columnIndex));
+				return true;
+			} else if (columnIndex == cursor.getColumnIndex(Statuses_styles.MESSAGE)) {
+				((TextView) view).setText(cursor.getString(columnIndex));
+				return true;
+			} else if (columnIndex == cursor.getColumnIndex(Statuses_styles.MESSAGES_TEXTSIZE)) {
+				((TextView) view).setTextSize(cursor.getLong(columnIndex));
+				return true;
+			} else if (columnIndex == cursor.getColumnIndex(Statuses_styles.STATUS_BG)) {
+				byte[] b = cursor.getBlob(columnIndex);
+				if (b != null) {
+					Bitmap bmp = BitmapFactory.decodeByteArray(b, 0, b.length);
+					if (bmp != null) {
+						((ImageView) view).setImageBitmap(bmp);
+					}
+				}
+				return true;
+			} else if (columnIndex == cursor.getColumnIndex(Statuses_styles.PROFILE)) {
+				byte[] b = cursor.getBlob(columnIndex);
+				if (b != null) {
+					Bitmap bmp = BitmapFactory.decodeByteArray(b, 0, b.length);
+					if (bmp != null) {
+						((ImageView) view).setImageBitmap(bmp);
+					}
+				}
+				return true;
+			} else if (columnIndex == cursor.getColumnIndex(Statuses_styles.FRIEND + "2")) {
+				((TextView) view).setText(cursor.getString(columnIndex));
+				return true;
+			} else if (columnIndex == cursor.getColumnIndex(Statuses_styles.CREATEDTEXT)) {
+				((TextView) view).setText(cursor.getString(columnIndex));
+				return true;
+			} else if (columnIndex == cursor.getColumnIndex(Statuses_styles.MESSAGE + "2")) {
+				((TextView) view).setText(cursor.getString(columnIndex));
+				return true;
+			} else if (columnIndex == cursor.getColumnIndex(Statuses_styles.FRIEND_COLOR)) {
+				((TextView) view).setTextColor(cursor.getInt(columnIndex));
+			return true;
+			} else if (columnIndex == cursor.getColumnIndex(Statuses_styles.CREATED_COLOR)) {
+				((TextView) view).setTextColor(cursor.getInt(columnIndex));
+				return true;
+			} else if (columnIndex == cursor.getColumnIndex(Statuses_styles.MESSAGES_COLOR)) {
+				((TextView) view).setTextColor(cursor.getInt(columnIndex));
+				return true;
+			} else if (columnIndex == cursor.getColumnIndex(Statuses_styles.FRIEND_TEXTSIZE)) {
+				((TextView) view).setTextSize(cursor.getLong(columnIndex));
+				return true;
+			} else if (columnIndex == cursor.getColumnIndex(Statuses_styles.CREATED_TEXTSIZE)) {
+				((TextView) view).setTextSize(cursor.getLong(columnIndex));
+				return true;
+			} else if (columnIndex == cursor.getColumnIndex(Statuses_styles.MESSAGES_TEXTSIZE)) {
+				((TextView) view).setTextSize(cursor.getLong(columnIndex));
+				return true;
+			} else if (columnIndex == cursor.getColumnIndex(Statuses_styles.ICON)) {
+				byte[] b = cursor.getBlob(columnIndex);
+				if (b != null) {
+					Bitmap bmp = BitmapFactory.decodeByteArray(b, 0, b.length);
+					if (bmp != null) {
+						((ImageView) view).setImageBitmap(bmp);
+					}
+				}
+				return true;
+			} else {
+				return false;
+			}
+		}
+	};
+
+	private void loadStatuses() {
+		Cursor c = this.managedQuery(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.FRIEND + " as " + Statuses_styles.FRIEND + "2", Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.MESSAGE + " as " + Statuses_styles.MESSAGE + "2", Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON}, Statuses_styles.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, Statuses_styles.CREATED + " desc");
+		SimpleCursorAdapter sca = new SimpleCursorAdapter(About.this, R.layout.widget_item, c, new String[] {Statuses_styles.FRIEND, Statuses_styles.FRIEND + "2", Statuses_styles.MESSAGE, Statuses_styles.MESSAGE + "2", Statuses_styles.STATUS_BG, Statuses_styles.CREATEDTEXT, Statuses_styles.PROFILE, Statuses_styles.ICON}, new int[] {R.id.friend_bg_clear, R.id.friend, R.id.message_bg_clear, R.id.message, R.id.status_bg, R.id.created, R.id.profile, R.id.icon});
+		sca.setViewBinder(mViewBinder);
+		setListAdapter(sca);
 	}
 }

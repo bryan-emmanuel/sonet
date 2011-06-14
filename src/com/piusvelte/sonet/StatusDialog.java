@@ -274,7 +274,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 							arg0.cancel();
 						}					
 					})
-					.setPositiveButton(R.string.refreshall, new OnClickListener() {
+					.setPositiveButton(R.string.refreshallwidgets, new OnClickListener() {
 						@Override
 						public void onClick(DialogInterface arg0, int which) {
 							// refresh all

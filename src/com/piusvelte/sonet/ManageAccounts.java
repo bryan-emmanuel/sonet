@@ -116,10 +116,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		((Button) findViewById(R.id.default_widget_settings)).setOnClickListener(this);
 		((Button) findViewById(R.id.button_add_account)).setOnClickListener(this);
 		((Button) findViewById(R.id.save)).setOnClickListener(this);
-
-		if (mAppWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-			finish();
-		}
 	}
 	
 	private final SimpleCursorAdapter.ViewBinder mViewBinder = new SimpleCursorAdapter.ViewBinder() {

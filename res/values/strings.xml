@@ -70,7 +70,7 @@
     <string name="category_time">Time</string>
 	<string name="about">Sonet is a widget application. Please add and configure widgets from the home screen.</string>
     <string name="widgets">Configure Widgets</string>
-	<string name="refreshall">Refresh All</string>
+	<string name="refreshallwidgets">Refresh Homescreen Widgets</string>
 	<string name="timezone">Select Timezone</string>
 	<string name="nowidgets">No Sonet widgets have been created.</string>
 	<string name="defaultsettings">Default settings</string>
@@ -108,4 +108,5 @@
 	<string name="error_status">Error getting status info</string>
 	<string name="messageWithCommentCount">%1$s\u000A%2$d comments</string>
 	<string name="userProfile">%1$s\'s profile</string>
+	<string name="about_title">About Sonet</string>
 </resources>

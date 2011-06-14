@@ -93,7 +93,6 @@ public class SonetProvider extends ContentProvider {
 		accountsProjectionMap.put(Accounts.SECRET, Accounts.SECRET);
 		accountsProjectionMap.put(Accounts.SERVICE, Accounts.SERVICE);
 		accountsProjectionMap.put(Accounts.EXPIRY, Accounts.EXPIRY);
-//		accountsProjectionMap.put(Accounts.WIDGET, Accounts.WIDGET);
 		accountsProjectionMap.put(Accounts.SID, Accounts.SID);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_WIDGET_ACCOUNTS, WIDGET_ACCOUNTS);
