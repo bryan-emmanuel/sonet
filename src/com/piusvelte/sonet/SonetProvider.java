@@ -24,7 +24,6 @@ import java.util.HashMap;
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Widget_accounts;
 import com.piusvelte.sonet.Sonet.Widget_accounts_view;
-import com.piusvelte.sonet.Sonet.Accounts_usage_view;
 import com.piusvelte.sonet.Sonet.Entities;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
 import com.piusvelte.sonet.Sonet.Widgets;
@@ -55,7 +54,6 @@ public class SonetProvider extends ContentProvider {
 	private static final int ENTITIES = 5;
 	private static final int WIDGET_ACCOUNTS = 6;
 	private static final int WIDGET_ACCOUNTS_VIEW = 7;
-	private static final int ACCOUNTS_USAGE_VIEW = 8;
 
 	private static final String DATABASE_NAME = "sonet.db";
 	private static final int DATABASE_VERSION = 13;
@@ -75,14 +73,11 @@ public class SonetProvider extends ContentProvider {
 	private static final String TABLE_ENTITIES = "entities";
 	private static HashMap<String, String> entitiesProjectionMap;
 	
-	private static final String TABLE_WIDGET_ACCOUNTS = "widget_accounts";
+	protected static final String TABLE_WIDGET_ACCOUNTS = "widget_accounts";
 	private static HashMap<String, String> widget_accountsProjectionMap;
 	
 	private static final String VIEW_WIDGET_ACCOUNTS = "widget_accounts_view";
 	private static HashMap<String, String> widget_accounts_viewProjectionMap;
-	
-	private static final String VIEW_ACCOUNTS_USAGE = "accounts_usage_view";
-	private static HashMap<String, String> accounts_usage_viewProjectionMap;
 
 	private DatabaseHelper mDatabaseHelper;
 
@@ -121,14 +116,6 @@ public class SonetProvider extends ContentProvider {
 		widget_accounts_viewProjectionMap.put(Widget_accounts_view.EXPIRY, Widget_accounts_view.EXPIRY);
 		widget_accounts_viewProjectionMap.put(Widget_accounts_view.SID, Widget_accounts_view.SID);
 
-
-		sUriMatcher.addURI(AUTHORITY, VIEW_ACCOUNTS_USAGE, ACCOUNTS_USAGE_VIEW);
-
-		accounts_usage_viewProjectionMap = new HashMap<String, String>();
-		accounts_usage_viewProjectionMap.put(Accounts_usage_view._ID, Accounts_usage_view._ID);
-		accounts_usage_viewProjectionMap.put(Accounts_usage_view.WIDGET, Accounts_usage_view.WIDGET);
-		accounts_usage_viewProjectionMap.put(Accounts_usage_view.USERNAME, Accounts_usage_view.USERNAME);
-		
 		sUriMatcher.addURI(AUTHORITY, TABLE_WIDGETS, WIDGETS);
 
 		widgetsProjectionMap = new HashMap<String, String>();
@@ -221,8 +208,6 @@ public class SonetProvider extends ContentProvider {
 			return Widget_accounts.CONTENT_TYPE;
 		case WIDGET_ACCOUNTS_VIEW:
 			return Widget_accounts_view.CONTENT_TYPE;
-		case ACCOUNTS_USAGE_VIEW:
-			return Accounts_usage_view.CONTENT_TYPE;
 		case WIDGETS:
 			return Widgets.CONTENT_TYPE;
 		case STATUSES:
@@ -320,10 +305,6 @@ public class SonetProvider extends ContentProvider {
 			qb.setTables(VIEW_WIDGET_ACCOUNTS);
 			qb.setProjectionMap(widget_accounts_viewProjectionMap);
 			break;
-		case ACCOUNTS_USAGE_VIEW:
-			qb.setTables(VIEW_ACCOUNTS_USAGE);
-			qb.setProjectionMap(accounts_usage_viewProjectionMap);
-			break;
 		case WIDGETS:
 			qb.setTables(TABLE_WIDGETS);
 			qb.setProjectionMap(widgetsProjectionMap);
@@ -419,17 +400,6 @@ public class SonetProvider extends ContentProvider {
 					+ TABLE_WIDGET_ACCOUNTS
 					+ "," + TABLE_ACCOUNTS
 					+ " where "
-					+ TABLE_ACCOUNTS + "." + Accounts._ID + "=" + Widget_accounts.ACCOUNT
-					+ ";");
-			db.execSQL("create view if not exists " + VIEW_ACCOUNTS_USAGE + " as select "
-					+ TABLE_ACCOUNTS + "." + Accounts._ID
-					+ "," + Widget_accounts.WIDGET
-					+ "," + Accounts.USERNAME
-					+ " from "
-					+ TABLE_ACCOUNTS
-					+ " left join "
-					+ TABLE_WIDGET_ACCOUNTS
-					+ " on "
 					+ TABLE_ACCOUNTS + "." + Accounts._ID + "=" + Widget_accounts.ACCOUNT
 					+ ";");
 			db.execSQL("create table if not exists " + TABLE_WIDGETS
@@ -1236,17 +1206,6 @@ public class SonetProvider extends ContentProvider {
 						+ TABLE_WIDGET_ACCOUNTS
 						+ "," + TABLE_ACCOUNTS
 						+ " where "
-						+ TABLE_ACCOUNTS + "." + Accounts._ID + "=" + Widget_accounts.ACCOUNT
-						+ ";");
-				db.execSQL("create view if not exists " + VIEW_ACCOUNTS_USAGE + " as select "
-						+ TABLE_ACCOUNTS + "." + Accounts._ID
-						+ "," + Widget_accounts.WIDGET
-						+ "," + Accounts.USERNAME
-						+ " from "
-						+ TABLE_ACCOUNTS
-						+ " left join "
-						+ TABLE_WIDGET_ACCOUNTS
-						+ " on "
 						+ TABLE_ACCOUNTS + "." + Accounts._ID + "=" + Widget_accounts.ACCOUNT
 						+ ";");
 			}

@@ -22,10 +22,12 @@ package com.piusvelte.sonet;
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 import static com.piusvelte.sonet.Sonet.ACCOUNTS_QUERY;
+import static com.piusvelte.sonet.SonetProvider.TABLE_WIDGET_ACCOUNTS;
 
 import com.google.ads.*;
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
+import com.piusvelte.sonet.Sonet.Widget_accounts;
 import com.piusvelte.sonet.Sonet.Widgets;
 
 import android.app.AlertDialog;
@@ -55,8 +57,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	private static final int ENABLE_ID = Menu.FIRST + 2;
 	private static final int DELETE_ID = Menu.FIRST + 3;
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
-	private boolean mHasAccounts = false,
-	mAddingAccount,
+	private boolean mAddingAccount,
 	mUpdateWidget = false;
 
 	@Override
@@ -124,18 +125,15 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	private final SimpleCursorAdapter.ViewBinder mViewBinder = new SimpleCursorAdapter.ViewBinder() {
 		@Override
 		public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
-			if (columnIndex == cursor.getColumnIndex(Networks.MANAGE)) {
-				((CheckBox) view).setChecked(cursor.getInt(columnIndex) == 1);
-				return true;
-			} else if (columnIndex == cursor.getColumnIndex(Ranges.MANAGE_CELL)) {
-				((CheckBox) view).setChecked(cursor.getInt(columnIndex) == 1);
+			if (columnIndex == cursor.getColumnIndex(Widget_accounts.WIDGET)) {
+				((CheckBox) view).setChecked(cursor.getInt(columnIndex) != -1);
 				return true;
 			} else return false;
 		}
 	};
 
 	@Override
-	protected void onListItemClick(ListView list, View view, int position, long id) {
+	protected void onListItemClick(ListView list, final View view, int position, long id) {
 		super.onListItemClick(list, view, position, id);
 		final long item = id;
 		final CharSequence[] items = {getString(R.string.re_authenticate), getString(R.string.account_settings)};
@@ -159,6 +157,16 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 					startActivityForResult(new Intent(ManageAccounts.this, AccountSettings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, item), RESULT_REFRESH);
 					break;
 				case ENABLE_ID:
+					if (((CheckBox) view.findViewById(R.id.isenabled)).isChecked()) {
+						// enable the account
+						ContentValues values = new ContentValues();
+						values.put(Widget_accounts.ACCOUNT, item);
+						values.put(Widget_accounts.WIDGET, mAppWidgetId);
+						ManageAccounts.this.getContentResolver().insert(Widget_accounts.CONTENT_URI, values);
+					} else {
+						ManageAccounts.this.getContentResolver().delete(Widget_accounts.CONTENT_URI, Widget_accounts.ACCOUNT + "=? and " + Widget_accounts.WIDGET + "=?", new String[]{Long.toString(item), Integer.toString(mAppWidgetId)});
+					}
+					listAccounts();
 					break;
 				}
 				dialog.cancel();
@@ -215,10 +223,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		super.onPause();
 		if (!mAddingAccount && mUpdateWidget) {
 			startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
-		} else if (!mHasAccounts) {
-			// clean up any setup for this widget
-			getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=" + mAppWidgetId, null);
-			getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=" + mAppWidgetId, null);
 		}
 	}
 
@@ -233,9 +237,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	private void listAccounts() {
 		// list all accounts, checking the checkbox if they are enabled for this widget
 		// prepend service name to username
-		Cursor c = this.managedQuery(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetId)}, null);
-		mHasAccounts = c.getCount() != 0;
-		SimpleCursorAdapter sca = new SimpleCursorAdapter(ManageAccounts.this, R.layout.accounts_row, c, new String[] {Accounts.USERNAME}, new int[] {R.id.account_username});
+		Cursor c = this.managedQuery(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY, "(select " + Widget_accounts.WIDGET + " from " + TABLE_WIDGET_ACCOUNTS + " where " + Widget_accounts.WIDGET + "=" + mAppWidgetId + " limit 1) as " + Widget_accounts.WIDGET}, null, null, null);
+		SimpleCursorAdapter sca = new SimpleCursorAdapter(ManageAccounts.this, R.layout.accounts_row, c, new String[] {Accounts.USERNAME, Widget_accounts.WIDGET}, new int[] {R.id.account_username, R.id.isenabled});
 		sca.setViewBinder(mViewBinder);
 		setListAdapter(sca);
 	}

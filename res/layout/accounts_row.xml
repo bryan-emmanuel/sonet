@@ -25,7 +25,7 @@
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
 		android:padding="12dip" android:textSize="16dip"
 		android:layout_alignParentLeft="true" />
-	<CheckBox android:id="@+id/network_manage"
+	<CheckBox android:id="@+id/isenabled"
 		android:layout_width="wrap_content" android:layout_height="fill_parent"
 		android:layout_alignParentTop="true" android:layout_alignParentRight="true"
 		android:layout_alignParentBottom="true" android:focusable="false"
