@@ -39,12 +39,14 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -98,14 +100,6 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 				this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
 			}
 		}
-		Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID}, null, null, null);
-		if (!accounts.moveToFirst()) {
-			Dialog dialog = new Dialog(this);
-			dialog.setContentView(R.layout.about);
-			dialog.setTitle(R.string.about_title);
-			dialog.show();
-		}
-		accounts.close();
 		registerForContextMenu(getListView());
 	}
 
@@ -158,7 +152,7 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 			return true;
 		case ABOUT:
 			Dialog dialog = new Dialog(this);
-			dialog.setContentView(R.layout.about);
+			dialog.setContentView(R.string.about);
 			dialog.setTitle(R.string.about_title);
 			dialog.show();
 			return true;
@@ -169,6 +163,14 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 	@Override
 	protected void onResume() {
 		super.onResume();
+		Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID}, null, null, null);
+		if (!accounts.moveToFirst()) {
+			Dialog dialog = new Dialog(this);
+			dialog.setContentView(R.string.about);
+			dialog.setTitle(R.string.about_title);
+			dialog.show();
+		}
+		accounts.close();
 		loadStatuses();
 	}
 
@@ -188,6 +190,12 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 	public void onClick(DialogInterface dialog, int which) {
 		startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[which]));
 		dialog.cancel();
+	}
+	
+	@Override
+	protected void onListItemClick(ListView list, final View view, int position, long id) {
+		super.onListItemClick(list, view, position, id);
+		startActivity(new Intent(this, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, Long.toString(id))));
 	}
 
 	private final SimpleCursorAdapter.ViewBinder mViewBinder = new SimpleCursorAdapter.ViewBinder() {

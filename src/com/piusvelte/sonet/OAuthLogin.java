@@ -209,7 +209,6 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 		values.put(Accounts.SECRET, secret);
 		values.put(Accounts.EXPIRY, expiry);
 		values.put(Accounts.SERVICE, service);
-//		values.put(Accounts.WIDGET, mWidgetId);
 		values.put(Accounts.SID, String.format(SID_FORMAT, sid));
 		if (mAccountId != Sonet.INVALID_ACCOUNT_ID) {
 			// re-authenticating

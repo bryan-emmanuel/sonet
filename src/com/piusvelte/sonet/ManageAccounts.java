@@ -23,6 +23,7 @@ import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 import static com.piusvelte.sonet.Sonet.ACCOUNTS_QUERY;
 import static com.piusvelte.sonet.SonetProvider.TABLE_WIDGET_ACCOUNTS;
+import static com.piusvelte.sonet.SonetProvider.TABLE_ACCOUNTS;
 
 import com.google.ads.*;
 import com.piusvelte.sonet.Sonet.Accounts;
@@ -122,17 +123,16 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		@Override
 		public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
 			if (columnIndex == cursor.getColumnIndex(Widget_accounts.WIDGET)) {
-				((CheckBox) view).setChecked(cursor.getInt(columnIndex) != -1);
+				((CheckBox) view).setChecked(cursor.getInt(columnIndex) == 1);
 				return true;
 			} else return false;
 		}
 	};
 
 	@Override
-	protected void onListItemClick(ListView list, final View view, int position, long id) {
+	protected void onListItemClick(ListView list, final View view, int position, final long id) {
 		super.onListItemClick(list, view, position, id);
-		final long item = id;
-		final CharSequence[] items = {getString(R.string.re_authenticate), getString(R.string.account_settings)};
+		final CharSequence[] items = {getString(R.string.re_authenticate), getString(R.string.account_settings), getString(((CheckBox) view.findViewById(R.id.isenabled)).isChecked() ? R.string.disable : R.string.enable)};
 		AlertDialog.Builder dialog = new AlertDialog.Builder(this);
 		dialog.setItems(items, new DialogInterface.OnClickListener() {
 			@Override
@@ -141,27 +141,32 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 				switch (which) {
 				case REAUTH_ID:
 					// need the account id if reauthenticating
-					Cursor c = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(item)}, null);
+					Cursor c = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(id)}, null);
 					if (c.moveToFirst()) {
 						mAddingAccount = true;
-						startActivityForResult(new Intent(ManageAccounts.this, OAuthLogin.class).putExtra(Accounts.SERVICE, c.getInt(c.getColumnIndex(Accounts.SERVICE))).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, item), RESULT_REFRESH);
+						startActivityForResult(new Intent(ManageAccounts.this, OAuthLogin.class).putExtra(Accounts.SERVICE, c.getInt(c.getColumnIndex(Accounts.SERVICE))).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id), RESULT_REFRESH);
 					}
 					c.close();
 					break;
 				case SETTINGS_ID:
 					mAddingAccount = true;
-					startActivityForResult(new Intent(ManageAccounts.this, AccountSettings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, item), RESULT_REFRESH);
+					startActivityForResult(new Intent(ManageAccounts.this, AccountSettings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id), RESULT_REFRESH);
 					break;
 				case ENABLE_ID:
 					if (((CheckBox) view.findViewById(R.id.isenabled)).isChecked()) {
+						// disable the account
+						ManageAccounts.this.getContentResolver().delete(Widget_accounts.CONTENT_URI, Widget_accounts.ACCOUNT + "=? and " + Widget_accounts.WIDGET + "=?", new String[]{Long.toString(id), Integer.toString(mAppWidgetId)});
+						ManageAccounts.this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.ACCOUNT + "=? and " + Statuses.WIDGET + "=?", new String[]{Long.toString(id), Integer.toString(mAppWidgetId)});
+						listAccounts();
+					} else {
 						// enable the account
 						ContentValues values = new ContentValues();
-						values.put(Widget_accounts.ACCOUNT, item);
+						values.put(Widget_accounts.ACCOUNT, id);
 						values.put(Widget_accounts.WIDGET, mAppWidgetId);
 						ManageAccounts.this.getContentResolver().insert(Widget_accounts.CONTENT_URI, values);
-					} else {
-						ManageAccounts.this.getContentResolver().delete(Widget_accounts.CONTENT_URI, Widget_accounts.ACCOUNT + "=? and " + Widget_accounts.WIDGET + "=?", new String[]{Long.toString(item), Integer.toString(mAppWidgetId)});
+						listAccounts();
 					}
+					mUpdateWidget = true;
 					listAccounts();
 					break;
 				}
@@ -184,6 +189,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			// need to delete the statuses and settings for this account
 			getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
 			getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
+			getContentResolver().delete(Widget_accounts.CONTENT_URI, Widget_accounts.ACCOUNT + "=?", new String[]{Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
 		}
 		return super.onContextItemSelected(item);
 	}
@@ -233,7 +239,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	private void listAccounts() {
 		// list all accounts, checking the checkbox if they are enabled for this widget
 		// prepend service name to username
-		Cursor c = this.managedQuery(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY, "(select " + Widget_accounts.WIDGET + " from " + TABLE_WIDGET_ACCOUNTS + " where " + Widget_accounts.WIDGET + "=" + mAppWidgetId + " limit 1) as " + Widget_accounts.WIDGET}, null, null, null);
+		Cursor c = this.managedQuery(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY, "case when (select " + Widget_accounts.WIDGET + " from " + TABLE_WIDGET_ACCOUNTS + " where " + Widget_accounts.WIDGET + "=" + mAppWidgetId + " and " + Widget_accounts.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1) is null then 0 else 1 end as " + Widget_accounts.WIDGET}, null, null, null);
 		SimpleCursorAdapter sca = new SimpleCursorAdapter(ManageAccounts.this, R.layout.accounts_row, c, new String[] {Accounts.USERNAME, Widget_accounts.WIDGET}, new int[] {R.id.account_username, R.id.isenabled});
 		sca.setViewBinder(mViewBinder);
 		setListAdapter(sca);

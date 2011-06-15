@@ -230,7 +230,6 @@ public class Sonet {
 		public static final String SECRET = "secret";
 		public static final String SERVICE = "service";
 		public static final String EXPIRY = "expiry";
-//		public static final String WIDGET = "widget";
 		// service id for posting and linking
 		public static final String SID = "sid";
 

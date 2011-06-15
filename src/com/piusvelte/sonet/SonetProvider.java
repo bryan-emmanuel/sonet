@@ -29,6 +29,7 @@ import com.piusvelte.sonet.Sonet.Statuses_styles;
 import com.piusvelte.sonet.Sonet.Widgets;
 import com.piusvelte.sonet.Sonet.Statuses;
 
+import android.appwidget.AppWidgetManager;
 import android.content.ContentProvider;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -56,9 +57,9 @@ public class SonetProvider extends ContentProvider {
 	private static final int WIDGET_ACCOUNTS_VIEW = 7;
 
 	private static final String DATABASE_NAME = "sonet.db";
-	private static final int DATABASE_VERSION = 13;
+	private static final int DATABASE_VERSION = 14;
 
-	private static final String TABLE_ACCOUNTS = "accounts";
+	protected static final String TABLE_ACCOUNTS = "accounts";
 	private static HashMap<String, String> accountsProjectionMap;
 
 	private static final String TABLE_WIDGETS = "widgets";
@@ -72,10 +73,10 @@ public class SonetProvider extends ContentProvider {
 
 	private static final String TABLE_ENTITIES = "entities";
 	private static HashMap<String, String> entitiesProjectionMap;
-	
+
 	protected static final String TABLE_WIDGET_ACCOUNTS = "widget_accounts";
 	private static HashMap<String, String> widget_accountsProjectionMap;
-	
+
 	private static final String VIEW_WIDGET_ACCOUNTS = "widget_accounts_view";
 	private static HashMap<String, String> widget_accounts_viewProjectionMap;
 
@@ -379,7 +380,7 @@ public class SonetProvider extends ContentProvider {
 					+ Accounts.SECRET + " text, "
 					+ Accounts.SERVICE + " integer, "
 					+ Accounts.EXPIRY + " integer, "
-//					+ Accounts.WIDGET + " integer, "
+					//					+ Accounts.WIDGET + " integer, "
 					+ Accounts.SID + " text);");
 			db.execSQL("create table if not exists " + TABLE_WIDGET_ACCOUNTS
 					+ " (" + Widget_accounts._ID + " integer primary key autoincrement, "
@@ -1162,9 +1163,9 @@ public class SonetProvider extends ContentProvider {
 						+ Accounts.SECRET + " text, "
 						+ Accounts.SERVICE + " integer, "
 						+ Accounts.EXPIRY + " integer, "
-//						+ Accounts.WIDGET + " integer, "
+						//						+ Accounts.WIDGET + " integer, "
 						+ Accounts.SID + " text);");
-				Cursor accounts = db.query(TABLE_ACCOUNTS, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY, "widget", Accounts.SID}, null, null, null, null, null);
+				Cursor accounts = db.query(TABLE_ACCOUNTS + "_bkp", new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY, "widget", Accounts.SID}, null, null, null, null, null);
 				if (accounts.moveToFirst()) {
 					int iid = accounts.getColumnIndex(Accounts._ID),
 					iusername = accounts.getColumnIndex(Accounts.USERNAME),
@@ -1207,6 +1208,18 @@ public class SonetProvider extends ContentProvider {
 						+ " where "
 						+ TABLE_ACCOUNTS + "." + Accounts._ID + "=" + Widget_accounts.ACCOUNT
 						+ ";");
+				// enable all accounts for the Sonet app
+				Cursor enable = db.query(TABLE_ACCOUNTS, new String[]{Accounts._ID}, null, null, null, null, null);
+				if (enable.moveToFirst()) {
+					while (!enable.isAfterLast()) {
+						ContentValues values = new ContentValues();
+						values.put(Widget_accounts.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
+						values.put(Widget_accounts.ACCOUNT, enable.getLong(enable.getColumnIndex(Accounts._ID)));
+						db.insert(TABLE_WIDGET_ACCOUNTS, Widget_accounts._ID, values);
+						enable.moveToNext();
+					}
+				}
+				enable.close();
 			}
 		}
 
