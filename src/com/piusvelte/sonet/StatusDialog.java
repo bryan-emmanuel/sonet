@@ -118,7 +118,12 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 				items[POST] = getString(R.string.button_post);
 				items[SETTINGS] = getString(R.string.settings);
 				items[REFRESH] = getString(R.string.button_refresh);
-				items[PROFILE] = String.format(getString(R.string.userProfile), c.getString(c.getColumnIndex(Statuses_styles.FRIEND)));
+				// for facebook wall posts, remove everything after the " > "
+				String friend = c.getString(c.getColumnIndex(Statuses_styles.FRIEND));
+				if (friend.indexOf(">") > 0) {
+					friend = friend.substring(0, friend.indexOf(">") - 1);
+				}
+				items[PROFILE] = String.format(getString(R.string.userProfile), friend);
 				count = PROFILE + 1;
 				m.reset();
 				while (m.find()) {

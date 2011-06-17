@@ -185,11 +185,12 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	public boolean onContextItemSelected(MenuItem item) {
 		if (item.getItemId() == DELETE_ID) {
 			mUpdateWidget = true;
-			getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=?", new String[]{Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
+			String accountId = Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id);
+			getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=?", new String[]{accountId});
 			// need to delete the statuses and settings for this account
-			getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
-			getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
-			getContentResolver().delete(Widget_accounts.CONTENT_URI, Widget_accounts.ACCOUNT + "=?", new String[]{Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
+			getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), accountId});
+			getContentResolver().delete(Statuses.CONTENT_URI, Statuses.ACCOUNT + "=?", new String[]{accountId});
+			getContentResolver().delete(Widget_accounts.CONTENT_URI, Widget_accounts.ACCOUNT + "=?", new String[]{accountId});
 		}
 		return super.onContextItemSelected(item);
 	}

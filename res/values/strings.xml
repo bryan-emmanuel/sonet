@@ -111,5 +111,5 @@
 	<string name="about_title">About Sonet</string>
 	<string name="enable">Enable Account</string>
 	<string name="disable">Disable Account</string>
-	<string name="noaccountsenabled">No accounts enabled</string>
+	<string name="noaccountsenabled">Loading or no accounts enabled</string>
 </resources>

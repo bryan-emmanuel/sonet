@@ -1163,7 +1163,6 @@ public class SonetProvider extends ContentProvider {
 						+ Accounts.SECRET + " text, "
 						+ Accounts.SERVICE + " integer, "
 						+ Accounts.EXPIRY + " integer, "
-						//						+ Accounts.WIDGET + " integer, "
 						+ Accounts.SID + " text);");
 				Cursor accounts = db.query(TABLE_ACCOUNTS + "_bkp", new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY, "widget", Accounts.SID}, null, null, null, null, null);
 				if (accounts.moveToFirst()) {
@@ -1171,6 +1170,7 @@ public class SonetProvider extends ContentProvider {
 					iusername = accounts.getColumnIndex(Accounts.USERNAME),
 					itoken = accounts.getColumnIndex(Accounts.TOKEN),
 					isecret = accounts.getColumnIndex(Accounts.SECRET),
+					iservice = accounts.getColumnIndex(Accounts.SERVICE),
 					iexpiry = accounts.getColumnIndex(Accounts.EXPIRY),
 					iwidget = accounts.getColumnIndex("widget"),
 					isid = accounts.getColumnIndex(Accounts.SID);
@@ -1183,7 +1183,8 @@ public class SonetProvider extends ContentProvider {
 						values.put(Accounts._ID, accounts.getLong(iid));
 						values.put(Accounts.USERNAME, accounts.getString(iusername));
 						values.put(Accounts.TOKEN, accounts.getString(itoken));
-						values.put(Accounts.SERVICE, accounts.getString(isecret));
+						values.put(Accounts.SECRET, accounts.getString(isecret));
+						values.put(Accounts.SERVICE, accounts.getString(iservice));
 						values.put(Accounts.EXPIRY, accounts.getLong(iexpiry));
 						values.put(Accounts.SID, accounts.getString(isid));
 						db.insert(TABLE_ACCOUNTS, Accounts._ID, values);

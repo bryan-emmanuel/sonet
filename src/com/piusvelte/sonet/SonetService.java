@@ -285,35 +285,6 @@ public class SonetService extends Service {
 				 * then sort them by datetime, descending
 				 */
 				Cursor accounts = this.getContentResolver().query(Widget_accounts_view.CONTENT_URI, new String[]{Widget_accounts_view._ID, Widget_accounts_view.USERNAME, Widget_accounts_view.TOKEN, Widget_accounts_view.SECRET, Widget_accounts_view.SERVICE, Widget_accounts_view.EXPIRY}, Widget_accounts_view.WIDGET + "=?", new String[]{appWidgetId}, null);
-				// this code is no longer supported, old accounts will no longer be migrated forward
-				//				if (!accounts.moveToFirst()) {
-				//					// check for old accounts without appwidgetid
-				//					accounts.close();
-				//					accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{""}, null);
-				//					if (accounts.moveToFirst()) {
-				//						// upgrade the accounts, adding the appwidgetid
-				//						int username = accounts.getColumnIndex(Accounts.USERNAME),
-				//						token = accounts.getColumnIndex(Accounts.TOKEN),
-				//						secret = accounts.getColumnIndex(Accounts.SECRET),
-				//						service = accounts.getColumnIndex(Accounts.SERVICE),
-				//						expiry = accounts.getColumnIndex(Accounts.EXPIRY);
-				//						while (!accounts.isAfterLast()) {
-				//							ContentValues values = new ContentValues();
-				//							values.put(Accounts.USERNAME, accounts.getString(username));
-				//							values.put(Accounts.TOKEN, accounts.getString(token));
-				//							values.put(Accounts.SECRET, accounts.getString(secret));
-				//							values.put(Accounts.SERVICE, accounts.getInt(service));
-				//							values.put(Accounts.EXPIRY, accounts.getInt(expiry));
-				//							values.put(Accounts.WIDGET, appWidgetId);
-				//							values.put(Accounts.SID, "");
-				//							this.getContentResolver().insert(Accounts.CONTENT_URI, values);
-				//							accounts.moveToNext();
-				//						}
-				//					}
-				//					accounts.close();
-				//					this.getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=?", new String[]{""});
-				//					accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.USERNAME, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.EXPIRY}, Accounts.WIDGET + "=?", new String[]{appWidgetId}, null);
-				//				}
 				if (accounts.moveToFirst()) {
 					// load the updates
 					int iaccountid = accounts.getColumnIndex(Widget_accounts_view._ID),
@@ -376,7 +347,7 @@ public class SonetService extends Service {
 													for (int e = 0; e < entries.length(); e++) {
 														JSONObject entry = entries.getJSONObject(e);
 														JSONObject user = entry.getJSONObject("user");
-														addStatusItem(Sonet.parseDate(entry.getString("created_at"), "EEE MMM dd HH:mm:ss z yyyy"),
+														addStatusItem(Sonet.parseDate(entry.getString("created_at"), "EEE MMM dd HH:mm:ss Z yyyy"),
 																user.getString("name"),
 																user.getString("profile_image_url"),
 																entry.getString("text"),
@@ -1202,14 +1173,14 @@ public class SonetService extends Service {
 			id = Long.parseLong(this.getContentResolver().insert(Entities.CONTENT_URI, values).getLastPathSegment());
 		}
 		entity.close();
-		// facebook sid comes in as esid_sid, and needs to be split
 		int serviceId = Integer.parseInt(service);
-		if (serviceId == FACEBOOK) {
-			int split = sid.indexOf("_");
-			if ((split > 0) && (split < sid.length())) {
-				sid = sid.substring(sid.indexOf("_") + 1);
-			}
-		}
+		// facebook sid comes in as esid_sid, the esid_ may need to be removed
+//		if (serviceId == FACEBOOK) {
+//			int split = sid.indexOf("_");
+//			if ((split > 0) && (split < sid.length())) {
+//				sid = sid.substring(sid.indexOf("_") + 1);
+//			}
+//		}
 		// update the account statuses
 		ContentValues values = new ContentValues();
 		values.put(Statuses.CREATED, created);

@@ -22,7 +22,6 @@ package com.piusvelte.sonet;
 import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 
 import com.google.ads.*;
-import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
 import com.piusvelte.sonet.Sonet.Widget_accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
@@ -163,12 +162,19 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 	@Override
 	protected void onResume() {
 		super.onResume();
-		Cursor accounts = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID}, null, null, null);
+		Cursor accounts = this.getContentResolver().query(Widget_accounts.CONTENT_URI, new String[]{Widget_accounts._ID}, Widget_accounts.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
 		if (!accounts.moveToFirst()) {
 			Dialog dialog = new Dialog(this);
 			dialog.setContentView(R.string.about);
 			dialog.setTitle(R.string.about_title);
 			dialog.show();
+		} else {
+			// if there are accounts, run the initial loading for About.class
+			Cursor statuses = this.getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID}, Statuses.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
+			if (!statuses.moveToFirst()) {
+				startService(new Intent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
+			}
+			statuses.close();			
 		}
 		accounts.close();
 		loadStatuses();

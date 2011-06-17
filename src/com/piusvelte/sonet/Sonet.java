@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.TimeZone;
 
 import org.apache.http.HttpEntity;
@@ -447,7 +448,7 @@ public class Sonet {
 	}
 
 	protected static long parseDate(String date, String format) {
-		SimpleDateFormat msformat = new SimpleDateFormat(format);
+		SimpleDateFormat msformat = new SimpleDateFormat(format, Locale.getDefault());
 		// all dates should be GMT/UTC
 		msformat.setTimeZone(TimeZone.getTimeZone("GMT"));
 		Date created;
