@@ -83,7 +83,7 @@ import android.widget.Toast;
 
 public class StatusDialog extends Activity implements DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
 	private static final String TAG = "StatusDialog";
-	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
+	private int mAppWidgetId = -1;
 	private long mAccount = Sonet.INVALID_ACCOUNT_ID;
 	private Uri mData;
 	private static final int COMMENT = 0;
@@ -130,7 +130,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 					items[count++] = m.group();
 				}
 			} else {
-				mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
+				mAppWidgetId = -1;
 				items = new String[]{getString(R.string.comment), getString(R.string.button_post), getString(R.string.settings), getString(R.string.button_refresh)};
 			}
 			c.close();
@@ -160,7 +160,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 	public void onClick(final DialogInterface dialog, int which) {
 		switch (which) {
 		case COMMENT:
-			if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+			if (mAppWidgetId != -1) {
 				startActivity(new Intent(this, SonetComments.class).setData(mData));
 			} else {
 				(Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
@@ -168,7 +168,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 			dialog.cancel();
 			break;
 		case POST:
-			if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {				
+			if (mAppWidgetId != -1) {				
 				startActivity(new Intent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.CONTENT_URI, Long.toString(mAccount))));
 				dialog.cancel();
 			} else {
@@ -234,7 +234,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 			}
 			break;
 		case SETTINGS:
-			if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+			if (mAppWidgetId != -1) {
 				startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 				dialog.cancel();
 			} else {
@@ -264,7 +264,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 			}
 			break;
 		case REFRESH:
-			if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+			if (mAppWidgetId != -1) {
 				startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
 				dialog.cancel();
 			} else {

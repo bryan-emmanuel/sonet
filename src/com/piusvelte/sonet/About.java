@@ -108,7 +108,7 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 		menu.add(0, REFRESH, 0, R.string.button_refresh).setIcon(android.R.drawable.ic_menu_rotate);
 		menu.add(0, REFRESH_WIDGETS, 0, R.string.refreshallwidgets).setIcon(android.R.drawable.ic_menu_rotate);
 		menu.add(0, WIDGET_SETTINGS, 0, R.string.settings).setIcon(android.R.drawable.ic_menu_preferences);
-		menu.add(0, DEFAULT_SETTINGS, 0, R.string.default_widget_settings).setIcon(android.R.drawable.ic_menu_preferences);
+		menu.add(0, DEFAULT_SETTINGS, 0, R.string.defaultsettings).setIcon(android.R.drawable.ic_menu_preferences);
 		menu.add(0, MANAGE_ACCOUNTS, 0, R.string.accounts).setIcon(android.R.drawable.ic_menu_manage);
 		menu.add(0, ABOUT, 0, R.string.about_title).setIcon(android.R.drawable.ic_menu_more);
 		return result;
@@ -151,7 +151,7 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 			return true;
 		case ABOUT:
 			Dialog dialog = new Dialog(this);
-			dialog.setContentView(R.string.about);
+			dialog.setContentView(R.layout.about_dialog);
 			dialog.setTitle(R.string.about_title);
 			dialog.show();
 			return true;
@@ -165,7 +165,7 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 		Cursor accounts = this.getContentResolver().query(Widget_accounts.CONTENT_URI, new String[]{Widget_accounts._ID}, Widget_accounts.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
 		if (!accounts.moveToFirst()) {
 			Dialog dialog = new Dialog(this);
-			dialog.setContentView(R.string.about);
+			dialog.setContentView(R.layout.about_dialog);
 			dialog.setTitle(R.string.about_title);
 			dialog.show();
 		} else {

@@ -29,7 +29,6 @@ import com.piusvelte.sonet.Sonet.Statuses_styles;
 import com.piusvelte.sonet.Sonet.Widgets;
 import com.piusvelte.sonet.Sonet.Statuses;
 
-import android.appwidget.AppWidgetManager;
 import android.content.ContentProvider;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -1209,18 +1208,6 @@ public class SonetProvider extends ContentProvider {
 						+ " where "
 						+ TABLE_ACCOUNTS + "." + Accounts._ID + "=" + Widget_accounts.ACCOUNT
 						+ ";");
-				// enable all accounts for the Sonet app
-				Cursor enable = db.query(TABLE_ACCOUNTS, new String[]{Accounts._ID}, null, null, null, null, null);
-				if (enable.moveToFirst()) {
-					while (!enable.isAfterLast()) {
-						ContentValues values = new ContentValues();
-						values.put(Widget_accounts.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
-						values.put(Widget_accounts.ACCOUNT, enable.getLong(enable.getColumnIndex(Accounts._ID)));
-						db.insert(TABLE_WIDGET_ACCOUNTS, Widget_accounts._ID, values);
-						enable.moveToNext();
-					}
-				}
-				enable.close();
 			}
 		}
 
