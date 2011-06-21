@@ -111,5 +111,6 @@
 	<string name="enable">Enable Account</string>
 	<string name="disable">Disable Account</string>
 	<string name="noaccountsenabled">Loading or no accounts enabled under Menu, Accounts</string>
+	<string name="widget_settings">Widget settings</string>
     <string name="gpl">Sonet - Android Social Networking Widget\u000A\u000ACopyright (C) 2009 Bryan Emmanuel\u000A\u000AThis program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\u000A\u000AThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\u000A\u000AYou should have received a copy of the GNU General Public License along with this program.  If not, see \u003C\u000Ahttp://www.gnu.org/licenses/\u003E.\u000A\u000ABryan Emmanuel piusvelte@gmail.com</string>
 </resources>

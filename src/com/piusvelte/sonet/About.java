@@ -56,9 +56,9 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 	private boolean mUpdateWidget = false;
 	private static final int REFRESH = Menu.FIRST;
 	private static final int MANAGE_ACCOUNTS = Menu.FIRST + 1;
-	private static final int DEFAULT_SETTINGS = Menu.FIRST + 2;
-	private static final int REFRESH_WIDGETS = Menu.FIRST + 3;
-	private static final int WIDGET_SETTINGS = Menu.FIRST + 4;
+	private static final int REFRESH_WIDGETS = Menu.FIRST + 2;
+	private static final int WIDGET_SETTINGS = Menu.FIRST + 3;
+	private static final int DEFAULT_SETTINGS = Menu.FIRST + 4;
 	private static final int ABOUT = Menu.FIRST + 5;
 
 	@Override
@@ -106,10 +106,10 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 	public boolean onCreateOptionsMenu(Menu menu) {
 		boolean result = super.onCreateOptionsMenu(menu);
 		menu.add(0, REFRESH, 0, R.string.button_refresh).setIcon(android.R.drawable.ic_menu_rotate);
-		menu.add(0, REFRESH_WIDGETS, 0, R.string.refreshallwidgets).setIcon(android.R.drawable.ic_menu_rotate);
-		menu.add(0, WIDGET_SETTINGS, 0, R.string.settings).setIcon(android.R.drawable.ic_menu_preferences);
-		menu.add(0, DEFAULT_SETTINGS, 0, R.string.defaultsettings).setIcon(android.R.drawable.ic_menu_preferences);
 		menu.add(0, MANAGE_ACCOUNTS, 0, R.string.accounts).setIcon(android.R.drawable.ic_menu_manage);
+		menu.add(0, REFRESH_WIDGETS, 0, R.string.refreshallwidgets).setIcon(android.R.drawable.ic_menu_rotate);
+		menu.add(0, WIDGET_SETTINGS, 0, R.string.widget_settings).setIcon(android.R.drawable.ic_menu_preferences);
+		menu.add(0, DEFAULT_SETTINGS, 0, R.string.defaultsettings).setIcon(android.R.drawable.ic_menu_preferences);
 		menu.add(0, ABOUT, 0, R.string.about_title).setIcon(android.R.drawable.ic_menu_more);
 		return result;
 	}
