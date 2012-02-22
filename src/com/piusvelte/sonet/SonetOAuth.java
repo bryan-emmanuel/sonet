@@ -19,18 +19,7 @@
  */
 package com.piusvelte.sonet;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.util.Log;
 import oauth.signpost.OAuthConsumer;
@@ -60,21 +49,10 @@ public class SonetOAuth {
 		mOAuthConsumer.setTokenWithSecret(token, tokenSecret);
 	}
 
-	public String getAuthUrl(String request, String access, String authorize, String callback, boolean isOAuth10a) {
+	public String getAuthUrl(String request, String access, String authorize, String callback, boolean isOAuth10a) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
 		mOAuthProvider = new CommonsHttpOAuthProvider(request, access, authorize);
 		mOAuthProvider.setOAuth10a(isOAuth10a);
-		try {
-			return mOAuthProvider.retrieveRequestToken(mOAuthConsumer, callback);
-		} catch (OAuthMessageSignerException e) {
-			Log.e(TAG,e.toString());
-		} catch (OAuthNotAuthorizedException e) {
-			Log.e(TAG,e.toString());
-		} catch (OAuthExpectationFailedException e) {
-			Log.e(TAG,e.toString());
-		} catch (OAuthCommunicationException e) {
-			Log.e(TAG,e.toString());
-		}
-		return null;
+		return mOAuthProvider.retrieveRequestToken(mOAuthConsumer, callback);
 	}
 
 	public boolean retrieveAccessToken(String verifier) {
@@ -82,88 +60,29 @@ public class SonetOAuth {
 			mOAuthProvider.retrieveAccessToken(mOAuthConsumer, verifier);
 			return true;
 		} catch (OAuthMessageSignerException e) {
-			Log.e(TAG,e.toString());
+			Log.e(TAG, e.toString());
 		} catch (OAuthNotAuthorizedException e) {
-			Log.e(TAG,e.toString());
+			Log.e(TAG, e.toString());
 		} catch (OAuthExpectationFailedException e) {
-			Log.e(TAG,e.toString());
+			Log.e(TAG, e.toString());
 		} catch (OAuthCommunicationException e) {
-			Log.e(TAG,e.toString());
+			Log.e(TAG, e.toString());
 		}
 		return false;
 	}
 
-	public String httpResponse(HttpUriRequest httpRequest) {
-		String response = null;
+	public HttpUriRequest getSignedRequest(HttpUriRequest httpRequest) {
 		try {
 			mOAuthConsumer.sign(httpRequest);
-			HttpClient httpClient = new DefaultHttpClient();
-			HttpResponse httpResponse = httpClient.execute(httpRequest);
-			StatusLine statusLine = httpResponse.getStatusLine();
-			HttpEntity entity = httpResponse.getEntity();
-
-			switch(statusLine.getStatusCode()) {
-			case 200:
-			case 201:
-			case 204:
-				if (entity != null) {
-					InputStream is = entity.getContent();
-					BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-					StringBuilder sb = new StringBuilder();
-
-					String line = null;
-					try {
-						while ((line = reader.readLine()) != null) sb.append(line + "\n");
-					} catch (IOException e) {
-						e.printStackTrace();
-					} finally {
-						try {
-							is.close();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					}
-					response = sb.toString();
-				} else {
-					response = "OK";
-				}
-				break;
-			default:
-				Log.e(TAG,httpRequest.getURI().toString());
-				Log.e(TAG,""+statusLine.getStatusCode()+" "+statusLine.getReasonPhrase());
-				if (entity != null) {
-					InputStream is = entity.getContent();
-					BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-					StringBuilder sb = new StringBuilder();
-
-					String line = null;
-					try {
-						while ((line = reader.readLine()) != null) sb.append(line + "\n");
-					} catch (IOException e) {
-						e.printStackTrace();
-					} finally {
-						try {
-							is.close();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					}
-					Log.e(TAG,"response:"+sb.toString());
-				}
-				break;
-			}
+			return httpRequest;
 		} catch (OAuthMessageSignerException e) {
 			Log.e(TAG,e.toString());
 		} catch (OAuthExpectationFailedException e) {
 			Log.e(TAG,e.toString());
 		} catch (OAuthCommunicationException e) {
 			Log.e(TAG,e.toString());
-		} catch (ClientProtocolException e) {
-			Log.e(TAG,e.toString());
-		} catch (IOException e) {
-			Log.e(TAG,e.toString());
 		}
-		return response;		
+		return null;
 	}
 
 	public String getToken() {

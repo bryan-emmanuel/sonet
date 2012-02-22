@@ -32,7 +32,7 @@
 			<Button android:id="@+id/statuses_per_account" android:text="@string/statuses_per_account"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<CheckBox android:id="@+id/hasbuttons" android:text="@string/hasbuttons"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
 			<Button android:id="@+id/buttons_bg_color" android:text="@string/buttons_bg_color"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<Button android:id="@+id/buttons_color" android:text="@string/buttons_color"
@@ -49,15 +49,31 @@
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<Button android:id="@+id/friend_textsize" android:text="@string/friend_textsize"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/friend_bg_color" android:text="@string/friend_bg_color"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<Button android:id="@+id/created_color" android:text="@string/created_color"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<Button android:id="@+id/created_textsize" android:text="@string/created_textsize"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<CheckBox android:id="@+id/time24hr" android:text="@string/time24hr"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
 			<CheckBox android:id="@+id/icon" android:text="@string/icon"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="true" />
 			<CheckBox android:id="@+id/background_update" android:text="@string/background_update"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="true" />
+			<CheckBox android:id="@+id/sound" android:text="@string/sound"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
+			<CheckBox android:id="@+id/vibrate" android:text="@string/vibrate"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
+			<CheckBox android:id="@+id/lights" android:text="@string/lights"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
+			<CheckBox android:id="@+id/display_profile" android:text="@string/display_profile"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="true" />
+			<Button android:id="@+id/profile_bg_color" android:text="@string/profile_bg_color"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<CheckBox android:id="@+id/instantupload" android:text="@string/instantupload"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
+			<Button android:id="@+id/margin" android:text="@string/margin"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 		</LinearLayout>
 	</ScrollView>

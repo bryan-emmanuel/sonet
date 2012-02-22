@@ -36,6 +36,5 @@
 		android:layout_below="@id/message" android:singleLine="true"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
 		android:layout_alignParentBottom="true"
-		android:layout_alignParentRight="true" android:paddingTop="4dip"
-		android:text="@string/like" />
+		android:layout_alignParentRight="true" android:paddingTop="4dip" />
 </RelativeLayout>

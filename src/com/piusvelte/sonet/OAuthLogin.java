@@ -19,115 +19,92 @@
  */
 package com.piusvelte.sonet;
 
-import static com.piusvelte.sonet.Sonet.TOKEN;
-import static com.piusvelte.sonet.Sonet.EXPIRES;
-
-import static com.piusvelte.sonet.Sonet.TWITTER;
-import static com.piusvelte.sonet.Sonet.TWITTER_BASE_URL;
-import static com.piusvelte.sonet.Sonet.TWITTER_URL_ACCESS;
-import static com.piusvelte.sonet.Sonet.TWITTER_URL_AUTHORIZE;
-import static com.piusvelte.sonet.Sonet.TWITTER_URL_REQUEST;
-import static com.piusvelte.sonet.SonetTokens.TWITTER_KEY;
-import static com.piusvelte.sonet.SonetTokens.TWITTER_SECRET;
-import static com.piusvelte.sonet.Sonet.SID_FORMAT;
+import static com.piusvelte.sonet.Sonet.*;
+import static com.piusvelte.sonet.SonetTokens.*;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
-import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import oauth.signpost.exception.OAuthCommunicationException;
+import oauth.signpost.exception.OAuthExpectationFailedException;
+import oauth.signpost.exception.OAuthMessageSignerException;
+import oauth.signpost.exception.OAuthNotAuthorizedException;
+
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import static com.piusvelte.sonet.Sonet.BUZZ;
-import static com.piusvelte.sonet.Sonet.BUZZ_SCOPE;
-import static com.piusvelte.sonet.Sonet.BUZZ_URL_ACCESS;
-import static com.piusvelte.sonet.Sonet.BUZZ_URL_AUTHORIZE;
-import static com.piusvelte.sonet.Sonet.BUZZ_URL_REQUEST;
-import static com.piusvelte.sonet.SonetTokens.BUZZ_KEY;
-import static com.piusvelte.sonet.SonetTokens.BUZZ_SECRET;
-import static com.piusvelte.sonet.SonetTokens.BUZZ_API_KEY;
-import static com.piusvelte.sonet.Sonet.BUZZ_BASE_URL;
-import static com.piusvelte.sonet.Sonet.BUZZ_URL_ME;
-
-import static com.piusvelte.sonet.Sonet.MYSPACE;
-import static com.piusvelte.sonet.Sonet.MYSPACE_URL_ACCESS;
-import static com.piusvelte.sonet.Sonet.MYSPACE_URL_AUTHORIZE;
-import static com.piusvelte.sonet.Sonet.MYSPACE_URL_REQUEST;
-import static com.piusvelte.sonet.SonetTokens.MYSPACE_KEY;
-import static com.piusvelte.sonet.SonetTokens.MYSPACE_SECRET;
-import static com.piusvelte.sonet.Sonet.MYSPACE_BASE_URL;
-import static com.piusvelte.sonet.Sonet.MYSPACE_URL_ME;
-
-//import static com.piusvelte.sonet.Sonet.SALESFORCE;
-//import static com.piusvelte.sonet.Sonet.SALESFORCE_URL_ACCESS;
-//import static com.piusvelte.sonet.Sonet.SALESFORCE_URL_AUTHORIZE;
-//import static com.piusvelte.sonet.Sonet.SALESFORCE_URL_REQUEST;
-//import static com.piusvelte.sonet.Tokens.SALESFORCE_KEY;
-//import static com.piusvelte.sonet.Tokens.SALESFORCE_SECRET;
-
-import static com.piusvelte.sonet.Sonet.FACEBOOK;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_AUTHORIZE;
-import static com.piusvelte.sonet.SonetTokens.FACEBOOK_ID;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_ME;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
-
-import static com.piusvelte.sonet.Sonet.FOURSQUARE;
-import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_AUTHORIZE;
-import static com.piusvelte.sonet.SonetTokens.FOURSQUARE_KEY;
-import static com.piusvelte.sonet.Sonet.FOURSQUARE_BASE_URL;
-import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_ME;
-
-import static com.piusvelte.sonet.Sonet.LINKEDIN;
-import static com.piusvelte.sonet.SonetTokens.LINKEDIN_KEY;
-import static com.piusvelte.sonet.SonetTokens.LINKEDIN_SECRET;
-import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_ACCESS;
-import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_AUTHORIZE;
-import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_REQUEST;
-import static com.piusvelte.sonet.Sonet.LINKEDIN_HEADERS;
-import static com.piusvelte.sonet.Sonet.LINKEDIN_BASE_URL;
-import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_ME;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import static oauth.signpost.OAuth.OAUTH_VERIFIER;
 
+import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Widget_accounts;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.appwidget.AppWidgetManager;
 import android.content.ContentValues;
 import android.content.DialogInterface;
+import android.content.UriMatcher;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.EditText;
+import android.widget.Toast;
 
 public class OAuthLogin extends Activity implements OnCancelListener, OnClickListener {
 	private static final String TAG = "OAuthLogin";
 	private static Uri TWITTER_CALLBACK = Uri.parse("sonet://twitter");
 	private static Uri BUZZ_CALLBACK = Uri.parse("sonet://buzz");
 	private static Uri MYSPACE_CALLBACK = Uri.parse("sonet://myspace");
-	//	private static Uri SALESFORCE_CALLBACK = Uri.parse("sonet://salesforce");
+	private static Uri CHATTER_CALLBACK = Uri.parse("sonet://chatter");
 	private static Uri FACEBOOK_CALLBACK = Uri.parse("fbconnect://success");
 	private static Uri FOURSQUARE_CALLBACK = Uri.parse("sonet://foursquare");
 	private static Uri LINKEDIN_CALLBACK = Uri.parse("sonet://linkedin");
+	private static Uri IDENTICA_CALLBACK = Uri.parse("sonet://identi.ca");
+	//	private static Uri GOOGLEPLUS_CALLBACK = Uri.parse("http://localhost");
 	private SonetOAuth mSonetOAuth;
 	private ProgressDialog mLoadingDialog;
 	private int mWidgetId;
 	private long mAccountId;
+	private String mServiceName = "unknown";
+	private SonetWebView mSonetWebView;
+	private SonetHttpClient mSonetHttpClient;
+
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setResult(RESULT_CANCELED);
+		mSonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
 		mLoadingDialog = new ProgressDialog(this);
 		mLoadingDialog.setMessage(getString(R.string.loading));
 		mLoadingDialog.setCancelable(true);
@@ -138,57 +115,254 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 			Bundle extras = intent.getExtras();
 			if (extras != null) {
 				int service = extras.getInt(Sonet.Accounts.SERVICE, Sonet.INVALID_SERVICE);
+				mServiceName = this.getResources().getStringArray(R.array.service_entries)[service];
 				mWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 				mAccountId = extras.getLong(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID);
-				SonetWebView sonetWebView = new SonetWebView();
-				String authUrl = null;
+				mSonetWebView = new SonetWebView();
+				final ProgressDialog loadingDialog = new ProgressDialog(this);
+				final AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
+					@Override
+					protected String doInBackground(String... args) {
+						try {
+							return mSonetOAuth.getAuthUrl(args[0], args[1], args[2], args[3], Boolean.parseBoolean(args[4]));
+						} catch (OAuthMessageSignerException e) {
+							e.printStackTrace();
+						} catch (OAuthNotAuthorizedException e) {
+							e.printStackTrace();
+						} catch (OAuthExpectationFailedException e) {
+							e.printStackTrace();
+						} catch (OAuthCommunicationException e) {
+							(Toast.makeText(OAuthLogin.this, String.format(getString(R.string.oauth_error), mServiceName), Toast.LENGTH_LONG)).show();
+							e.printStackTrace();
+						}
+						return null;
+					}
+
+					@Override
+					protected void onPostExecute(String url) {
+						if (loadingDialog.isShowing()) loadingDialog.dismiss();
+						// load the webview
+						if (url != null) {
+							mSonetWebView.open(url);
+						} else {
+							OAuthLogin.this.finish();
+						}
+					}
+				};
+				loadingDialog.setMessage(getString(R.string.loading));
+				loadingDialog.setCancelable(true);
+				loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+					}
+				});
+				loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+					}
+				});
 				try {
 					switch (service) {
-					case FOURSQUARE:
-						sonetWebView.open(String.format(FOURSQUARE_URL_AUTHORIZE, FOURSQUARE_KEY, FOURSQUARE_CALLBACK.toString()));
-						break;
-					case FACEBOOK:
-						sonetWebView.open(String.format(FACEBOOK_URL_AUTHORIZE, FACEBOOK_BASE_URL, FACEBOOK_ID, FACEBOOK_CALLBACK.toString()));
-						break;
 					case TWITTER:
 						mSonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET);
-						authUrl = mSonetOAuth.getAuthUrl(String.format(TWITTER_URL_REQUEST, TWITTER_BASE_URL), String.format(TWITTER_URL_ACCESS, TWITTER_BASE_URL), String.format(TWITTER_URL_AUTHORIZE, TWITTER_BASE_URL), TWITTER_CALLBACK.toString(), true);
-						if (authUrl != null) {
-							sonetWebView.open(authUrl);
-						} else {
-							this.finish();
-						}
+						asyncTask.execute(String.format(TWITTER_URL_REQUEST, TWITTER_BASE_URL), String.format(TWITTER_URL_ACCESS, TWITTER_BASE_URL), String.format(TWITTER_URL_AUTHORIZE, TWITTER_BASE_URL), TWITTER_CALLBACK.toString(), Boolean.toString(true));
+						loadingDialog.show();
+						break;
+					case FACEBOOK:
+						mSonetWebView.open(String.format(FACEBOOK_URL_AUTHORIZE, FACEBOOK_BASE_URL, FACEBOOK_ID, FACEBOOK_CALLBACK.toString()));
 						break;
 					case MYSPACE:
 						mSonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET);
-						authUrl = mSonetOAuth.getAuthUrl(MYSPACE_URL_REQUEST, MYSPACE_URL_ACCESS, MYSPACE_URL_AUTHORIZE, MYSPACE_CALLBACK.toString(), true);
-						if (authUrl != null) {
-							sonetWebView.open(authUrl);
-						} else {
-							this.finish();
-						}
+						asyncTask.execute(MYSPACE_URL_REQUEST, MYSPACE_URL_ACCESS, MYSPACE_URL_AUTHORIZE, MYSPACE_CALLBACK.toString(), Boolean.toString(true));
+						loadingDialog.show();
 						break;
 					case BUZZ:
 						mSonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET);
-						authUrl = mSonetOAuth.getAuthUrl(String.format(BUZZ_URL_REQUEST, URLEncoder.encode(BUZZ_SCOPE, "utf-8"), getString(R.string.app_name), BUZZ_KEY), BUZZ_URL_ACCESS, String.format(BUZZ_URL_AUTHORIZE, URLEncoder.encode(BUZZ_SCOPE, "utf-8"), getString(R.string.app_name), BUZZ_KEY), BUZZ_CALLBACK.toString(), true);
-						if (authUrl != null) {
-							sonetWebView.open(authUrl);
-						} else {
-							this.finish();
-						}
+						asyncTask.execute(String.format(BUZZ_URL_REQUEST, URLEncoder.encode(BUZZ_SCOPE, "utf-8"), getString(R.string.app_name), BUZZ_KEY), BUZZ_URL_ACCESS, String.format(BUZZ_URL_AUTHORIZE, URLEncoder.encode(BUZZ_SCOPE, "utf-8"), getString(R.string.app_name), BUZZ_KEY), BUZZ_CALLBACK.toString(), Boolean.toString(true));
+						loadingDialog.show();
 						break;
-						//					case SALESFORCE:
-						//						mSonetOAuth = new SonetOAuth(SALESFORCE_KEY, SALESFORCE_SECRET);
-						//						sonetWebView.open(mSonetOAuth.getAuthUrl(SALESFORCE_URL_REQUEST, SALESFORCE_URL_ACCESS, SALESFORCE_URL_AUTHORIZE, SALESFORCE_CALLBACK.toString(), true) + "&oauth_consumer_key=" + SALESFORCE_KEY);
-						//						break;
+					case FOURSQUARE:
+						mSonetWebView.open(String.format(FOURSQUARE_URL_AUTHORIZE, FOURSQUARE_KEY, FOURSQUARE_CALLBACK.toString()));
+						break;
 					case LINKEDIN:
 						mSonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET);
-						authUrl = mSonetOAuth.getAuthUrl(LINKEDIN_URL_REQUEST, LINKEDIN_URL_ACCESS, LINKEDIN_URL_AUTHORIZE, LINKEDIN_CALLBACK.toString(), true);
-						if (authUrl != null) {
-							sonetWebView.open(authUrl);
+						asyncTask.execute(LINKEDIN_URL_REQUEST, LINKEDIN_URL_ACCESS, LINKEDIN_URL_AUTHORIZE, LINKEDIN_CALLBACK.toString(), Boolean.toString(true));
+						loadingDialog.show();
+						break;
+					case SMS:
+						// don't insert this more than once...
+						Cursor c = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID}, Accounts.SERVICE + "=?", new String[]{Integer.toString(SMS)}, null);
+						if (c.moveToFirst()) {
+							(Toast.makeText(OAuthLogin.this, "SMS has already been added.", Toast.LENGTH_LONG)).show();
 						} else {
-							this.finish();
+							addAccount("SMS", null, null, 0, SMS, null);
 						}
+						c.close();
+						finish();
+						break;
+					case RSS:
+						// prompt for RSS url
+						final EditText rss_url = new EditText(this);
+						rss_url.setSingleLine();
+						new AlertDialog.Builder(OAuthLogin.this)
+						.setTitle(R.string.rss_url)
+						.setView(rss_url)
+						.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(final DialogInterface dialog, int which) {
+								// test the url and add if valid, else Toast error
+								mLoadingDialog.show();
+								(new AsyncTask<String, Void, String>() {
+									String url;
+
+									@Override
+									protected String doInBackground(String... params) {
+										url = rss_url.getText().toString();
+										return mSonetHttpClient.httpResponse(new HttpGet(url));
+									}
+
+									@Override
+									protected void onPostExecute(String response) {
+										mLoadingDialog.dismiss();
+										if (response != null) {
+											DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+											DocumentBuilder db;
+											try {
+												db = dbf.newDocumentBuilder();
+												InputSource is = new InputSource();
+												is.setCharacterStream(new StringReader(response));
+												Document doc = db.parse(is);
+												// test parsing...
+												NodeList nodes = doc.getElementsByTagName(Sitem);
+												if (nodes.getLength() > 0) {
+													// check for an image
+													NodeList images = doc.getElementsByTagName(Simage);
+													if (images.getLength() > 0) {
+														NodeList imageChildren = images.item(0).getChildNodes();
+														Node n = imageChildren.item(0);
+														if (n.getNodeName().toLowerCase().equals(Surl)) {
+															if (n.hasChildNodes()) {
+																n.getChildNodes().item(0).getNodeValue();
+															}
+														}
+													}
+													NodeList children = nodes.item(0).getChildNodes();
+													String date = null;
+													String title = null;
+													String description = null;
+													String link = null;
+													int values_count = 0;
+													for (int child = 0, c2 = children.getLength(); (child < c2) && (values_count < 4); child++) {
+														Node n = children.item(child);
+														if (n.getNodeName().toLowerCase().equals(Spubdate)) {
+															values_count++;
+															if (n.hasChildNodes()) {
+																date = n.getChildNodes().item(0).getNodeValue();
+															}
+														} else if (n.getNodeName().toLowerCase().equals(Stitle)) {
+															values_count++;
+															if (n.hasChildNodes()) {
+																title = n.getChildNodes().item(0).getNodeValue();
+															}
+														} else if (n.getNodeName().toLowerCase().equals(Sdescription)) {
+															values_count++;
+															if (n.hasChildNodes()) {
+																StringBuilder sb = new StringBuilder();
+																NodeList descNodes = n.getChildNodes();
+																for (int dn = 0, dn2 = descNodes.getLength(); dn < dn2; dn++) {
+																	Node descNode = descNodes.item(dn);
+																	if (descNode.getNodeType() == Node.TEXT_NODE) {
+																		sb.append(descNode.getNodeValue());
+																	}
+																}
+																// strip out the html tags
+																description = sb.toString().replaceAll("\\<(.|\n)*?>", "");
+															}
+														} else if (n.getNodeName().toLowerCase().equals(Slink)) {
+															values_count++;
+															if (n.hasChildNodes()) {
+																link = n.getChildNodes().item(0).getNodeValue();
+															}
+														}
+													}
+													if (Sonet.HasValues(new String[]{title, description, link, date})) {
+														final EditText url_name = new EditText(OAuthLogin.this);
+														url_name.setSingleLine();
+														new AlertDialog.Builder(OAuthLogin.this)
+														.setTitle(R.string.rss_channel)
+														.setView(url_name)
+														.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+															@Override
+															public void onClick(DialogInterface dialog1, int which) {
+																addAccount(url_name.getText().toString(), null, null, 0, RSS, url);
+																dialog1.dismiss();
+																dialog.dismiss();
+																finish();
+															}
+														})
+														.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+															@Override
+															public void onClick(DialogInterface dialog1, int which) {
+																dialog1.dismiss();
+																dialog.dismiss();
+																finish();
+															}
+														})
+														.show();
+													} else {
+														(Toast.makeText(OAuthLogin.this, "Feed is missing standard fields", Toast.LENGTH_LONG)).show();
+													}
+												} else {
+													(Toast.makeText(OAuthLogin.this, "Invalid feed", Toast.LENGTH_LONG)).show();
+													dialog.dismiss();
+													finish();
+												}
+											} catch (ParserConfigurationException e) {
+												Log.e(TAG, e.toString());
+												(Toast.makeText(OAuthLogin.this, "Invalid feed", Toast.LENGTH_LONG)).show();
+												dialog.dismiss();
+												finish();
+											} catch (SAXException e) {
+												Log.e(TAG, e.toString());
+												(Toast.makeText(OAuthLogin.this, "Invalid feed", Toast.LENGTH_LONG)).show();
+												dialog.dismiss();
+												finish();
+											} catch (IOException e) {
+												Log.e(TAG, e.toString());
+												(Toast.makeText(OAuthLogin.this, "Invalid feed", Toast.LENGTH_LONG)).show();
+												dialog.dismiss();
+												finish();
+											}
+										} else {
+											(Toast.makeText(OAuthLogin.this, "Invalid URL", Toast.LENGTH_LONG)).show();
+											dialog.dismiss();
+											finish();
+										}
+									}
+								}).execute(rss_url.getText().toString());
+							}
+						})
+						.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								dialog.dismiss();
+								finish();
+							}
+						})
+						.show();
+						break;
+					case IDENTICA:
+						mSonetOAuth = new SonetOAuth(IDENTICA_KEY, IDENTICA_SECRET);
+						asyncTask.execute(String.format(IDENTICA_URL_REQUEST, IDENTICA_BASE_URL), String.format(IDENTICA_URL_ACCESS, IDENTICA_BASE_URL), String.format(IDENTICA_URL_AUTHORIZE, IDENTICA_BASE_URL), IDENTICA_CALLBACK.toString(), Boolean.toString(true));
+						loadingDialog.show();
+						break;
+					case GOOGLEPLUS:
+						mSonetWebView.open(String.format(GOOGLEPLUS_AUTHORIZE, GOOGLE_CLIENTID, "urn:ietf:wg:oauth:2.0:oob"));
+						break;
+					case CHATTER:
+						mSonetWebView.open(String.format(CHATTER_URL_AUTHORIZE, CHATTER_KEY, CHATTER_CALLBACK.toString()));
 						break;
 					default:
 						this.finish();
@@ -209,7 +383,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 		values.put(Accounts.SECRET, secret);
 		values.put(Accounts.EXPIRY, expiry);
 		values.put(Accounts.SERVICE, service);
-		values.put(Accounts.SID, String.format(SID_FORMAT, sid));
+		values.put(Accounts.SID, sid);
 		if (mAccountId != Sonet.INVALID_ACCOUNT_ID) {
 			// re-authenticating
 			accountId = Long.toString(mAccountId);
@@ -237,6 +411,113 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 				@Override
 				public void onPageFinished(WebView view, String url) {
 					mLoadingDialog.dismiss();
+					if (url != null) {
+						Uri uri = Uri.parse(url);
+						UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
+						matcher.addURI("accounts.google.com", "o/oauth2/approval", 1);
+						if (matcher.match(uri) == 1) {
+							// get the access_token
+							String code = view.getTitle().split("=")[1];
+							String[] title = view.getTitle().split("=");
+							if (title.length > 0) {
+								code = title[1];
+							}
+							if (code != null) {
+								final ProgressDialog loadingDialog = new ProgressDialog(OAuthLogin.this);
+								final AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
+
+									String refresh_token = null;
+
+									@Override
+									protected String doInBackground(String... args) {
+										HttpPost httpPost = new HttpPost(GOOGLE_ACCESS);
+										List<NameValuePair> params = new ArrayList<NameValuePair>();
+										params.add(new BasicNameValuePair("code", args[0]));
+										params.add(new BasicNameValuePair("client_id", GOOGLE_CLIENTID));
+										params.add(new BasicNameValuePair("client_secret", GOOGLE_CLIENTSECRET));
+										params.add(new BasicNameValuePair("redirect_uri", "urn:ietf:wg:oauth:2.0:oob"));
+										params.add(new BasicNameValuePair("grant_type", "authorization_code"));
+										String response = null;
+										try {
+											httpPost.setEntity(new UrlEncodedFormEntity(params));
+											if ((response = mSonetHttpClient.httpResponse(httpPost)) != null) {
+												JSONObject j = new JSONObject(response);
+												if (j.has("access_token") && j.has("refresh_token")) {
+													refresh_token = j.getString("refresh_token");
+													return mSonetHttpClient.httpResponse(new HttpGet(String.format(GOOGLEPLUS_URL_ME, GOOGLEPLUS_BASE_URL, j.getString("access_token"))));
+												}
+											} else {
+												return null;
+											}
+										} catch (UnsupportedEncodingException e) {
+											Log.e(TAG,e.toString());
+										} catch (JSONException e) {
+											Log.e(TAG,e.toString());
+										}
+										return null;
+									}
+
+									@Override
+									protected void onPostExecute(String response) {
+										if (loadingDialog.isShowing()) loadingDialog.dismiss();
+										boolean finish = true;
+										if (response != null) {
+											try {
+												JSONObject j = new JSONObject(response);
+												if (j.has(Sid) && j.has(SdisplayName)) {
+													addAccount(j.getString(SdisplayName), refresh_token, "", 0, GOOGLEPLUS, j.getString(Sid));
+													// beta message to user
+													finish = false;
+													AlertDialog.Builder dialog = new AlertDialog.Builder(OAuthLogin.this);
+													dialog.setTitle(getResources().getStringArray(R.array.service_entries)[GOOGLEPLUS]);
+													dialog.setMessage(R.string.googleplusbeta);
+													dialog.setPositiveButton(android.R.string.ok, new OnClickListener() {
+
+														@Override
+														public void onClick(DialogInterface arg0, int arg1) {
+															arg0.cancel();
+															OAuthLogin.this.finish();
+														}
+
+													});
+													dialog.setCancelable(true);
+													dialog.show();
+												} else {
+													(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
+												}
+											} catch (JSONException e) {
+												Log.e(TAG, e.getMessage());
+											}
+										} else {
+											(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
+										}
+										if (finish) {
+											OAuthLogin.this.finish();
+										}
+									}
+								};
+								loadingDialog.setMessage(getString(R.string.loading));
+								loadingDialog.setCancelable(true);
+								loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+									@Override
+									public void onCancel(DialogInterface dialog) {
+										if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+									}
+								});
+								loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										dialog.cancel();
+									}
+								});
+								asyncTask.execute(code);
+								loadingDialog.show();
+							} else {
+								(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
+								OAuthLogin.this.finish();
+							}
+						}
+					}
 				}
 
 				@Override
@@ -244,111 +525,449 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 					if (url != null) {
 						mLoadingDialog.show();
 						Uri uri = Uri.parse(url);
-						try {
-							if (TWITTER_CALLBACK.getHost().equals(uri.getHost())) {
-								if (mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER))) {
-									String response = mSonetOAuth.httpResponse(new HttpGet("http://api.twitter.com/1/account/verify_credentials.json"));
+						if (TWITTER_CALLBACK.getHost().equals(uri.getHost())) {
+							final ProgressDialog loadingDialog = new ProgressDialog(OAuthLogin.this);
+							final AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
+
+								@Override
+								protected String doInBackground(String... args) {
+									if (mSonetOAuth.retrieveAccessToken(args[0])) {
+										return mSonetHttpClient.httpResponse(mSonetOAuth.getSignedRequest(new HttpGet("http://api.twitter.com/1/account/verify_credentials.json")));
+									} else {
+										return null;
+									}
+								}
+
+								@Override
+								protected void onPostExecute(String response) {
+									if (loadingDialog.isShowing()) loadingDialog.dismiss();
 									if (response != null) {
-										JSONObject jobj = new JSONObject(response);
-										addAccount(jobj.getString("screen_name"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, TWITTER, jobj.getString("id"));
-									}
-								}
-							} else if (FOURSQUARE_CALLBACK.getHost().equals(uri.getHost())) {
-								// get the access_token
-								url = url.replace("sonet", "http");
-								URL u = new URL(url);
-								String token = "";
-								String[] parameters = (u.getQuery() + "&" + u.getRef()).split("&");
-								for (String parameter : parameters) {
-									String[] param = parameter.split("=");
-									if (TOKEN.equals(param[0])) {
-										token = param[1];
-										break;
-									}
-								}
-								String response = Sonet.httpResponse(new HttpGet(String.format(FOURSQUARE_URL_ME, FOURSQUARE_BASE_URL, token)));
-								if (response != null) {
-									JSONObject jobj = (new JSONObject(response)).getJSONObject("response").getJSONObject("user");
-									if (jobj.has("firstName") && jobj.has("id")) {
-										addAccount(jobj.getString("firstName") + " " + jobj.getString("lastName"), token, "", 0, FOURSQUARE, jobj.getString("id"));
-									}
-								}
-							} else if (FACEBOOK_CALLBACK.getHost().equals(uri.getHost())) {
-								url = url.replace("fbconnect", "http");
-								URL u = new URL(url);
-								String token = "";
-								int expiry = 0;
-								String[] parameters = (u.getQuery() + "&" + u.getRef()).split("&");
-								for (String parameter : parameters) {
-									String[] param = parameter.split("=");
-									if (TOKEN.equals(param[0])) {
-										token = param[1];
-									} else if (EXPIRES.equals(param[0])) {
-										expiry = param[1] == "0" ? 0 : (int) System.currentTimeMillis() + Integer.parseInt(param[1]) * 1000;
-									}
-								}
-								String response = Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_URL_ME, FACEBOOK_BASE_URL, TOKEN, token)));
-								if (response != null) {
-									JSONObject jobj = new JSONObject(response);
-									if (jobj.has("name") && jobj.has("id")) {
-										addAccount(jobj.getString("name"), token, "", expiry, FACEBOOK, jobj.getString("id"));
-									}
-								}
-							} else if (MYSPACE_CALLBACK.getHost().equals(uri.getHost())) {
-								if (mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER))) {
-									String response = mSonetOAuth.httpResponse(new HttpGet(String.format(MYSPACE_URL_ME, MYSPACE_BASE_URL)));
-									if (response != null) {
-										JSONObject jobj = new JSONObject(response);
-										JSONObject person = jobj.getJSONObject("person");
-										if (person.has("displayName") && person.has("id")) {
-											addAccount(person.getString("displayName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, MYSPACE, person.getString("id"));
+										try {
+											JSONObject jobj = new JSONObject(response);
+											addAccount(jobj.getString(Sscreen_name), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, TWITTER, jobj.getString(Sid));
+										} catch (JSONException e) {
+											Log.e(TAG, e.getMessage());
 										}
+									} else {
+										(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
 									}
+									OAuthLogin.this.finish();
 								}
-							} else if (BUZZ_CALLBACK.getHost().equals(uri.getHost())) {
-								mWebView.setVisibility(View.INVISIBLE);
-								if (mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER))) {
-									String response = mSonetOAuth.httpResponse(new HttpGet(String.format(BUZZ_URL_ME, BUZZ_BASE_URL, BUZZ_API_KEY)));
-									if (response != null) {
-										JSONObject data = new JSONObject(response).getJSONObject("data");
-										if (data.has("displayName") && data.has("id")) {
-											addAccount(data.getString("displayName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, BUZZ, data.getString("id"));
-										}
-									}
+							};
+							loadingDialog.setMessage(getString(R.string.loading));
+							loadingDialog.setCancelable(true);
+							loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+								@Override
+								public void onCancel(DialogInterface dialog) {
+									if (!asyncTask.isCancelled()) asyncTask.cancel(true);
 								}
-								//							} else if (SALESFORCE_CALLBACK.getHost().equals(uri.getHost())) {
-								//								mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER));
-								//								String response = mSonetOAuth.httpPost("https://login.salesforce.com/services/OAuth/u/21.0");
-								//								Log.v(TAG,"response:"+response);
-								//								//account info
-								//								//https://login.salesforce.com/ID/orgID/userID?Format=json
-							} else if (LINKEDIN_CALLBACK.getHost().equals(uri.getHost())) {
-								if (mSonetOAuth.retrieveAccessToken(uri.getQueryParameter(OAUTH_VERIFIER))) {
-									HttpGet httpGet = new HttpGet(String.format(LINKEDIN_URL_ME, LINKEDIN_BASE_URL));
-									for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
-									String response = mSonetOAuth.httpResponse(httpGet);
-									if (response != null) {
-										JSONObject jobj = new JSONObject(response);
-										if (jobj.has("firstName") && jobj.has("id")) {
-											addAccount(jobj.getString("firstName") + " " + jobj.getString("lastName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, LINKEDIN, jobj.getString("id"));
-										}
-									}
+							});
+							loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									dialog.cancel();
 								}
-								//							} else if (uri.getHost().contains("salesforce.com") && (uri.getQueryParameter("oauth_consumer_key") == null)) {
-								//								Log.v(TAG,"load:"+url + "&oauth_consumer_key=" + SALESFORCE_KEY);
-								//								view.loadUrl(url + "&oauth_consumer_key=" + SALESFORCE_KEY);
-								//								return true;
-							} else {
-								return false;// allow google to redirect
+							});
+							asyncTask.execute(uri.getQueryParameter(OAUTH_VERIFIER));
+							mLoadingDialog.dismiss();
+							loadingDialog.show();
+						} else if (FOURSQUARE_CALLBACK.getHost().equals(uri.getHost())) {
+							// get the access_token
+							String token = "";
+							String[] parameters = getParams(url);
+							for (String parameter : parameters) {
+								String[] param = parameter.split("=");
+								if (Saccess_token.equals(param[0])) {
+									token = param[1];
+									break;
+								}
 							}
-						} catch (JSONException e) {
-							Log.e(TAG, e.getMessage());
-						} catch (IOException e) {
-							Log.e(TAG, e.getMessage());
+							final ProgressDialog loadingDialog = new ProgressDialog(OAuthLogin.this);
+							final AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
+								String token;
+
+								@Override
+								protected String doInBackground(String... args) {
+									token = args[0];
+									return mSonetHttpClient.httpResponse(new HttpGet(args[1]));
+								}
+
+								@Override
+								protected void onPostExecute(String response) {
+									if (loadingDialog.isShowing()) loadingDialog.dismiss();
+									if (response != null) {
+										JSONObject jobj;
+										try {
+											jobj = (new JSONObject(response)).getJSONObject("response").getJSONObject("user");
+											if (jobj.has("firstName") && jobj.has(Sid)) {
+												addAccount(jobj.getString("firstName") + " " + jobj.getString("lastName"), token, "", 0, FOURSQUARE, jobj.getString(Sid));
+											} else {
+												(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
+											}
+										} catch (JSONException e) {
+											Log.e(TAG, e.getMessage());
+										}
+									} else {
+										(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
+									}
+									OAuthLogin.this.finish();
+								}
+							};
+							loadingDialog.setMessage(getString(R.string.loading));
+							loadingDialog.setCancelable(true);
+							loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+								@Override
+								public void onCancel(DialogInterface dialog) {
+									if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+								}
+							});
+							loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									dialog.cancel();
+								}
+							});
+							asyncTask.execute(token, String.format(FOURSQUARE_URL_ME, FOURSQUARE_BASE_URL, token));
+							mLoadingDialog.dismiss();
+							loadingDialog.show();
+						} else if (FACEBOOK_CALLBACK.getHost().equals(uri.getHost())) {
+							String token = "";
+							int expiry = 0;
+							String[] parameters = getParams(url);
+							for (String parameter : parameters) {
+								String[] param = parameter.split("=");
+								if (Saccess_token.equals(param[0])) {
+									token = param[1];
+								} else if (Sexpires_in.equals(param[0])) {
+									expiry = param[1] == "0" ? 0 : (int) System.currentTimeMillis() + Integer.parseInt(param[1]) * 1000;
+								}
+							}
+							final ProgressDialog loadingDialog = new ProgressDialog(OAuthLogin.this);
+							final AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
+								String token;
+								int expiry;
+
+								@Override
+								protected String doInBackground(String... args) {
+									token = args[0];
+									expiry = Integer.parseInt(args[1]);
+									return mSonetHttpClient.httpResponse(new HttpGet(args[2]));
+								}
+
+								@Override
+								protected void onPostExecute(String response) {
+									if (loadingDialog.isShowing()) loadingDialog.dismiss();
+									if (response != null) {
+										try {
+											JSONObject jobj = new JSONObject(response);
+											if (jobj.has(Sname) && jobj.has(Sid)) {
+												addAccount(jobj.getString(Sname), token, "", expiry, FACEBOOK, jobj.getString(Sid));
+											} else {
+												(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
+											}
+										} catch (JSONException e) {
+											Log.e(TAG, e.getMessage());
+										}
+									} else {
+										(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
+									}
+									OAuthLogin.this.finish();
+								}
+							};
+							loadingDialog.setMessage(getString(R.string.loading));
+							loadingDialog.setCancelable(true);
+							loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+								@Override
+								public void onCancel(DialogInterface dialog) {
+									if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+								}
+							});
+							loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									dialog.cancel();
+								}
+							});
+							asyncTask.execute(token, Integer.toString(expiry), String.format(FACEBOOK_URL_ME, FACEBOOK_BASE_URL, Saccess_token, token));
+							mLoadingDialog.dismiss();
+							loadingDialog.show();
+						} else if (MYSPACE_CALLBACK.getHost().equals(uri.getHost())) {
+							final ProgressDialog loadingDialog = new ProgressDialog(OAuthLogin.this);
+							final AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
+
+								@Override
+								protected String doInBackground(String... args) {
+									if (mSonetOAuth.retrieveAccessToken(args[0])) {
+										return mSonetHttpClient.httpResponse(mSonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_URL_ME, MYSPACE_BASE_URL))));
+									} else {
+										return null;
+									}
+								}
+
+								@Override
+								protected void onPostExecute(String response) {
+									if (loadingDialog.isShowing()) loadingDialog.dismiss();
+									if (response != null) {
+										try {
+											JSONObject jobj = new JSONObject(response);
+											JSONObject person = jobj.getJSONObject("person");
+											if (person.has(SdisplayName) && person.has(Sid)) {
+												addAccount(person.getString(SdisplayName), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, MYSPACE, person.getString(Sid));
+											} else {
+												(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
+											}
+										} catch (JSONException e) {
+											Log.e(TAG, e.getMessage());
+										}
+									} else {
+										(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
+									}
+									OAuthLogin.this.finish();
+								}
+							};
+							loadingDialog.setMessage(getString(R.string.loading));
+							loadingDialog.setCancelable(true);
+							loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+								@Override
+								public void onCancel(DialogInterface dialog) {
+									if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+								}
+							});
+							loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									dialog.cancel();
+								}
+							});
+							asyncTask.execute(uri.getQueryParameter(OAUTH_VERIFIER));
+							mLoadingDialog.dismiss();
+							loadingDialog.show();
+						} else if (BUZZ_CALLBACK.getHost().equals(uri.getHost())) {
+							mWebView.setVisibility(View.INVISIBLE);							
+							final ProgressDialog loadingDialog = new ProgressDialog(OAuthLogin.this);
+							final AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
+
+								@Override
+								protected String doInBackground(String... args) {
+									if (mSonetOAuth.retrieveAccessToken(args[0])) {
+										return mSonetHttpClient.httpResponse(mSonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_URL_ME, BUZZ_BASE_URL, BUZZ_API_KEY))));
+									} else {
+										return null;
+									}
+								}
+
+								@Override
+								protected void onPostExecute(String response) {
+									if (loadingDialog.isShowing()) loadingDialog.dismiss();
+									if (response != null) {
+										try {
+											JSONObject data = new JSONObject(response).getJSONObject(Sdata);
+											if (data.has(SdisplayName) && data.has(Sid)) {
+												addAccount(data.getString(SdisplayName), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, BUZZ, data.getString(Sid));
+											} else {
+												(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
+											}
+										} catch (JSONException e) {
+											Log.e(TAG, e.getMessage());
+										}
+									} else {
+										(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
+									}
+									OAuthLogin.this.finish();
+								}
+							};
+							loadingDialog.setMessage(getString(R.string.loading));
+							loadingDialog.setCancelable(true);
+							loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+								@Override
+								public void onCancel(DialogInterface dialog) {
+									if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+								}
+							});
+							loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									dialog.cancel();
+								}
+							});
+							asyncTask.execute(uri.getQueryParameter(OAUTH_VERIFIER));
+							mLoadingDialog.dismiss();
+							loadingDialog.show();
+						} else if (LINKEDIN_CALLBACK.getHost().equals(uri.getHost())) {
+							final ProgressDialog loadingDialog = new ProgressDialog(OAuthLogin.this);
+							final AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
+
+								@Override
+								protected String doInBackground(String... args) {
+									if (mSonetOAuth.retrieveAccessToken(args[0])) {
+										HttpGet httpGet = new HttpGet(String.format(LINKEDIN_URL_ME, LINKEDIN_BASE_URL));
+										for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
+										return mSonetHttpClient.httpResponse(mSonetOAuth.getSignedRequest(httpGet));
+									} else {
+										return null;
+									}
+								}
+
+								@Override
+								protected void onPostExecute(String response) {
+									if (loadingDialog.isShowing()) loadingDialog.dismiss();
+									if (response != null) {
+										try {
+											JSONObject jobj = new JSONObject(response);
+											if (jobj.has("firstName") && jobj.has(Sid)) {
+												addAccount(jobj.getString("firstName") + " " + jobj.getString("lastName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, LINKEDIN, jobj.getString(Sid));
+											} else {
+												(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
+											}
+										} catch (JSONException e) {
+											Log.e(TAG, e.getMessage());
+										}
+									} else {
+										(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
+									}
+									OAuthLogin.this.finish();
+								}
+							};
+							loadingDialog.setMessage(getString(R.string.loading));
+							loadingDialog.setCancelable(true);
+							loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+								@Override
+								public void onCancel(DialogInterface dialog) {
+									if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+								}
+							});
+							loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									dialog.cancel();
+								}
+							});
+							asyncTask.execute(uri.getQueryParameter(OAUTH_VERIFIER));
+							mLoadingDialog.dismiss();
+							loadingDialog.show();
+						} else if (IDENTICA_CALLBACK.getHost().equals(uri.getHost())) {
+							final ProgressDialog loadingDialog = new ProgressDialog(OAuthLogin.this);
+							final AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
+
+								@Override
+								protected String doInBackground(String... args) {
+									if (mSonetOAuth.retrieveAccessToken(args[0])) {
+										return mSonetHttpClient.httpResponse(mSonetOAuth.getSignedRequest(new HttpGet("https://identi.ca/api/account/verify_credentials.json")));
+									} else {
+										return null;
+									}
+								}
+
+								@Override
+								protected void onPostExecute(String response) {
+									if (loadingDialog.isShowing()) loadingDialog.dismiss();
+									if (response != null) {
+										try {
+											JSONObject jobj = new JSONObject(response);
+											addAccount(jobj.getString(Sscreen_name), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, IDENTICA, jobj.getString(Sid));
+										} catch (JSONException e) {
+											Log.e(TAG, e.getMessage());
+										}
+									} else {
+										(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
+									}
+									OAuthLogin.this.finish();
+								}
+							};
+							loadingDialog.setMessage(getString(R.string.loading));
+							loadingDialog.setCancelable(true);
+							loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+								@Override
+								public void onCancel(DialogInterface dialog) {
+									if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+								}
+							});
+							loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									dialog.cancel();
+								}
+							});
+							asyncTask.execute(uri.getQueryParameter(OAUTH_VERIFIER));
+							mLoadingDialog.dismiss();
+							loadingDialog.show();
+						} else if (CHATTER_CALLBACK.getHost().equals(uri.getHost())) {
+							// get the access_token
+							String token = null,
+							refresh_token = null,
+							instance_url = null;
+							String[] parameters = getParams(url);
+							for (String parameter : parameters) {
+								String[] param = parameter.split("=");
+								if (Saccess_token.equals(param[0])) {
+									token = Uri.decode(param[1]);
+								} else if ("refresh_token".equals(param[0])) {
+									refresh_token = Uri.decode(param[1]);
+								} else if ("instance_url".equals(param[0])) {
+									instance_url = Uri.decode(param[1]);
+								}
+							}
+							if ((token != null) && (refresh_token != null) && (instance_url != null)) {
+								final ProgressDialog loadingDialog = new ProgressDialog(OAuthLogin.this);
+								final AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
+									String refresh_token;
+
+									@Override
+									protected String doInBackground(String... args) {
+										refresh_token = args[2];
+										HttpGet httpGet = new HttpGet(String.format(CHATTER_URL_ME, args[1]));
+										httpGet.setHeader("Authorization", "OAuth " + args[0]);
+										return mSonetHttpClient.httpResponse(httpGet);
+									}
+
+									@Override
+									protected void onPostExecute(String response) {
+										if (loadingDialog.isShowing()) loadingDialog.dismiss();
+										if (response != null) {
+											try {
+												JSONObject jobj = new JSONObject(response);
+												if (jobj.has(Sname) && jobj.has(Sid)) {
+													// save the refresh_token to retrieve updated access_token
+													addAccount(jobj.getString(Sname), refresh_token, "", 0, CHATTER, jobj.getString(Sid));
+												} else {
+													(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
+												}
+											} catch (JSONException e) {
+												Log.e(TAG, e.getMessage());
+											}
+										} else {
+											// check for REST_API enabled
+											(Toast.makeText(OAuthLogin.this, "Salesforce does not allow REST API access for Professional and Group Editions. Please ask them to make it available.", Toast.LENGTH_LONG)).show();
+										}
+										OAuthLogin.this.finish();
+									}
+								};
+								loadingDialog.setMessage(getString(R.string.loading));
+								loadingDialog.setCancelable(true);
+								loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+									@Override
+									public void onCancel(DialogInterface dialog) {
+										if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+									}
+								});
+								loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										dialog.cancel();
+									}
+								});
+								asyncTask.execute(token, instance_url, refresh_token);
+								mLoadingDialog.dismiss();
+								loadingDialog.show();
+							} else {
+								(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
+								mLoadingDialog.dismiss();
+								OAuthLogin.this.finish();
+							}
+						} else {
+							return false;// allow google to redirect
 						}
 					}
-					mLoadingDialog.dismiss();
-					OAuthLogin.this.finish();
 					return true;
 				}
 
@@ -368,6 +987,15 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 
 	}
 
+	private String[] getParams(String url) {
+		if (url.contains("?")) {
+			return url.substring(url.indexOf("?") + 1).replace("#", "&").split("&");
+		} else if (url.contains("#")) {
+			return url.substring(url.indexOf("#") + 1).split("&");
+		} else {
+			return new String[0];
+		}
+	}
 
 	@Override
 	public void onClick(DialogInterface arg0, int arg1) {

@@ -19,8 +19,12 @@
  */
 package com.piusvelte.sonet;
 
+import static com.piusvelte.sonet.Sonet.PRO;
+
 import com.google.ads.*;
+import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet.Widgets;
+import com.piusvelte.sonet.Sonet.Widgets_settings;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -38,14 +42,16 @@ import android.widget.LinearLayout;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 
 public class AccountSettings extends Activity implements View.OnClickListener, OnCheckedChangeListener {
-	private int mMessages_bg_color_value,
-	mMessages_color_value,
-	mMessages_textsize_value,
-	mFriend_color_value,
-	mFriend_textsize_value,
-	mCreated_color_value,
-	mCreated_textsize_value,
-	mStatuses_per_account_value;
+	private int mMessages_bg_color_value = Sonet.default_message_bg_color,
+	mMessages_color_value = Sonet.default_message_color,
+	mMessages_textsize_value = Sonet.default_messages_textsize,
+	mFriend_color_value = Sonet.default_friend_color,
+	mFriend_textsize_value = Sonet.default_friend_textsize,
+	mCreated_color_value = Sonet.default_created_color,
+	mCreated_textsize_value = Sonet.default_created_textsize,
+	mStatuses_per_account_value = Sonet.default_statuses_per_account,
+	mProfiles_bg_color_value = Sonet.default_message_bg_color,
+	mFriend_bg_color_value = Sonet.default_friend_bg_color;
 	private Button mMessages_bg_color;
 	private Button mMessages_color;
 	private Button mMessages_textsize;
@@ -59,15 +65,22 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private long mAccountId = Sonet.INVALID_ACCOUNT_ID;
 	private String mWidgetAccountSettingsId;
+	private CheckBox mSound;
+	private CheckBox mVibrate;
+	private CheckBox mLights;
+	private Button mProfiles_bg_color;
+	private Button mFriend_bg_color;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setResult(RESULT_CANCELED);
 		setContentView(R.layout.account_preferences);
-		AdView adView = new AdView(this, AdSize.BANNER, Sonet.GOOGLE_AD_ID);
-		((LinearLayout) findViewById(R.id.ad)).addView(adView);
-		adView.loadAd(new AdRequest());
+		if (!getPackageName().toLowerCase().contains(PRO)) {
+			AdView adView = new AdView(this, AdSize.BANNER, SonetTokens.GOOGLE_AD_ID);
+			((LinearLayout) findViewById(R.id.ad)).addView(adView);
+			adView.loadAd(new AdRequest());
+		}
 		Intent i = getIntent();
 		if (i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
 			mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
@@ -86,124 +99,73 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 		mTime24hr = (CheckBox) findViewById(R.id.time24hr);
 		mIcon = (CheckBox) findViewById(R.id.icon);
 		mStatuses_per_account = (Button) findViewById(R.id.statuses_per_account);
+		mSound = (CheckBox) findViewById(R.id.sound);
+		mVibrate = (CheckBox) findViewById(R.id.vibrate);
+		mLights = (CheckBox) findViewById(R.id.lights);
+		mProfiles_bg_color = (Button) findViewById(R.id.profile_bg_color);
+		mFriend_bg_color = (Button) findViewById(R.id.friend_bg_color);
 
 		int scrollableVersion = 0;
-		
+
 		// get this account/widgets settings, falling back on the defaults...
-		Cursor c = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SCROLLABLE}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(mAccountId)}, null);
-		if (c.moveToFirst()) {
-			mWidgetAccountSettingsId = Integer.toString(c.getInt(c.getColumnIndex(Widgets._ID)));
-			mMessages_bg_color_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
-			mMessages_color_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_COLOR));
-			mMessages_textsize_value = c.getInt(c.getColumnIndex(Widgets.MESSAGES_TEXTSIZE));
-			mFriend_color_value = c.getInt(c.getColumnIndex(Widgets.FRIEND_COLOR));
-			mFriend_textsize_value = c.getInt(c.getColumnIndex(Widgets.FRIEND_TEXTSIZE));
-			mCreated_color_value = c.getInt(c.getColumnIndex(Widgets.CREATED_COLOR));
-			mCreated_textsize_value = c.getInt(c.getColumnIndex(Widgets.CREATED_TEXTSIZE));
-			mTime24hr.setChecked(c.getInt(c.getColumnIndex(Widgets.TIME24HR)) == 1);
-			mIcon.setChecked(c.getInt(c.getColumnIndex(Widgets.ICON)) == 1);
-			mStatuses_per_account_value = c.getInt(c.getColumnIndex(Widgets.STATUSES_PER_ACCOUNT));
-			scrollableVersion = c.getInt(c.getColumnIndex(Widgets.SCROLLABLE));
-		} else {
-			// fall back on widget settings
-			Cursor d = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SCROLLABLE}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
-			if (d.moveToFirst()) {
-				mMessages_bg_color_value = d.getInt(d.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
-				mMessages_color_value = d.getInt(d.getColumnIndex(Widgets.MESSAGES_COLOR));
-				mMessages_textsize_value = d.getInt(d.getColumnIndex(Widgets.MESSAGES_TEXTSIZE));
-				mFriend_color_value = d.getInt(d.getColumnIndex(Widgets.FRIEND_COLOR));
-				mFriend_textsize_value = d.getInt(d.getColumnIndex(Widgets.FRIEND_TEXTSIZE));
-				mCreated_color_value = d.getInt(d.getColumnIndex(Widgets.CREATED_COLOR));
-				mCreated_textsize_value = d.getInt(d.getColumnIndex(Widgets.CREATED_TEXTSIZE));
-				mTime24hr.setChecked(d.getInt(d.getColumnIndex(Widgets.TIME24HR)) == 1);
-				mIcon.setChecked(d.getInt(d.getColumnIndex(Widgets.ICON)) == 1);
-				mStatuses_per_account_value = d.getInt(d.getColumnIndex(Widgets.STATUSES_PER_ACCOUNT));
-				scrollableVersion = d.getInt(d.getColumnIndex(Widgets.SCROLLABLE));
-			} else {
-				// fall back on user defaults
-				Cursor e = this.getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT}, Widgets.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
-				if (e.moveToFirst()) {
-					mMessages_bg_color_value = e.getInt(e.getColumnIndex(Widgets.MESSAGES_BG_COLOR));
-					mMessages_color_value = e.getInt(e.getColumnIndex(Widgets.MESSAGES_COLOR));
-					mMessages_textsize_value = e.getInt(e.getColumnIndex(Widgets.MESSAGES_TEXTSIZE));
-					mFriend_color_value = e.getInt(e.getColumnIndex(Widgets.FRIEND_COLOR));
-					mFriend_textsize_value = e.getInt(e.getColumnIndex(Widgets.FRIEND_TEXTSIZE));
-					mCreated_color_value = e.getInt(e.getColumnIndex(Widgets.CREATED_COLOR));
-					mCreated_textsize_value = e.getInt(e.getColumnIndex(Widgets.CREATED_TEXTSIZE));
-					mTime24hr.setChecked(e.getInt(e.getColumnIndex(Widgets.TIME24HR)) == 1);
-					mIcon.setChecked(e.getInt(e.getColumnIndex(Widgets.ICON)) == 1);
-					mStatuses_per_account_value = e.getInt(e.getColumnIndex(Widgets.STATUSES_PER_ACCOUNT));
-				} else {
-					// ultimately fall back on the app defaults
-					mMessages_bg_color_value = Sonet.default_message_bg_color;
-					mMessages_color_value = Sonet.default_message_color;
-					mMessages_textsize_value = Sonet.default_messages_textsize;
-					mFriend_color_value = Sonet.default_friend_color;
-					mFriend_textsize_value = Sonet.default_friend_textsize;
-					mCreated_color_value = Sonet.default_created_color;
-					mCreated_textsize_value = Sonet.default_created_textsize;
-					mStatuses_per_account_value = Sonet.default_statuses_per_account;
-					mTime24hr.setChecked(false);
-					mIcon.setChecked(true);
-					// initialize default settings
+		Cursor c = this.getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SCROLLABLE, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(mAccountId)}, null);
+		if (!c.moveToFirst()) {
+			c.close();
+			c = this.getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SCROLLABLE, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+			if (!c.moveToFirst()) {
+				c.close();
+				c = this.getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SCROLLABLE, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+				if (!c.moveToFirst()) {
+					// initialize account settings
 					ContentValues values = new ContentValues();
 					values.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
 					values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-					values.put(Widgets.MESSAGES_BG_COLOR, mMessages_bg_color_value);
-					values.put(Widgets.MESSAGES_COLOR, mMessages_color_value);
-					values.put(Widgets.MESSAGES_TEXTSIZE, mMessages_textsize_value);
-					values.put(Widgets.FRIEND_COLOR, mFriend_color_value);
-					values.put(Widgets.FRIEND_TEXTSIZE, mFriend_textsize_value);
-					values.put(Widgets.CREATED_COLOR, mCreated_color_value);
-					values.put(Widgets.CREATED_TEXTSIZE, mCreated_textsize_value);
-					values.put(Widgets.TIME24HR, false);
-					values.put(Widgets.ICON, true);
-					values.put(Widgets.STATUSES_PER_ACCOUNT, mStatuses_per_account_value);
-					values.put(Widgets.SCROLLABLE, scrollableVersion);
-					this.getContentResolver().insert(Widgets.CONTENT_URI, values);
+					mWidgetAccountSettingsId = this.getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
 				}
-				e.close();
-				// initialize widget settings
-				ContentValues values = new ContentValues();
-				values.put(Widgets.WIDGET, mAppWidgetId);
-				values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-				values.put(Widgets.MESSAGES_BG_COLOR, mMessages_bg_color_value);
-				values.put(Widgets.MESSAGES_COLOR, mMessages_color_value);
-				values.put(Widgets.MESSAGES_TEXTSIZE, mMessages_textsize_value);
-				values.put(Widgets.FRIEND_COLOR, mFriend_color_value);
-				values.put(Widgets.FRIEND_TEXTSIZE, mFriend_textsize_value);
-				values.put(Widgets.CREATED_COLOR, mCreated_color_value);
-				values.put(Widgets.CREATED_TEXTSIZE, mCreated_textsize_value);
-				values.put(Widgets.TIME24HR, false);
-				values.put(Widgets.ICON, true);
-				values.put(Widgets.STATUSES_PER_ACCOUNT, mStatuses_per_account_value);
-				values.put(Widgets.SCROLLABLE, scrollableVersion);
-				this.getContentResolver().insert(Widgets.CONTENT_URI, values);
+				if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+					// initialize account settings
+					ContentValues values = new ContentValues();
+					values.put(Widgets.WIDGET, mAppWidgetId);
+					values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
+					mWidgetAccountSettingsId = this.getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
+				}
 			}
-			d.close();
 			// initialize account settings
 			ContentValues values = new ContentValues();
 			values.put(Widgets.WIDGET, mAppWidgetId);
 			values.put(Widgets.ACCOUNT, mAccountId);
-			values.put(Widgets.MESSAGES_BG_COLOR, mMessages_bg_color_value);
-			values.put(Widgets.MESSAGES_COLOR, mMessages_color_value);
-			values.put(Widgets.MESSAGES_TEXTSIZE, mMessages_textsize_value);
-			values.put(Widgets.FRIEND_COLOR, mFriend_color_value);
-			values.put(Widgets.FRIEND_TEXTSIZE, mFriend_textsize_value);
-			values.put(Widgets.CREATED_COLOR, mCreated_color_value);
-			values.put(Widgets.CREATED_TEXTSIZE, mCreated_textsize_value);
-			values.put(Widgets.TIME24HR, false);
-			values.put(Widgets.ICON, true);
-			values.put(Widgets.STATUSES_PER_ACCOUNT, mStatuses_per_account_value);
-			values.put(Widgets.SCROLLABLE, scrollableVersion);
 			mWidgetAccountSettingsId = this.getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
+		}
+		if (c.moveToFirst()) {
+			mWidgetAccountSettingsId = Integer.toString(c.getInt(0));
+			mMessages_color_value = c.getInt(1);
+			mMessages_textsize_value = c.getInt(2);
+			mFriend_color_value = c.getInt(3);
+			mFriend_textsize_value = c.getInt(4);
+			mCreated_color_value = c.getInt(5);
+			mCreated_textsize_value = c.getInt(6);
+			mTime24hr.setChecked(c.getInt(7) == 1);
+			mMessages_bg_color_value = c.getInt(8);
+			mIcon.setChecked(c.getInt(9) == 1);
+			mStatuses_per_account_value = c.getInt(10);
+			scrollableVersion = c.getInt(11);
+			mSound.setChecked(c.getInt(12) == 1);
+			mVibrate.setChecked(c.getInt(13) == 1);
+			mLights.setChecked(c.getInt(14) == 1);
+			mProfiles_bg_color_value = c.getInt(15);
+			mFriend_bg_color_value = c.getInt(16);
 		}
 		c.close();
 
-		mMessages_bg_color.setOnClickListener(AccountSettings.this);
+		mMessages_bg_color.setOnClickListener(this);
 		mTime24hr.setOnCheckedChangeListener(this);
 		mIcon.setOnCheckedChangeListener(this);
-		mStatuses_per_account.setOnClickListener(AccountSettings.this);
+		mStatuses_per_account.setOnClickListener(this);
+		mSound.setOnCheckedChangeListener(this);
+		mVibrate.setOnCheckedChangeListener(this);
+		mLights.setOnCheckedChangeListener(this);
+		mProfiles_bg_color.setOnClickListener(this);
+		mFriend_bg_color.setOnClickListener(this);
 
 		if (scrollableVersion == 1) {
 			mMessages_color.setEnabled(false);
@@ -213,12 +175,12 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 			mCreated_color.setEnabled(false);
 			mCreated_textsize.setEnabled(false);			
 		} else {
-			mMessages_color.setOnClickListener(AccountSettings.this);
-			mMessages_textsize.setOnClickListener(AccountSettings.this);
-			mFriend_color.setOnClickListener(AccountSettings.this);
-			mFriend_textsize.setOnClickListener(AccountSettings.this);
-			mCreated_color.setOnClickListener(AccountSettings.this);
-			mCreated_textsize.setOnClickListener(AccountSettings.this);			
+			mMessages_color.setOnClickListener(this);
+			mMessages_textsize.setOnClickListener(this);
+			mFriend_color.setOnClickListener(this);
+			mFriend_textsize.setOnClickListener(this);
+			mCreated_color.setOnClickListener(this);
+			mCreated_textsize.setOnClickListener(this);			
 		}
 
 	}
@@ -269,6 +231,28 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 		public void colorChanged(int color) {
 			AccountSettings.this.mCreated_color_value = color;
 			updateDatabase(Widgets.CREATED_COLOR, color);
+		}
+
+		public void colorUpdate(int color) {}
+	};
+
+	ColorPickerDialog.OnColorChangedListener mProfileBackgroundColorListener =
+		new ColorPickerDialog.OnColorChangedListener() {
+
+		public void colorChanged(int color) {
+			AccountSettings.this.mProfiles_bg_color_value = color;
+			updateDatabase(Widgets.PROFILES_BG_COLOR, color);
+		}
+
+		public void colorUpdate(int color) {}
+	};
+
+	ColorPickerDialog.OnColorChangedListener mFriendBackgroundColorListener =
+		new ColorPickerDialog.OnColorChangedListener() {
+
+		public void colorChanged(int color) {
+			AccountSettings.this.mFriend_bg_color_value = color;
+			updateDatabase(Widgets.FRIEND_BG_COLOR, color);
 		}
 
 		public void colorUpdate(int color) {}
@@ -368,6 +352,12 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 			})
 			.setCancelable(true)
 			.show();
+		} else if (v == mProfiles_bg_color) {
+			ColorPickerDialog cp = new ColorPickerDialog(this, mProfileBackgroundColorListener, this.mProfiles_bg_color_value);
+			cp.show();
+		} else if (v == mFriend_bg_color) {
+			ColorPickerDialog cp = new ColorPickerDialog(this, mFriendBackgroundColorListener, this.mFriend_bg_color_value);
+			cp.show();
 		}
 	}
 
@@ -377,6 +367,12 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 			updateDatabase(Widgets.TIME24HR, isChecked ? 1 : 0);
 		} else if (buttonView == mIcon) {
 			updateDatabase(Widgets.ICON, isChecked ? 1 : 0);
+		} else if (buttonView == mSound) {
+			updateDatabase(Widgets.SOUND, isChecked ? 1 : 0);
+		} else if (buttonView == mVibrate) {
+			updateDatabase(Widgets.VIBRATE, isChecked ? 1 : 0);
+		} else if (buttonView == mLights) {
+			updateDatabase(Widgets.LIGHTS, isChecked ? 1 : 0);
 		}
 	}
 }

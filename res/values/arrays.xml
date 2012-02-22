@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- * Wapdroid - Android Location based Wifi Manager
+ * Sonet - Android Location based Wifi Manager
  * Copyright (C) 2009 Bryan Emmanuel
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -44,7 +44,11 @@
 		<item>Buzz</item>
 		<item>Foursquare</item>
 		<item>LinkedIn</item>
-<!--		<item>Salesforce</item>-->
+		<item>SMS</item>
+		<item>RSS</item>
+		<item>Identi.ca</item>
+		<item>Google\u002B</item>
+<!-- 		<item>Chatter</item> -->
 	</string-array>
 	<string-array name="service_values">
 		<item>0</item>
@@ -53,9 +57,18 @@
 		<item>3</item>
 		<item>4</item>
 		<item>5</item>
-<!--		<item>6</item>-->
+		<item>6</item>
+		<item>7</item>
+		<item>8</item>
+		<item>9</item>
+<!-- 		<item>10</item> -->
 	</string-array>
 	<string-array name="textsize_entries">
+		<item>5</item>
+		<item>6</item>
+		<item>7</item>
+		<item>8</item>
+		<item>9</item>
 		<item>10</item>
 		<item>11</item>
 		<item>12</item>
@@ -69,6 +82,11 @@
 		<item>20</item>
 	</string-array>
 	<string-array name="textsize_values">
+		<item>5</item>
+		<item>6</item>
+		<item>7</item>
+		<item>8</item>
+		<item>9</item>
 		<item>10</item>
 		<item>11</item>
 		<item>12</item>
@@ -124,5 +142,13 @@
 		<item>18</item>
 		<item>19</item>
 		<item>20</item>
+	</string-array>
+	<string-array name="margin_entries">
+		<item>none</item>
+		<item>16 pixels</item>
+	</string-array>
+	<string-array name="margin_values">
+		<item>0</item>
+		<item>16</item>
 	</string-array>
 </resources>

@@ -39,14 +39,24 @@
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<Button android:id="@+id/friend_textsize" android:text="@string/friend_textsize"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/friend_bg_color" android:text="@string/friend_bg_color"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<Button android:id="@+id/created_color" android:text="@string/created_color"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<Button android:id="@+id/created_textsize" android:text="@string/created_textsize"
 				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/profile_bg_color" android:text="@string/profile_bg_color"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
 			<CheckBox android:id="@+id/time24hr" android:text="@string/time24hr"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
 			<CheckBox android:id="@+id/icon" android:text="@string/icon"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="true" />
+			<CheckBox android:id="@+id/sound" android:text="@string/sound"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
+			<CheckBox android:id="@+id/vibrate" android:text="@string/vibrate"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
+			<CheckBox android:id="@+id/lights" android:text="@string/lights"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
 		</LinearLayout>
 	</ScrollView>
 </RelativeLayout>

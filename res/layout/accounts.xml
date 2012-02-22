@@ -25,7 +25,7 @@
 		android:layout_height="wrap_content" />
 	<Button android:id="@+id/default_widget_settings"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
-		android:text="@string/defaultsettings" android:layout_below="@id/ad" />
+		android:text="@string/defaultwidgetsettings" />
 	<Button android:id="@+id/button_add_account" android:text="@string/button_add_account"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
 		android:layout_below="@id/default_widget_settings" />

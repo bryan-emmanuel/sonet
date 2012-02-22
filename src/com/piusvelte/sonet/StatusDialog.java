@@ -19,45 +19,19 @@
  */
 package com.piusvelte.sonet;
 
-import static com.piusvelte.sonet.Sonet.ACCOUNTS_QUERY;
-import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
-import static com.piusvelte.sonet.Sonet.BUZZ;
-import static com.piusvelte.sonet.Sonet.BUZZ_BASE_URL;
-import static com.piusvelte.sonet.Sonet.BUZZ_URL_USER;
-import static com.piusvelte.sonet.Sonet.FACEBOOK;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_USER;
-import static com.piusvelte.sonet.Sonet.FOURSQUARE;
-import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_PROFILE;
-import static com.piusvelte.sonet.Sonet.LINKEDIN;
-import static com.piusvelte.sonet.Sonet.LINKEDIN_HEADERS;
-import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_USER;
-import static com.piusvelte.sonet.Sonet.MYSPACE;
-import static com.piusvelte.sonet.Sonet.MYSPACE_BASE_URL;
-import static com.piusvelte.sonet.Sonet.MYSPACE_USER;
-import static com.piusvelte.sonet.Sonet.TOKEN;
-import static com.piusvelte.sonet.Sonet.TWITTER;
-import static com.piusvelte.sonet.Sonet.TWITTER_BASE_URL;
-import static com.piusvelte.sonet.Sonet.TWITTER_PROFILE;
-import static com.piusvelte.sonet.Sonet.TWITTER_USER;
-import static com.piusvelte.sonet.SonetTokens.BUZZ_API_KEY;
-import static com.piusvelte.sonet.SonetTokens.BUZZ_KEY;
-import static com.piusvelte.sonet.SonetTokens.BUZZ_SECRET;
-import static com.piusvelte.sonet.SonetTokens.LINKEDIN_KEY;
-import static com.piusvelte.sonet.SonetTokens.LINKEDIN_SECRET;
-import static com.piusvelte.sonet.SonetTokens.MYSPACE_KEY;
-import static com.piusvelte.sonet.SonetTokens.MYSPACE_SECRET;
-import static com.piusvelte.sonet.SonetTokens.TWITTER_KEY;
-import static com.piusvelte.sonet.SonetTokens.TWITTER_SECRET;
+import static com.piusvelte.sonet.Sonet.*;
+import static com.piusvelte.sonet.SonetTokens.*;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import mobi.intuitit.android.content.LauncherIntent;
 
 import org.apache.http.client.methods.HttpGet;
-import org.json.JSONArray;
+import org.apache.http.client.methods.HttpPost;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
@@ -75,9 +49,12 @@ import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.QuickContact;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -87,70 +64,107 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 	private long mAccount = Sonet.INVALID_ACCOUNT_ID;
 	private Uri mData;
 	private static final int COMMENT = 0;
-	private static final int POST = COMMENT + 1;
-	private static final int SETTINGS = POST + 1;
-	private static final int REFRESH = SETTINGS + 1;
-	private static final int PROFILE = REFRESH + 1;
+	private static final int POST = 1;
+	private static final int SETTINGS = 2;
+	private static final int NOTIFICATIONS = 3;
+	private static final int REFRESH = 4;
+	private static final int PROFILE = 5;
 	private int[] mAppWidgetIds;
-	private String[] items;
+	private String[] items = null;
 	private String mEsid;
 	private int mService;
+	private String mServiceName;
+	private ProgressDialog mLoadingDialog;
+	private StatusLoader mStatusLoader;
+	private Rect mRect;
+	private SonetCrypto mSonetCrypto;
+	private boolean mFinish = false;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		if ((getIntent() != null) && (getIntent().getData() != null)) {
-			mData = getIntent().getData();
-			Cursor c = this.getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.WIDGET, Statuses_styles.ACCOUNT, Statuses_styles.ESID, Statuses_styles.MESSAGE, Statuses_styles.FRIEND, Statuses_styles.SERVICE}, Statuses_styles._ID + "=?", new String[] {mData.getLastPathSegment()}, null);
-			if (c.moveToFirst()) {
-				mAppWidgetId = c.getInt(c.getColumnIndex(Statuses_styles.WIDGET));
-				mAccount = c.getLong(c.getColumnIndex(Statuses_styles.ACCOUNT));
-				mEsid = Sonet.removeUnderscore(c.getString(c.getColumnIndex(Statuses_styles.ESID)));
-				mService = c.getInt(c.getColumnIndex(Statuses_styles.SERVICE));
-				// parse any links
-				Matcher m = Pattern.compile("\\bhttp(s)?://\\S+\\b", Pattern.CASE_INSENSITIVE).matcher(c.getString(c.getColumnIndex(Statuses_styles.MESSAGE)));
-				int count = 0;
-				while (m.find()) {
-					count++;
+		// load secretkey
+		mSonetCrypto = SonetCrypto.getInstance(getApplicationContext());
+		Intent intent = getIntent();
+		if (intent != null) {
+			mData = intent.getData();
+			if (mData != null) {
+				mData = intent.getData();
+				if (intent.hasExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS)) {
+					mRect = intent.getParcelableExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS);
+				} else {
+					mRect = intent.getSourceBounds();
 				}
-				items = new String[PROFILE + count + 1];
-				items[COMMENT] = getString(R.string.comment);
-				items[POST] = getString(R.string.button_post);
-				items[SETTINGS] = getString(R.string.settings);
-				items[REFRESH] = getString(R.string.button_refresh);
-				// for facebook wall posts, remove everything after the " > "
-				String friend = c.getString(c.getColumnIndex(Statuses_styles.FRIEND));
-				if (friend.indexOf(">") > 0) {
-					friend = friend.substring(0, friend.indexOf(">") - 1);
-				}
-				items[PROFILE] = String.format(getString(R.string.userProfile), friend);
-				count = PROFILE + 1;
-				m.reset();
-				while (m.find()) {
-					items[count++] = m.group();
-				}
-			} else {
-				mAppWidgetId = -1;
-				items = new String[]{getString(R.string.comment), getString(R.string.button_post), getString(R.string.settings), getString(R.string.button_refresh)};
+				// need to use a thread here to avoid anr
+				mLoadingDialog = new ProgressDialog(this);
+				mLoadingDialog.setMessage(getString(R.string.loading));
+				mLoadingDialog.setCancelable(true);
+				mLoadingDialog.setOnCancelListener(this);
+				mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), this);
+				mLoadingDialog.show();
+				mStatusLoader = new StatusLoader();
+				mStatusLoader.execute();
 			}
-			c.close();
-		} else {
-			items = new String[]{getString(R.string.comment), getString(R.string.button_post), getString(R.string.settings), getString(R.string.button_refresh)};
 		}
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		// offer options for Comment, Post, Settings and Refresh
-		// loading the likes/retweet and other options takes too long, so load them in the SonetCreatePost.class
-		(new AlertDialog.Builder(this))
-		.setItems(items, this)
-		.setCancelable(true)
-		.setOnCancelListener(this)
-		.show();
+		// check if the dialog is still loading
+		if (mFinish) {
+			finish();
+		} else if ((mLoadingDialog == null) || !mLoadingDialog.isShowing()) {
+			showDialog();
+		}
 	}
-	
+
+	@Override
+	protected void onPause() {
+		if ((mLoadingDialog != null) && mLoadingDialog.isShowing()) {
+			mLoadingDialog.dismiss();
+		}
+		if (mStatusLoader != null) {
+			mStatusLoader.cancel(true);
+		}
+		super.onPause();
+	}
+
+	private void showDialog() {
+		if (mService == SMS) {
+			// if mRect go straight to message app...
+			if (mRect != null) {
+				QuickContact.showQuickContact(this, mRect, Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, mEsid), QuickContact.MODE_LARGE, null);
+			} else {
+				startActivity(new Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + mEsid)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+			}
+		} else if (mService == RSS) {
+			if (mEsid != null) {
+				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(mEsid)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+			} else {
+				(Toast.makeText(StatusDialog.this, "RSS item has no link", Toast.LENGTH_LONG)).show();
+				StatusDialog.this.finish();
+			}
+		} else if (items != null) {
+			// offer options for Comment, Post, Settings and Refresh
+			// loading the likes/retweet and other options takes too long, so load them in the SonetCreatePost.class
+			(new AlertDialog.Builder(this))
+			.setItems(items, this)
+			.setCancelable(true)
+			.setOnCancelListener(this)
+			.show();
+		} else {
+			if (mAppWidgetId != Sonet.INVALID_ACCOUNT_ID) {
+				// informational messages go to settings
+				mFinish = true;
+				startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+			} else {
+				(Toast.makeText(StatusDialog.this, "This widget may be reloading. Please try again after it has completed or use the app.", Toast.LENGTH_LONG)).show();
+				StatusDialog.this.finish();
+			}
+		}
+	}
+
 	private void onErrorExit(String serviceName) {
 		(Toast.makeText(StatusDialog.this, serviceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
 		StatusDialog.this.finish();
@@ -161,15 +175,25 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 		switch (which) {
 		case COMMENT:
 			if (mAppWidgetId != -1) {
-				startActivity(new Intent(this, SonetComments.class).setData(mData));
+				if (mService == GOOGLEPLUS) {
+					//TODO: open browser for now...
+					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://plus.google.com")));
+				} else {
+					startActivity(new Intent(this, SonetComments.class).setData(mData).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				}
 			} else {
 				(Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
 			}
 			dialog.cancel();
 			break;
 		case POST:
-			if (mAppWidgetId != -1) {				
-				startActivity(new Intent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.CONTENT_URI, Long.toString(mAccount))));
+			if (mAppWidgetId != -1) {
+				if (mService == GOOGLEPLUS) {
+					//TODO: open browser for now...
+					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://plus.google.com")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				} else {
+					startActivity(new Intent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.CONTENT_URI, Long.toString(mAccount))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				}
 				dialog.cancel();
 			} else {
 				// no widget sent in, dialog to select one
@@ -181,7 +205,6 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 						public void onClick(DialogInterface arg0, int arg1) {
 							// no account, dialog to select one
 							// don't limit accounts to the widget
-//							Cursor c = StatusDialog.this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY}, Accounts.WIDGET + "=?", new String[]{Integer.toString(mAppWidgetIds[arg1])}, null);
 							Cursor c = StatusDialog.this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY}, null, null, null);
 							if (c.moveToFirst()) {
 								int iid = c.getColumnIndex(Accounts._ID),
@@ -235,7 +258,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 			break;
 		case SETTINGS:
 			if (mAppWidgetId != -1) {
-				startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
+				startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 				dialog.cancel();
 			} else {
 				// no widget sent in, dialog to select one
@@ -263,6 +286,9 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 				}
 			}
 			break;
+		case NOTIFICATIONS:
+			startActivity(new Intent(this, SonetNotifications.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+			dialog.cancel();
 		case REFRESH:
 			if (mAppWidgetId != -1) {
 				startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
@@ -313,7 +339,8 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 						@Override
 						protected String doInBackground(String... arg0) {
 							SonetOAuth sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, arg0[0], arg0[1]);
-							return sonetOAuth.httpResponse(new HttpGet(String.format(TWITTER_USER, TWITTER_BASE_URL, mEsid)));
+							SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
+							return sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_USER, TWITTER_BASE_URL, mEsid))));
 						}
 
 						@Override
@@ -321,16 +348,14 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 							if (loadingDialog.isShowing()) loadingDialog.dismiss();
 							if (response != null) {
 								try {
-									JSONArray users = new JSONArray(response);
-									if (users.length() > 0) {
-										startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(TWITTER_PROFILE, users.getJSONObject(0).getString("screen_name")))));
-									}
+									JSONObject user = new JSONObject(response);
+									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(TWITTER_PROFILE, user.getString("screen_name")))));
 								} catch (JSONException e) {
 									Log.e(TAG, e.toString());
-									onErrorExit(getString(R.string.twitter));
+									onErrorExit(mServiceName);
 								}
 							} else {
-								onErrorExit(getString(R.string.twitter));
+								onErrorExit(mServiceName);
 							}
 						}
 					};
@@ -349,7 +374,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 						}
 					});
 					loadingDialog.show();
-					asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+					asyncTask.execute(mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))), mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET))));
 				}
 				account.close();
 				break;
@@ -360,7 +385,8 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 					asyncTask = new AsyncTask<String, Void, String>() {
 						@Override
 						protected String doInBackground(String... arg0) {
-							return Sonet.httpResponse(new HttpGet(String.format(FACEBOOK_USER, FACEBOOK_BASE_URL, mEsid, TOKEN, arg0[0])));
+							SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
+							return sonetHttpClient.httpResponse(new HttpGet(String.format(FACEBOOK_USER, FACEBOOK_BASE_URL, mEsid, Saccess_token, arg0[0])));
 						}
 
 						@Override
@@ -371,10 +397,10 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getString("link"))));
 								} catch (JSONException e) {
 									Log.e(TAG, e.toString());
-									onErrorExit(getString(R.string.facebook));
+									onErrorExit(mServiceName);
 								}
 							} else {
-								onErrorExit(getString(R.string.facebook));
+								onErrorExit(mServiceName);
 							}
 						}
 					};
@@ -393,7 +419,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 						}
 					});
 					loadingDialog.show();
-					asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)));
+					asyncTask.execute(mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))));
 				}
 				account.close();
 				break;
@@ -405,7 +431,8 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 						@Override
 						protected String doInBackground(String... arg0) {
 							SonetOAuth sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, arg0[0], arg0[1]);
-							return sonetOAuth.httpResponse(new HttpGet(String.format(MYSPACE_USER, MYSPACE_BASE_URL, mEsid)));
+							SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
+							return sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_USER, MYSPACE_BASE_URL, mEsid))));
 						}
 
 						@Override
@@ -416,10 +443,10 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getJSONObject("person").getString("profileUrl"))));
 								} catch (JSONException e) {
 									Log.e(TAG, e.toString());
-									onErrorExit(getString(R.string.myspace));
+									onErrorExit(mServiceName);
 								}
 							} else {
-								onErrorExit(getString(R.string.myspace));
+								onErrorExit(mServiceName);
 							}
 						}
 					};
@@ -438,7 +465,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 						}
 					});
 					loadingDialog.show();
-					asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+					asyncTask.execute(mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))), mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET))));
 				}
 				account.close();
 				break;
@@ -450,7 +477,8 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 						@Override
 						protected String doInBackground(String... arg0) {
 							SonetOAuth sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, arg0[0], arg0[1]);
-							return sonetOAuth.httpResponse(new HttpGet(String.format(BUZZ_URL_USER, BUZZ_BASE_URL, mEsid, BUZZ_API_KEY)));
+							SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
+							return sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_URL_USER, BUZZ_BASE_URL, mEsid, BUZZ_API_KEY))));
 						}
 
 						@Override
@@ -461,10 +489,10 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getJSONObject("data").getString("profileUrl"))));
 								} catch (JSONException e) {
 									Log.e(TAG, e.toString());
-									onErrorExit(getString(R.string.buzz));
+									onErrorExit(mServiceName);
 								}
 							} else {
-								onErrorExit(getString(R.string.buzz));
+								onErrorExit(mServiceName);
 							}
 						}
 					};
@@ -483,7 +511,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 						}
 					});
 					loadingDialog.show();
-					asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+					asyncTask.execute(mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))), mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET))));
 				}
 				account.close();
 				break;
@@ -498,9 +526,10 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 						@Override
 						protected String doInBackground(String... arg0) {
 							SonetOAuth sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, arg0[0], arg0[1]);
+							SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
 							HttpGet httpGet = new HttpGet(String.format(LINKEDIN_URL_USER, mEsid));
 							for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
-							return sonetOAuth.httpResponse(httpGet);
+							return sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpGet));
 						}
 
 						@Override
@@ -511,10 +540,10 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getJSONObject("siteStandardProfileRequest").getString("url").replaceAll("\\\\", ""))));
 								} catch (JSONException e) {
 									Log.e(TAG, e.toString());
-									onErrorExit(getString(R.string.linkedin));
+									onErrorExit(mServiceName);
 								}
 							} else {
-								onErrorExit(getString(R.string.linkedin));
+								onErrorExit(mServiceName);
 							}
 						}
 					};
@@ -533,15 +562,121 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 						}
 					});
 					loadingDialog.show();
-					asyncTask.execute(account.getString(account.getColumnIndex(Accounts.TOKEN)), account.getString(account.getColumnIndex(Accounts.SECRET)));
+					asyncTask.execute(mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))), mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET))));
+				}
+				account.close();
+				break;
+			case IDENTICA:
+				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				if (account.moveToFirst()) {
+					final ProgressDialog loadingDialog = new ProgressDialog(this);
+					asyncTask = new AsyncTask<String, Void, String>() {
+						@Override
+						protected String doInBackground(String... arg0) {
+							SonetOAuth sonetOAuth = new SonetOAuth(IDENTICA_KEY, IDENTICA_SECRET, arg0[0], arg0[1]);
+							SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
+							return sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(IDENTICA_USER, IDENTICA_BASE_URL, mEsid))));
+						}
+
+						@Override
+						protected void onPostExecute(String response) {
+							if (loadingDialog.isShowing()) loadingDialog.dismiss();
+							if (response != null) {
+								try {
+									JSONObject user = new JSONObject(response);
+									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(IDENTICA_PROFILE, user.getString("screen_name")))));
+								} catch (JSONException e) {
+									Log.e(TAG, e.toString());
+									onErrorExit(mServiceName);
+								}
+							} else {
+								onErrorExit(mServiceName);
+							}
+						}
+					};
+					loadingDialog.setMessage(getString(R.string.loading));
+					loadingDialog.setCancelable(true);
+					loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+						@Override
+						public void onCancel(DialogInterface dialog) {
+							if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+						}
+					});
+					loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.cancel();
+						}
+					});
+					loadingDialog.show();
+					asyncTask.execute(mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))), mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET))));
+				}
+				account.close();
+				break;
+			case GOOGLEPLUS:
+				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(GOOGLEPLUS_PROFILE, mEsid))));
+				break;
+			case CHATTER:
+				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				if (account.moveToFirst()) {
+					final ProgressDialog loadingDialog = new ProgressDialog(this);
+					asyncTask = new AsyncTask<String, Void, String>() {
+						@Override
+						protected String doInBackground(String... arg0) {
+							// need to get an instance
+							SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
+							return sonetHttpClient.httpResponse(new HttpPost(String.format(CHATTER_URL_ACCESS, CHATTER_KEY, arg0[0])));
+						}
+
+						@Override
+						protected void onPostExecute(String response) {
+							if (loadingDialog.isShowing()) loadingDialog.dismiss();
+							if (response != null) {
+								try {
+									JSONObject jobj = new JSONObject(response);
+									if (jobj.has("instance_url")) {
+										startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(jobj.getString("instance_url") + "/" + mEsid)));
+									}
+								} catch (JSONException e) {
+									Log.e(TAG, e.toString());
+									onErrorExit(mServiceName);
+								}
+							} else {
+								onErrorExit(mServiceName);
+							}
+						}
+					};
+					loadingDialog.setMessage(getString(R.string.loading));
+					loadingDialog.setCancelable(true);
+					loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+						@Override
+						public void onCancel(DialogInterface dialog) {
+							if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+						}
+					});
+					loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.cancel();
+						}
+					});
+					loadingDialog.show();
+					asyncTask.execute(mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))));
 				}
 				account.close();
 				break;
 			}
 			break;
 		default:
-			// open link
-			startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
+			if ((items != null) && (which < items.length) && (items[which] != null)) {
+				// open link
+				Matcher m = Sonet.getLinksMatcher(items[which]);
+				if (m.find()) {
+					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(m.group())));
+				}
+			} else {
+				(Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
+			}
 		}
 	}
 
@@ -592,7 +727,89 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 
 	@Override
 	public void onCancel(DialogInterface dialog) {
+		if (mStatusLoader != null) {
+			mStatusLoader.cancel(true);
+		}
 		finish();
-	}	
+	}
+
+	class StatusLoader extends AsyncTask<Void, Void, Void> {
+
+		@Override
+		protected Void doInBackground(Void... params) {
+			Cursor c = getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.WIDGET, Statuses_styles.ACCOUNT, Statuses_styles.ESID, Statuses_styles.MESSAGE, Statuses_styles.FRIEND, Statuses_styles.SERVICE}, Statuses_styles._ID + "=?", new String[] {mData.getLastPathSegment()}, null);
+			if (c.moveToFirst()) {
+				mAppWidgetId = c.getInt(1);
+				mAccount = c.getLong(2);
+				// informational messages go directly to settings, otherwise, load up the options
+				if (mAccount != Sonet.INVALID_ACCOUNT_ID) {
+					mEsid = mSonetCrypto.Decrypt(c.getString(3));
+					mService = c.getInt(6);
+					if (mService == SMS) {
+						// lookup the contact, else null mRect
+						Cursor phones = getContentResolver().query(Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(mEsid)), new String[]{ContactsContract.PhoneLookup.LOOKUP_KEY}, null, null, null);
+						if (phones.moveToFirst()) {
+							mEsid = phones.getString(0);
+						} else {
+							mRect = null;
+						}
+						phones.close();
+					} else if (mService != RSS) {
+						mServiceName = getResources().getStringArray(R.array.service_entries)[mService];
+						// parse any links
+						Matcher m = Sonet.getLinksMatcher(c.getString(4));
+						int count = 0;
+						while (m.find()) {
+							count++;
+						}
+						// get links from table
+						Cursor links = getContentResolver().query(Status_links.CONTENT_URI, new String[]{Status_links.LINK_URI, Status_links.LINK_TYPE}, Status_links.STATUS_ID + "=?", new String[]{Long.toString(c.getLong(0))}, null);
+						count += links.getCount();
+						items = new String[PROFILE + count + 1];
+						// for facebook wall posts, remove everything after the " > "
+						String friend = c.getString(5);
+						if (friend.indexOf(">") > 0) {
+							friend = friend.substring(0, friend.indexOf(">") - 1);
+						}
+						if (mService == TWITTER) {
+							items[COMMENT] = getString(R.string.reply) + " @" + friend;
+							items[POST] = getString(R.string.tweet);
+						} else if (mService == IDENTICA) {
+							items[COMMENT] = getString(R.string.reply) + " @" + friend;
+							items[POST] = String.format(getString(R.string.update_status), mServiceName);
+						} else {
+							items[COMMENT] = String.format(getString(R.string.comment_status), friend);
+							items[POST] = String.format(getString(R.string.update_status), mServiceName);
+						}
+						items[SETTINGS] = getString(R.string.accounts_and_settings);
+						items[NOTIFICATIONS] = getString(R.string.notifications);
+						items[REFRESH] = getString(R.string.button_refresh);
+						items[PROFILE] = String.format(getString(R.string.userProfile), friend);
+						count = PROFILE + 1;
+						m.reset();
+						while (m.find()) {
+							items[count++] = m.group();
+						}
+						// links
+						if (links.moveToFirst()) {
+							while (!links.isAfterLast()) {
+								items[count++] = links.getString(1) + ": " + links.getString(0);
+								links.moveToNext();
+							}
+						}
+						links.close();
+					}
+				}
+			}
+			c.close();
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(Void result) {
+			mLoadingDialog.dismiss();
+			showDialog();
+		}
+	}
 
 }
