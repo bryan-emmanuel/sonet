@@ -200,6 +200,7 @@ public class SonetService extends Service {
 			}
 
 		}).execute();
+		Log.d(TAG,"onCreate");
 		if (intent != null) {
 			String action = intent.getAction();
 			if (action != null) {
