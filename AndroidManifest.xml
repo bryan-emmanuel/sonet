@@ -21,7 +21,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	package="com.piusvelte.sonet" android:versionCode="297"
 	android:versionName="2.9.7">
-	<application android:icon="@drawable/icon" android:label="@string/app_name" android:backupAgent="SonetBackupAgent">
+	<application android:icon="@drawable/icon" android:label="@string/app_name">
 		<activity android:name=".About" android:label="@string/app_name">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
@@ -90,9 +90,6 @@
 			<intent-filter>
 				<action android:name="com.piusvelte.sonet.Sonet.REFRESH" />
 			</intent-filter>
-			<intent-filter>
-				<action android:name="com.piusvelte.sonet.Sonet.BUILD_SCROLL" />
-			</intent-filter>
 		</receiver>
 		<service android:name=".SonetService" />
 		<service android:name=".SonetScrollableBuilder" />
@@ -106,8 +103,6 @@
             android:exported="false" />
 		<provider android:name=".SonetProvider" android:authorities="com.piusvelte.sonet.SonetProvider"
 			android:multiprocess="true" android:grantUriPermissions="true" />
-		<!--<meta-data android:name="com.google.android.backup.api_key"
-		    android:value="AEdPqrEAAAAIJFmymCv9QhMdqT8nwcSVQ5IGM17NW-kE4ZXH0w" />-->
 	</application>
 
 	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />

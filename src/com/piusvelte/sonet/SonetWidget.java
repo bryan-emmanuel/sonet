@@ -50,7 +50,6 @@ public class SonetWidget extends AppWidgetProvider {
 		Sonet.acquire(context);
 		// this is sent on boot
 		// this should reload the widget
-		Log.d(TAG,"onUpdate");
 		context.startService(new Intent(context, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds).setAction(ACTION_REFRESH));
 	}
 

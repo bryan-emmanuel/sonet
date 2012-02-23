@@ -49,7 +49,6 @@ import android.net.Uri;
 public class SonetProvider extends ContentProvider {
 
 	public static final String AUTHORITY = "com.piusvelte.sonet.SonetProvider";
-	public static final String AUTHORITYPRO = "com.piusvelte.sonetpro.SonetProvider";
 
 	private static final UriMatcher sUriMatcher;
 
@@ -109,9 +108,7 @@ public class SonetProvider extends ContentProvider {
 		sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_ACCOUNTS, ACCOUNTS);
-		sUriMatcher.addURI(AUTHORITYPRO, TABLE_ACCOUNTS, ACCOUNTS);
 		sUriMatcher.addURI(AUTHORITY, ACCOUNTS_STYLES, ACCOUNTS_STYLES_VIEW);
-		sUriMatcher.addURI(AUTHORITYPRO, ACCOUNTS_STYLES, ACCOUNTS_STYLES_VIEW);
 
 		accountsProjectionMap = new HashMap<String, String>();
 		accountsProjectionMap.put(Accounts._ID, Accounts._ID);
@@ -123,7 +120,6 @@ public class SonetProvider extends ContentProvider {
 		accountsProjectionMap.put(Accounts.SID, Accounts.SID);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_WIDGET_ACCOUNTS, WIDGET_ACCOUNTS);
-		sUriMatcher.addURI(AUTHORITYPRO, TABLE_WIDGET_ACCOUNTS, WIDGET_ACCOUNTS);
 
 		widget_accountsProjectionMap = new HashMap<String, String>();
 		widget_accountsProjectionMap.put(Widget_accounts._ID, Widget_accounts._ID);
@@ -131,7 +127,6 @@ public class SonetProvider extends ContentProvider {
 		widget_accountsProjectionMap.put(Widget_accounts.WIDGET, Widget_accounts.WIDGET);
 
 		sUriMatcher.addURI(AUTHORITY, VIEW_WIDGET_ACCOUNTS, WIDGET_ACCOUNTS_VIEW);
-		sUriMatcher.addURI(AUTHORITYPRO, VIEW_WIDGET_ACCOUNTS, WIDGET_ACCOUNTS_VIEW);
 
 		widget_accounts_viewProjectionMap = new HashMap<String, String>();
 		widget_accounts_viewProjectionMap.put(Widget_accounts_view._ID, Widget_accounts_view._ID);
@@ -145,7 +140,6 @@ public class SonetProvider extends ContentProvider {
 		widget_accounts_viewProjectionMap.put(Widget_accounts_view.SID, Widget_accounts_view.SID);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_WIDGETS, WIDGETS);
-		sUriMatcher.addURI(AUTHORITYPRO, TABLE_WIDGETS, WIDGETS);
 
 		widgetsProjectionMap = new HashMap<String, String>();
 		widgetsProjectionMap.put(Widgets._ID, Widgets._ID);
@@ -178,7 +172,6 @@ public class SonetProvider extends ContentProvider {
 		widgetsProjectionMap.put(Widgets.FRIEND_BG_COLOR, Widgets.FRIEND_BG_COLOR);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_STATUSES, STATUSES);
-		sUriMatcher.addURI(AUTHORITYPRO, TABLE_STATUSES, STATUSES);
 
 		statusesProjectionMap = new HashMap<String, String>();
 		statusesProjectionMap.put(Statuses._ID, Statuses._ID);
@@ -195,9 +188,7 @@ public class SonetProvider extends ContentProvider {
 		statusesProjectionMap.put(Statuses.FRIEND_BG, Statuses.FRIEND_BG);
 
 		sUriMatcher.addURI(AUTHORITY, VIEW_STATUSES_STYLES, STATUSES_STYLES);
-		sUriMatcher.addURI(AUTHORITYPRO, VIEW_STATUSES_STYLES, STATUSES_STYLES);
 		sUriMatcher.addURI(AUTHORITY, VIEW_STATUSES_STYLES + "/*", STATUSES_STYLES_WIDGET);
-		sUriMatcher.addURI(AUTHORITYPRO, VIEW_STATUSES_STYLES + "/*", STATUSES_STYLES_WIDGET);
 
 		statuses_stylesProjectionMap = new HashMap<String, String>();
 		statuses_stylesProjectionMap.put(Statuses_styles._ID, Statuses_styles._ID);
@@ -224,7 +215,6 @@ public class SonetProvider extends ContentProvider {
 		statuses_stylesProjectionMap.put(Statuses.FRIEND_BG, Statuses.FRIEND_BG);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_ENTITIES, ENTITIES);
-		sUriMatcher.addURI(AUTHORITYPRO, TABLE_ENTITIES, ENTITIES);
 
 		entitiesProjectionMap = new HashMap<String, String>();
 		entitiesProjectionMap.put(Entities._ID, Entities._ID);
@@ -234,7 +224,6 @@ public class SonetProvider extends ContentProvider {
 		entitiesProjectionMap.put(Entities.ACCOUNT, Entities.ACCOUNT);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_NOTIFICATIONS, NOTIFICATIONS);
-		sUriMatcher.addURI(AUTHORITYPRO, TABLE_NOTIFICATIONS, NOTIFICATIONS);
 		notificationsProjectionMap = new HashMap<String, String>();
 		notificationsProjectionMap.put(Notifications._ID, Notifications._ID);
 		notificationsProjectionMap.put(Notifications.SID, Notifications.SID);
@@ -248,13 +237,10 @@ public class SonetProvider extends ContentProvider {
 		notificationsProjectionMap.put(Notifications.UPDATED, Notifications.UPDATED);
 
 		sUriMatcher.addURI(AUTHORITY, VIEW_WIDGETS_SETTINGS, WIDGETS_SETTINGS);
-		sUriMatcher.addURI(AUTHORITYPRO, VIEW_WIDGETS_SETTINGS, WIDGETS_SETTINGS);
 
 		sUriMatcher.addURI(AUTHORITY, VIEW_DISTINCT_WIDGETS_SETTINGS, DISTINCT_WIDGETS_SETTINGS);
-		sUriMatcher.addURI(AUTHORITYPRO, VIEW_DISTINCT_WIDGETS_SETTINGS, DISTINCT_WIDGETS_SETTINGS);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_STATUS_LINKS, STATUS_LINKS);
-		sUriMatcher.addURI(AUTHORITYPRO, TABLE_STATUS_LINKS, STATUS_LINKS);
 		status_linksProjectionMap = new HashMap<String, String>();
 		status_linksProjectionMap.put(Status_links._ID, Status_links._ID);
 		status_linksProjectionMap.put(Status_links.STATUS_ID, Status_links.STATUS_ID);
