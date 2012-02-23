@@ -46,6 +46,7 @@ public class Sonet {
 	protected static final String ACTION_PAGE_UP = "com.piusvelte.sonet.Sonet.PAGE_UP";
 	protected static final String ACTION_PAGE_DOWN = "com.piusvelte.sonet.Sonet.PAGE_DOWN";
 	protected static final String ACTION_ON_CLICK = "com.piusvelte.sonet.Sonet.ON_CLICK";
+	protected static final String ACTION_UPLOAD = "com.piusvelte.sonet.Sonet.UPLOAD";
 	protected static final String SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED";
 	protected static final String EXTRA_ACCOUNT_ID = "com.piusvelte.sonet.Sonet.ACCOUNT_ID";
 	protected static final String EXTRA_SCROLLABLE_VERSION = "com.piusvelte.sonet.Sonet.SCROLLABLE_VERSION";
@@ -321,9 +322,9 @@ public class Sonet {
 	protected static final int INVALID_SERVICE = -1;
 
 	protected static final int default_interval = 3600000;
-	protected static final int default_buttons_bg_color = 0x99000000;
+	protected static final int default_buttons_bg_color = 0x88000000;
 	protected static final int default_buttons_color = 0xFFFFFFFF;
-	protected static final int default_message_bg_color = 0x99FFFFFF;
+	protected static final int default_message_bg_color = 0x88FFFFFF;
 	protected static final int default_message_color = 0xFF000000;
 	protected static final int default_friend_color = 0xFFFFFFFF;
 	protected static final int default_created_color = 0xFFFFFFFF;
@@ -334,7 +335,7 @@ public class Sonet {
 	protected static final int default_statuses_per_account = 10;
 	protected static final boolean default_include_profile = true;
 	protected static final int default_margin = 0;
-	protected static final int default_friend_bg_color = 0x99000000;
+	protected static final int default_friend_bg_color = 0x88000000;
 
 	public Sonet() {
 	}

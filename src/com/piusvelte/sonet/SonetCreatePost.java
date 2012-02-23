@@ -453,19 +453,28 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 								case FACEBOOK:
 									if (mPhotoPath != null) {
 										// upload photo
-										httpPost = new HttpPost(String.format(FACEBOOK_PHOTOS, FACEBOOK_BASE_URL, Saccess_token, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN)))));
-										MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
-										File file = new File(mPhotoPath);
-										ContentBody fileBody = new FileBody(file);
-										entity.addPart("source", fileBody);
-										try {
-											entity.addPart("message", new StringBody(mMessage.getText().toString()));
-											httpPost.setEntity(entity);
-											response = mSonetHttpClient.httpResponse(httpPost);
-										} catch (UnsupportedEncodingException e) {
-											Log.e(TAG,e.toString());
-										}
-										publishProgress(serviceName + " photo", getString(response != null ? R.string.success : R.string.failure));
+										// uploading a photo takes a long time, have the service handle it
+										startService(
+												new Intent(SonetCreatePost.this.getApplicationContext(), SonetService.class)
+												.setAction(Sonet.ACTION_UPLOAD)
+												.putExtra(Accounts.TOKEN, account.getString(account.getColumnIndex(Accounts.TOKEN)))
+												.putExtra(Widgets.INSTANT_UPLOAD, mPhotoPath)
+												.putExtra(Statuses.MESSAGE, mMessage.getText().toString())
+										);
+										publishProgress(serviceName + " photo");
+//										httpPost = new HttpPost(String.format(FACEBOOK_PHOTOS, FACEBOOK_BASE_URL, Saccess_token, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN)))));
+//										MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
+//										File file = new File(mPhotoPath);
+//										ContentBody fileBody = new FileBody(file);
+//										entity.addPart("source", fileBody);
+//										try {
+//											entity.addPart("message", new StringBody(mMessage.getText().toString()));
+//											httpPost.setEntity(entity);
+//											response = mSonetHttpClient.httpResponse(httpPost);
+//										} catch (UnsupportedEncodingException e) {
+//											Log.e(TAG,e.toString());
+//										}
+//										publishProgress(serviceName + " photo", getString(response != null ? R.string.success : R.string.failure));
 										// send checkins separately
 										if (placeId != null) {
 											//checkin
