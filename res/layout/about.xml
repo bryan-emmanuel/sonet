@@ -19,11 +19,10 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:app="http://schemas.android.com/apk/res/com.piusvelte.sonet"
 	android:layout_width="fill_parent" android:layout_height="fill_parent">
 	<LinearLayout android:id="@+id/ad" android:layout_width="fill_parent"
 		android:layout_height="wrap_content" />
-	<ListView android:id="@android:id/list" android:layout_width="fill_parent"
+	<ListView android:layout_below="@id/ad" android:id="@android:id/list" android:layout_width="fill_parent"
 		android:layout_height="fill_parent" />
 	<TextView android:id="@android:id/empty" android:layout_width="fill_parent"
 		android:layout_height="fill_parent"

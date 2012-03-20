@@ -19,21 +19,22 @@
  */
 package com.piusvelte.sonet;
 
+import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.PRO;
 import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
-import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.sBFOptions;
 import mobi.intuitit.android.content.LauncherIntent;
 
 import com.google.ads.*;
+import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
 import com.piusvelte.sonet.Sonet.Widget_accounts;
-import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Widgets;
 import com.piusvelte.sonet.Sonet.Widgets_settings;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.app.WallpaperManager;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ComponentName;
@@ -45,9 +46,11 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -69,6 +72,7 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 	private static final int NOTIFICATIONS = 5;
 	private static final int WIDGET_SETTINGS = 6;
 	private static final int ABOUT = 7;
+	private static final String TAG = "About";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -80,6 +84,11 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 			adView.loadAd(new AdRequest());
 		}
 		registerForContextMenu(getListView());
+		
+		Drawable wp = WallpaperManager.getInstance(getApplicationContext()).getDrawable();
+		if (wp != null) {
+			findViewById(R.id.ad).getRootView().setBackgroundDrawable(wp);
+		}
 	}
 
 	@Override
@@ -155,6 +164,7 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 	@Override
 	protected void onResume() {
 		super.onResume();
+		Log.d(TAG,"onResume");
 		mAppWidgetIds = new int[0];
 		// validate appwidgetids from appwidgetmanager
 		mAppWidgetManager = AppWidgetManager.getInstance(About.this);
@@ -171,7 +181,10 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 	@Override
 	protected void onPause() {
 		super.onPause();
-		if (mUpdateWidget) startService(new Intent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
+		if (mUpdateWidget) {
+			(Toast.makeText(getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
+			startService(new Intent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
+		}
 	}
 
 	@Override
@@ -270,6 +283,26 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 					}
 				}
 				return true;
+			} else if (columnIndex == cursor.getColumnIndex(Statuses_styles.IMAGE_BG)) {
+				byte[] b = cursor.getBlob(columnIndex);
+				Bitmap bmp = null;
+				if (b != null) {
+					bmp = BitmapFactory.decodeByteArray(b, 0, b.length, sBFOptions);
+					if (bmp != null) {
+						((ImageView) view).setImageBitmap(bmp);
+					}
+				}
+				return true;
+			} else if (columnIndex == cursor.getColumnIndex(Statuses_styles.IMAGE)) {
+				byte[] b = cursor.getBlob(columnIndex);
+				Bitmap bmp = null;
+				if (b != null) {
+					bmp = BitmapFactory.decodeByteArray(b, 0, b.length, sBFOptions);
+					if (bmp != null) {
+						((ImageView) view).setImageBitmap(bmp);
+					}
+				}
+				return true;
 			} else {
 				return false;
 			}
@@ -280,6 +313,7 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 
 		@Override
 		protected Integer doInBackground(Void... arg0) {
+			Log.d(TAG,"WidgetsDataLoader executing");
 			int[] removeAppWidgets = new int[0];
 			// remove old widgets that didn't have ids
 			getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=?", new String[] {""});
@@ -334,14 +368,15 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 
 		@Override
 		protected void onProgressUpdate(Boolean... profile) {
+			Log.d(TAG,"set query using profile:"+profile[0]);
 			Cursor c;
 			SimpleCursorAdapter sca;
 			if (profile[0]) {
-				c = managedQuery(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.FRIEND + " as " + Statuses_styles.FRIEND + "2", Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.MESSAGE + " as " + Statuses_styles.MESSAGE + "2", Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.PROFILE_BG, Statuses_styles.FRIEND_BG}, Statuses_styles.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, Statuses_styles.CREATED + " desc");
-				sca = new SimpleCursorAdapter(About.this, R.layout.widget_item, c, new String[] {Statuses_styles.FRIEND, Statuses_styles.FRIEND + "2", Statuses_styles.MESSAGE, Statuses_styles.MESSAGE + "2", Statuses_styles.STATUS_BG, Statuses_styles.CREATEDTEXT, Statuses_styles.PROFILE, Statuses_styles.ICON, Statuses_styles.PROFILE_BG, Statuses_styles.FRIEND_BG}, new int[] {R.id.friend_bg_clear, R.id.friend, R.id.message_bg_clear, R.id.message, R.id.status_bg, R.id.created, R.id.profile, R.id.icon, R.id.profile_bg, R.id.friend_bg});
+				c = managedQuery(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.FRIEND + " as " + Statuses_styles.FRIEND + "2", Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.MESSAGE + " as " + Statuses_styles.MESSAGE + "2", Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.PROFILE_BG, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE}, Statuses_styles.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, Statuses_styles.CREATED + " desc");
+				sca = new SimpleCursorAdapter(About.this, R.layout.widget_item, c, new String[] {Statuses_styles.FRIEND, Statuses_styles.FRIEND + "2", Statuses_styles.MESSAGE, Statuses_styles.MESSAGE + "2", Statuses_styles.STATUS_BG, Statuses_styles.CREATEDTEXT, Statuses_styles.PROFILE, Statuses_styles.ICON, Statuses_styles.PROFILE_BG, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE}, new int[] {R.id.friend_bg_clear, R.id.friend, R.id.message_bg_clear, R.id.message, R.id.status_bg, R.id.created, R.id.profile, R.id.icon, R.id.profile_bg, R.id.friend_bg, R.id.image_clear, R.id.image});
 			} else {
-				c = managedQuery(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.FRIEND + " as " + Statuses_styles.FRIEND + "2", Statuses_styles.MESSAGE, Statuses_styles.MESSAGE + " as " + Statuses_styles.MESSAGE + "2", Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.FRIEND_BG}, Statuses_styles.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, Statuses_styles.CREATED + " desc");
-				sca = new SimpleCursorAdapter(About.this, R.layout.widget_item_noprofile, c, new String[] {Statuses_styles.FRIEND, Statuses_styles.FRIEND + "2", Statuses_styles.MESSAGE, Statuses_styles.MESSAGE + "2", Statuses_styles.STATUS_BG, Statuses_styles.CREATEDTEXT, Statuses_styles.ICON, Statuses_styles.FRIEND_BG}, new int[] {R.id.friend_bg_clear, R.id.friend, R.id.message_bg_clear, R.id.message, R.id.status_bg, R.id.created, R.id.icon, R.id.friend_bg});
+				c = managedQuery(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.FRIEND + " as " + Statuses_styles.FRIEND + "2", Statuses_styles.MESSAGE, Statuses_styles.MESSAGE + " as " + Statuses_styles.MESSAGE + "2", Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE}, Statuses_styles.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, Statuses_styles.CREATED + " desc");
+				sca = new SimpleCursorAdapter(About.this, R.layout.widget_item_noprofile, c, new String[] {Statuses_styles.FRIEND, Statuses_styles.FRIEND + "2", Statuses_styles.MESSAGE, Statuses_styles.MESSAGE + "2", Statuses_styles.STATUS_BG, Statuses_styles.CREATEDTEXT, Statuses_styles.ICON, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE}, new int[] {R.id.friend_bg_clear, R.id.friend, R.id.message_bg_clear, R.id.message, R.id.status_bg, R.id.created, R.id.icon, R.id.friend_bg, R.id.image_clear, R.id.image});
 			}
 			sca.setViewBinder(mViewBinder);
 			setListAdapter(sca);
@@ -349,6 +384,10 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 
 		@Override
 		protected void onPostExecute(Integer result) {
+			// 0 - existing statuses, loaded by onProgressUpdate
+			// 1 - no statuses, service will load them
+			// 2 - no account, open alert
+			Log.d(TAG,"result:"+result);
 			if (result > 0) {
 				// accounts, but no statuses
 				startService(new Intent(About.this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID).setAction(ACTION_REFRESH));

@@ -46,18 +46,18 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.google.ads.*;
+
+import static com.piusvelte.sonet.Sonet.*;
+import static com.piusvelte.sonet.SonetTokens.*;
+
 import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Entities;
 import com.piusvelte.sonet.Sonet.Notifications;
 import com.piusvelte.sonet.Sonet.Statuses;
+import com.piusvelte.sonet.Sonet.Statuses_styles;
 import com.piusvelte.sonet.Sonet.Widgets;
 import com.piusvelte.sonet.Sonet.Widgets_settings;
-
-import static com.piusvelte.sonet.Sonet.*;
-import static com.piusvelte.sonet.SonetTokens.*;
-
-import com.piusvelte.sonet.Sonet.Statuses_styles;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -111,6 +111,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 	private SimpleDateFormat mSimpleDateFormat = null;
 	private SonetHttpClient mSonetHttpClient;
 	private String[] items = null;
+	private AlertDialog mDialog;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -149,6 +150,14 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 			finish();
 		} else {
 			loadComments();
+		}
+	}
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		if ((mDialog != null) && mDialog.isShowing()) {
+			mDialog.dismiss();
 		}
 	}
 
@@ -376,7 +385,6 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 	@Override
 	protected void onListItemClick(ListView list, View view, final int position, long id) {
 		super.onListItemClick(list, view, position, id);
-		AlertDialog.Builder dialog;
 		final String sid = mComments.get(position).get(Statuses.SID);
 		final String liked = mComments.get(position).get(getString(R.string.like));
 		// wait for previous attempts to finish
@@ -398,8 +406,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 				while (m.find()) {
 					items[count++] = m.group();
 				}
-				dialog = new AlertDialog.Builder(this);
-				dialog.setItems(items, new DialogInterface.OnClickListener() {
+				mDialog = (new AlertDialog.Builder(this))
+				.setItems(items, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						if (which == 0) {
@@ -436,7 +444,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 				})
 				.setCancelable(true)
 				.setOnCancelListener(this)
-				.show();
+				.create();
+				mDialog.show();
 				break;
 			case FACEBOOK:
 				items = new String[count + 1];
@@ -446,8 +455,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 				while (m.find()) {
 					items[count++] = m.group();
 				}
-				dialog = new AlertDialog.Builder(this);
-				dialog.setItems(items, new DialogInterface.OnClickListener() {
+				mDialog = (new AlertDialog.Builder(this))
+				.setItems(items, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						if (which == 0) {
@@ -491,7 +500,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 				})
 				.setCancelable(true)
 				.setOnCancelListener(this)
-				.show();
+				.create();
+				mDialog.show();
 				break;
 			case BUZZ:
 				if (position == 0) {
@@ -502,8 +512,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					while (m.find()) {
 						items[count++] = m.group();
 					}
-					dialog = new AlertDialog.Builder(this);
-					dialog.setItems(items, new DialogInterface.OnClickListener() {
+					mDialog = (new AlertDialog.Builder(this))
+					.setItems(items, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
 							if (which == 0) {
@@ -542,7 +552,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					})
 					.setCancelable(true)
 					.setOnCancelListener(this)
-					.show();
+					.create();
+					mDialog.show();
 				} else {
 					// no like option here
 					items = new String[count];
@@ -551,8 +562,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					while (m.find()) {
 						items[count++] = m.group();
 					}
-					dialog = new AlertDialog.Builder(this);
-					dialog.setItems(items, new DialogInterface.OnClickListener() {
+					mDialog = (new AlertDialog.Builder(this))
+					.setItems(items, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
 							if ((which < items.length) && (items[which] != null)) {
@@ -568,7 +579,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					})
 					.setCancelable(true)
 					.setOnCancelListener(this)
-					.show();
+					.create();
+					mDialog.show();
 				}
 				break;
 			case LINKEDIN:
@@ -580,8 +592,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					while (m.find()) {
 						items[count++] = m.group();
 					}
-					dialog = new AlertDialog.Builder(this);
-					dialog.setItems(items, new DialogInterface.OnClickListener() {
+					mDialog = (new AlertDialog.Builder(this))
+					.setItems(items, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
 							if (which == 0) {
@@ -628,7 +640,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					})
 					.setCancelable(true)
 					.setOnCancelListener(this)
-					.show();
+					.create();
+					mDialog.show();
 				} else {
 					// no like option here
 					items = new String[count];
@@ -637,8 +650,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					while (m.find()) {
 						items[count++] = m.group();
 					}
-					dialog = new AlertDialog.Builder(this);
-					dialog.setItems(items, new DialogInterface.OnClickListener() {
+					mDialog = (new AlertDialog.Builder(this))
+					.setItems(items, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
 							if ((which < items.length) && (items[which] != null)) {
@@ -654,7 +667,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					})
 					.setCancelable(true)
 					.setOnCancelListener(this)
-					.show();
+					.create();
+					mDialog.show();
 				}
 				break;
 			case IDENTICA:
@@ -666,8 +680,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 				while (m.find()) {
 					items[count++] = m.group();
 				}
-				dialog = new AlertDialog.Builder(this);
-				dialog.setItems(items, new DialogInterface.OnClickListener() {
+				mDialog = (new AlertDialog.Builder(this))
+				.setItems(items, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						if (which == 0) {
@@ -704,7 +718,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 				})
 				.setCancelable(true)
 				.setOnCancelListener(this)
-				.show();
+				.create();
+				mDialog.show();
 				break;
 			case GOOGLEPLUS:
 				//TODO:
@@ -715,8 +730,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 				while (m.find()) {
 					items[count++] = m.group();
 				}
-				dialog = new AlertDialog.Builder(this);
-				dialog.setItems(items, new DialogInterface.OnClickListener() {
+				mDialog = (new AlertDialog.Builder(this))
+				.setItems(items, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						if ((which < items.length) && (items[which] != null)) {
@@ -732,7 +747,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 				})
 				.setCancelable(true)
 				.setOnCancelListener(this)
-				.show();
+				.create();
+				mDialog.show();
 				break;
 			case CHATTER:
 				if (position == 0) {
@@ -743,8 +759,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					while (m.find()) {
 						items[count++] = m.group();
 					}
-					dialog = new AlertDialog.Builder(this);
-					dialog.setItems(items, new DialogInterface.OnClickListener() {
+					mDialog = (new AlertDialog.Builder(this))
+					.setItems(items, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
 							if (which == 0) {
@@ -789,7 +805,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					})
 					.setCancelable(true)
 					.setOnCancelListener(this)
-					.show();
+					.create();
+					mDialog.show();
 				} else {
 					// no like option here
 					items = new String[count];
@@ -798,8 +815,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					while (m.find()) {
 						items[count++] = m.group();
 					}
-					dialog = new AlertDialog.Builder(this);
-					dialog.setItems(items, new DialogInterface.OnClickListener() {
+					mDialog = (new AlertDialog.Builder(this))
+					.setItems(items, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
 							if ((which < items.length) && (items[which] != null)) {
@@ -815,7 +832,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					})
 					.setCancelable(true)
 					.setOnCancelListener(this)
-					.show();
+					.create();
+					mDialog.show();
 				}
 				break;
 			}

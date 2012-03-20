@@ -19,11 +19,10 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:app="http://schemas.android.com/apk/res/com.piusvelte.sonet"
 	android:layout_width="fill_parent" android:layout_height="fill_parent">
 	<LinearLayout android:id="@+id/ad" android:layout_width="fill_parent"
 		android:layout_height="wrap_content" />
-	<Button android:id="@+id/default_widget_settings"
+	<Button android:layout_below="@id/ad" android:id="@+id/default_widget_settings"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
 		android:text="@string/defaultwidgetsettings" />
 	<Button android:id="@+id/button_add_account" android:text="@string/button_add_account"

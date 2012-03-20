@@ -42,10 +42,10 @@ public class Sonet {
 	protected static final String PRO = "pro";
 	protected static final String Saccess_token = "access_token";
 	protected static final String Sexpires_in = "expires_in";
-	protected static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
-	protected static final String ACTION_PAGE_UP = "com.piusvelte.sonet.Sonet.PAGE_UP";
-	protected static final String ACTION_PAGE_DOWN = "com.piusvelte.sonet.Sonet.PAGE_DOWN";
-	protected static final String ACTION_ON_CLICK = "com.piusvelte.sonet.Sonet.ON_CLICK";
+	protected static final String ACTION_REFRESH = "com.piusvelte.sonetpro.Sonet.REFRESH";
+	protected static final String ACTION_PAGE_UP = "com.piusvelte.sonetpro.Sonet.PAGE_UP";
+	protected static final String ACTION_PAGE_DOWN = "com.piusvelte.sonetpro.Sonet.PAGE_DOWN";
+	protected static final String ACTION_ON_CLICK = "com.piusvelte.sonetpro.Sonet.ON_CLICK";
 	protected static final String ACTION_UPLOAD = "com.piusvelte.sonet.Sonet.UPLOAD";
 	protected static final String SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED";
 	protected static final String EXTRA_ACCOUNT_ID = "com.piusvelte.sonet.Sonet.ACCOUNT_ID";
@@ -76,7 +76,7 @@ public class Sonet {
 	protected static final String FACEBOOK_BASE_URL = "https://graph.facebook.com/";
 	protected static final String FACEBOOK_URL_AUTHORIZE = "%soauth/authorize?client_id=%s&scope=offline_access,read_stream,publish_stream,publish_checkins&type=user_agent&redirect_uri=%s&display=touch&sdk=android";
 	protected static final String FACEBOOK_URL_ME = "%sme?format=json&sdk=android&%s=%s";
-	protected static final String FACEBOOK_HOME = "%sme/home?date_format=U&format=json&sdk=android&%s=%s&fields=actions,link,type,from,message,created_time,to,comments,story,source";
+	protected static final String FACEBOOK_HOME = "%sme/home?date_format=U&format=json&sdk=android&%s=%s&fields=actions,link,type,from,message,created_time,to,comments,story,source,picture";
 	protected static final String FACEBOOK_POST = "%sme/feed?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_CHECKIN = "%sme/checkins?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_LIKES = "%s%s/likes?format=json&sdk=android&%s=%s";
@@ -173,8 +173,15 @@ public class Sonet {
 	protected static final String GOOGLEPLUS_ACTIVITIES = "%speople/%s/activities/%s?maxResults=%s&access_token=%s";
 	protected static final String GOOGLEPLUS_ACTIVITY = "%sactivities/%s?access_token=%s";
 	protected static final String GOOGLEPLUS_PROFILE = "https://plus.google.com/%s";
+	
+	protected static final int PINTEREST = 10;
+	protected static final String PINTEREST_BASE_URL = "https://api.pinterest.com/v2/";
+	protected static final String PINTEREST_URL_FEED = "%spopular/";
+	protected static final String PINTEREST_PIN = "https://pinterest.com/pin/%s/";
+	protected static final String PINTEREST_PROFILE = "https://pinterest.com/%s/";
+	protected static final String PINTEREST_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
 
-	protected static final int CHATTER = 10;
+	protected static final int CHATTER = 11;
 	protected static final String CHATTER_URL_AUTHORIZE = "https://login.salesforce.com/services/oauth2/authorize?response_type=token&display=touch&client_id=%s&redirect_uri=%s";
 	protected static final String CHATTER_URL_ACCESS = "https://login.salesforce.com/services/oauth2/token?grant_type=refresh_token&client_id=%s&refresh_token=%s";
 	protected static final String CHATTER_URL_ME = "%s/services/data/v22.0/chatter/users/me";
@@ -199,7 +206,8 @@ public class Sonet {
 	+ Accounts.SERVICE + "=" + CHATTER + " then 'Chatter: ' when "
 	+ Accounts.SERVICE + "=" + RSS + " then 'RSS: ' when "
 	+ Accounts.SERVICE + "=" + IDENTICA + " then 'Identi.ca: ' when "
-	+ Accounts.SERVICE + "=" + GOOGLEPLUS + " then 'Google+: ' else '' end)||" + Accounts.USERNAME + " as " + Accounts.USERNAME;
+	+ Accounts.SERVICE + "=" + GOOGLEPLUS + " then 'Google+: ' when "
+	+ Accounts.SERVICE + "=" + PINTEREST + " then 'Pinterest: ' else '' end)||" + Accounts.USERNAME + " as " + Accounts.USERNAME;
 	
 	protected static final String Sid = "id";
 	protected static final String Sname = "name";
@@ -297,6 +305,14 @@ public class Sonet {
 	protected static final String Sfull_name = "full_name";
 	protected static final String Ssource = "source";
 	protected static final String Sstory = "story";
+	protected static final String Smobile = "mobile";
+	protected static final String Simage_url = "image_url";
+	protected static final String Scounts = "counts";
+	protected static final String Simages = "images";
+	protected static final String Susername = "username";
+	protected static final String Spicture = "picture";
+	protected static final String Sboard = "board";
+	protected static final String Simgur = "i.imgur.com";
 	
 	private static final String POWER_SERVICE = Context.POWER_SERVICE;
 	private static WakeLock sWakeLock;
@@ -518,6 +534,8 @@ public class Sonet {
 		public static final String ESID = "esid";
 		public static final String PROFILE_BG = "profiles_bg_color";
 		public static final String FRIEND_BG = "friend_bg";
+		public static final String IMAGE_BG = "image_bg";
+		public static final String IMAGE = "image";
 
 	}
 
@@ -567,6 +585,20 @@ public class Sonet {
 		public static final String STATUS_ID = "status_id";
 		public static final String LINK_URI = "link_uri";
 		public static final String LINK_TYPE = "link_type";
+		
+	}
+	
+	public static final class Status_images implements BaseColumns {
+
+		private Status_images() {
+		}
+
+		public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/status_images");
+
+		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.status_images";
+		public static final String STATUS_ID = "status_id";
+		public static final String IMAGE = "image";
+		public static final String IMAGE_BG = "image_bg";
 		
 	}
 

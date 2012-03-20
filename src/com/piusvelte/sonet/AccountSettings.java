@@ -64,7 +64,7 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 	private Button mStatuses_per_account;
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private long mAccountId = Sonet.INVALID_ACCOUNT_ID;
-	private String mWidgetAccountSettingsId;
+	private String mWidgetAccountSettingsId = null;
 	private CheckBox mSound;
 	private CheckBox mVibrate;
 	private CheckBox mLights;
@@ -120,24 +120,27 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 					ContentValues values = new ContentValues();
 					values.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
 					values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-					mWidgetAccountSettingsId = this.getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
+					mWidgetAccountSettingsId = getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
 				}
 				if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
 					// initialize account settings
 					ContentValues values = new ContentValues();
 					values.put(Widgets.WIDGET, mAppWidgetId);
 					values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-					mWidgetAccountSettingsId = this.getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
+					mWidgetAccountSettingsId = getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
 				}
 			}
 			// initialize account settings
 			ContentValues values = new ContentValues();
 			values.put(Widgets.WIDGET, mAppWidgetId);
 			values.put(Widgets.ACCOUNT, mAccountId);
-			mWidgetAccountSettingsId = this.getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
+			mWidgetAccountSettingsId = getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
 		}
 		if (c.moveToFirst()) {
-			mWidgetAccountSettingsId = Integer.toString(c.getInt(0));
+			// if settings were initialized, then use that mWidgetAccountSettingsId
+			if (mWidgetAccountSettingsId == null) {
+				mWidgetAccountSettingsId = Integer.toString(c.getInt(0));
+			}
 			mMessages_color_value = c.getInt(1);
 			mMessages_textsize_value = c.getInt(2);
 			mFriend_color_value = c.getInt(3);

@@ -19,7 +19,6 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:app="http://schemas.android.com/apk/res/com.piusvelte.sonet"
 	android:layout_width="wrap_content" android:layout_height="fill_parent"
 	android:padding="4dip">
 	<TextView android:layout_marginRight="4dip" android:id="@+id/friend"

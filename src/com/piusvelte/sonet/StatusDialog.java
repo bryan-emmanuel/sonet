@@ -35,8 +35,8 @@ import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
-import com.piusvelte.sonet.Sonet.Widgets;
 import com.piusvelte.sonet.Sonet.Widget_accounts;
+import com.piusvelte.sonet.Sonet.Widgets;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -58,7 +58,7 @@ import android.provider.ContactsContract.QuickContact;
 import android.util.Log;
 import android.widget.Toast;
 
-public class StatusDialog extends Activity implements DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
+public class StatusDialog extends Activity implements OnClickListener {
 	private static final String TAG = "StatusDialog";
 	private int mAppWidgetId = -1;
 	private long mAccount = Sonet.INVALID_ACCOUNT_ID;
@@ -71,14 +71,17 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 	private static final int PROFILE = 5;
 	private int[] mAppWidgetIds;
 	private String[] items = null;
-	private String mEsid;
+	private String mSid = null;
+	private String mEsid = null;
 	private int mService;
-	private String mServiceName;
+	private String mServiceName = null;
 	private ProgressDialog mLoadingDialog;
 	private StatusLoader mStatusLoader;
 	private Rect mRect;
 	private SonetCrypto mSonetCrypto;
 	private boolean mFinish = false;
+	private String mFilePath = null;
+	private AlertDialog mDialog;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -87,23 +90,46 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 		mSonetCrypto = SonetCrypto.getInstance(getApplicationContext());
 		Intent intent = getIntent();
 		if (intent != null) {
-			mData = intent.getData();
-			if (mData != null) {
+			if (intent.hasExtra(Widgets.INSTANT_UPLOAD)) {
+				mFilePath = intent.getStringExtra(Widgets.INSTANT_UPLOAD);
+				Log.d(TAG,"upload photo?"+mFilePath);
+			} else {
 				mData = intent.getData();
-				if (intent.hasExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS)) {
-					mRect = intent.getParcelableExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS);
-				} else {
-					mRect = intent.getSourceBounds();
+				if (mData != null) {
+					mData = intent.getData();
+					if (intent.hasExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS)) {
+						mRect = intent.getParcelableExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS);
+					} else {
+						mRect = intent.getSourceBounds();
+					}
+					// need to use a thread here to avoid anr
+					mLoadingDialog = new ProgressDialog(this);
+					mLoadingDialog.setMessage(getString(R.string.loading));
+					mLoadingDialog.setCancelable(true);
+					mLoadingDialog.setOnCancelListener(new OnCancelListener() {
+
+						@Override
+						public void onCancel(DialogInterface arg0) {
+							if (mStatusLoader != null) {
+								mStatusLoader.cancel(true);
+							}
+							finish();
+						}
+						
+					});
+					mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new OnClickListener() {
+
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.cancel();
+							StatusDialog.this.finish();
+						}
+						
+					});
+					mLoadingDialog.show();
+					mStatusLoader = new StatusLoader();
+					mStatusLoader.execute();
 				}
-				// need to use a thread here to avoid anr
-				mLoadingDialog = new ProgressDialog(this);
-				mLoadingDialog.setMessage(getString(R.string.loading));
-				mLoadingDialog.setCancelable(true);
-				mLoadingDialog.setOnCancelListener(this);
-				mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), this);
-				mLoadingDialog.show();
-				mStatusLoader = new StatusLoader();
-				mStatusLoader.execute();
 			}
 		}
 	}
@@ -111,23 +137,54 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 	@Override
 	protected void onResume() {
 		super.onResume();
-		// check if the dialog is still loading
-		if (mFinish) {
-			finish();
-		} else if ((mLoadingDialog == null) || !mLoadingDialog.isShowing()) {
-			showDialog();
+		if (mFilePath != null) {
+			mDialog = (new AlertDialog.Builder(this))
+			.setTitle(R.string.uploadprompt)
+			.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					startActivityForResult(new Intent(getApplicationContext(), SonetCreatePost.class).putExtra(Widgets.INSTANT_UPLOAD, mFilePath), RESULT_REFRESH);
+					dialog.dismiss();
+				}
+			})
+			.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.dismiss();
+					StatusDialog.this.finish();
+				}
+			}).create();
+			mDialog.show();
+		} else {
+			// check if the dialog is still loading
+			if (mFinish) {
+				finish();
+			} else if ((mLoadingDialog == null) || !mLoadingDialog.isShowing()) {
+				showDialog();
+			}
 		}
 	}
 
 	@Override
 	protected void onPause() {
+		super.onPause();
 		if ((mLoadingDialog != null) && mLoadingDialog.isShowing()) {
 			mLoadingDialog.dismiss();
 		}
 		if (mStatusLoader != null) {
 			mStatusLoader.cancel(true);
 		}
-		super.onPause();
+		if ((mDialog != null) && mDialog.isShowing()) {
+			mDialog.dismiss();
+		}
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if ((requestCode == RESULT_REFRESH) && (resultCode == RESULT_OK)) {
+			finish();
+		}
 	}
 
 	private void showDialog() {
@@ -148,11 +205,19 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 		} else if (items != null) {
 			// offer options for Comment, Post, Settings and Refresh
 			// loading the likes/retweet and other options takes too long, so load them in the SonetCreatePost.class
-			(new AlertDialog.Builder(this))
+			mDialog = (new AlertDialog.Builder(this))
 			.setItems(items, this)
 			.setCancelable(true)
-			.setOnCancelListener(this)
-			.show();
+			.setOnCancelListener(new OnCancelListener() {
+
+				@Override
+				public void onCancel(DialogInterface arg0) {
+					StatusDialog.this.finish();
+				}
+				
+			})
+			.create();
+			mDialog.show();
 		} else {
 			if (mAppWidgetId != Sonet.INVALID_ACCOUNT_ID) {
 				// informational messages go to settings
@@ -178,6 +243,12 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 				if (mService == GOOGLEPLUS) {
 					//TODO: open browser for now...
 					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://plus.google.com")));
+				} else if (mService == PINTEREST) {
+					if (mSid != null) {
+						startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(PINTEREST_PIN, mSid))));
+					} else {
+						startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
+					}
 				} else {
 					startActivity(new Intent(this, SonetComments.class).setData(mData).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 				}
@@ -190,7 +261,9 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 			if (mAppWidgetId != -1) {
 				if (mService == GOOGLEPLUS) {
 					//TODO: open browser for now...
-					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://plus.google.com")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://plus.google.com")));
+				} else if (mService == PINTEREST) {
+					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
 				} else {
 					startActivity(new Intent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.CONTENT_URI, Long.toString(mAccount))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 				}
@@ -199,7 +272,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 				// no widget sent in, dialog to select one
 				String[] widgets = getAllWidgets();
 				if (widgets.length > 0) {
-					(new AlertDialog.Builder(this))
+					mDialog = (new AlertDialog.Builder(this))
 					.setItems(widgets, new OnClickListener() {
 						@Override
 						public void onClick(DialogInterface arg0, int arg1) {
@@ -208,8 +281,8 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 							Cursor c = StatusDialog.this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY}, null, null, null);
 							if (c.moveToFirst()) {
 								int iid = c.getColumnIndex(Accounts._ID),
-								iusername = c.getColumnIndex(Accounts.USERNAME),
-								i = 0;
+										iusername = c.getColumnIndex(Accounts.USERNAME),
+										i = 0;
 								final long[] accountIndexes = new long[c.getCount()];
 								final String[] accounts = new String[c.getCount()];
 								while (!c.isAfterLast()) {
@@ -218,8 +291,9 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 									accounts[i++] = c.getString(iusername);
 									c.moveToNext();
 								}
-								AlertDialog.Builder accountsDialog = new AlertDialog.Builder(StatusDialog.this);
-								accountsDialog.setTitle(R.string.accounts)
+								arg0.cancel();
+								mDialog = (new AlertDialog.Builder(StatusDialog.this))
+								.setTitle(R.string.accounts)
 								.setSingleChoiceItems(accounts, -1, new OnClickListener() {
 									@Override
 									public void onClick(DialogInterface arg0, int which) {
@@ -234,7 +308,8 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 										dialog.cancel();
 									}
 								})
-								.show();
+								.create();
+								mDialog.show();
 							} else {
 								(Toast.makeText(StatusDialog.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
 								dialog.cancel();
@@ -248,8 +323,8 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 						public void onCancel(DialogInterface arg0) {
 							dialog.cancel();
 						}						
-					})
-					.show();
+					}).create();
+					mDialog.show();
 				} else {
 					(Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
 					dialog.cancel();
@@ -264,7 +339,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 				// no widget sent in, dialog to select one
 				String[] widgets = getAllWidgets();
 				if (widgets.length > 0) {
-					(new AlertDialog.Builder(this))
+					mDialog = (new AlertDialog.Builder(this))
 					.setItems(widgets, new OnClickListener() {
 						@Override
 						public void onClick(DialogInterface arg0, int arg1) {
@@ -279,7 +354,8 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 							dialog.cancel();
 						}
 					})
-					.show();
+					.create();
+					mDialog.show();
 				} else {
 					(Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
 					dialog.cancel();
@@ -291,16 +367,18 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 			dialog.cancel();
 		case REFRESH:
 			if (mAppWidgetId != -1) {
+				(Toast.makeText(getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
 				startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
 				dialog.cancel();
 			} else {
 				// no widget sent in, dialog to select one
 				String[] widgets = getAllWidgets();
 				if (widgets.length > 0) {
-					(new AlertDialog.Builder(this))
+					mDialog = (new AlertDialog.Builder(this))
 					.setItems(widgets, new OnClickListener() {
 						@Override
 						public void onClick(DialogInterface arg0, int arg1) {
+							(Toast.makeText(StatusDialog.this.getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
 							startService(new Intent(StatusDialog.this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetIds[arg1]}));
 							arg0.cancel();
 						}					
@@ -309,6 +387,7 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 						@Override
 						public void onClick(DialogInterface arg0, int which) {
 							// refresh all
+							(Toast.makeText(StatusDialog.this.getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
 							startService(new Intent(StatusDialog.this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
 							arg0.cancel();
 						}
@@ -320,7 +399,8 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 							dialog.cancel();
 						}						
 					})
-					.show();
+					.create();
+					mDialog.show();
 				} else {
 					dialog.cancel();
 				}
@@ -616,6 +696,13 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 			case GOOGLEPLUS:
 				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(GOOGLEPLUS_PROFILE, mEsid))));
 				break;
+			case PINTEREST:
+				if (mEsid != null) {
+					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(PINTEREST_PROFILE, mEsid))));
+				} else {
+					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
+				}
+				break;
 			case CHATTER:
 				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 				if (account.moveToFirst()) {
@@ -717,34 +804,35 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 			AppWidgetProviderInfo info = appWidgetManager.getAppWidgetInfo(mAppWidgetIds[i]);
 			String providerName = info.provider.getClassName();
 			widgetsOptions[i] = Integer.toString(mAppWidgetIds[i])
-			+ " ("
-			+ (providerName == SonetWidget_4x2.class.getName() ? "4x2"
-					: providerName == SonetWidget_4x3.class
-					.getName() ? "4x3" : "4x4") + ")";
+					+ " ("
+					+ (providerName == SonetWidget_4x2.class.getName() ? "4x2"
+							: providerName == SonetWidget_4x3.class
+							.getName() ? "4x3" : "4x4") + ")";
 		}
 		return widgetsOptions;
-	}
-
-	@Override
-	public void onCancel(DialogInterface dialog) {
-		if (mStatusLoader != null) {
-			mStatusLoader.cancel(true);
-		}
-		finish();
 	}
 
 	class StatusLoader extends AsyncTask<Void, Void, Void> {
 
 		@Override
 		protected Void doInBackground(Void... params) {
-			Cursor c = getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.WIDGET, Statuses_styles.ACCOUNT, Statuses_styles.ESID, Statuses_styles.MESSAGE, Statuses_styles.FRIEND, Statuses_styles.SERVICE}, Statuses_styles._ID + "=?", new String[] {mData.getLastPathSegment()}, null);
+			Log.d(TAG,"get status: "+mData.getLastPathSegment());
+			Cursor c = getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.WIDGET, Statuses_styles.ACCOUNT, Statuses_styles.ESID, Statuses_styles.MESSAGE, Statuses_styles.FRIEND, Statuses_styles.SERVICE, Statuses_styles.SID}, Statuses_styles._ID + "=?", new String[] {mData.getLastPathSegment()}, null);
 			if (c.moveToFirst()) {
 				mAppWidgetId = c.getInt(1);
 				mAccount = c.getLong(2);
+				Log.d(TAG,"account: "+mAccount);
 				// informational messages go directly to settings, otherwise, load up the options
 				if (mAccount != Sonet.INVALID_ACCOUNT_ID) {
-					mEsid = mSonetCrypto.Decrypt(c.getString(3));
 					mService = c.getInt(6);
+					Log.d(TAG,"service: "+mService);
+					if (mService == PINTEREST) {
+						// pinterest uses the username for the profile page
+						mEsid = c.getString(5);
+					} else {
+						mEsid = mSonetCrypto.Decrypt(c.getString(3));
+					}
+					mSid = mSonetCrypto.Decrypt(c.getString(7));
 					if (mService == SMS) {
 						// lookup the contact, else null mRect
 						Cursor phones = getContentResolver().query(Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(mEsid)), new String[]{ContactsContract.PhoneLookup.LOOKUP_KEY}, null, null, null);
@@ -756,15 +844,16 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 						phones.close();
 					} else if (mService != RSS) {
 						mServiceName = getResources().getStringArray(R.array.service_entries)[mService];
-						// parse any links
-						Matcher m = Sonet.getLinksMatcher(c.getString(4));
-						int count = 0;
-						while (m.find()) {
-							count++;
-						}
+						//						// parse any links
+						//						Matcher m = Sonet.getLinksMatcher(c.getString(4));
+						//						int count = 0;
+						//						while (m.find()) {
+						//							count++;
+						//						}
 						// get links from table
 						Cursor links = getContentResolver().query(Status_links.CONTENT_URI, new String[]{Status_links.LINK_URI, Status_links.LINK_TYPE}, Status_links.STATUS_ID + "=?", new String[]{Long.toString(c.getLong(0))}, null);
-						count += links.getCount();
+						//						count += links.getCount();
+						int count = links.getCount();
 						items = new String[PROFILE + count + 1];
 						// for facebook wall posts, remove everything after the " > "
 						String friend = c.getString(5);
@@ -786,10 +875,10 @@ public class StatusDialog extends Activity implements DialogInterface.OnClickLis
 						items[REFRESH] = getString(R.string.button_refresh);
 						items[PROFILE] = String.format(getString(R.string.userProfile), friend);
 						count = PROFILE + 1;
-						m.reset();
-						while (m.find()) {
-							items[count++] = m.group();
-						}
+						//						m.reset();
+						//						while (m.find()) {
+						//							items[count++] = m.group();
+						//						}
 						// links
 						if (links.moveToFirst()) {
 							while (!links.isAfterLast()) {

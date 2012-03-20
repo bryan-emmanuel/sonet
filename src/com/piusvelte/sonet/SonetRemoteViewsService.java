@@ -33,6 +33,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.RemoteViews;
 
 public class SonetRemoteViewsService extends android.widget.RemoteViewsService {
@@ -132,6 +133,20 @@ class SonetRemoteViewsFactory implements android.widget.RemoteViewsService.Remot
 			views.setTextViewText(R.id.created, mCursor.getString(4));
 			views.setTextColor(R.id.created, created_color);
 			views.setFloat(R.id.created, "setTextSize", created_textsize);
+			byte[] image_bg = mCursor.getBlob(15);
+			if (image_bg != null) {
+				Bitmap image_bgbmp = BitmapFactory.decodeByteArray(image_bg, 0, image_bg.length, sBFOptions);
+				if (image_bgbmp != null) {
+					views.setImageViewBitmap(R.id.image_clear, image_bgbmp);
+					byte[] image = mCursor.getBlob(16);
+					if (image != null) {
+						Bitmap imagebmp = BitmapFactory.decodeByteArray(image, 0, image.length, sBFOptions);
+						if (imagebmp != null) {
+							views.setImageViewBitmap(R.id.image, imagebmp);
+						}
+					}
+				}
+			}
 			byte[] profile_bg = mCursor.getBlob(13);
 			if (mDisplay_profile) {
 				if (profile_bg != null) {
@@ -178,7 +193,7 @@ class SonetRemoteViewsFactory implements android.widget.RemoteViewsService.Remot
         if (mCursor != null) {
             mCursor.close();
         }
-        mCursor = mContext.getContentResolver().query(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, Integer.toString(mAppWidgetId)), new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.PROFILE_BG, Statuses_styles.FRIEND_BG}, null, null, Statuses_styles.CREATED + " DESC");
+        mCursor = mContext.getContentResolver().query(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, Integer.toString(mAppWidgetId)), new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.PROFILE_BG, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE}, null, null, Statuses_styles.CREATED + " DESC");
 	}
 
 	@Override

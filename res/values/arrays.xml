@@ -48,6 +48,7 @@
 		<item>RSS</item>
 		<item>Identi.ca</item>
 		<item>Google\u002B</item>
+		<item>Pinterest</item>
 <!-- 		<item>Chatter</item> -->
 	</string-array>
 	<string-array name="service_values">
@@ -61,7 +62,8 @@
 		<item>7</item>
 		<item>8</item>
 		<item>9</item>
-<!-- 		<item>10</item> -->
+		<item>10</item>
+<!-- 		<item>11</item> -->
 	</string-array>
 	<string-array name="textsize_entries">
 		<item>5</item>

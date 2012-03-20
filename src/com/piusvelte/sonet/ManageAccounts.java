@@ -24,16 +24,17 @@ import static com.piusvelte.sonet.Sonet.PRO;
 import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 import static com.piusvelte.sonet.Sonet.RSS;
 import static com.piusvelte.sonet.Sonet.SMS;
-import static com.piusvelte.sonet.Sonet.sBFOptions;
 import static com.piusvelte.sonet.Sonet.map_icons;
-import static com.piusvelte.sonet.SonetProvider.TABLE_WIDGET_ACCOUNTS;
+import static com.piusvelte.sonet.Sonet.sBFOptions;
 import static com.piusvelte.sonet.SonetProvider.TABLE_ACCOUNTS;
 import static com.piusvelte.sonet.SonetProvider.TABLE_WIDGETS;
+import static com.piusvelte.sonet.SonetProvider.TABLE_WIDGET_ACCOUNTS;
 
 import com.google.ads.*;
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Accounts_styles;
 import com.piusvelte.sonet.Sonet.Notifications;
+import com.piusvelte.sonet.Sonet.Status_images;
 import com.piusvelte.sonet.Sonet.Status_links;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
@@ -66,6 +67,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class ManageAccounts extends ListActivity implements OnClickListener, DialogInterface.OnClickListener {
@@ -76,6 +78,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private boolean mAddingAccount,
 	mUpdateWidget = false;
+	private AlertDialog mDialog;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -111,7 +114,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		
 		Drawable wp = WallpaperManager.getInstance(getApplicationContext()).getDrawable();
 		if (wp != null) {
-			findViewById(R.id.save).getRootView().setBackgroundDrawable(wp);
+			findViewById(R.id.ad).getRootView().setBackgroundDrawable(wp);
 		}
 	}
 
@@ -181,8 +184,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	protected void onListItemClick(ListView list, final View view, int position, final long id) {
 		super.onListItemClick(list, view, position, id);
 		final CharSequence[] items = {getString(R.string.re_authenticate), getString(R.string.account_settings), getString(((TextView) view.findViewById(R.id.message)).getText().toString().contains("enabled") ? R.string.disable : R.string.enable)};
-		AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-		dialog.setItems(items, new DialogInterface.OnClickListener() {
+		mDialog = (new AlertDialog.Builder(this))
+		.setItems(items, new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				which++; //fix indexing
@@ -208,6 +211,15 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 						// disable the account, remove settings and statuses
 						getContentResolver().delete(Widgets.CONTENT_URI, Widgets.ACCOUNT + "=? and " + Widgets.WIDGET + "=?", new String[]{Long.toString(id), Integer.toString(mAppWidgetId)});
 						getContentResolver().delete(Widget_accounts.CONTENT_URI, Widget_accounts.ACCOUNT + "=? and " + Widget_accounts.WIDGET + "=?", new String[]{Long.toString(id), Integer.toString(mAppWidgetId)});
+						Cursor statuses = getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID}, Statuses.ACCOUNT + "=? and " + Statuses.WIDGET + "=?", new String[]{Long.toString(id), Integer.toString(mAppWidgetId)}, null);
+						if (statuses.moveToFirst()) {
+							while (!statuses.isAfterLast()) {
+								getContentResolver().delete(Status_links.CONTENT_URI, Status_links.STATUS_ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
+								getContentResolver().delete(Status_images.CONTENT_URI, Status_images.STATUS_ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
+								statuses.moveToNext();
+							}
+						}
+						statuses.close();
 						getContentResolver().delete(Statuses.CONTENT_URI, Statuses.ACCOUNT + "=? and " + Statuses.WIDGET + "=?", new String[]{Long.toString(id), Integer.toString(mAppWidgetId)});
 						listAccounts();
 					} else {
@@ -224,7 +236,9 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 				}
 				dialog.cancel();
 			}
-		}).show();
+		})
+		.create();
+		mDialog.show();
 	}
 
 	@Override
@@ -245,6 +259,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			if (statuses.moveToFirst()) {
 				while (!statuses.isAfterLast()) {
 					getContentResolver().delete(Status_links.CONTENT_URI, Status_links.STATUS_ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
+					getContentResolver().delete(Status_images.CONTENT_URI, Status_images.STATUS_ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
 					statuses.moveToNext();
 				}
 			}
@@ -260,9 +275,10 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		if (v.getId() == R.id.button_add_account) {
 			// add a new account
 			String[] services = getResources().getStringArray(R.array.service_entries);
-			(new AlertDialog.Builder(this))
+			mDialog = (new AlertDialog.Builder(this))
 			.setItems(services, this)
-			.show();
+			.create();
+			mDialog.show();
 		} else if (v.getId() == R.id.default_widget_settings) {
 			mAddingAccount = true;
 			startActivityForResult(new Intent(this, Settings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId), RESULT_REFRESH);
@@ -282,7 +298,11 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 	protected void onPause() {
 		super.onPause();
 		if (!mAddingAccount && mUpdateWidget) {
+			(Toast.makeText(getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
 			startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
+		}
+		if ((mDialog != null) && mDialog.isShowing()) {
+			mDialog.dismiss();
 		}
 	}
 
@@ -310,7 +330,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 				+ Accounts.SERVICE + "=" + Sonet.CHATTER + " then 'Chatter: ' when "
 				+ Accounts.SERVICE + "=" + Sonet.RSS + " then 'RSS: ' when "
 				+ Accounts.SERVICE + "=" + Sonet.IDENTICA + " then 'Identi.ca: ' when "
-				+ Accounts.SERVICE + "=" + Sonet.GOOGLEPLUS + " then 'Google+: ' else '' end) as " + Statuses_styles.FRIEND,
+				+ Accounts.SERVICE + "=" + Sonet.GOOGLEPLUS + " then 'Google+: ' when "
+				+ Accounts.SERVICE + "=" + Sonet.PINTEREST + " then 'Pinterest: ' else '' end) as " + Statuses_styles.FRIEND,
 				
 				"(case when " + Accounts.SERVICE + "=" + Sonet.TWITTER + " then 'Twitter: ' when "
 				+ Accounts.SERVICE + "=" + Sonet.FACEBOOK + " then 'Facebook: ' when "
@@ -321,7 +342,8 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 				+ Accounts.SERVICE + "=" + Sonet.CHATTER + " then 'Chatter: ' when "
 				+ Accounts.SERVICE + "=" + Sonet.RSS + " then 'RSS: ' when "
 				+ Accounts.SERVICE + "=" + Sonet.IDENTICA + " then 'Identi.ca: ' when "
-				+ Accounts.SERVICE + "=" + Sonet.GOOGLEPLUS + " then 'Google+: ' else '' end) as " + Statuses_styles.FRIEND + "2",
+				+ Accounts.SERVICE + "=" + Sonet.GOOGLEPLUS + " then 'Google+: ' when "
+				+ Accounts.SERVICE + "=" + Sonet.PINTEREST + " then 'Pinterest: ' else '' end) as " + Statuses_styles.FRIEND + "2",
 				
 				"(case when (select " + Widgets.DISPLAY_PROFILE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + mAppWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then (select " + Widgets.DISPLAY_PROFILE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + mAppWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
 				+ "when (select " + Widgets.DISPLAY_PROFILE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + mAppWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.DISPLAY_PROFILE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + mAppWidgetId + " and " + Widgets.ACCOUNT + "=-1 limit 1)"

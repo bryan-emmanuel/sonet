@@ -192,12 +192,11 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 						loadingDialog.show();
 						break;
 					case SMS:
-						// don't insert this more than once...
 						Cursor c = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID}, Accounts.SERVICE + "=?", new String[]{Integer.toString(SMS)}, null);
 						if (c.moveToFirst()) {
 							(Toast.makeText(OAuthLogin.this, "SMS has already been added.", Toast.LENGTH_LONG)).show();
 						} else {
-							addAccount("SMS", null, null, 0, SMS, null);
+							addAccount(getResources().getStringArray(R.array.service_entries)[SMS], null, null, 0, SMS, null);
 						}
 						c.close();
 						finish();
@@ -363,6 +362,17 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 						break;
 					case CHATTER:
 						mSonetWebView.open(String.format(CHATTER_URL_AUTHORIZE, CHATTER_KEY, CHATTER_CALLBACK.toString()));
+						break;
+					case PINTEREST:
+						Cursor pinterestAccount = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID}, Accounts.SERVICE + "=?", new String[]{Integer.toString(PINTEREST)}, null);
+						if (pinterestAccount.moveToFirst()) {
+							(Toast.makeText(OAuthLogin.this, "Pinterest has already been added.", Toast.LENGTH_LONG)).show();
+						} else {
+							(Toast.makeText(OAuthLogin.this, "Pinterest currently allows only public, non-authenticated viewing.", Toast.LENGTH_LONG)).show();
+							addAccount(getResources().getStringArray(R.array.service_entries)[PINTEREST], null, null, 0, PINTEREST, null);
+						}
+						pinterestAccount.close();
+						finish();
 						break;
 					default:
 						this.finish();

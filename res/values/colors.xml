@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- * Sonet - Android Location based Wifi Manager
+ * Sonet - Android Social Networking Widget
  * Copyright (C) 2009 Bryan Emmanuel
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -12,14 +12,17 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
-
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <resources>
-	<color name="primary">#ffffff</color>
-	<color name="secondary">#cccccc</color>
-	<color name="tertiary">#000000</color>
+
+    <color name="default_buttons_color">#FFFFFFFF</color>
+    <color name="default_message_color">#FF000000</color>
+    <color name="default_friend_color">#FFFFFFFF</color>
+    <color name="default_created_color">#FFFFFFFF</color>
+
 </resources>

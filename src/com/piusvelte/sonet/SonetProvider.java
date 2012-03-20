@@ -25,14 +25,15 @@ import java.util.HashMap;
 
 import com.piusvelte.sonet.Sonet.Accounts;
 import com.piusvelte.sonet.Sonet.Accounts_styles;
+import com.piusvelte.sonet.Sonet.Entities;
 import com.piusvelte.sonet.Sonet.Notifications;
+import com.piusvelte.sonet.Sonet.Status_images;
 import com.piusvelte.sonet.Sonet.Status_links;
+import com.piusvelte.sonet.Sonet.Statuses;
+import com.piusvelte.sonet.Sonet.Statuses_styles;
 import com.piusvelte.sonet.Sonet.Widget_accounts;
 import com.piusvelte.sonet.Sonet.Widget_accounts_view;
-import com.piusvelte.sonet.Sonet.Entities;
-import com.piusvelte.sonet.Sonet.Statuses_styles;
 import com.piusvelte.sonet.Sonet.Widgets;
-import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Widgets_settings;
 
 import android.content.ContentProvider;
@@ -65,9 +66,10 @@ public class SonetProvider extends ContentProvider {
 	protected static final int DISTINCT_WIDGETS_SETTINGS = 10;
 	protected static final int STATUS_LINKS = 11;
 	private static final int ACCOUNTS_STYLES_VIEW = 12;
+	protected static final int STATUS_IMAGES = 13;
 
 	protected static final String DATABASE_NAME = "sonet.db";
-	private static final int DATABASE_VERSION = 25;
+	private static final int DATABASE_VERSION = 26;
 
 	protected static final String TABLE_ACCOUNTS = "accounts";
 	private static HashMap<String, String> accountsProjectionMap;
@@ -101,6 +103,9 @@ public class SonetProvider extends ContentProvider {
 	private static HashMap<String, String> status_linksProjectionMap;
 
 	private static final String ACCOUNTS_STYLES = "accounts_styles";
+	
+	protected static final String TABLE_STATUS_IMAGES = "status_images";
+	private static HashMap<String, String> status_imagesProjectionMap;
 
 	private DatabaseHelper mDatabaseHelper;
 
@@ -212,7 +217,9 @@ public class SonetProvider extends ContentProvider {
 		statuses_stylesProjectionMap.put(Statuses_styles.ENTITY, Statuses_styles.ENTITY);
 		statuses_stylesProjectionMap.put(Statuses_styles.ESID, Statuses_styles.ESID);
 		statuses_stylesProjectionMap.put(Statuses_styles.PROFILE_BG, Statuses_styles.PROFILE_BG);
-		statuses_stylesProjectionMap.put(Statuses.FRIEND_BG, Statuses.FRIEND_BG);
+		statuses_stylesProjectionMap.put(Statuses_styles.FRIEND_BG, Statuses_styles.FRIEND_BG);
+		statuses_stylesProjectionMap.put(Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE_BG);
+		statuses_stylesProjectionMap.put(Statuses_styles.IMAGE, Statuses_styles.IMAGE);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_ENTITIES, ENTITIES);
 
@@ -246,15 +253,22 @@ public class SonetProvider extends ContentProvider {
 		status_linksProjectionMap.put(Status_links.STATUS_ID, Status_links.STATUS_ID);
 		status_linksProjectionMap.put(Status_links.LINK_URI, Status_links.LINK_URI);
 		status_linksProjectionMap.put(Status_links.LINK_TYPE, Status_links.LINK_TYPE);
+		
+		sUriMatcher.addURI(AUTHORITY, TABLE_STATUS_IMAGES, STATUS_IMAGES);
+		status_imagesProjectionMap = new HashMap<String, String>();
+		status_imagesProjectionMap.put(Status_images._ID, Status_images._ID);
+		status_imagesProjectionMap.put(Status_images.STATUS_ID, Status_images.STATUS_ID);
+		status_imagesProjectionMap.put(Status_images.IMAGE, Status_images.IMAGE);
+		status_imagesProjectionMap.put(Status_images.IMAGE_BG, Status_images.IMAGE_BG);
 
 	}
 
 	public enum StatusesStylesColumns {
-		_id, friend, profile, message, createdtext, messages_color, friend_color, created_color, messages_textsize, friend_textsize, created_textsize, status_bg, icon, profile_bg, friend_bg
+		_id, friend, profile, message, createdtext, messages_color, friend_color, created_color, messages_textsize, friend_textsize, created_textsize, status_bg, icon, profile_bg, friend_bg, image_bg, image
 	}
 
 	public enum StatusesStylesColumnsNoProfile {
-		_id, friend, message, createdtext, messages_color, friend_color, created_color, messages_textsize, friend_textsize, created_textsize, status_bg, icon, friend_bg
+		_id, friend, message, createdtext, messages_color, friend_color, created_color, messages_textsize, friend_textsize, created_textsize, status_bg, icon, friend_bg, image_bg, image
 	}
 
 	@Override
@@ -292,6 +306,8 @@ public class SonetProvider extends ContentProvider {
 			return Status_links.CONTENT_TYPE;
 		case ACCOUNTS_STYLES_VIEW:
 			return Accounts_styles.CONTENT_TYPE;
+		case STATUS_IMAGES:
+			return Status_images.CONTENT_TYPE;
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
 		}
@@ -326,6 +342,9 @@ public class SonetProvider extends ContentProvider {
 				break;
 			case STATUS_LINKS:
 				count = db.delete(TABLE_STATUS_LINKS, whereClause, whereArgs);
+				break;
+			case STATUS_IMAGES:
+				count = db.delete(TABLE_STATUS_IMAGES, whereClause, whereArgs);
 				break;
 			default:
 				throw new IllegalArgumentException("Unknown URI " + uri);
@@ -412,6 +431,11 @@ public class SonetProvider extends ContentProvider {
 				returnUri = ContentUris.withAppendedId(Status_links.CONTENT_URI, rowId);
 				getContext().getContentResolver().notifyChange(returnUri, null);
 				break;
+			case STATUS_IMAGES:
+				rowId = db.insert(TABLE_STATUS_IMAGES, Status_images._ID, values);
+				returnUri = ContentUris.withAppendedId(Status_images.CONTENT_URI, rowId);
+				getContext().getContentResolver().notifyChange(returnUri, null);
+				break;
 			default:
 				throw new IllegalArgumentException("Unknown URI " + uri);
 			}
@@ -483,6 +507,9 @@ public class SonetProvider extends ContentProvider {
 				qb.setTables(TABLE_ACCOUNTS);
 				qb.setProjectionMap(statuses_stylesProjectionMap);
 				break;
+			case STATUS_IMAGES:
+				qb.setTables(TABLE_STATUS_IMAGES);
+				qb.setProjectionMap(status_imagesProjectionMap);
 			default:
 				throw new IllegalArgumentException("Unknown URI " + uri);
 			}
@@ -549,6 +576,9 @@ public class SonetProvider extends ContentProvider {
 				break;
 			case STATUS_LINKS:
 				count = db.update(TABLE_STATUS_LINKS, values, selection, selectionArgs);
+				break;
+			case STATUS_IMAGES:
+				count = db.update(TABLE_STATUS_IMAGES, values, selection, selectionArgs);
 				break;
 			default:
 				throw new IllegalArgumentException("Unknown URI " + uri);
@@ -644,6 +674,28 @@ public class SonetProvider extends ContentProvider {
 					+ Entities.PROFILE + " blob, "
 					+ Entities.ACCOUNT + " integer, "
 					+ Entities.ESID + " text);");
+			// notifications
+			db.execSQL("create table if not exists " + TABLE_NOTIFICATIONS
+					+ " (" + Notifications._ID + " integer primary key autoincrement, "
+					+ Notifications.SID + " text, "
+					+ Notifications.ESID + " text, "
+					+ Notifications.FRIEND + " text, "
+					+ Notifications.MESSAGE + " text, "
+					+ Notifications.CREATED + " integer, "
+					+ Notifications.NOTIFICATION + " text, "
+					+ Notifications.ACCOUNT + " integer, "
+					+ Notifications.CLEARED + " integer, "
+					+ Notifications.UPDATED + " integer);");
+			db.execSQL("create table if not exists " + TABLE_STATUS_LINKS
+					+ " (" + Status_links._ID + " integer primary key autoincrement, "
+					+ Status_links.STATUS_ID + " integer, "
+					+ Status_links.LINK_URI + " text, "
+					+ Status_links.LINK_TYPE + " text);");
+			db.execSQL("create table if not exists " + TABLE_STATUS_IMAGES
+					+ " (" + Status_images._ID + " integer primary key autoincrement, "
+					+ Status_images.STATUS_ID + " integer, "
+					+ Status_images.IMAGE + " blob, "
+					+ Status_images.IMAGE_BG + " blob);");
 			db.execSQL("create view if not exists " + VIEW_STATUSES_STYLES + " as select " +
 					"s." + Statuses._ID + " as " + Statuses_styles._ID
 					+ ",s." + Statuses.CREATED + " as " + Statuses_styles.CREATED
@@ -685,7 +737,11 @@ public class SonetProvider extends ContentProvider {
 					+ ",e." + Entities.ESID + " as " + Statuses_styles.ESID
 					+ ",s." + Statuses.PROFILE_BG + " as " + Statuses_styles.PROFILE_BG
 					+ ",s." + Statuses.FRIEND_BG + " as " + Statuses_styles.FRIEND_BG
+					+ ",i." + Status_images.IMAGE_BG + " as " + Statuses_styles.IMAGE_BG
+					+ ",i." + Status_images.IMAGE + " as " + Statuses_styles.IMAGE
 					+ " from " + TABLE_STATUSES + " s," + TABLE_ENTITIES + " e," + TABLE_WIDGETS + " a," + TABLE_WIDGETS + " b," + TABLE_WIDGETS + " c"
+					+ " left join " + TABLE_STATUS_IMAGES + " i"
+					+ " on i." + Status_images.STATUS_ID + "=s." + Statuses._ID
 					+ " where "
 					+ "e." + Entities._ID + "=s." + Statuses.ENTITY
 					+ " and a." + Widgets.WIDGET + "=s." + Statuses.WIDGET
@@ -694,18 +750,6 @@ public class SonetProvider extends ContentProvider {
 					+ " and b." + Widgets.ACCOUNT + "=-1"
 					+ " and c." + Widgets.WIDGET + "=0"
 					+ " and c." + Widgets.ACCOUNT + "=-1;");
-			// notifications
-			db.execSQL("create table if not exists " + TABLE_NOTIFICATIONS
-					+ " (" + Notifications._ID + " integer primary key autoincrement, "
-					+ Notifications.SID + " text, "
-					+ Notifications.ESID + " text, "
-					+ Notifications.FRIEND + " text, "
-					+ Notifications.MESSAGE + " text, "
-					+ Notifications.CREATED + " integer, "
-					+ Notifications.NOTIFICATION + " text, "
-					+ Notifications.ACCOUNT + " integer, "
-					+ Notifications.CLEARED + " integer, "
-					+ Notifications.UPDATED + " integer);");
 			// create a view for the widget settings
 			db.execSQL("create view if not exists " + VIEW_WIDGETS_SETTINGS + " as select a."
 					+ Widgets._ID + " as " + Widgets._ID
@@ -814,11 +858,6 @@ public class SonetProvider extends ContentProvider {
 					+ " from " + TABLE_WIDGETS + " a,"
 					+ TABLE_WIDGETS + " b,"
 					+ TABLE_WIDGETS + " c WHERE b." + Widgets.WIDGET + "=a." + Widgets.WIDGET + " and b." + Widgets.ACCOUNT + "=-1 and c." + Widgets.WIDGET + "=0 and c." + Widgets.ACCOUNT + "=-1;");
-			db.execSQL("create table if not exists " + TABLE_STATUS_LINKS
-					+ " (" + Status_links._ID + " integer primary key autoincrement, "
-					+ Status_links.STATUS_ID + " integer, "
-					+ Status_links.LINK_URI + " text, "
-					+ Status_links.LINK_TYPE + " text);");
 		}
 
 		@Override
@@ -2045,6 +2084,69 @@ public class SonetProvider extends ContentProvider {
 						+ " from " + TABLE_WIDGETS + " a,"
 						+ TABLE_WIDGETS + " b,"
 						+ TABLE_WIDGETS + " c WHERE b." + Widgets.WIDGET + "=a." + Widgets.WIDGET + " and b." + Widgets.ACCOUNT + "=-1 and c." + Widgets.WIDGET + "=0 and c." + Widgets.ACCOUNT + "=-1;");
+			}
+			if (oldVersion < 26) {
+				db.execSQL("drop table if exists " + TABLE_STATUS_IMAGES + ";");
+				db.execSQL("create table if not exists " + TABLE_STATUS_IMAGES
+						+ " (" + Status_images._ID + " integer primary key autoincrement, "
+						+ Status_images.STATUS_ID + " integer, "
+						+ Status_images.IMAGE + " blob, "
+						+ Status_images.IMAGE_BG + " blob);");
+				db.execSQL("drop view if exists " + VIEW_STATUSES_STYLES + ";");
+				db.execSQL("create view if not exists " + VIEW_STATUSES_STYLES + " as select " +
+						"s." + Statuses._ID + " as " + Statuses_styles._ID
+						+ ",s." + Statuses.CREATED + " as " + Statuses_styles.CREATED
+						+ ",(case when " + "s." + Statuses.FRIEND_OVERRIDE + " != \"\" then " + "s." + Statuses.FRIEND_OVERRIDE + " else " + "e." + Entities.FRIEND + " end) as " + Statuses_styles.FRIEND
+						+ ",e." + Entities.PROFILE + " as " + Statuses_styles.PROFILE
+						+ ",s." + Statuses.MESSAGE + " as " + Statuses_styles.MESSAGE
+						+ ",s." + Statuses.SERVICE + " as " + Statuses_styles.SERVICE
+						+ ",s." + Statuses.CREATEDTEXT + " as " + Statuses_styles.CREATEDTEXT
+						+ ",s." + Statuses.WIDGET + " as " + Statuses_styles.WIDGET
+						+ ",s." + Statuses.ACCOUNT + " as " + Statuses_styles.ACCOUNT
+						+ ",(case when a." + Widgets.FRIEND_COLOR + " is not null then a." + Widgets.FRIEND_COLOR
+						+ " when b." + Widgets.FRIEND_COLOR + " is not null then b. " + Widgets.FRIEND_COLOR
+						+ " when c." + Widgets.FRIEND_COLOR + " is not null then c." + Widgets.FRIEND_COLOR
+						+ " else " + Sonet.default_friend_color + " end) as " + Statuses_styles.FRIEND_COLOR
+						+ ",(case when a." + Widgets.CREATED_COLOR + " is not null then a." + Widgets.CREATED_COLOR
+						+ " when b." + Widgets.CREATED_COLOR + " is not null then b. " + Widgets.CREATED_COLOR
+						+ " when c." + Widgets.CREATED_COLOR + " is not null then c." + Widgets.CREATED_COLOR
+						+ " else " + Sonet.default_created_color + " end) as " + Statuses_styles.CREATED_COLOR
+						+ ",(case when a." + Widgets.MESSAGES_COLOR + " is not null then a." + Widgets.MESSAGES_COLOR
+						+ " when b." + Widgets.MESSAGES_COLOR + " is not null then b. " + Widgets.MESSAGES_COLOR
+						+ " when c." + Widgets.MESSAGES_COLOR + " is not null then c." + Widgets.MESSAGES_COLOR
+						+ " else " + Sonet.default_message_color + " end) as " + Statuses_styles.MESSAGES_COLOR
+						+ ",(case when a." + Widgets.MESSAGES_TEXTSIZE + " is not null then a." + Widgets.MESSAGES_TEXTSIZE
+						+ " when b." + Widgets.MESSAGES_TEXTSIZE + " is not null then b. " + Widgets.MESSAGES_TEXTSIZE
+						+ " when c." + Widgets.MESSAGES_TEXTSIZE + " is not null then c." + Widgets.MESSAGES_TEXTSIZE
+						+ " else " + Sonet.default_messages_textsize + " end) as " + Statuses_styles.MESSAGES_TEXTSIZE
+						+ ",(case when a." + Widgets.FRIEND_TEXTSIZE + " is not null then a." + Widgets.FRIEND_TEXTSIZE
+						+ " when b." + Widgets.FRIEND_TEXTSIZE + " is not null then b. " + Widgets.FRIEND_TEXTSIZE
+						+ " when c." + Widgets.FRIEND_TEXTSIZE + " is not null then c." + Widgets.FRIEND_TEXTSIZE
+						+ " else " + Sonet.default_friend_textsize + " end) as " + Statuses_styles.FRIEND_TEXTSIZE
+						+ ",(case when a." + Widgets.CREATED_TEXTSIZE + " is not null then a." + Widgets.CREATED_TEXTSIZE
+						+ " when b." + Widgets.CREATED_TEXTSIZE + " is not null then b. " + Widgets.CREATED_TEXTSIZE
+						+ " when c." + Widgets.CREATED_TEXTSIZE + " is not null then c." + Widgets.CREATED_TEXTSIZE
+						+ " else " + Sonet.default_created_textsize + " end) as " + Statuses_styles.CREATED_TEXTSIZE
+						+ ",s." + Statuses.STATUS_BG + " as " + Statuses_styles.STATUS_BG
+						+ ",s." + Statuses.ICON + " as " + Statuses_styles.ICON
+						+ ",s." + Statuses.SID + " as " + Statuses_styles.SID
+						+ ",e." + Entities._ID + " as " + Statuses_styles.ENTITY
+						+ ",e." + Entities.ESID + " as " + Statuses_styles.ESID
+						+ ",s." + Statuses.PROFILE_BG + " as " + Statuses_styles.PROFILE_BG
+						+ ",s." + Statuses.FRIEND_BG + " as " + Statuses_styles.FRIEND_BG
+						+ ",i." + Status_images.IMAGE_BG + " as " + Statuses_styles.IMAGE_BG
+						+ ",i." + Status_images.IMAGE + " as " + Statuses_styles.IMAGE
+						+ " from " + TABLE_STATUSES + " s," + TABLE_ENTITIES + " e," + TABLE_WIDGETS + " a," + TABLE_WIDGETS + " b," + TABLE_WIDGETS + " c"
+						+ " left join " + TABLE_STATUS_IMAGES + " i"
+						+ " on i." + Status_images.STATUS_ID + "=s." + Statuses._ID
+						+ " where "
+						+ "e." + Entities._ID + "=s." + Statuses.ENTITY
+						+ " and a." + Widgets.WIDGET + "=s." + Statuses.WIDGET
+						+ " and a." + Widgets.ACCOUNT + "=s." + Statuses.ACCOUNT
+						+ " and b." + Widgets.WIDGET + "=s." + Statuses.WIDGET
+						+ " and b." + Widgets.ACCOUNT + "=-1"
+						+ " and c." + Widgets.WIDGET + "=0"
+						+ " and c." + Widgets.ACCOUNT + "=-1;");
 			}
 		}
 

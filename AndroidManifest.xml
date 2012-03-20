@@ -19,8 +19,8 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.piusvelte.sonet" android:versionCode="297"
-	android:versionName="2.9.7">
+	package="com.piusvelte.sonet" android:versionCode="299"
+	android:versionName="2.9.9">
 	<application android:icon="@drawable/icon" android:label="@string/app_name">
 		<activity android:name=".About" android:label="@string/app_name">
 			<intent-filter>
@@ -46,9 +46,7 @@
 		</activity>
 		<activity android:name=".SonetComments" />
 		<activity android:name=".StatusDialog"
-			android:theme="@style/SonetDialog" />
-		<activity android:name=".SonetUploadDialog"
-			android:theme="@style/SonetDialog" />
+			android:theme="@style/SonetDialog" android:clearTaskOnLaunch="true" android:taskAffinity="" />"
 		<activity android:name=".SonetNotifications" />
 		<activity android:name="com.google.ads.AdActivity"
 			android:configChanges="orientation|keyboard|keyboardHidden" />

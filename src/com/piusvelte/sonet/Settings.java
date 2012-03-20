@@ -74,7 +74,7 @@ public class Settings extends Activity implements View.OnClickListener, OnChecke
 	private CheckBox mBackgroundUpdate;
 	private Button mStatuses_per_account;
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
-	private String mWidgetSettingsId;
+	private String mWidgetSettingsId = null;
 	private CheckBox mSound;
 	private CheckBox mVibrate;
 	private CheckBox mLights;
@@ -132,18 +132,21 @@ public class Settings extends Activity implements View.OnClickListener, OnChecke
 				ContentValues values = new ContentValues();
 				values.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
 				values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-				mWidgetSettingsId = this.getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
+				mWidgetSettingsId = getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
 			}
 			if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
 				// initialize widget settings
 				ContentValues values = new ContentValues();
 				values.put(Widgets.WIDGET, mAppWidgetId);
 				values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-				mWidgetSettingsId = this.getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
+				mWidgetSettingsId = getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
 			}
 		}
 		if (c.moveToFirst()) {
-			mWidgetSettingsId = Integer.toString(c.getInt(0));
+			// if settings were initialized, then use that mWidgetSettingsId
+			if (mWidgetSettingsId == null) {
+				mWidgetSettingsId = Integer.toString(c.getInt(0));
+			}
 			mInterval_value = c.getInt(1);
 			mButtons_bg_color_value = c.getInt(2);
 			mButtons_color_value = c.getInt(3);
