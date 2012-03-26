@@ -645,10 +645,8 @@ public class SonetService extends Service {
 			Cursor statuses = getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID}, Statuses.WIDGET + "=?", new String[]{widget}, null);
 			boolean hasCache = statuses.moveToFirst();
 			statuses.close();
-			if (!hasCache) {
-				// if there's a cache, let it remain out there, otherwise inform the user that the widget is loading
-				addStatusItem(getString(R.string.loading), appWidgetId);
-			}
+			// always inform the user that the widget is loading
+			addStatusItem(widget, getString(R.string.updating), appWidgetId);
 			// loading takes time, so don't leave an empty widget sitting there
 			if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
 				// build the widget
@@ -1961,14 +1959,14 @@ public class SonetService extends Service {
 				if (!hasCache) {
 					// there should be a loading message displaying
 					// if no updates have been loaded, display "no updates"
-					addStatusItem(getString(R.string.no_updates), appWidgetId);
+					addStatusItem(widget, getString(R.string.no_updates), appWidgetId);
 				}
 			} else {
 				Log.d(TAG,"no accounts");
 				// no accounts, clear cache
 				getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[]{widget});
 				// insert no accounts message
-				addStatusItem(getString(R.string.no_accounts), appWidgetId);
+				addStatusItem(widget, getString(R.string.no_accounts), appWidgetId);
 			}
 			accounts.close();
 			// always update buttons, if !scrollable update widget both times, otherwise build scrollable first, requery second
@@ -2139,7 +2137,25 @@ public class SonetService extends Service {
 			}
 			entities.close();
 		}
-		private void addStatusItem(String message, int appWidgetId) {
+
+		private void addStatusItem(String widget, String message, int appWidgetId) {
+			int status_bg_color = Sonet.default_message_bg_color;
+			int profile_bg_color = Sonet.default_message_bg_color;
+			int friend_bg_color = Sonet.default_friend_bg_color;
+			boolean icon = true;
+			Cursor c = SonetService.this.getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{widget, Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+			if (!c.moveToFirst()) {
+				// no widget settings
+				c.close();
+				c = SonetService.this.getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+			}
+			if (c.moveToFirst()) {
+				status_bg_color = c.getInt(1);
+				icon = c.getInt(2) == 1;
+				profile_bg_color = c.getInt(7);
+				friend_bg_color = c.getInt(8);
+			}
+			c.close();
 			long id;
 			long created = System.currentTimeMillis();
 			int service = 0;
@@ -2147,8 +2163,8 @@ public class SonetService extends Service {
 			long accountId = Sonet.INVALID_ACCOUNT_ID;
 			String sid = "-1";
 			String esid = "-1";
-			String friend = "";
-			byte[] profile = getBlob(getResources(), R.drawable.ic_contact_picture);
+			String friend = getString(R.string.app_name);
+			byte[] profile = getBlob(getResources(), R.drawable.icon);
 			Cursor entity = getContentResolver().query(Entities.CONTENT_URI, new String[]{Entities._ID}, Entities.ACCOUNT + "=? and " + Entities.ESID + "=?", new String[]{Long.toString(accountId), mSonetCrypto.Encrypt(esid)}, null);
 			if (entity.moveToFirst()) {
 				id = entity.getLong(0);
@@ -2171,17 +2187,20 @@ public class SonetService extends Service {
 			values.put(Statuses.ACCOUNT, accountId);
 			values.put(Statuses.SID, sid);
 			values.put(Statuses.FRIEND_OVERRIDE, friend);
-			values.put(Statuses.STATUS_BG, createBackground(Sonet.default_message_bg_color));
-			values.put(Statuses.FRIEND_BG, createBackground(Sonet.default_friend_bg_color));
-			values.put(Statuses.PROFILE_BG, createBackground(Sonet.default_message_bg_color));
-			long statusId = Long.parseLong(getContentResolver().insert(Statuses.CONTENT_URI, values).getLastPathSegment());
-			// remote views can be reused, avoid images being repeated across multiple statuses
+			values.put(Statuses.STATUS_BG, createBackground(status_bg_color));
+			values.put(Statuses.FRIEND_BG, createBackground(friend_bg_color));
+			values.put(Statuses.PROFILE_BG, createBackground(profile_bg_color));
 			Bitmap emptyBmp = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
 			ByteArrayOutputStream imageBgStream = new ByteArrayOutputStream();
 			emptyBmp.compress(Bitmap.CompressFormat.PNG, 100, imageBgStream);
 			byte[] emptyImg = imageBgStream.toByteArray();
 			emptyBmp.recycle();
 			emptyBmp = null;
+			if (icon && (emptyImg != null)) {
+				values.put(Statuses.ICON, emptyImg);
+			}
+			long statusId = Long.parseLong(getContentResolver().insert(Statuses.CONTENT_URI, values).getLastPathSegment());
+			// remote views can be reused, avoid images being repeated across multiple statuses
 			if (emptyImg != null) {
 				ContentValues imageValues = new ContentValues();
 				imageValues.put(Status_images.STATUS_ID, statusId);

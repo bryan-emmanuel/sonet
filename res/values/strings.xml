@@ -23,7 +23,9 @@
     <string name="sonet_4x2">Sonet 4x2</string>
     <string name="sonet_4x3">Sonet 4x3</string>
     <string name="sonet_4x4">Sonet 4x4</string>
-    <string name="loading">Loading...</string>
+    <string name="loading">Loading&#8230;</string>
+    <string name="updating">Updating content&#8230;</string>
+    <string name="refreshing">Updating Sonet content&#8230;</string>
     <string name="no_connection">No connection</string>
     <string name="no_updates">No status updates</string>
     <string name="accounts_and_settings">Accounts \u0026 Settings</string>
@@ -31,12 +33,12 @@
     <string name="accounts">Accounts</string>
     <string name="no_accounts">No accounts setup or enabled, press here to setup some.</string>
     <string name="button_post">Post</string>
-    <string name="button_refresh">Refresh</string>
+    <string name="button_refresh">Update</string>
     <string name="button_add_account">Add Account</string>
     <string name="delete_account">Delete Account</string>
     <string name="key_preferences">sonet</string>
     <string name="category_update">Update</string>
-    <string name="interval">Refresh Interval</string>
+    <string name="interval">Update Interval</string>
     <string name="key_interval">interval</string>
     <string name="buttons_bg_color">Buttons Background Color</string>
     <string name="key_head_background">headBackground</string>
@@ -71,9 +73,9 @@
     <string name="key_time_12_24">time1224</string>
     <string name="time24hr">Use 24-hour format</string>
     <string name="category_time">Time</string>
-	<string name="about">Sonet displays statuses from Twitter, Facebook, Buzz, MySpace, Foursquare, LinkedIn, SMS, RSS, Identi.ca, and Pinterest. The statuses can be displayed in the app, or as widgets on the homescreen. The colors and fonts can be customized in the settings. Please select Accounts from the menu and add an account.\u000A\u000ASonet - Android Social Networking Widget\u000A\u000ACopyright (C) 2009 Bryan Emmanuel\u000A\u000AThis program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\u000A\u000AThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\u000A\u000AYou should have received a copy of the GNU General Public License along with this program.  If not, see \u003C\u000Ahttp://www.gnu.org/licenses/\u003E.\u000A\u000ABryan Emmanuel piusvelte@gmail.com</string>
+	<string name="about">Sonet displays statuses from Twitter, Facebook, Buzz, MySpace, Foursquare, LinkedIn, SMS, RSS, Identi.ca, and Pinterest. The statuses can be displayed in the app, or as widgets on the homescreen. The colors and fonts can be customized in the settings. Please select Accounts from the menu and add an account.\u000A\u000ASonet - Android Social Networking Widget\u000A\u000ACopyright &#169; 2009 Bryan Emmanuel\u000A\u000AThis program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\u000A\u000AThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\u000A\u000AYou should have received a copy of the GNU General Public License along with this program.  If not, see \u003C\u000Ahttp://www.gnu.org/licenses/\u003E.\u000A\u000ABryan Emmanuel piusvelte@gmail.com</string>
     <string name="widgets">Configure Widgets</string>
-	<string name="refreshallwidgets">Refresh Widgets</string>
+	<string name="refreshallwidgets">Update Widgets</string>
 	<string name="timezone">Select Timezone</string>
 	<string name="nowidgets">No Sonet widgets have been created.</string>
 	<string name="defaultsettings">Default settings</string>
@@ -131,5 +133,4 @@
 	<string name="googleplusbeta">Google\u002B currently allows reading of your own public posts only. Comments are not provided yet by Google. As new features are available from Google, they will be included in Sonet.</string>
 	<string name="less_than">\u0020\u003c\u003c\u0020</string>
 	<string name="greater_than">\u0020\u003e\u003e\u0020</string>
-	<string name="refreshing">Refreshing Sonet widget</string>
 </resources>
