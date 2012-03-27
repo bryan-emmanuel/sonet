@@ -57,6 +57,7 @@ public class SonetWidget extends AppWidgetProvider {
 	public void onReceive(Context context, Intent intent) {
 		final String action = intent.getAction();
 		if (action.equals(ACTION_REFRESH)) {
+			Sonet.acquire(context);
 			// this should reload the widget
 			int[] appWidgetIds;
 			if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
@@ -75,6 +76,7 @@ public class SonetWidget extends AppWidgetProvider {
 				super.onReceive(context, intent);
 			}
 		} else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_READY)) {
+			Sonet.acquire(context);
 			// ACTION_READY is sent on screen rotation and on boot
 			// this should only ever requery...
 			final Bundle extras = intent.getExtras();
