@@ -102,6 +102,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 					} else {
 						mRect = intent.getSourceBounds();
 					}
+					Log.d(TAG,"data:"+mData.toString());
 					// need to use a thread here to avoid anr
 					mLoadingDialog = new ProgressDialog(this);
 					mLoadingDialog.setMessage(getString(R.string.loading));

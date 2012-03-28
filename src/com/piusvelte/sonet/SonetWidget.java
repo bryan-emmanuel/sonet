@@ -23,9 +23,9 @@ import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.EXTRA_SCROLLABLE_VERSION;
 
 import com.piusvelte.sonet.Sonet.Status_links;
-import com.piusvelte.sonet.Sonet.Widget_accounts;
 import com.piusvelte.sonet.Sonet.Statuses;
 import com.piusvelte.sonet.Sonet.Statuses_styles;
+import com.piusvelte.sonet.Sonet.Widget_accounts;
 import com.piusvelte.sonet.Sonet.Widgets;
 
 import mobi.intuitit.android.content.LauncherIntent;
@@ -113,11 +113,14 @@ public class SonetWidget extends AppWidgetProvider {
 
 	private void onClick(Context context, Intent intent) {
 		// send all onClick events to StatusDialog
+		String statusId = "";
 		if (intent.hasExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS)) {
-			context.startActivity(intent.setClass(context, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, intent.getStringExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+			statusId = intent.getStringExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS);
 		} else if (intent.hasExtra(Sonet.Status_links.STATUS_ID)) {
-			context.startActivity(intent.setClass(context, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, intent.getStringExtra(Sonet.Status_links.STATUS_ID))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));			
+			statusId = intent.getStringExtra(Sonet.Status_links.STATUS_ID);		
 		}
+		Log.d(TAG,"onClick:"+statusId);
+		context.startActivity(intent.setClass(context, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, statusId)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
 	}
 
 }
