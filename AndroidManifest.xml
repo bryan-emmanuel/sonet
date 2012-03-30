@@ -91,6 +91,7 @@
 		</receiver>
 		<service android:name=".SonetService" />
 		<service android:name=".SonetScrollableBuilder" />
+		<service android:name=".SonetUploader" />
 		<receiver android:name=".SonetSMSReceiver">
 			<intent-filter>
 				<action android:name="android.provider.Telephony.SMS_RECEIVED" />
