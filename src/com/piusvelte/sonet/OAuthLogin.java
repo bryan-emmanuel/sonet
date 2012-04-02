@@ -39,6 +39,7 @@ import oauth.signpost.exception.OAuthMessageSignerException;
 import oauth.signpost.exception.OAuthNotAuthorizedException;
 
 import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
@@ -97,14 +98,14 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 	private long mAccountId;
 	private String mServiceName = "unknown";
 	private SonetWebView mSonetWebView;
-	private SonetHttpClient mSonetHttpClient;
+	private HttpClient mHttpClient;
 
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setResult(RESULT_CANCELED);
-		mSonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
+		mHttpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
 		mLoadingDialog = new ProgressDialog(this);
 		mLoadingDialog.setMessage(getString(R.string.loading));
 		mLoadingDialog.setCancelable(true);
@@ -219,7 +220,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 									@Override
 									protected String doInBackground(String... params) {
 										url = rss_url.getText().toString();
-										return mSonetHttpClient.httpResponse(new HttpGet(url));
+										return SonetHttpClient.httpResponse(mHttpClient, new HttpGet(url));
 									}
 
 									@Override
@@ -450,11 +451,11 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 										String response = null;
 										try {
 											httpPost.setEntity(new UrlEncodedFormEntity(params));
-											if ((response = mSonetHttpClient.httpResponse(httpPost)) != null) {
+											if ((response = SonetHttpClient.httpResponse(mHttpClient, httpPost)) != null) {
 												JSONObject j = new JSONObject(response);
 												if (j.has("access_token") && j.has("refresh_token")) {
 													refresh_token = j.getString("refresh_token");
-													return mSonetHttpClient.httpResponse(new HttpGet(String.format(GOOGLEPLUS_URL_ME, GOOGLEPLUS_BASE_URL, j.getString("access_token"))));
+													return SonetHttpClient.httpResponse(mHttpClient, new HttpGet(String.format(GOOGLEPLUS_URL_ME, GOOGLEPLUS_BASE_URL, j.getString("access_token"))));
 												}
 											} else {
 												return null;
@@ -542,7 +543,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 								@Override
 								protected String doInBackground(String... args) {
 									if (mSonetOAuth.retrieveAccessToken(args[0])) {
-										return mSonetHttpClient.httpResponse(mSonetOAuth.getSignedRequest(new HttpGet("http://api.twitter.com/1/account/verify_credentials.json")));
+										return SonetHttpClient.httpResponse(mHttpClient, mSonetOAuth.getSignedRequest(new HttpGet("http://api.twitter.com/1/account/verify_credentials.json")));
 									} else {
 										return null;
 									}
@@ -599,7 +600,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 								@Override
 								protected String doInBackground(String... args) {
 									token = args[0];
-									return mSonetHttpClient.httpResponse(new HttpGet(args[1]));
+									return SonetHttpClient.httpResponse(mHttpClient, new HttpGet(args[1]));
 								}
 
 								@Override
@@ -661,7 +662,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 								protected String doInBackground(String... args) {
 									token = args[0];
 									expiry = Integer.parseInt(args[1]);
-									return mSonetHttpClient.httpResponse(new HttpGet(args[2]));
+									return SonetHttpClient.httpResponse(mHttpClient, new HttpGet(args[2]));
 								}
 
 								@Override
@@ -708,7 +709,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 								@Override
 								protected String doInBackground(String... args) {
 									if (mSonetOAuth.retrieveAccessToken(args[0])) {
-										return mSonetHttpClient.httpResponse(mSonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_URL_ME, MYSPACE_BASE_URL))));
+										return SonetHttpClient.httpResponse(mHttpClient, mSonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_URL_ME, MYSPACE_BASE_URL))));
 									} else {
 										return null;
 									}
@@ -760,7 +761,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 								@Override
 								protected String doInBackground(String... args) {
 									if (mSonetOAuth.retrieveAccessToken(args[0])) {
-										return mSonetHttpClient.httpResponse(mSonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_URL_ME, BUZZ_BASE_URL, BUZZ_API_KEY))));
+										return SonetHttpClient.httpResponse(mHttpClient, mSonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_URL_ME, BUZZ_BASE_URL, BUZZ_API_KEY))));
 									} else {
 										return null;
 									}
@@ -812,7 +813,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 									if (mSonetOAuth.retrieveAccessToken(args[0])) {
 										HttpGet httpGet = new HttpGet(String.format(LINKEDIN_URL_ME, LINKEDIN_BASE_URL));
 										for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
-										return mSonetHttpClient.httpResponse(mSonetOAuth.getSignedRequest(httpGet));
+										return SonetHttpClient.httpResponse(mHttpClient, mSonetOAuth.getSignedRequest(httpGet));
 									} else {
 										return null;
 									}
@@ -862,7 +863,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 								@Override
 								protected String doInBackground(String... args) {
 									if (mSonetOAuth.retrieveAccessToken(args[0])) {
-										return mSonetHttpClient.httpResponse(mSonetOAuth.getSignedRequest(new HttpGet("https://identi.ca/api/account/verify_credentials.json")));
+										return SonetHttpClient.httpResponse(mHttpClient, mSonetOAuth.getSignedRequest(new HttpGet("https://identi.ca/api/account/verify_credentials.json")));
 									} else {
 										return null;
 									}
@@ -927,7 +928,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 										refresh_token = args[2];
 										HttpGet httpGet = new HttpGet(String.format(CHATTER_URL_ME, args[1]));
 										httpGet.setHeader("Authorization", "OAuth " + args[0]);
-										return mSonetHttpClient.httpResponse(httpGet);
+										return SonetHttpClient.httpResponse(mHttpClient, httpGet);
 									}
 
 									@Override

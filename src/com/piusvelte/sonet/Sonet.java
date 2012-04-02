@@ -42,10 +42,10 @@ public class Sonet {
 	protected static final String PRO = "pro";
 	protected static final String Saccess_token = "access_token";
 	protected static final String Sexpires_in = "expires_in";
-	protected static final String ACTION_REFRESH = "com.piusvelte.sonetpro.Sonet.REFRESH";
-	protected static final String ACTION_PAGE_UP = "com.piusvelte.sonetpro.Sonet.PAGE_UP";
-	protected static final String ACTION_PAGE_DOWN = "com.piusvelte.sonetpro.Sonet.PAGE_DOWN";
-	protected static final String ACTION_ON_CLICK = "com.piusvelte.sonetpro.Sonet.ON_CLICK";
+	protected static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
+	protected static final String ACTION_PAGE_UP = "com.piusvelte.sonet.Sonet.PAGE_UP";
+	protected static final String ACTION_PAGE_DOWN = "com.piusvelte.sonet.Sonet.PAGE_DOWN";
+	protected static final String ACTION_ON_CLICK = "com.piusvelte.sonet.Sonet.ON_CLICK";
 	protected static final String ACTION_UPLOAD = "com.piusvelte.sonet.Sonet.UPLOAD";
 	protected static final String SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED";
 	protected static final String EXTRA_ACCOUNT_ID = "com.piusvelte.sonet.Sonet.ACCOUNT_ID";

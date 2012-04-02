@@ -226,6 +226,8 @@ public class StatusDialog extends Activity implements OnClickListener {
 				startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 			} else {
 				(Toast.makeText(StatusDialog.this, "This widget may be reloading. Please try again after it has completed or use the app.", Toast.LENGTH_LONG)).show();
+				// force widgets rebuild
+				startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH));
 				StatusDialog.this.finish();
 			}
 		}
@@ -420,8 +422,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 						@Override
 						protected String doInBackground(String... arg0) {
 							SonetOAuth sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, arg0[0], arg0[1]);
-							SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
-							return sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_USER, TWITTER_BASE_URL, mEsid))));
+							return SonetHttpClient.httpResponse(SonetHttpClient.getThreadSafeClient(getApplicationContext()), sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_USER, TWITTER_BASE_URL, mEsid))));
 						}
 
 						@Override
@@ -466,8 +467,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 					asyncTask = new AsyncTask<String, Void, String>() {
 						@Override
 						protected String doInBackground(String... arg0) {
-							SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
-							return sonetHttpClient.httpResponse(new HttpGet(String.format(FACEBOOK_USER, FACEBOOK_BASE_URL, mEsid, Saccess_token, arg0[0])));
+							return SonetHttpClient.httpResponse(SonetHttpClient.getThreadSafeClient(getApplicationContext()), new HttpGet(String.format(FACEBOOK_USER, FACEBOOK_BASE_URL, mEsid, Saccess_token, arg0[0])));
 						}
 
 						@Override
@@ -512,8 +512,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 						@Override
 						protected String doInBackground(String... arg0) {
 							SonetOAuth sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, arg0[0], arg0[1]);
-							SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
-							return sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_USER, MYSPACE_BASE_URL, mEsid))));
+							return SonetHttpClient.httpResponse(SonetHttpClient.getThreadSafeClient(getApplicationContext()), sonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_USER, MYSPACE_BASE_URL, mEsid))));
 						}
 
 						@Override
@@ -558,8 +557,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 						@Override
 						protected String doInBackground(String... arg0) {
 							SonetOAuth sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, arg0[0], arg0[1]);
-							SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
-							return sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_URL_USER, BUZZ_BASE_URL, mEsid, BUZZ_API_KEY))));
+							return SonetHttpClient.httpResponse(SonetHttpClient.getThreadSafeClient(getApplicationContext()), sonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_URL_USER, BUZZ_BASE_URL, mEsid, BUZZ_API_KEY))));
 						}
 
 						@Override
@@ -607,10 +605,9 @@ public class StatusDialog extends Activity implements OnClickListener {
 						@Override
 						protected String doInBackground(String... arg0) {
 							SonetOAuth sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, arg0[0], arg0[1]);
-							SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
 							HttpGet httpGet = new HttpGet(String.format(LINKEDIN_URL_USER, mEsid));
 							for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
-							return sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpGet));
+							return SonetHttpClient.httpResponse(SonetHttpClient.getThreadSafeClient(getApplicationContext()), sonetOAuth.getSignedRequest(httpGet));
 						}
 
 						@Override
@@ -655,8 +652,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 						@Override
 						protected String doInBackground(String... arg0) {
 							SonetOAuth sonetOAuth = new SonetOAuth(IDENTICA_KEY, IDENTICA_SECRET, arg0[0], arg0[1]);
-							SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
-							return sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(IDENTICA_USER, IDENTICA_BASE_URL, mEsid))));
+							return SonetHttpClient.httpResponse(SonetHttpClient.getThreadSafeClient(getApplicationContext()), sonetOAuth.getSignedRequest(new HttpGet(String.format(IDENTICA_USER, IDENTICA_BASE_URL, mEsid))));
 						}
 
 						@Override
@@ -712,8 +708,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 						@Override
 						protected String doInBackground(String... arg0) {
 							// need to get an instance
-							SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
-							return sonetHttpClient.httpResponse(new HttpPost(String.format(CHATTER_URL_ACCESS, CHATTER_KEY, arg0[0])));
+							return SonetHttpClient.httpResponse(SonetHttpClient.getThreadSafeClient(getApplicationContext()), new HttpPost(String.format(CHATTER_URL_ACCESS, CHATTER_KEY, arg0[0])));
 						}
 
 						@Override

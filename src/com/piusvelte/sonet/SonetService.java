@@ -37,7 +37,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -49,6 +48,7 @@ import mobi.intuitit.android.content.LauncherIntent;
 import mobi.intuitit.android.widget.BoundRemoteViews;
 
 import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -163,6 +163,9 @@ public class SonetService extends Service {
 						putValidatedUpdates(new int[]{intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)}, 1);
 					} else if (intent.getData() != null) {
 						putValidatedUpdates(new int[]{Integer.parseInt(intent.getData().getLastPathSegment())}, 1);
+					} else {
+						// rebuild all widgets
+						putValidatedUpdates(null, 0);
 					}
 				} else if (action.equals(LauncherIntent.Action.ACTION_READY)) {
 					if (intent.hasExtra(EXTRA_SCROLLABLE_VERSION) && intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
@@ -178,7 +181,7 @@ public class SonetService extends Service {
 								this.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets.WIDGET + "=?", new String[] {Integer.toString(appWidgetId)});
 								putValidatedUpdates(new int[]{appWidgetId}, 1);
 							} else {
-								putValidatedUpdates(new int[]{appWidgetId}, 0);
+								putValidatedUpdates(new int[]{appWidgetId}, 1);
 							}
 						} else {
 							ContentValues values = new ContentValues();
@@ -270,13 +273,13 @@ public class SonetService extends Service {
 										boolean icon = true;
 										int status_count = Sonet.default_statuses_per_account;
 										int notifications = 0;
-										Cursor c = SonetService.this.getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(widget), Long.toString(accountId)}, null);
+										Cursor c = getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(widget), Long.toString(accountId)}, null);
 										if (!c.moveToFirst()) {
 											c.close();
-											c = SonetService.this.getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(widget), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+											c = getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(widget), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 											if (!c.moveToFirst()) {
 												c.close();
-												c = SonetService.this.getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+												c = getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 												if (!c.moveToFirst()) {
 													// initialize account settings
 													ContentValues v = new ContentValues();
@@ -399,7 +402,6 @@ public class SonetService extends Service {
 									mSMSLoaders.remove(this);
 								}
 								putValidatedUpdates(appWidgetIds, 0);
-								processUpdates(SonetService.this);
 							}
 
 						};
@@ -438,12 +440,12 @@ public class SonetService extends Service {
 									File file = new File(params[2]);
 									ContentBody fileBody = new FileBody(file);
 									entity.addPart("source", fileBody);
-									SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
+									HttpClient httpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
 									try {
 										entity.addPart("message", new StringBody(params[1]));
 										httpPost.setEntity(entity);
 										Log.d(TAG,"begin upload");
-										response = sonetHttpClient.httpResponse(httpPost);
+										response = SonetHttpClient.httpResponse(httpClient, httpPost);
 									} catch (UnsupportedEncodingException e) {
 										Log.e(TAG,e.toString());
 									}
@@ -475,21 +477,20 @@ public class SonetService extends Service {
 				}
 			}
 		}
-		processUpdates(this);
 	}
 
 	protected void putValidatedUpdates(int[] appWidgetIds, int reload) {
+		int[] awi = new int[0];
+		AppWidgetManager awm = AppWidgetManager.getInstance(getApplicationContext());
+		awi = Sonet.arrayCat(
+				Sonet.arrayCat(awm.getAppWidgetIds(new ComponentName(
+						getApplicationContext(), SonetWidget_4x2.class)),
+						awm.getAppWidgetIds(new ComponentName(
+								getApplicationContext(), SonetWidget_4x3.class))),
+								awm.getAppWidgetIds(new ComponentName(getApplicationContext(),
+										SonetWidget_4x4.class)));
 		if ((appWidgetIds != null) && (appWidgetIds.length > 0)) {
 			// check for phantom widgets
-			int[] awi = new int[0];
-			AppWidgetManager awm = AppWidgetManager.getInstance(getApplicationContext());
-			awi = Sonet.arrayCat(
-					Sonet.arrayCat(awm.getAppWidgetIds(new ComponentName(
-							getApplicationContext(), SonetWidget_4x2.class)),
-							awm.getAppWidgetIds(new ComponentName(
-									getApplicationContext(), SonetWidget_4x3.class))),
-									awm.getAppWidgetIds(new ComponentName(getApplicationContext(),
-											SonetWidget_4x4.class)));
 			for (int appWidgetId : appWidgetIds) {
 				// About.java will send an invalid appwidget id
 				if ((appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) || Sonet.arrayContains(awi, appWidgetId)) {
@@ -500,41 +501,19 @@ public class SonetService extends Service {
 					getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
 				}
 			}
-		}
-	}
-
-	private static synchronized void processUpdates(SonetService service) {
-		HashMap<Integer, Integer> appWidgetIdsReprocessing = new HashMap<Integer, Integer>();
-		for (Map.Entry<Integer, Integer> entry : mAppWidgetIdsQueued.entrySet()) {
-			// check if this update is already processing
-			if (mAppWidgetIdsProcessing.isEmpty() || !mAppWidgetIdsProcessing.containsKey(entry.getKey())) {
-				// start processing
-				mAppWidgetIdsProcessing.put(entry.getKey(), entry.getValue());
-				StatusesLoader loader = service.new StatusesLoader();
-				mStatusesLoaders.put(entry.getKey(), loader);
-				loader.execute(entry.getKey(), entry.getValue());
-			} else if (appWidgetIdsReprocessing.isEmpty() || !appWidgetIdsReprocessing.containsKey(entry.getKey()) || (appWidgetIdsReprocessing.get(entry.getKey()) < entry.getValue())) {
-				// already processing, shelve to reprocessing until current processing is complete
-				// check that a reload doesn't override a non-reload
-				appWidgetIdsReprocessing.put(entry.getKey(), entry.getValue());
+		} else if ((awi != null) && (awi.length > 0)) {
+			for (int appWidgetId : awi) {
+				putNewUpdate(appWidgetId, reload);
 			}
 		}
-		mAppWidgetIdsQueued.clear();
-		if (!appWidgetIdsReprocessing.isEmpty()) {
-			// reset the queue to those that are awaiting processing
-			mAppWidgetIdsQueued = appWidgetIdsReprocessing;
-		}
-
 	}
 
-	private static HashMap<Integer, Integer> mAppWidgetIdsQueued = new HashMap<Integer, Integer>();
-	private static HashMap<Integer, Integer> mAppWidgetIdsProcessing = new HashMap<Integer, Integer>();
-
-	protected static synchronized void putNewUpdate(int widget, int reload) {
+	protected void putNewUpdate(int widget, int reload) {
 		// if the widget is already loading, don't load another
-		// always add this update to the queue
-		if (mAppWidgetIdsQueued.isEmpty() || !mAppWidgetIdsQueued.containsKey(widget) || (mAppWidgetIdsQueued.get(widget) < reload)) {
-			mAppWidgetIdsQueued.put(widget, reload);
+		if (mStatusesLoaders.isEmpty() || !mStatusesLoaders.containsKey(widget) || ((reload == 1) && (mStatusesLoaders.get(widget).cancel(true)))) {
+			StatusesLoader loader = new StatusesLoader();
+			mStatusesLoaders.put(widget, loader);
+			loader.execute(widget, reload);
 		}
 	}
 
@@ -606,19 +585,9 @@ public class SonetService extends Service {
 			// the widget will start out as the default widget.xml, which simply says "loading..."
 			// if there's a cache, that should be quickly reloaded while new updates come down
 			// otherwise, replace the widget with "loading..."
-			//
-			// Android may have killed the service while it was updating, and later restarted it
-			// check the messages to see the last update time and use that to determine where to continue updating
-			String lastUpdated = null;
-			Cursor statuses = getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID, Statuses.CREATED}, Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, Long.toString(Sonet.INVALID_ACCOUNT_ID)}, Statuses.CREATED + " DESC");
-			if (statuses.moveToFirst()) {
-				// use the refreshInterval for the threshold by which new statuses may have been loaded
-				lastUpdated = Long.toString(statuses.getLong(1) - refreshInterval);
-				// clear the messages
-				getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, Long.toString(Sonet.INVALID_ACCOUNT_ID)});	
-			}
-			statuses.close();
-			statuses = getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID}, Statuses.WIDGET + "=?", new String[]{widget}, null);
+			// clear the messages
+			getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, Long.toString(Sonet.INVALID_ACCOUNT_ID)});
+			Cursor statuses = getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID}, Statuses.WIDGET + "=?", new String[]{widget}, null);
 			boolean hasCache = statuses.moveToFirst();
 			statuses.close();
 			// the alarm should always be set, rather than depend on the tasks to complete
@@ -628,8 +597,73 @@ public class SonetService extends Service {
 				mAlarmManager.set(backgroundUpdate ? AlarmManager.RTC_WAKEUP : AlarmManager.RTC, System.currentTimeMillis() + refreshInterval, PendingIntent.getService(SonetService.this, 0, new Intent(SonetService.this, SonetService.class).setData(Uri.withAppendedPath(Widgets.CONTENT_URI, widget)).setAction(ACTION_REFRESH), 0));
 				Log.d(TAG,"alarm set");
 			}
-			// always inform the user that the widget is loading
-			addStatusItem(widget, getString(R.string.updating), appWidgetId);
+			// get the accounts
+			Cursor accounts = getContentResolver().query(Widget_accounts_view.CONTENT_URI, new String[]{Widget_accounts_view.ACCOUNT, Widget_accounts_view.TOKEN, Widget_accounts_view.SECRET, Widget_accounts_view.SERVICE, Widget_accounts_view.SID}, Widget_accounts_view.WIDGET + "=?", new String[]{widget}, null);
+			if (hasCache && accounts.moveToFirst()) {
+				Log.d(TAG,"update cache styles");
+				// update the styles for existing statuses while fetching new statuses
+				while (!accounts.isAfterLast()) {
+					long account = accounts.getLong(0);
+					int service = accounts.getInt(3);
+					int status_bg_color = Sonet.default_message_bg_color;
+					int profile_bg_color = Sonet.default_message_bg_color;
+					int friend_bg_color = Sonet.default_friend_bg_color;
+					boolean icon = true;
+					Cursor c = getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{widget, Long.toString(account)}, null);
+					if (!c.moveToFirst()) {
+						// no account settings
+						c.close();
+						c = getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{widget, Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+						if (!c.moveToFirst()) {
+							// no widget settings
+							c.close();
+							c = getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+							if (!c.moveToFirst()) {
+								// initialize widget settings
+								ContentValues values = new ContentValues();
+								values.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
+								values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
+								getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
+							}
+							// don't insert a duplicate row
+							if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+								// initialize account settings
+								ContentValues values = new ContentValues();
+								values.put(Widgets.WIDGET, widget);
+								values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
+								getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
+							}
+						}
+						// initialize account settings
+						ContentValues values = new ContentValues();
+						values.put(Widgets.WIDGET, widget);
+						values.put(Widgets.ACCOUNT, Long.toString(account));
+						getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
+					}
+					if (c.moveToFirst()) {
+						status_bg_color = c.getInt(0);
+						icon = c.getInt(1) == 1;
+						profile_bg_color = c.getInt(2);
+						friend_bg_color = c.getInt(3);
+					}
+					c.close();
+					// update the bg and icon
+					// create the status_bg
+					ContentValues values = new ContentValues();
+					values.put(Statuses.STATUS_BG, createBackground(status_bg_color));
+					// friend_bg
+					values.put(Statuses.FRIEND_BG, createBackground(friend_bg_color));
+					// profile_bg
+					values.put(Statuses.PROFILE_BG, createBackground(profile_bg_color));
+					// icon
+					values.put(Statuses.ICON, icon ? getBlob(getResources(), map_icons[service]) : null);
+					getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, Integer.toString(service), Long.toString(account)});
+					accounts.moveToNext();
+				}
+			} else {
+				// if no cache inform the user that the widget is loading
+				addStatusItem(widget, getString(R.string.updating), appWidgetId);
+			}
 			// loading takes time, so don't leave an empty widget sitting there
 			if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
 				// build the widget
@@ -640,11 +674,6 @@ public class SonetService extends Service {
 				Log.d(TAG,"temp About build");
 				getContentResolver().notifyChange(Statuses_styles.CONTENT_URI, null);
 			}
-			// query accounts
-			/* get statuses for all accounts
-			 * then sort them by datetime, descending
-			 */
-			Cursor accounts = getContentResolver().query(Widget_accounts_view.CONTENT_URI, new String[]{Widget_accounts_view.ACCOUNT, Widget_accounts_view.TOKEN, Widget_accounts_view.SECRET, Widget_accounts_view.SERVICE, Widget_accounts_view.SID}, Widget_accounts_view.WIDGET + "=?", new String[]{widget}, null);
 			if (accounts.moveToFirst()) {
 				// only reload if the token's can be decrypted and if there's no cache or a reload is requested
 				if (!hasCache || reload) {
@@ -652,6 +681,7 @@ public class SonetService extends Service {
 					int notifications = 0;
 					// load the updates
 					while (!accounts.isAfterLast()) {
+						HttpClient httpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
 						long account = accounts.getLong(0);
 						int service = accounts.getInt(3);
 						Log.d(TAG,"widget:"+widget+",account:"+account+",service:"+service);
@@ -665,15 +695,15 @@ public class SonetService extends Service {
 						int friend_bg_color = Sonet.default_friend_bg_color;
 						boolean icon = true;
 						int status_count = Sonet.default_statuses_per_account;
-						Cursor c = SonetService.this.getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{widget, Long.toString(account)}, null);
+						Cursor c = getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{widget, Long.toString(account)}, null);
 						if (!c.moveToFirst()) {
 							// no account settings
 							c.close();
-							c = SonetService.this.getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{widget, Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+							c = getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{widget, Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 							if (!c.moveToFirst()) {
 								// no widget settings
 								c.close();
-								c = SonetService.this.getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+								c = getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 								if (!c.moveToFirst()) {
 									// initialize widget settings
 									ContentValues values = new ContentValues();
@@ -714,93 +744,67 @@ public class SonetService extends Service {
 							friend_bg_color = c.getInt(8);
 						}
 						c.close();
-						// if the service was killed while updating, some of the accounts may have been updated, check before processing
-						boolean isUpdated = false;
-						if (lastUpdated != null) {
-							Cursor recents = SonetService.this.getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID}, Statuses.CREATED + ">?", new String[]{lastUpdated}, null);
-							isUpdated = (recents.getCount() >= status_count);
-							recents.close();
-						}
-						if (!isUpdated) {
-							// if no connection, only update the status_bg and icons
-							if ((mConnectivityManager.getActiveNetworkInfo() != null) && mConnectivityManager.getActiveNetworkInfo().isConnected()) {
-								// get this account's statuses
-								boolean updateCreatedText = false;
-								switch (service) {
-								case TWITTER:
-									updateCreatedText = updateTwitter(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications);
-									break;
-								case FACEBOOK:
-									updateCreatedText = updateFacebook(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications);
-									break;
-								case MYSPACE:
-									updateCreatedText = updateMySpace(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications);
-									break;
-								case BUZZ:
-									updateCreatedText = updateBuzz(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications);
-									break;
-								case FOURSQUARE:
-									updateCreatedText = updateFoursquare(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications);
-									break;
-								case LINKEDIN:
-									updateCreatedText = updateLinkedIn(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications);
-									break;
-								case RSS:
-									updateCreatedText = updateRSS(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications);
-									break;
-								case IDENTICA:
-									updateCreatedText = updateIdentiCa(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications);
-									break;
-								case GOOGLEPLUS:
-									updateCreatedText = updateGooglePlus(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications);
-									break;
-								case PINTEREST:
-									updateCreatedText = updatePinterest(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications);
-									break;
-								case CHATTER:
-									updateCreatedText = updateChatter(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications);
-								}
-								// remove old notifications
-								getContentResolver().delete(Notifications.CONTENT_URI, Notifications.CLEARED + "=1 and " + Notifications.ACCOUNT + "=? and " + Notifications.CREATED + "<?", new String[]{Long.toString(account), Long.toString(System.currentTimeMillis() - 86400000)});
-								if (updateCreatedText) {
-									if (updateCreatedText(widget, Long.toString(account), time24hr) && (service == MYSPACE)) {
-										// warn about myspace permissions
-										addStatusItem(0,
-												getString(R.string.myspace_permissions_title),
-												null,
-												getString(R.string.myspace_permissions_message),
-												service,
-												time24hr,
-												appWidgetId,
-												account,
-												"",
-												"",
-												new ArrayList<String[]>());
-									}
-								}
-							} else {
-								// no network connection
-								if (hasCache) {
-									// update created text
-									updateCreatedText(widget, Long.toString(account), time24hr);
-								} else {
-									// clear the "loading" message and display "no connection"
-									getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[]{widget});
-									addStatusItem(System.currentTimeMillis(), "", null, getString(R.string.no_connection), 0, false, appWidgetId, Sonet.INVALID_ACCOUNT_ID, "-1", "-1", new ArrayList<String[]>());
-								}
+						// if no connection, only update the status_bg and icons
+						if ((mConnectivityManager.getActiveNetworkInfo() != null) && mConnectivityManager.getActiveNetworkInfo().isConnected()) {
+							// get this account's statuses
+							switch (service) {
+							case TWITTER:
+								updateTwitter(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications, httpClient);
+								break;
+							case FACEBOOK:
+								updateFacebook(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications, httpClient);
+								break;
+							case MYSPACE:
+								updateMySpace(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications, httpClient);
+								break;
+							case BUZZ:
+								updateBuzz(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications, httpClient);
+								break;
+							case FOURSQUARE:
+								updateFoursquare(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications, httpClient);
+								break;
+							case LINKEDIN:
+								updateLinkedIn(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications, httpClient);
+								break;
+							case RSS:
+								updateRSS(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications, httpClient);
+								break;
+							case IDENTICA:
+								updateIdentiCa(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications, httpClient);
+								break;
+							case GOOGLEPLUS:
+								updateGooglePlus(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications, httpClient);
+								break;
+							case PINTEREST:
+								updatePinterest(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications, httpClient);
+								break;
+							case CHATTER:
+								updateChatter(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications, httpClient);
 							}
-							// update the bg and icon
-							// create the status_bg
-							ContentValues values = new ContentValues();
-							values.put(Statuses.STATUS_BG, createBackground(status_bg_color));
-							// friend_bg
-							values.put(Statuses.FRIEND_BG, createBackground(friend_bg_color));
-							// profile_bg
-							values.put(Statuses.PROFILE_BG, createBackground(profile_bg_color));
-							// icon
-							values.put(Statuses.ICON, icon ? getBlob(getResources(), map_icons[service]) : null);
-							SonetService.this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, Integer.toString(service), Long.toString(account)});
+							// remove old notifications
+							getContentResolver().delete(Notifications.CONTENT_URI, Notifications.CLEARED + "=1 and " + Notifications.ACCOUNT + "=? and " + Notifications.CREATED + "<?", new String[]{Long.toString(account), Long.toString(System.currentTimeMillis() - 86400000)});
+						} else {
+							// no network connection
+							if (hasCache) {
+								// update created text
+								updateCreatedText(widget, Long.toString(account), time24hr);
+							} else {
+								// clear the "loading" message and display "no connection"
+								getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[]{widget});
+								addStatusItem(widget, getString(R.string.no_connection), appWidgetId);
+							}
 						}
+						// update the bg and icon
+						// create the status_bg
+						ContentValues values = new ContentValues();
+						values.put(Statuses.STATUS_BG, createBackground(status_bg_color));
+						// friend_bg
+						values.put(Statuses.FRIEND_BG, createBackground(friend_bg_color));
+						// profile_bg
+						values.put(Statuses.PROFILE_BG, createBackground(profile_bg_color));
+						// icon
+						values.put(Statuses.ICON, icon ? getBlob(getResources(), map_icons[service]) : null);
+						getContentResolver().update(Statuses.CONTENT_URI, values, Statuses.WIDGET + "=? and " + Statuses.SERVICE + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, Integer.toString(service), Long.toString(account)});
 						accounts.moveToNext();
 					}
 					if ((notifications != 0) && (mNotify != null)) {
@@ -839,6 +843,11 @@ public class SonetService extends Service {
 			}
 			return appWidgetId;
 		}
+		
+		@Override
+		protected void onCancelled(Integer appWidgetId) {
+			Log.d(TAG,"loader cancelled");
+		}
 
 		@Override
 		protected void onProgressUpdate(String... updates) {
@@ -853,21 +862,15 @@ public class SonetService extends Service {
 
 		@Override
 		protected void onPostExecute(Integer appWidgetId) {
-			// remove widget from list
-			if (!mAppWidgetIdsProcessing.isEmpty() && mAppWidgetIdsProcessing.containsKey(appWidgetId)) {
-				mAppWidgetIdsProcessing.remove(appWidgetId);
-			}
 			// remove self from thread list
 			if (!mStatusesLoaders.isEmpty() && mStatusesLoaders.containsKey(appWidgetId)) {
 				mStatusesLoaders.remove(appWidgetId);
 			}
 			Log.d(TAG,"finished update, check queue");
-			if (mAppWidgetIdsQueued.isEmpty() && mStatusesLoaders.isEmpty()) {
+			if (mStatusesLoaders.isEmpty()) {
 				Log.d(TAG,"stop service");
 				Sonet.release();
 				stopSelf();
-			} else {
-				processUpdates(SonetService.this);
 			}
 		}
 
@@ -916,11 +919,11 @@ public class SonetService extends Service {
 			int profile_bg_color = Sonet.default_message_bg_color;
 			int friend_bg_color = Sonet.default_friend_bg_color;
 			boolean icon = true;
-			Cursor c = SonetService.this.getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{widget, Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+			Cursor c = getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{widget, Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 			if (!c.moveToFirst()) {
 				// no widget settings
 				c.close();
-				c = SonetService.this.getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+				c = getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 			}
 			if (c.moveToFirst()) {
 				status_bg_color = c.getInt(1);
@@ -983,13 +986,12 @@ public class SonetService extends Service {
 			}
 		}
 
-		private void addStatusItem(long created, String friend, String url, String message, int service, boolean time24hr, int appWidgetId, long accountId, String sid, String esid, ArrayList<String[]> links) {
+		private void addStatusItem(long created, String friend, String url, String message, int service, boolean time24hr, int appWidgetId, long accountId, String sid, String esid, ArrayList<String[]> links, HttpClient httpClient) {
 			long id;
 			byte[] profile = null;
 			if (url != null) {
 				// get profile
-				final SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
-				profile = sonetHttpClient.httpBlobResponse(new HttpGet(url));
+				profile = SonetHttpClient.httpBlobResponse(httpClient, new HttpGet(url));
 			}
 			if (profile == null) {
 				profile = getBlob(getResources(), R.drawable.ic_contact_picture);
@@ -1075,8 +1077,7 @@ public class SonetService extends Service {
 			if (imageUrl != null) {
 				byte[] image = null;
 				if (url != null) {
-					final SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
-					image = sonetHttpClient.httpBlobResponse(new HttpGet(imageUrl));
+					image = SonetHttpClient.httpBlobResponse(httpClient, new HttpGet(imageUrl));
 				}
 				if (image != null) {
 					Bitmap imageBmp = BitmapFactory.decodeByteArray(image, 0, image.length, sBFOptions);
@@ -1212,12 +1213,12 @@ public class SonetService extends Service {
 
 		private boolean updateCreatedText(String widget, String account, boolean time24hr) {
 			boolean statuses_updated = false;
-			Cursor statuses = SonetService.this.getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID, Statuses.CREATED}, Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, account}, null);
+			Cursor statuses = getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID, Statuses.CREATED}, Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widget, account}, null);
 			if (statuses.moveToFirst()) {
 				while (!statuses.isAfterLast()) {
 					ContentValues values = new ContentValues();
 					values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(statuses.getLong(1), time24hr));
-					SonetService.this.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses._ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
+					getContentResolver().update(Statuses.CONTENT_URI, values, Statuses._ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
 					statuses.moveToNext();
 				}
 				statuses_updated = true;
@@ -1271,11 +1272,9 @@ public class SonetService extends Service {
 			return System.currentTimeMillis();
 		}
 
-		private boolean updateTwitter(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications) {
-			boolean updateCreatedText = false;
+		private void updateTwitter(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
 			String response;
 			JSONArray statusesArray;
-			SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
 			ArrayList<String[]> links = new ArrayList<String[]>();
 			final ArrayList<String> notificationSids = new ArrayList<String>();
 			mSimpleDateFormat = null;
@@ -1286,7 +1285,7 @@ public class SonetService extends Service {
 			String friend;
 			SonetOAuth sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, token, secret);
 			// parse the response
-			if ((response = sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_URL_FEED, TWITTER_BASE_URL, status_count))))) != null) {
+			if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_URL_FEED, TWITTER_BASE_URL, status_count))))) != null) {
 				// if not a full_refresh, only update the status_bg and icons
 				try {
 					statusesArray = new JSONArray(response);
@@ -1308,16 +1307,13 @@ public class SonetService extends Service {
 											account,
 											statusObj.getString(Sid),
 											friendObj.getString(Sid),
-											links);
+											links,
+											httpClient);
 						}
-					} else {
-						updateCreatedText = true;
 					}
 				} catch (JSONException e) {
 					Log.e(TAG, service + ":" + e.toString());
 				}
-			} else {
-				updateCreatedText = true;
 			}
 			// notifications
 			if (notifications != 0) {
@@ -1339,7 +1335,7 @@ public class SonetService extends Service {
 				}
 				last_status.close();
 				// get all mentions since the oldest status for this account
-				if ((response = sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_MENTIONS, TWITTER_BASE_URL, last_sid != null ? String.format(TWITTER_SINCE_ID, last_sid) : ""))))) != null) {
+				if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_MENTIONS, TWITTER_BASE_URL, last_sid != null ? String.format(TWITTER_SINCE_ID, last_sid) : ""))))) != null) {
 					try {
 						statusesArray = new JSONArray(response);
 						for (int i = 0, i2 = statusesArray.length(); i < i2; i++) {
@@ -1355,14 +1351,11 @@ public class SonetService extends Service {
 					}
 				}
 			}
-			return updateCreatedText;
 		}
 
-		private boolean updateFacebook(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications) {
-			boolean updateCreatedText = false;
+		private void updateFacebook(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
 			String response;
 			JSONArray statusesArray;
-			SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
 			ArrayList<String[]> links = new ArrayList<String[]>();
 			final ArrayList<String> notificationSids = new ArrayList<String>();
 			mSimpleDateFormat = null;
@@ -1392,7 +1385,7 @@ public class SonetService extends Service {
 							notificationSids.add(sid);
 						}
 						// get comments for current notifications
-						if ((response = sonetHttpClient.httpResponse(new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, sid, Saccess_token, token)))) != null) {
+						if ((response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, sid, Saccess_token, token)))) != null) {
 							// check for a newer post, if it's the user's own, then set CLEARED=0
 							try {
 								commentsArray = new JSONObject(response).getJSONArray(Sdata);
@@ -1417,7 +1410,7 @@ public class SonetService extends Service {
 				currentNotifications.close();
 			}
 			// parse the response
-			if ((response = sonetHttpClient.httpResponse(new HttpGet(String.format(FACEBOOK_HOME, FACEBOOK_BASE_URL, Saccess_token, token)))) != null) {
+			if ((response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(FACEBOOK_HOME, FACEBOOK_BASE_URL, Saccess_token, token)))) != null) {
 				String profile = "http://graph.facebook.com/%s/picture";
 				try {
 					statusesArray = new JSONObject(response).getJSONArray(Sdata);
@@ -1527,28 +1520,22 @@ public class SonetService extends Service {
 														account,
 														sid,
 														esid,
-														links);
+														links,
+														httpClient);
 									}
 								}
 							}
 						}
-					} else {
-						updateCreatedText = true;
 					}
 				} catch (JSONException e) {
 					Log.e(TAG, service + ":" + e.toString() + ":" + response);
 				}
-			} else {
-				updateCreatedText = true;
 			}
-			return updateCreatedText;
 		}
 
-		private boolean updateMySpace(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications) {
-			boolean updateCreatedText = false;
+		private void updateMySpace(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
 			String response;
 			JSONArray statusesArray;
-			SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
 			ArrayList<String[]> links = new ArrayList<String[]>();
 			final ArrayList<String> notificationSids = new ArrayList<String>();
 			mSimpleDateFormat = null;
@@ -1580,7 +1567,7 @@ public class SonetService extends Service {
 							notificationSids.add(sid);
 						}
 						// get comments for current notifications
-						if ((response = sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, esid, sid))))) != null) {
+						if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, esid, sid))))) != null) {
 							// check for a newer post, if it's the user's own, then set CLEARED=0
 							try {
 								commentsArray = new JSONObject(response).getJSONArray(Sentry);
@@ -1605,7 +1592,7 @@ public class SonetService extends Service {
 				currentNotifications.close();
 			}
 			// parse the response
-			if ((response = sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_HISTORY, MYSPACE_BASE_URL))))) != null) {
+			if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_HISTORY, MYSPACE_BASE_URL))))) != null) {
 				try {
 					statusesArray = new JSONObject(response).getJSONArray(Sentry);
 					// if there are updates, clear the cache
@@ -1667,26 +1654,48 @@ public class SonetService extends Service {
 												account,
 												sid,
 												esid,
-												links);
+												links,
+												httpClient);
 							}
 						}
 					} else {
-						updateCreatedText = true;
+						// warn about myspace permissions
+						addStatusItem(0,
+								getString(R.string.myspace_permissions_title),
+								null,
+								getString(R.string.myspace_permissions_message),
+								service,
+								time24hr,
+								appWidgetId,
+								account,
+								"",
+								"",
+								new ArrayList<String[]>(),
+								httpClient);
 					}
 				} catch (JSONException e) {
 					Log.e(TAG, service + ":" + e.toString());
 				}
 			} else {
-				updateCreatedText = true;
+				// warn about myspace permissions
+				addStatusItem(0,
+						getString(R.string.myspace_permissions_title),
+						null,
+						getString(R.string.myspace_permissions_message),
+						service,
+						time24hr,
+						appWidgetId,
+						account,
+						"",
+						"",
+						new ArrayList<String[]>(),
+						httpClient);
 			}
-			return updateCreatedText;
 		}
 
-		private boolean updateBuzz(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications) {
-			boolean updateCreatedText = false;
+		private void updateBuzz(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
 			String response;
 			JSONArray statusesArray;
-			SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
 			ArrayList<String[]> links = new ArrayList<String[]>();
 			final ArrayList<String> notificationSids = new ArrayList<String>();
 			mSimpleDateFormat = null;
@@ -1717,7 +1726,7 @@ public class SonetService extends Service {
 							notificationSids.add(sid);
 						}
 						// get comments for current notifications
-						if ((response = sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, sid, BUZZ_API_KEY))))) != null) {
+						if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, sid, BUZZ_API_KEY))))) != null) {
 							// check for a newer post, if it's the user's own, then set CLEARED=0
 							try {
 								commentsArray = new JSONObject(response).getJSONObject(Sdata).getJSONArray(Sitems);
@@ -1742,7 +1751,7 @@ public class SonetService extends Service {
 				currentNotifications.close();
 			}
 			// parse the response
-			if ((response = sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_ACTIVITIES, BUZZ_BASE_URL, BUZZ_API_KEY))))) != null) {
+			if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_ACTIVITIES, BUZZ_BASE_URL, BUZZ_API_KEY))))) != null) {
 				try {
 					statusesArray = new JSONObject(response).getJSONObject(Sdata).getJSONArray(Sitems);
 					// if there are updates, clear the cache
@@ -1806,28 +1815,22 @@ public class SonetService extends Service {
 														account,
 														sid,
 														esid,
-														links);
+														links,
+														httpClient);
 									}
 								}
 							}
 						}
-					} else {
-						updateCreatedText = true;
 					}
 				} catch (JSONException e) {
 					Log.e(TAG, service + ":" + e.toString());
 				}
-			} else {
-				updateCreatedText = true;
 			}
-			return updateCreatedText;
 		}
 
-		private boolean updateFoursquare(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications) {
-			boolean updateCreatedText = false;
+		private void updateFoursquare(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
 			String response;
 			JSONArray statusesArray;
-			SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
 			ArrayList<String[]> links = new ArrayList<String[]>();
 			final ArrayList<String> notificationSids = new ArrayList<String>();
 			mSimpleDateFormat = null;
@@ -1857,7 +1860,7 @@ public class SonetService extends Service {
 							notificationSids.add(sid);
 						}
 						// get comments for current notifications
-						if ((response = sonetHttpClient.httpResponse(new HttpGet(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, sid, token)))) != null) {
+						if ((response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, sid, token)))) != null) {
 							// check for a newer post, if it's the user's own, then set CLEARED=0
 							try {
 								commentsArray = new JSONObject(response).getJSONObject(Sresponse).getJSONObject(Scheckin).getJSONObject(Scomments).getJSONArray(Sitems);
@@ -1882,7 +1885,7 @@ public class SonetService extends Service {
 				currentNotifications.close();
 			}
 			// parse the response
-			if ((response = sonetHttpClient.httpResponse(new HttpGet(String.format(FOURSQUARE_CHECKINS, FOURSQUARE_BASE_URL, token)))) != null) {
+			if ((response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(FOURSQUARE_CHECKINS, FOURSQUARE_BASE_URL, token)))) != null) {
 				try {
 					statusesArray = new JSONObject(response).getJSONObject(Sresponse).getJSONArray(Srecent);
 					// if there are updates, clear the cache
@@ -1953,27 +1956,21 @@ public class SonetService extends Service {
 												account,
 												sid,
 												esid,
-												links);
+												links,
+												httpClient);
 							}
 						}
-					} else {
-						updateCreatedText = true;
 					}
 				} catch (JSONException e) {
 					Log.e(TAG, service + ":" + e.toString());
 					Log.e(TAG, response);
 				}
-			} else {
-				updateCreatedText = true;
 			}
-			return updateCreatedText;
 		}
 
-		private boolean updateLinkedIn(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications) {
-			boolean updateCreatedText = false;
+		private void updateLinkedIn(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
 			String response;
 			JSONArray statusesArray;
-			SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
 			ArrayList<String[]> links = new ArrayList<String[]>();
 			HttpGet httpGet;
 			final ArrayList<String> notificationSids = new ArrayList<String>();
@@ -2007,7 +2004,7 @@ public class SonetService extends Service {
 						// get comments for current notifications
 						httpGet = new HttpGet(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, sid));
 						for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
-						if ((response = sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpGet))) != null) {
+						if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(httpGet))) != null) {
 							// check for a newer post, if it's the user's own, then set CLEARED=0
 							try {
 								JSONObject jsonResponse = new JSONObject(response);
@@ -2039,7 +2036,7 @@ public class SonetService extends Service {
 				httpGet.setHeader(header[0], header[1]);
 			}
 			// parse the response
-			if ((response = sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpGet))) != null) {
+			if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(httpGet))) != null) {
 				try {
 					statusesArray = new JSONObject(response).getJSONArray(Svalues);
 					// if there are updates, clear the cache
@@ -2176,27 +2173,21 @@ public class SonetService extends Service {
 													account,
 													sid,
 													esid,
-													links);
+													links,
+													httpClient);
 								}
 							}
 						}
-					} else {
-						updateCreatedText = true;
 					}
 				} catch (JSONException e) {
 					Log.e(TAG, service + ":" + e.toString());
 				}
-			} else {
-				updateCreatedText = true;
 			}
-			return updateCreatedText;
 		}
 
-		private boolean updateRSS(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications) {
-			boolean updateCreatedText = false;
-			SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
+		private void updateRSS(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
 			ArrayList<String[]> links = new ArrayList<String[]>();
-			String response = sonetHttpClient.httpResponse(new HttpGet(accountEsid));
+			String response = SonetHttpClient.httpResponse(httpClient, new HttpGet(accountEsid));
 			if (response != null) {
 				DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 				try {
@@ -2223,7 +2214,6 @@ public class SonetService extends Service {
 							}
 						}
 						removeOldStatuses(widget, Long.toString(account));
-						updateCreatedText = true;
 						int item_count = 0;
 						for (int i = 0; (i < i2) && (item_count < status_count); i++) {
 							links.clear();
@@ -2269,7 +2259,7 @@ public class SonetService extends Service {
 							}
 							if (Sonet.HasValues(new String[]{title, description, link, date})) {
 								item_count++;
-								addStatusItem(parseDate(date, null), title, display_profile ? image_url : null, description, service, time24hr, appWidgetId, account, null, link, links);
+								addStatusItem(parseDate(date, null), title, display_profile ? image_url : null, description, service, time24hr, appWidgetId, account, null, link, links, httpClient);
 							}
 						}
 					}
@@ -2281,14 +2271,11 @@ public class SonetService extends Service {
 					Log.e(TAG, "RSS:" + e.toString());
 				}
 			}
-			return updateCreatedText;
 		}
 
-		private boolean updateIdentiCa(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications) {
-			boolean updateCreatedText = false;
+		private void updateIdentiCa(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
 			String response;
 			JSONArray statusesArray;
-			SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
 			ArrayList<String[]> links = new ArrayList<String[]>();
 			final ArrayList<String> notificationSids = new ArrayList<String>();
 			mSimpleDateFormat = null;
@@ -2299,7 +2286,7 @@ public class SonetService extends Service {
 			String friend;
 			SonetOAuth sonetOAuth = new SonetOAuth(IDENTICA_KEY, IDENTICA_SECRET, token, secret);
 			// parse the response
-			if ((response = sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(IDENTICA_URL_FEED, IDENTICA_BASE_URL, status_count))))) != null) {
+			if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(IDENTICA_URL_FEED, IDENTICA_BASE_URL, status_count))))) != null) {
 				// if not a full_refresh, only update the status_bg and icons
 				try {
 					statusesArray = new JSONArray(response);
@@ -2322,16 +2309,13 @@ public class SonetService extends Service {
 											account,
 											statusObj.getString(Sid),
 											friendObj.getString(Sid),
-											links);
+											links,
+											httpClient);
 						}
-					} else {
-						updateCreatedText = true;
 					}
 				} catch (JSONException e) {
 					Log.e(TAG, service + ":" + e.toString());
 				}
-			} else {
-				updateCreatedText = true;
 			}
 			// notifications
 			if (notifications != 0) {
@@ -2353,7 +2337,7 @@ public class SonetService extends Service {
 				}
 				last_status.close();
 				// get all mentions since the oldest status for this account
-				if ((response = sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(IDENTICA_MENTIONS, IDENTICA_BASE_URL, last_sid != null ? String.format(IDENTICA_SINCE_ID, last_sid) : ""))))) != null) {
+				if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(IDENTICA_MENTIONS, IDENTICA_BASE_URL, last_sid != null ? String.format(IDENTICA_SINCE_ID, last_sid) : ""))))) != null) {
 					try {
 						statusesArray = new JSONArray(response);
 						for (int i = 0, i2 = statusesArray.length(); i < i2; i++) {
@@ -2369,14 +2353,11 @@ public class SonetService extends Service {
 					}
 				}
 			}
-			return updateCreatedText;
 		}
 
-		private boolean updateGooglePlus(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications) {
-			boolean updateCreatedText = false;
+		private void updateGooglePlus(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
 			String response;
 			JSONArray statusesArray;
-			SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
 			ArrayList<String[]> links = new ArrayList<String[]>();
 			final ArrayList<String> notificationSids = new ArrayList<String>();
 			mSimpleDateFormat = null;
@@ -2398,7 +2379,7 @@ public class SonetService extends Service {
 			httpParams.add(new BasicNameValuePair("grant_type", "refresh_token"));
 			try {
 				httpPost.setEntity(new UrlEncodedFormEntity(httpParams));
-				if ((response = sonetHttpClient.httpResponse(httpPost)) != null) {
+				if ((response = SonetHttpClient.httpResponse(httpClient, httpPost)) != null) {
 					JSONObject j = new JSONObject(response);
 					if (j.has("access_token")) {
 						String access_token = j.getString("access_token");
@@ -2417,7 +2398,7 @@ public class SonetService extends Service {
 										notificationSids.add(sid);
 									}
 									// get comments for current notifications
-									if ((response = sonetHttpClient.httpResponse(new HttpGet(String.format(GOOGLEPLUS_ACTIVITY, GOOGLEPLUS_BASE_URL, sid, access_token)))) != null) {
+									if ((response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(GOOGLEPLUS_ACTIVITY, GOOGLEPLUS_BASE_URL, sid, access_token)))) != null) {
 										// check for a newer post, if it's the user's own, then set CLEARED=0
 										try {
 											JSONObject item = new JSONObject(response);
@@ -2441,7 +2422,7 @@ public class SonetService extends Service {
 							currentNotifications.close();
 						}
 						// get new feed
-						if ((response = sonetHttpClient.httpResponse(new HttpGet(String.format(GOOGLEPLUS_ACTIVITIES, GOOGLEPLUS_BASE_URL, "me", "public", status_count, access_token)))) != null) {
+						if ((response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(GOOGLEPLUS_ACTIVITIES, GOOGLEPLUS_BASE_URL, "me", "public", status_count, access_token)))) != null) {
 							JSONObject r = new JSONObject(response);
 							if (r.has(Sitems)) {
 								statusesArray = r.getJSONArray(Sitems);
@@ -2488,38 +2469,32 @@ public class SonetService extends Service {
 														account,
 														sid,
 														esid,
-														links);
+														links,
+														httpClient);
 											}
 										}
 									}
 								}
 							}
-						} else {
-							updateCreatedText = true;
 						}
 					}
-				} else {
-					updateCreatedText = true;
 				}
 			} catch (UnsupportedEncodingException e) {
 				Log.e(TAG,e.toString());
 			} catch (JSONException e) {
 				Log.e(TAG,e.toString());
 			}
-			return updateCreatedText;
 		}
 
-		private boolean updatePinterest(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications) {
-			boolean updateCreatedText = false;
+		private void updatePinterest(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
 			String response;
 			JSONArray statusesArray;
-			SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
 			ArrayList<String[]> links = new ArrayList<String[]>();
 			mSimpleDateFormat = null;
 			JSONObject statusObj;
 			JSONObject friendObj;
 			// parse the response
-			if ((response = sonetHttpClient.httpResponse(new HttpGet(String.format(PINTEREST_URL_FEED, PINTEREST_BASE_URL)))) != null) {
+			if ((response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(PINTEREST_URL_FEED, PINTEREST_BASE_URL)))) != null) {
 				// if not a full_refresh, only update the status_bg and icons
 				try {
 					JSONObject pins = new JSONObject(response);
@@ -2559,35 +2534,27 @@ public class SonetService extends Service {
 												account,
 												statusObj.getString(Sid),
 												friendObj.getString(Sid),
-												links);
+												links,
+												httpClient);
 							}
-						} else {
-							updateCreatedText = true;
 						}
-					} else {
-						updateCreatedText = true;
 					}
 				} catch (JSONException e) {
 					Log.e(TAG, service + ":" + e.toString());
 				}
-			} else {
-				updateCreatedText = true;
 			}
-			return updateCreatedText;
 		}
 
-		private boolean updateChatter(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications) {
-			boolean updateCreatedText = false;
+		private void updateChatter(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
 			String response;
 			JSONArray statusesArray;
-			SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
 			ArrayList<String[]> links = new ArrayList<String[]>();
 			HttpGet httpGet;
 			mSimpleDateFormat = null;
 			JSONObject statusObj;
 			JSONObject friendObj;
 			// need to get an updated access_token
-			String accessResponse = sonetHttpClient.httpResponse(new HttpPost(String.format(CHATTER_URL_ACCESS, CHATTER_KEY, token)));
+			String accessResponse = SonetHttpClient.httpResponse(httpClient, new HttpPost(String.format(CHATTER_URL_ACCESS, CHATTER_KEY, token)));
 			if (accessResponse != null) {
 				try {
 					JSONObject jobj = new JSONObject(accessResponse);
@@ -2595,7 +2562,7 @@ public class SonetService extends Service {
 						httpGet = new HttpGet(String.format(CHATTER_URL_FEED, jobj.getString(Sinstance_url)));
 						String chatterToken = jobj.getString(Saccess_token);
 						httpGet.setHeader("Authorization", "OAuth " + chatterToken);
-						if ((response = sonetHttpClient.httpResponse(httpGet)) != null) {
+						if ((response = SonetHttpClient.httpResponse(httpClient, httpGet)) != null) {
 							try {
 								statusesArray = new JSONObject(response).getJSONArray(Sitems);
 								// if there are updates, clear the cache
@@ -2620,18 +2587,15 @@ public class SonetService extends Service {
 															account,
 															statusObj.getString(Sid),
 															friendObj.getString(Sid),
-															links);
+															links,
+															httpClient);
 										}
 									}
-								} else {
-									updateCreatedText = true;
 								}
 							} catch (JSONException e) {
 								Log.e(TAG, service + ":" + e.toString());
 								Log.e(TAG, response);
 							}
-						} else {
-							updateCreatedText = true;
 						}
 					}
 				} catch (JSONException e) {
@@ -2639,7 +2603,6 @@ public class SonetService extends Service {
 					Log.e(TAG, accessResponse);
 				}
 			}
-			return updateCreatedText;
 		}
 	}
 

@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Locale;
 
 import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -176,7 +177,7 @@ public class SonetNotifications extends ListActivity {
 					Cursor widgets = getContentResolver().query(Widgets_settings.DISTINCT_CONTENT_URI, new String[]{Widgets.ACCOUNT}, Widgets.ACCOUNT + "!=-1 and (" + Widgets.LIGHTS + "=1 or " + Widgets.VIBRATE + "=1 or " + Widgets.SOUND + "=1)", null, null);
 					if (widgets.moveToFirst()) {
 						mSonetCrypto = SonetCrypto.getInstance(getApplicationContext());
-						SonetHttpClient sonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
+						HttpClient httpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
 						while (!widgets.isAfterLast()) {
 							long accountId = widgets.getLong(0);
 							ArrayList<String> notificationSids = new ArrayList<String>();
@@ -209,7 +210,7 @@ public class SonetNotifications extends ListActivity {
 									}
 									last_status.close();
 									// get all mentions since the oldest status for this account
-									String response = sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_MENTIONS, TWITTER_BASE_URL, last_sid != null ? String.format(TWITTER_SINCE_ID, last_sid) : ""))));
+									String response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_MENTIONS, TWITTER_BASE_URL, last_sid != null ? String.format(TWITTER_SINCE_ID, last_sid) : ""))));
 									if (response != null) {
 										try {
 											JSONArray comments = new JSONArray(response);
@@ -245,7 +246,7 @@ public class SonetNotifications extends ListActivity {
 									}
 									last_status.close();
 									// get all mentions since the oldest status for this account
-									String response = sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(IDENTICA_MENTIONS, IDENTICA_BASE_URL, last_sid != null ? String.format(IDENTICA_SINCE_ID, last_sid) : ""))));
+									String response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(IDENTICA_MENTIONS, IDENTICA_BASE_URL, last_sid != null ? String.format(IDENTICA_SINCE_ID, last_sid) : ""))));
 									if (response != null) {
 										try {
 											JSONArray comments = new JSONArray(response);
@@ -279,7 +280,7 @@ public class SonetNotifications extends ListActivity {
 													notificationSids.add(sid);
 												}
 												// get comments for current notifications
-												if ((response = sonetHttpClient.httpResponse(new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, sid, Saccess_token, token)))) != null) {
+												if ((response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, sid, Saccess_token, token)))) != null) {
 													// check for a newer post, if it's the user's own, then set CLEARED=0
 													try {
 														JSONArray comments = new JSONObject(response).getJSONArray(Sdata);
@@ -313,7 +314,7 @@ public class SonetNotifications extends ListActivity {
 												currentNotifications.moveToNext();
 											}
 											// check the latest feed
-											if ((response = sonetHttpClient.httpResponse(new HttpGet(String.format(FACEBOOK_HOME, FACEBOOK_BASE_URL, Saccess_token, token)))) != null) {
+											if ((response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(FACEBOOK_HOME, FACEBOOK_BASE_URL, Saccess_token, token)))) != null) {
 												try {
 													JSONArray jarr = new JSONObject(response).getJSONArray(Sdata);
 													// if there are updates, clear the cache
@@ -408,7 +409,7 @@ public class SonetNotifications extends ListActivity {
 													notificationSids.add(sid);
 												}
 												// get comments for current notifications
-												if ((response = sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, esid, sid))))) != null) {
+												if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, esid, sid))))) != null) {
 													// check for a newer post, if it's the user's own, then set CLEARED=0
 													try {
 														JSONArray comments = new JSONObject(response).getJSONArray(Sentry);
@@ -442,7 +443,7 @@ public class SonetNotifications extends ListActivity {
 												currentNotifications.moveToNext();
 											}
 											// check the latest feed
-											if ((response = sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_HISTORY, MYSPACE_BASE_URL))))) != null) {
+											if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_HISTORY, MYSPACE_BASE_URL))))) != null) {
 												try {
 													JSONArray jarr = new JSONObject(response).getJSONArray(Sentry);
 													// if there are updates, clear the cache
@@ -513,7 +514,7 @@ public class SonetNotifications extends ListActivity {
 													notificationSids.add(sid);
 												}
 												// get comments for current notifications
-												if ((response = sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, sid, BUZZ_API_KEY))))) != null) {
+												if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, sid, BUZZ_API_KEY))))) != null) {
 													// check for a newer post, if it's the user's own, then set CLEARED=0
 													try {
 														JSONArray comments = new JSONObject(response).getJSONObject(Sdata).getJSONArray(Sitems);
@@ -547,7 +548,7 @@ public class SonetNotifications extends ListActivity {
 												currentNotifications.moveToNext();
 											}
 											// check the latest feed
-											if ((response = sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_ACTIVITIES, BUZZ_BASE_URL, BUZZ_API_KEY))))) != null) {
+											if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_ACTIVITIES, BUZZ_BASE_URL, BUZZ_API_KEY))))) != null) {
 												try {
 													JSONArray jarr = new JSONObject(response).getJSONObject(Sdata).getJSONArray(Sitems);
 													// if there are updates, clear the cache
@@ -618,7 +619,7 @@ public class SonetNotifications extends ListActivity {
 													notificationSids.add(sid);
 												}
 												// get comments for current notifications
-												if ((response = sonetHttpClient.httpResponse(new HttpGet(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, sid, token)))) != null) {
+												if ((response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, sid, token)))) != null) {
 													// check for a newer post, if it's the user's own, then set CLEARED=0
 													try {
 														JSONArray comments = new JSONObject(response).getJSONObject(Sresponse).getJSONObject(Scheckin).getJSONObject(Scomments).getJSONArray(Sitems);
@@ -652,7 +653,7 @@ public class SonetNotifications extends ListActivity {
 												currentNotifications.moveToNext();
 											}
 											// check the latest feed
-											if ((response = sonetHttpClient.httpResponse(new HttpGet(String.format(FOURSQUARE_CHECKINS, FOURSQUARE_BASE_URL, token)))) != null) {
+											if ((response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(FOURSQUARE_CHECKINS, FOURSQUARE_BASE_URL, token)))) != null) {
 												try {
 													JSONArray jarr = new JSONObject(response).getJSONObject(Sresponse).getJSONArray(Srecent);
 													// if there are updates, clear the cache
@@ -735,7 +736,7 @@ public class SonetNotifications extends ListActivity {
 												// get comments for current notifications
 												HttpGet httpGet = new HttpGet(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, sid));
 												for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
-												if ((response = sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpGet))) != null) {
+												if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(httpGet))) != null) {
 													// check for a newer post, if it's the user's own, then set CLEARED=0
 													try {
 														JSONObject jsonResponse = new JSONObject(response);
@@ -776,7 +777,7 @@ public class SonetNotifications extends ListActivity {
 											for (String[] header : LINKEDIN_HEADERS) {
 												httpGet.setHeader(header[0], header[1]);
 											}
-											if ((response = sonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpGet))) != null) {
+											if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(httpGet))) != null) {
 												try {
 													JSONArray jarr = new JSONObject(response).getJSONArray(Svalues);
 													// if there are updates, clear the cache
@@ -919,7 +920,7 @@ public class SonetNotifications extends ListActivity {
 											httpParams.add(new BasicNameValuePair("grant_type", "refresh_token"));
 											try {
 												httpPost.setEntity(new UrlEncodedFormEntity(httpParams));
-												if ((response = sonetHttpClient.httpResponse(httpPost)) != null) {
+												if ((response = SonetHttpClient.httpResponse(httpClient, httpPost)) != null) {
 													JSONObject j = new JSONObject(response);
 													if (j.has(Saccess_token)) {
 														String access_token = j.getString(Saccess_token);
@@ -933,7 +934,7 @@ public class SonetNotifications extends ListActivity {
 																notificationSids.add(sid);
 															}
 															// get comments for current notifications
-															if ((response = sonetHttpClient.httpResponse(new HttpGet(String.format(GOOGLEPLUS_ACTIVITY, GOOGLEPLUS_BASE_URL, sid, access_token)))) != null) {
+															if ((response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(GOOGLEPLUS_ACTIVITY, GOOGLEPLUS_BASE_URL, sid, access_token)))) != null) {
 																// check for a newer post, if it's the user's own, then set CLEARED=0
 																try {
 																	JSONObject item = new JSONObject(response);
@@ -954,7 +955,7 @@ public class SonetNotifications extends ListActivity {
 															currentNotifications.moveToNext();
 														}
 														// get new feed
-														if ((response = sonetHttpClient.httpResponse(new HttpGet(String.format(GOOGLEPLUS_ACTIVITIES, GOOGLEPLUS_BASE_URL, "me", "public", 20, access_token)))) != null) {
+														if ((response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(GOOGLEPLUS_ACTIVITIES, GOOGLEPLUS_BASE_URL, "me", "public", 20, access_token)))) != null) {
 															JSONObject r = new JSONObject(response);
 															if (r.has(Sitems)) {
 																JSONArray items = r.getJSONArray(Sitems);

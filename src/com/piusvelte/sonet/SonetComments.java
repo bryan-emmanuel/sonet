@@ -32,6 +32,7 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 
 import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -109,7 +110,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 	private String mServiceName = null;
 	private Uri mData = null;
 	private SimpleDateFormat mSimpleDateFormat = null;
-	private SonetHttpClient mSonetHttpClient;
+	private HttpClient mHttpClient;
 	private String[] items = null;
 	private AlertDialog mDialog;
 
@@ -137,7 +138,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 		mMessage.setOnKeyListener(this);
 		mSend.setOnClickListener(this);
 
-		mSonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
+		mHttpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
 
 		setResult(RESULT_OK);
 	}
@@ -214,7 +215,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 								params.add(new BasicNameValuePair(Sin_reply_to_status_id, mSid));
 								try {
 									httpPost.setEntity(new UrlEncodedFormEntity(params));
-									response = mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpPost));
+									response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
 								} catch (UnsupportedEncodingException e) {
 									Log.e(TAG, e.toString());
 								}
@@ -226,7 +227,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							params.add(new BasicNameValuePair(Smessage, mMessage.getText().toString()));
 							try {
 								httpPost.setEntity(new UrlEncodedFormEntity(params));
-								response = mSonetHttpClient.httpResponse(httpPost);
+								response = SonetHttpClient.httpResponse(mHttpClient, httpPost);
 							} catch (UnsupportedEncodingException e) {
 								Log.e(TAG, e.toString());
 							}
@@ -236,7 +237,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							try {
 								httpPost = new HttpPost(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mEsid, mSid));
 								httpPost.setEntity(new StringEntity(String.format(MYSPACE_STATUSMOODCOMMENTS_BODY, mMessage.getText().toString())));
-								response = mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpPost));
+								response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
 							} catch (IOException e) {
 								Log.e(TAG, e.toString());
 							}
@@ -247,7 +248,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 								httpPost = new HttpPost(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, mSid, BUZZ_API_KEY));
 								httpPost.setEntity(new StringEntity(String.format(BUZZ_COMMENT_BODY, mMessage.getText().toString())));
 								httpPost.addHeader(new BasicHeader("Content-Type", "application/json"));
-								response = mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpPost));
+								response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
 							} catch (IOException e) {
 								Log.e(TAG, e.toString());
 							}
@@ -256,7 +257,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							try {
 								message = URLEncoder.encode(mMessage.getText().toString(), "UTF-8");
 								httpPost = new HttpPost(String.format(FOURSQUARE_ADDCOMMENT, FOURSQUARE_BASE_URL, mSid, message, mToken));
-								response = mSonetHttpClient.httpResponse(httpPost);
+								response = SonetHttpClient.httpResponse(mHttpClient, httpPost);
 							} catch (UnsupportedEncodingException e) {
 								Log.e(TAG, e.toString());
 							}
@@ -267,7 +268,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 								httpPost = new HttpPost(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, mSid));
 								httpPost.setEntity(new StringEntity(String.format(LINKEDIN_COMMENT_BODY, mMessage.getText().toString())));
 								httpPost.addHeader(new BasicHeader("Content-Type", "application/xml"));
-								response = mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpPost));
+								response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
 							} catch (IOException e) {
 								Log.e(TAG, e.toString());
 							}
@@ -306,7 +307,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 								params.add(new BasicNameValuePair(Sin_reply_to_status_id, mSid));
 								try {
 									httpPost.setEntity(new UrlEncodedFormEntity(params));
-									response = mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpPost));
+									response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
 								} catch (UnsupportedEncodingException e) {
 									Log.e(TAG, e.toString());
 								}
@@ -317,7 +318,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 						case CHATTER:
 							httpPost = new HttpPost(String.format(CHATTER_URL_COMMENT, mChatterInstance, mSid, Uri.encode(mMessage.getText().toString())));
 							httpPost.setHeader("Authorization", "OAuth " + mChatterToken);
-							response = mSonetHttpClient.httpResponse(httpPost);
+							response = SonetHttpClient.httpResponse(mHttpClient, httpPost);
 							break;
 						}
 						return ((response == null) && (mService == MYSPACE)) ? null : serviceName + " " + getString(response != null ? R.string.success : R.string.failure);
@@ -418,7 +419,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 									HttpPost httpPost = new HttpPost(String.format(TWITTER_RETWEET, TWITTER_BASE_URL, sid));
 									// resolve Error 417 Expectation by Twitter
 									httpPost.getParams().setBooleanParameter("http.protocol.expect-continue", false);
-									return mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpPost));
+									return SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
 								}
 
 								@Override
@@ -464,11 +465,11 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 								@Override
 								protected String doInBackground(String... arg0) {
 									if (liked.equals(getString(R.string.like))) {
-										return mSonetHttpClient.httpResponse(new HttpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, sid, Saccess_token, mToken)));
+										return SonetHttpClient.httpResponse(mHttpClient, new HttpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, sid, Saccess_token, mToken)));
 									} else {
 										HttpDelete httpDelete = new HttpDelete(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, sid, Saccess_token, mToken));
 										httpDelete.setHeader("Content-Length", "0");
-										return mSonetHttpClient.httpResponse(httpDelete);
+										return SonetHttpClient.httpResponse(mHttpClient, httpDelete);
 									}
 								}
 
@@ -521,7 +522,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 									@Override
 									protected String doInBackground(String... arg0) {
 										SonetOAuth sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, mToken, mSecret);
-										return mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(liked.equals(getString(R.string.like)) ? new HttpPut(String.format(BUZZ_LIKE, BUZZ_BASE_URL, mSid, BUZZ_API_KEY)) :  new HttpDelete(String.format(BUZZ_LIKE, BUZZ_BASE_URL, mSid, BUZZ_API_KEY))));
+										return SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(liked.equals(getString(R.string.like)) ? new HttpPut(String.format(BUZZ_LIKE, BUZZ_BASE_URL, mSid, BUZZ_API_KEY)) :  new HttpDelete(String.format(BUZZ_LIKE, BUZZ_BASE_URL, mSid, BUZZ_API_KEY))));
 									}
 
 									@Override
@@ -605,7 +606,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 										httpPut.addHeader(new BasicHeader("Content-Type", "application/xml"));
 										try {
 											httpPut.setEntity(new StringEntity(String.format(LINKEDIN_LIKE_BODY, Boolean.toString(liked.equals(getString(R.string.like))))));
-											return mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpPut));
+											return SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPut));
 										} catch (UnsupportedEncodingException e) {
 											Log.e(TAG, e.toString());
 										}
@@ -692,7 +693,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 									HttpPost httpPost = new HttpPost(String.format(IDENTICA_RETWEET, IDENTICA_BASE_URL, sid));
 									// resolve Error 417 Expectation by Twitter
 									httpPost.getParams().setBooleanParameter("http.protocol.expect-continue", false);
-									return mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpPost));
+									return SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
 								}
 
 								@Override
@@ -774,7 +775,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 											httpRequest = new HttpDelete(String.format(CHATTER_URL_LIKE, mChatterInstance, mChatterLikeId));
 										}
 										httpRequest.setHeader("Authorization", "OAuth " + mChatterToken);
-										return mSonetHttpClient.httpResponse(httpRequest);
+										return SonetHttpClient.httpResponse(mHttpClient, httpRequest);
 									}
 
 									@Override
@@ -984,7 +985,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					switch (mService) {
 					case TWITTER:
 						sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, mToken, mSecret);
-						if ((response = mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_USER, TWITTER_BASE_URL, mEsid))))) != null) {
+						if ((response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_USER, TWITTER_BASE_URL, mEsid))))) != null) {
 							try {
 								JSONObject user = new JSONObject(response);
 								screen_name = "@" + user.getString(Sscreen_name) + " ";
@@ -993,10 +994,10 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							}
 						}
 						publishProgress(screen_name);
-						response = mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_MENTIONS, TWITTER_BASE_URL, String.format(TWITTER_SINCE_ID, mSid)))));
+						response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_MENTIONS, TWITTER_BASE_URL, String.format(TWITTER_SINCE_ID, mSid)))));
 						break;
 					case FACEBOOK:
-						if ((response = mSonetHttpClient.httpResponse(new HttpGet(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mSid, Saccess_token, mToken)))) != null) {
+						if ((response = SonetHttpClient.httpResponse(mHttpClient, new HttpGet(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mSid, Saccess_token, mToken)))) != null) {
 							try {
 								JSONArray likes = new JSONObject(response).getJSONArray(Sdata);
 								for (int i = 0, i2 = likes.length(); i < i2; i++) {
@@ -1011,15 +1012,15 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							}
 						}
 						publishProgress(getString(liked ? R.string.unlike : R.string.like));
-						response = mSonetHttpClient.httpResponse(new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, mSid, Saccess_token, mToken)));
+						response = SonetHttpClient.httpResponse(mHttpClient, new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, mSid, Saccess_token, mToken)));
 						break;
 					case MYSPACE:
 						sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, mToken, mSecret);
-						response = mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mEsid, mSid))));
+						response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mEsid, mSid))));
 						break;
 					case BUZZ:
 						sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, mToken, mSecret);
-						if ((response = mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_GET_LIKE, BUZZ_BASE_URL, mSid, BUZZ_API_KEY))))) != null) {
+						if ((response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_GET_LIKE, BUZZ_BASE_URL, mSid, BUZZ_API_KEY))))) != null) {
 							try {
 								JSONObject data = new JSONObject(response).getJSONObject(Sdata);
 								if (data.has(Sentry)) {
@@ -1037,13 +1038,13 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							}
 						}
 						publishProgress(getString(liked ? R.string.unlike : R.string.like));
-						response = mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, mSid, BUZZ_API_KEY))));
+						response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, mSid, BUZZ_API_KEY))));
 						break;
 					case LINKEDIN:
 						sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, mToken, mSecret);
 						httpGet = new HttpGet(String.format(LINKEDIN_UPDATE, LINKEDIN_BASE_URL, mSid));
 						for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
-						if ((response = mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpGet))) != null) {
+						if ((response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpGet))) != null) {
 							try {
 								JSONObject data = new JSONObject(response);
 								if (data.has("isCommentable") && !data.getBoolean("isCommentable")) {
@@ -1062,14 +1063,14 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 						}
 						httpGet = new HttpGet(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, mSid));
 						for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
-						response = mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpGet));
+						response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpGet));
 						break;
 					case FOURSQUARE:
-						response = mSonetHttpClient.httpResponse(new HttpGet(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, mSid, mToken)));
+						response = SonetHttpClient.httpResponse(mHttpClient, new HttpGet(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, mSid, mToken)));
 						break;
 					case IDENTICA:
 						sonetOAuth = new SonetOAuth(IDENTICA_KEY, IDENTICA_SECRET, mToken, mSecret);
-						if ((response = mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(IDENTICA_USER, IDENTICA_BASE_URL, mEsid))))) != null) {
+						if ((response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(IDENTICA_USER, IDENTICA_BASE_URL, mEsid))))) != null) {
 							try {
 								JSONObject user = new JSONObject(response);
 								screen_name = "@" + user.getString(Sscreen_name) + " ";
@@ -1078,7 +1079,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							}
 						}
 						publishProgress(screen_name);
-						response = mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(IDENTICA_MENTIONS, IDENTICA_BASE_URL, String.format(IDENTICA_SINCE_ID, mSid)))));
+						response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(IDENTICA_MENTIONS, IDENTICA_BASE_URL, String.format(IDENTICA_SINCE_ID, mSid)))));
 						break;
 					case GOOGLEPLUS:
 						//TODO:
@@ -1087,7 +1088,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					case CHATTER:
 						// Chatter requires loading an instance
 						if ((mChatterInstance == null) || (mChatterToken == null)) {
-							if ((response = mSonetHttpClient.httpResponse(new HttpPost(String.format(CHATTER_URL_ACCESS, CHATTER_KEY, mToken)))) != null) {
+							if ((response = SonetHttpClient.httpResponse(mHttpClient, new HttpPost(String.format(CHATTER_URL_ACCESS, CHATTER_KEY, mToken)))) != null) {
 								try {
 									JSONObject jobj = new JSONObject(response);
 									if (jobj.has("instance_url") && jobj.has(Saccess_token)) {
@@ -1102,7 +1103,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 						if ((mChatterInstance != null) && (mChatterToken != null)) {
 							httpGet = new HttpGet(String.format(CHATTER_URL_LIKES, mChatterInstance, mSid));
 							httpGet.setHeader("Authorization", "OAuth " + mChatterToken);
-							if ((response = mSonetHttpClient.httpResponse(httpGet)) != null) {
+							if ((response = SonetHttpClient.httpResponse(mHttpClient, httpGet)) != null) {
 								try {
 									JSONObject jobj = new JSONObject(response);
 									if (jobj.getInt(Stotal) > 0) {
@@ -1123,7 +1124,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							publishProgress(getString(liked ? R.string.unlike : R.string.like));
 							httpGet = new HttpGet(String.format(CHATTER_URL_COMMENTS, mChatterInstance, mSid));
 							httpGet.setHeader("Authorization", "OAuth " + mChatterToken);
-							response = mSonetHttpClient.httpResponse(httpGet);
+							response = SonetHttpClient.httpResponse(mHttpClient, httpGet);
 						} else {
 							response = null;
 						}
@@ -1307,11 +1308,11 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							httpParams.add(new BasicNameValuePair("grant_type", "refresh_token"));
 							try {
 								httpPost.setEntity(new UrlEncodedFormEntity(httpParams));
-								if ((response = mSonetHttpClient.httpResponse(httpPost)) != null) {
+								if ((response = SonetHttpClient.httpResponse(mHttpClient, httpPost)) != null) {
 									JSONObject j = new JSONObject(response);
 									if (j.has(Saccess_token)) {
 										String access_token = j.getString(Saccess_token);
-										if ((response = mSonetHttpClient.httpResponse(new HttpGet(String.format(GOOGLEPLUS_ACTIVITY, GOOGLEPLUS_BASE_URL, mSid, access_token)))) != null) {
+										if ((response = SonetHttpClient.httpResponse(mHttpClient, new HttpGet(String.format(GOOGLEPLUS_ACTIVITY, GOOGLEPLUS_BASE_URL, mSid, access_token)))) != null) {
 											// check for a newer post, if it's the user's own, then set CLEARED=0
 											try {
 												JSONObject item = new JSONObject(response);

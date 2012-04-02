@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -91,7 +92,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 	private SonetCrypto mSonetCrypto;
 	private static final int PHOTO = 1;
 	private String mPhotoPath;
-	private SonetHttpClient mSonetHttpClient;
+	private HttpClient mHttpClient;
 	private AlertDialog mDialog;
 
 	@Override
@@ -116,7 +117,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 
 		// load secretkey
 		mSonetCrypto = SonetCrypto.getInstance(getApplicationContext());
-		mSonetHttpClient = SonetHttpClient.getInstance(getApplicationContext());
+		mHttpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
 		final Intent i = getIntent();
 		if (i != null) {
 			final String action = i.getAction();
@@ -188,11 +189,11 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 						// anonymous requests are rate limited to 150 per hour
 						// authenticated requests are rate limited to 350 per hour, so authenticate this!
 						sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))), mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET))));
-						return mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_SEARCH, TWITTER_BASE_URL, mLat, mLong))));
+						return SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_SEARCH, TWITTER_BASE_URL, mLat, mLong))));
 					case FACEBOOK:
-						return mSonetHttpClient.httpResponse(new HttpGet(String.format(FACEBOOK_SEARCH, FACEBOOK_BASE_URL, mLat, mLong, Saccess_token, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))))));
+						return SonetHttpClient.httpResponse(mHttpClient, new HttpGet(String.format(FACEBOOK_SEARCH, FACEBOOK_BASE_URL, mLat, mLong, Saccess_token, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))))));
 					case FOURSQUARE:
-						return mSonetHttpClient.httpResponse(new HttpGet(String.format(FOURSQUARE_SEARCH, FOURSQUARE_BASE_URL, mLat, mLong, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))))));
+						return SonetHttpClient.httpResponse(mHttpClient, new HttpGet(String.format(FOURSQUARE_SEARCH, FOURSQUARE_BASE_URL, mLat, mLong, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))))));
 					}
 				}
 				account.close();
@@ -450,7 +451,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 										}
 										try {
 											httpPost.setEntity(new UrlEncodedFormEntity(params));
-											response = mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpPost));
+											response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
 										} catch (UnsupportedEncodingException e) {
 											Log.e(TAG, e.toString());
 										}
@@ -477,7 +478,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 //										try {
 //											entity.addPart("message", new StringBody(mMessage.getText().toString()));
 //											httpPost.setEntity(entity);
-//											response = mSonetHttpClient.httpResponse(httpPost);
+//											response = SonetHttpClient.httpResponse(mHttpClient, httpPost);
 //										} catch (UnsupportedEncodingException e) {
 //											Log.e(TAG,e.toString());
 //										}
@@ -492,7 +493,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 											params.add(new BasicNameValuePair("message", mMessage.getText().toString()));
 											try {
 												httpPost.setEntity(new UrlEncodedFormEntity(params));
-												response = mSonetHttpClient.httpResponse(httpPost);
+												response = SonetHttpClient.httpResponse(mHttpClient, httpPost);
 											} catch (UnsupportedEncodingException e) {
 												Log.e(TAG,e.toString());
 											}
@@ -507,7 +508,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 										params.add(new BasicNameValuePair("message", mMessage.getText().toString()));
 										try {
 											httpPost.setEntity(new UrlEncodedFormEntity(params));
-											response = mSonetHttpClient.httpResponse(httpPost);
+											response = SonetHttpClient.httpResponse(mHttpClient, httpPost);
 										} catch (UnsupportedEncodingException e) {
 											Log.e(TAG,e.toString());
 										}
@@ -519,7 +520,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 										params.add(new BasicNameValuePair("message", mMessage.getText().toString()));
 										try {
 											httpPost.setEntity(new UrlEncodedFormEntity(params));
-											response = mSonetHttpClient.httpResponse(httpPost);
+											response = SonetHttpClient.httpResponse(mHttpClient, httpPost);
 										} catch (UnsupportedEncodingException e) {
 											Log.e(TAG,e.toString());
 										}
@@ -531,7 +532,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									try {
 										HttpPut httpPut = new HttpPut(String.format(MYSPACE_URL_STATUSMOOD, MYSPACE_BASE_URL));
 										httpPut.setEntity(new StringEntity(String.format(MYSPACE_STATUSMOOD_BODY, mMessage.getText().toString())));
-										response = mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpPut));
+										response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPut));
 									} catch (IOException e) {
 										Log.e(TAG, e.toString());
 									}
@@ -548,7 +549,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 										httpPost = new HttpPost(String.format(BUZZ_ACTIVITY, BUZZ_BASE_URL, BUZZ_API_KEY));
 										httpPost.setEntity(new StringEntity(String.format(BUZZ_ACTIVITY_BODY, mMessage.getText().toString())));
 										httpPost.addHeader(new BasicHeader("Content-Type", "application/json"));
-										response = mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpPost));
+										response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
 									} catch (IOException e) {
 										Log.e(TAG, e.toString());
 									}
@@ -566,7 +567,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 										} else {
 											httpPost = new HttpPost(String.format(FOURSQUARE_CHECKIN_NO_VENUE, FOURSQUARE_BASE_URL, message, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN)))));
 										}
-										response = mSonetHttpClient.httpResponse(httpPost);
+										response = SonetHttpClient.httpResponse(mHttpClient, httpPost);
 									} catch (UnsupportedEncodingException e) {
 										Log.e(TAG, e.toString());
 									}
@@ -578,7 +579,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 										httpPost = new HttpPost(String.format(LINKEDIN_POST, LINKEDIN_BASE_URL));
 										httpPost.setEntity(new StringEntity(String.format(LINKEDIN_POST_BODY, "", mMessage.getText().toString())));
 										httpPost.addHeader(new BasicHeader("Content-Type", "application/xml"));
-										response = mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpPost));
+										response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
 									} catch (IOException e) {
 										Log.e(TAG, e.toString());
 									}
@@ -622,7 +623,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 										}
 										try {
 											httpPost.setEntity(new UrlEncodedFormEntity(params));
-											response = mSonetHttpClient.httpResponse(sonetOAuth.getSignedRequest(httpPost));
+											response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
 										} catch (UnsupportedEncodingException e) {
 											Log.e(TAG, e.toString());
 										}
@@ -631,14 +632,14 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									break;
 								case CHATTER:
 									// need to get an updated access_token
-									response = mSonetHttpClient.httpResponse(new HttpPost(String.format(CHATTER_URL_ACCESS, CHATTER_KEY, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))))));
+									response = SonetHttpClient.httpResponse(mHttpClient, new HttpPost(String.format(CHATTER_URL_ACCESS, CHATTER_KEY, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))))));
 									if (response != null) {
 										try {
 											JSONObject jobj = new JSONObject(response);
 											if (jobj.has("instance_url") && jobj.has(Saccess_token)) {
 												httpPost = new HttpPost(String.format(CHATTER_URL_POST, jobj.getString("instance_url"), Uri.encode(mMessage.getText().toString())));
 												httpPost.setHeader("Authorization", "OAuth " + jobj.getString(Saccess_token));
-												response = mSonetHttpClient.httpResponse(httpPost);
+												response = SonetHttpClient.httpResponse(mHttpClient, httpPost);
 											}
 										} catch (JSONException e) {
 											Log.e(TAG, serviceName + ":" + e.toString());
