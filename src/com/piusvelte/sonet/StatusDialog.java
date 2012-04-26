@@ -225,10 +225,10 @@ public class StatusDialog extends Activity implements OnClickListener {
 				mFinish = true;
 				startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 			} else {
-				(Toast.makeText(StatusDialog.this, "This widget may be reloading. Please try again after it has completed or use the app.", Toast.LENGTH_LONG)).show();
+				(Toast.makeText(StatusDialog.this, "This widget is reloading. Please try again after it has completed or use the app to update the widget.", Toast.LENGTH_LONG)).show();
 				// force widgets rebuild
 				startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH));
-				StatusDialog.this.finish();
+				finish();
 			}
 		}
 	}

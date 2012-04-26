@@ -39,16 +39,10 @@ public class SonetUploader extends Service {
 	public IBinder onBind(Intent intent) {
 		return null;
 	}
-
+	
 	@Override
-	public int onStartCommand(Intent intent, int flags, int startId) {
-		onStart(intent, startId);
-		return START_STICKY;
-	}
-
-	@Override
-	public void onStart(Intent intent, int startId) {
-		super.onStart(intent, startId);
+	public void onCreate() {
+		super.onCreate();
 		// check for any instant upload settings
 		(new AsyncTask<Void, Void, Boolean>() {
 
@@ -107,6 +101,11 @@ public class SonetUploader extends Service {
 			}
 
 		}).execute();
+	}
+
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId) {
+		return START_STICKY;
 	}
 
 	@Override

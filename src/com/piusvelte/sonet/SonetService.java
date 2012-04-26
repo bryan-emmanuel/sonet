@@ -139,6 +139,8 @@ public class SonetService extends Service {
 		mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 		mConnectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 		mSonetCrypto = SonetCrypto.getInstance(getApplicationContext());
+		// check the instant upload settings
+		startService(new Intent(getApplicationContext(), SonetUploader.class));
 	}
 
 	@Override
@@ -150,8 +152,6 @@ public class SonetService extends Service {
 	@Override
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
-		// check the instant upload settings
-		startService(new Intent(getApplicationContext(), SonetUploader.class));
 		if (intent != null) {
 			String action = intent.getAction();
 			if (action != null) {

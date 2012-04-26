@@ -21,11 +21,10 @@ package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.getBlob;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.util.Locale;
 
@@ -112,21 +111,21 @@ public class SonetHttpClient {
 	protected static byte[] httpBlobResponse(HttpClient httpClient, HttpUriRequest httpRequest) {
 		if (httpClient != null) {
 			HttpResponse httpResponse;
+			HttpEntity entity = null;
 			try {
 				httpResponse = httpClient.execute(httpRequest);
 				StatusLine statusLine = httpResponse.getStatusLine();
-				HttpEntity entity = httpResponse.getEntity();
+				entity = httpResponse.getEntity();
 
 				switch(statusLine.getStatusCode()) {
 				case 200:
 				case 201:
 				case 204:
 					if (entity != null) {
-						return getBlob(entity.getContent());
+						return getBlob(new FlushedInputStream(entity.getContent()));
 					}
 					break;
 				}
-				entity.consumeContent();
 			} catch (ClientProtocolException e) {
 				Log.e(TAG, e.toString());
 				try {
@@ -141,6 +140,14 @@ public class SonetHttpClient {
 				} catch (UnsupportedOperationException ignore) {
 					Log.e(TAG, ignore.toString());
 				}
+			} finally {
+				if (entity != null) {
+					try {
+						entity.consumeContent();
+					} catch (IOException e) {
+						Log.e(TAG, e.toString());
+					}					
+				}
 			}
 		}
 		return null;
@@ -150,11 +157,12 @@ public class SonetHttpClient {
 		String response = null;
 		if (httpClient != null) {
 			HttpResponse httpResponse;
+			HttpEntity entity = null;
 			try {
 				Log.d(TAG,"request: "+httpRequest.getURI().getHost().toString());
 				httpResponse = httpClient.execute(httpRequest);
 				StatusLine statusLine = httpResponse.getStatusLine();
-				HttpEntity entity = httpResponse.getEntity();
+				entity = httpResponse.getEntity();
 
 				switch(statusLine.getStatusCode()) {
 				case 200:
@@ -188,7 +196,6 @@ public class SonetHttpClient {
 					}
 					break;
 				}
-				entity.consumeContent();
 			} catch (ClientProtocolException e) {
 				Log.e(TAG, e.toString());
 				try {
@@ -210,9 +217,41 @@ public class SonetHttpClient {
 				} catch (UnsupportedOperationException ignore) {
 					Log.e(TAG, ignore.toString());
 				}
+			} finally {
+				if (entity != null) {
+					try {
+						entity.consumeContent();
+					} catch (IOException e) {
+						Log.e(TAG, e.toString());
+					}					
+				}
 			}
 		}
 		return response;
+	}
+	
+	protected static class FlushedInputStream extends FilterInputStream {
+	    public FlushedInputStream(InputStream inputStream) {
+	        super(inputStream);
+	    }
+
+	    @Override
+	    public long skip(long n) throws IOException {
+	        long totalBytesSkipped = 0L;
+	        while (totalBytesSkipped < n) {
+	            long bytesSkipped = in.skip(n - totalBytesSkipped);
+	            if (bytesSkipped == 0L) {
+	                  int nextByte = read();
+	                  if (nextByte < 0) {
+	                      break;  // we reached EOF
+	                  } else {
+	                      bytesSkipped = 1; // we read one byte
+	                  }
+	           }
+	            totalBytesSkipped += bytesSkipped;
+	        }
+	        return totalBytesSkipped;
+	    }
 	}
 
 }
