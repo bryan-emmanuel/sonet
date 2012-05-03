@@ -133,7 +133,6 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 						} catch (OAuthExpectationFailedException e) {
 							e.printStackTrace();
 						} catch (OAuthCommunicationException e) {
-							(Toast.makeText(OAuthLogin.this, String.format(getString(R.string.oauth_error), mServiceName), Toast.LENGTH_LONG)).show();
 							e.printStackTrace();
 						}
 						return null;
@@ -146,6 +145,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 						if (url != null) {
 							mSonetWebView.open(url);
 						} else {
+							(Toast.makeText(OAuthLogin.this, String.format(getString(R.string.oauth_error), mServiceName), Toast.LENGTH_LONG)).show();
 							OAuthLogin.this.finish();
 						}
 					}

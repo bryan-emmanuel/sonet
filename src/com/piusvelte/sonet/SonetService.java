@@ -444,7 +444,7 @@ public class SonetService extends Service {
 									try {
 										entity.addPart("message", new StringBody(params[1]));
 										httpPost.setEntity(entity);
-										Log.d(TAG,"begin upload");
+//										Log.d(TAG,"begin upload");
 										response = SonetHttpClient.httpResponse(httpClient, httpPost);
 									} catch (UnsupportedEncodingException e) {
 										Log.e(TAG,e.toString());
@@ -457,7 +457,7 @@ public class SonetService extends Service {
 							protected void onPostExecute(String response) {
 								// notify photo success
 								String message = getString(response != null ? R.string.success : R.string.failure);
-								Log.d(TAG,"upload finished:" + message);
+//								Log.d(TAG,"upload finished:" + message);
 								Notification notification = new Notification(R.drawable.notification, "photo upload " + message, System.currentTimeMillis());
 								notification.setLatestEventInfo(getBaseContext(), "photo upload", message, null);
 								((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
@@ -591,16 +591,16 @@ public class SonetService extends Service {
 			boolean hasCache = statuses.moveToFirst();
 			statuses.close();
 			// the alarm should always be set, rather than depend on the tasks to complete
-			Log.d(TAG,"awi:"+appWidgetId+",hasCache:"+hasCache+",reload:"+reload+",refreshInterval:"+refreshInterval);
+//			Log.d(TAG,"awi:"+appWidgetId+",hasCache:"+hasCache+",reload:"+reload+",refreshInterval:"+refreshInterval);
 			if ((appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) && (!hasCache || reload) && (refreshInterval > 0)) {
 				mAlarmManager.cancel(PendingIntent.getService(SonetService.this, 0, new Intent(SonetService.this, SonetService.class).setAction(widget), 0));
 				mAlarmManager.set(backgroundUpdate ? AlarmManager.RTC_WAKEUP : AlarmManager.RTC, System.currentTimeMillis() + refreshInterval, PendingIntent.getService(SonetService.this, 0, new Intent(SonetService.this, SonetService.class).setData(Uri.withAppendedPath(Widgets.CONTENT_URI, widget)).setAction(ACTION_REFRESH), 0));
-				Log.d(TAG,"alarm set");
+//				Log.d(TAG,"alarm set");
 			}
 			// get the accounts
 			Cursor accounts = getContentResolver().query(Widget_accounts_view.CONTENT_URI, new String[]{Widget_accounts_view.ACCOUNT, Widget_accounts_view.TOKEN, Widget_accounts_view.SECRET, Widget_accounts_view.SERVICE, Widget_accounts_view.SID}, Widget_accounts_view.WIDGET + "=?", new String[]{widget}, null);
 			if (hasCache && accounts.moveToFirst()) {
-				Log.d(TAG,"update cache styles");
+//				Log.d(TAG,"update cache styles");
 				// update the styles for existing statuses while fetching new statuses
 				while (!accounts.isAfterLast()) {
 					long account = accounts.getLong(0);
@@ -667,11 +667,11 @@ public class SonetService extends Service {
 			// loading takes time, so don't leave an empty widget sitting there
 			if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
 				// build the widget
-				Log.d(TAG,"temp widget build");
+//				Log.d(TAG,"temp widget build");
 				buildWidgetButtons(appWidgetId, false, 0);
 			} else {
 				// update the About.java for in-app viewing
-				Log.d(TAG,"temp About build");
+//				Log.d(TAG,"temp About build");
 				getContentResolver().notifyChange(Statuses_styles.CONTENT_URI, null);
 			}
 			if (accounts.moveToFirst()) {
@@ -684,7 +684,7 @@ public class SonetService extends Service {
 						HttpClient httpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
 						long account = accounts.getLong(0);
 						int service = accounts.getInt(3);
-						Log.d(TAG,"widget:"+widget+",account:"+account+",service:"+service);
+//						Log.d(TAG,"widget:"+widget+",account:"+account+",service:"+service);
 						String token = mSonetCrypto.Decrypt(accounts.getString(1));
 						String secret = mSonetCrypto.Decrypt(accounts.getString(2));
 						String accountEsid = mSonetCrypto.Decrypt(accounts.getString(4));
@@ -823,7 +823,7 @@ public class SonetService extends Service {
 					addStatusItem(widget, getString(R.string.no_updates), appWidgetId);
 				}
 			} else {
-				Log.d(TAG,"no accounts");
+//				Log.d(TAG,"no accounts");
 				// no accounts, clear cache
 				getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[]{widget});
 				// insert no accounts message
@@ -834,10 +834,10 @@ public class SonetService extends Service {
 			// see if the tasks are finished
 			// non-scrollable widgets will be completely rebuilt, while scrollable widgets while be notified to requery
 			if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-				Log.d(TAG,"full widget build");
+//				Log.d(TAG,"full widget build");
 				buildWidgetButtons(appWidgetId, true, 0);
 			} else {
-				Log.d(TAG,"full About build");
+//				Log.d(TAG,"full About build");
 				// notify change to About.java
 				getContentResolver().notifyChange(Statuses_styles.CONTENT_URI, null);
 			}
@@ -846,7 +846,7 @@ public class SonetService extends Service {
 		
 		@Override
 		protected void onCancelled(Integer appWidgetId) {
-			Log.d(TAG,"loader cancelled");
+//			Log.d(TAG,"loader cancelled");
 		}
 
 		@Override
@@ -866,9 +866,9 @@ public class SonetService extends Service {
 			if (!mStatusesLoaders.isEmpty() && mStatusesLoaders.containsKey(appWidgetId)) {
 				mStatusesLoaders.remove(appWidgetId);
 			}
-			Log.d(TAG,"finished update, check queue");
+//			Log.d(TAG,"finished update, check queue");
 			if (mStatusesLoaders.isEmpty()) {
-				Log.d(TAG,"stop service");
+//				Log.d(TAG,"stop service");
 				Sonet.release();
 				stopSelf();
 			}
@@ -2863,7 +2863,7 @@ public class SonetService extends Service {
 				mgr.updateAppWidget(appWidgetId, views);
 			}
 		} else if (updatesReady) {
-			Log.d(TAG, "notify updatesReady");
+//			Log.d(TAG, "notify updatesReady");
 			getContentResolver().notifyChange(Statuses_styles.CONTENT_URI, null);
 		} else {
 			AppWidgetManager.getInstance(SonetService.this).updateAppWidget(Integer.parseInt(widget), views);
