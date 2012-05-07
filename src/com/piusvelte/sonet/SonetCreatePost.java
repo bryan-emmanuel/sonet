@@ -406,7 +406,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 							Cursor account = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
 							if (account.moveToFirst()) {
 								int service = account.getInt(account.getColumnIndex(Accounts.SERVICE));
-								final String serviceName = getResources().getStringArray(R.array.service_entries)[service];
+								final String serviceName = Sonet.getServiceName(getResources(), service);
 								publishProgress(serviceName);
 								String message;
 								SonetOAuth sonetOAuth;
@@ -542,18 +542,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									} else {
 										publishProgress(serviceName, getString(R.string.failure) + " " + getString(R.string.myspace_permissions_message));
 									}
-									break;
-								case BUZZ:
-									sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))), mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET))));
-									try {
-										httpPost = new HttpPost(String.format(BUZZ_ACTIVITY, BUZZ_BASE_URL, BUZZ_API_KEY));
-										httpPost.setEntity(new StringEntity(String.format(BUZZ_ACTIVITY_BODY, mMessage.getText().toString())));
-										httpPost.addHeader(new BasicHeader("Content-Type", "application/json"));
-										response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
-									} catch (IOException e) {
-										Log.e(TAG, e.toString());
-									}
-									publishProgress(serviceName, getString(response != null ? R.string.success : R.string.failure));
 									break;
 								case FOURSQUARE:
 									try {

@@ -549,51 +549,6 @@ public class StatusDialog extends Activity implements OnClickListener {
 				}
 				account.close();
 				break;
-			case BUZZ:
-				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-				if (account.moveToFirst()) {
-					final ProgressDialog loadingDialog = new ProgressDialog(this);
-					asyncTask = new AsyncTask<String, Void, String>() {
-						@Override
-						protected String doInBackground(String... arg0) {
-							SonetOAuth sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, arg0[0], arg0[1]);
-							return SonetHttpClient.httpResponse(SonetHttpClient.getThreadSafeClient(getApplicationContext()), sonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_URL_USER, BUZZ_BASE_URL, mEsid, BUZZ_API_KEY))));
-						}
-
-						@Override
-						protected void onPostExecute(String response) {
-							if (loadingDialog.isShowing()) loadingDialog.dismiss();
-							if (response != null) {
-								try {
-									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getJSONObject("data").getString("profileUrl"))));
-								} catch (JSONException e) {
-									Log.e(TAG, e.toString());
-									onErrorExit(mServiceName);
-								}
-							} else {
-								onErrorExit(mServiceName);
-							}
-						}
-					};
-					loadingDialog.setMessage(getString(R.string.loading));
-					loadingDialog.setCancelable(true);
-					loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
-						@Override
-						public void onCancel(DialogInterface dialog) {
-							if (!asyncTask.isCancelled()) asyncTask.cancel(true);
-						}
-					});
-					loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							dialog.cancel();
-						}
-					});
-					loadingDialog.show();
-					asyncTask.execute(mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))), mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET))));
-				}
-				account.close();
-				break;
 			case FOURSQUARE:
 				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(FOURSQUARE_URL_PROFILE, mEsid))));
 				break;
@@ -839,7 +794,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 						}
 						phones.close();
 					} else if (mService != RSS) {
-						mServiceName = getResources().getStringArray(R.array.service_entries)[mService];
+						mServiceName = Sonet.getServiceName(getResources(), mService);
 						//						// parse any links
 						//						Matcher m = Sonet.getLinksMatcher(c.getString(4));
 						//						int count = 0;

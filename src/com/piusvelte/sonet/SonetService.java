@@ -757,9 +757,6 @@ public class SonetService extends Service {
 							case MYSPACE:
 								updateMySpace(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications, httpClient);
 								break;
-							case BUZZ:
-								updateBuzz(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications, httpClient);
-								break;
 							case FOURSQUARE:
 								updateFoursquare(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications, httpClient);
 								break;
@@ -1693,141 +1690,6 @@ public class SonetService extends Service {
 			}
 		}
 
-		private void updateBuzz(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
-			String response;
-			JSONArray statusesArray;
-			ArrayList<String[]> links = new ArrayList<String[]>();
-			final ArrayList<String> notificationSids = new ArrayList<String>();
-			mSimpleDateFormat = null;
-			JSONObject statusObj;
-			JSONObject friendObj;
-			JSONArray commentsArray;
-			JSONObject commentObj;
-			Cursor currentNotifications;
-			String sid;
-			String esid;
-			long notificationId;
-			long updated;
-			boolean cleared;
-			String friend;
-			SonetOAuth sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, token, secret);
-			// notifications
-			if (notifications != 0) {
-				currentNotifications = getContentResolver().query(Notifications.CONTENT_URI, new String[]{Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
-				// loop over notifications
-				if (currentNotifications.moveToFirst()) {
-					while (!currentNotifications.isAfterLast()) {
-						notificationId = currentNotifications.getLong(0);
-						sid = mSonetCrypto.Decrypt(currentNotifications.getString(1));
-						updated = currentNotifications.getLong(2);
-						cleared = currentNotifications.getInt(3) == 1;
-						// store sids, to avoid duplicates when requesting the latest feed
-						if (!notificationSids.contains(sid)) {
-							notificationSids.add(sid);
-						}
-						// get comments for current notifications
-						if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, sid, BUZZ_API_KEY))))) != null) {
-							// check for a newer post, if it's the user's own, then set CLEARED=0
-							try {
-								commentsArray = new JSONObject(response).getJSONObject(Sdata).getJSONArray(Sitems);
-								int i2 = commentsArray.length();
-								if (i2 > 0) {
-									for (int i = 0; i < i2; i++) {
-										JSONObject comment = commentsArray.getJSONObject(i);
-										long created_time = parseDate(comment.getString(Spublished), BUZZ_DATE_FORMAT);
-										if (created_time > updated) {
-											JSONObject actor = comment.getJSONObject(Sactor);
-											updateNotification(notificationId, created_time, accountEsid, actor.getString(Sid), actor.getString(Sname), cleared);
-										}
-									}
-								}
-							} catch (JSONException e) {
-								Log.e(TAG, service + ":" + e.toString());
-							}
-						}
-						currentNotifications.moveToNext();
-					}
-				}
-				currentNotifications.close();
-			}
-			// parse the response
-			if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_ACTIVITIES, BUZZ_BASE_URL, BUZZ_API_KEY))))) != null) {
-				try {
-					statusesArray = new JSONObject(response).getJSONObject(Sdata).getJSONArray(Sitems);
-					// if there are updates, clear the cache
-					int e2 = statusesArray.length();
-					if (e2 > 0) {
-						removeOldStatuses(widget, Long.toString(account));
-						for (int e = 0; e < e2; e++) {
-							links.clear();
-							statusObj = statusesArray.getJSONObject(e);
-							if (statusObj.has(Spublished) && statusObj.has(Sactor) && statusObj.has(Sobject)) {
-								friendObj = statusObj.getJSONObject(Sactor);
-								JSONObject object = statusObj.getJSONObject(Sobject);
-								if (friendObj.has(Sname) && friendObj.has(SthumbnailUrl) && object.has(SoriginalContent)) {
-									long date = parseDate(statusObj.getString(Spublished), BUZZ_DATE_FORMAT);
-									esid = friendObj.getString(Sid);
-									int commentCount = 0;
-									sid = statusObj.getString(Sid);
-									String originalContent = object.getString(SoriginalContent);
-									friend = friendObj.getString(Sname);
-									String notification = null;
-									if (object.has(Scomments)) {
-										commentsArray = object.getJSONArray(Scomments);
-										commentCount = commentsArray.length();
-										if (!notificationSids.contains(sid) && (commentCount > 0)) {
-											// default hasCommented to whether or not these comments are for the own user's status
-											boolean hasCommented = notification != null || esid.equals(accountEsid);
-											for (int c2 = 0; c2 < commentCount; c2++) {
-												commentObj = commentsArray.getJSONObject(c2);
-												if (commentObj.has(Sactor)) {
-													JSONObject c4 = commentObj.getJSONObject(Sactor);
-													if (c4.getString(Sid).equals(accountEsid)) {
-														if (!hasCommented) {
-															// the user has commented on this thread, notify any updates
-															hasCommented = true;
-														}
-														// clear any notifications, as the user is already aware
-														if (notification != null) {
-															notification = null;
-														}
-													} else if (hasCommented) {
-														// don't notify about user's own comments
-														// send the parent comment sid
-														notification = String.format(getString(R.string.friendcommented), c4.getString(Sname));
-													}
-												}
-											}
-										}
-									}
-									if ((notifications != 0) && (notification != null)) {
-										// new notification
-										addNotification(sid, esid, friend, originalContent, date, account, notification);
-									}
-									if (e < status_count) {
-										addStatusItem(date,
-												friend,
-												display_profile ? friendObj.getString(SthumbnailUrl) : null,
-														String.format(getString(R.string.messageWithCommentCount), originalContent, commentCount),
-														service,
-														time24hr,
-														appWidgetId,
-														account,
-														sid,
-														esid,
-														links,
-														httpClient);
-									}
-								}
-							}
-						}
-					}
-				} catch (JSONException e) {
-					Log.e(TAG, service + ":" + e.toString());
-				}
-			}
-		}
-
 		private void updateFoursquare(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
 			String response;
 			JSONArray statusesArray;
@@ -2447,7 +2309,7 @@ public class SonetService extends Service {
 													photo = image.getString(Surl);
 												}
 											}
-											long date = parseDate(statusObj.getString(Spublished), BUZZ_DATE_FORMAT);
+											long date = parseDate(statusObj.getString(Spublished), GOOGLEPLUS_DATE_FORMAT);
 											int commentCount = 0;
 											JSONObject replies = object.getJSONObject(Sreplies);
 											String notification = null;

@@ -42,10 +42,10 @@ public class Sonet {
 	protected static final String PRO = "pro";
 	protected static final String Saccess_token = "access_token";
 	protected static final String Sexpires_in = "expires_in";
-	protected static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
-	protected static final String ACTION_PAGE_UP = "com.piusvelte.sonet.Sonet.PAGE_UP";
-	protected static final String ACTION_PAGE_DOWN = "com.piusvelte.sonet.Sonet.PAGE_DOWN";
-	protected static final String ACTION_ON_CLICK = "com.piusvelte.sonet.Sonet.ON_CLICK";
+	protected static final String ACTION_REFRESH = "com.piusvelte.sonetpro.Sonet.REFRESH";
+	protected static final String ACTION_PAGE_UP = "com.piusvelte.sonetpro.Sonet.PAGE_UP";
+	protected static final String ACTION_PAGE_DOWN = "com.piusvelte.sonetpro.Sonet.PAGE_DOWN";
+	protected static final String ACTION_ON_CLICK = "com.piusvelte.sonetpro.Sonet.ON_CLICK";
 	protected static final String ACTION_UPLOAD = "com.piusvelte.sonet.Sonet.UPLOAD";
 	protected static final String SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED";
 	protected static final String EXTRA_ACCOUNT_ID = "com.piusvelte.sonet.Sonet.ACCOUNT_ID";
@@ -99,23 +99,6 @@ public class Sonet {
 	protected static final String MYSPACE_STATUSMOOD_BODY = "{\"status\":\"%s\"}";
 	protected static final String MYSPACE_STATUSMOODCOMMENTS_BODY = "{\"body\":\"%s\"}";
 	protected static final String MYSPACE_USER = "%speople/%s/@self";
-
-	protected static final int BUZZ = 3;
-	protected static final String BUZZ_BASE_URL = "https://www.googleapis.com/buzz/v1/";
-	protected static final String BUZZ_URL_REQUEST = "https://www.google.com/accounts/OAuthGetRequestToken?scope=%s&xoauth_displayname=%s&domain=%s";
-	protected static final String BUZZ_URL_AUTHORIZE = "https://www.google.com/buzz/api/auth/OAuthAuthorizeToken?scope=%s&xoauth_displayname=%s&domain=%s&btmpl=mobile";
-	protected static final String BUZZ_URL_ACCESS = "https://www.google.com/accounts/OAuthGetAccessToken";
-	protected static final String BUZZ_SCOPE = "https://www.googleapis.com/auth/buzz";
-	protected static final String BUZZ_URL_ME = "%speople/@me/@self?alt=json&key=%s";
-	protected static final String BUZZ_URL_USER = "%speople/%s/@self?alt=json&key=%s";
-	protected static final String BUZZ_ACTIVITIES = "%sactivities/@me/@consumption?alt=json&max-comments=10&key=%s";
-	protected static final String BUZZ_LIKE = "%sactivities/@me/@liked/%s?alt=json&key=%s";
-	protected static final String BUZZ_GET_LIKE = "%sactivities/@me/@self/%s/@liked?alt=json&key=%s";
-	protected static final String BUZZ_COMMENT = "%sactivities/@me/@self/%s/@comments?alt=json&key=%s";
-	protected static final String BUZZ_ACTIVITY = "%sactivities/@me/@self?alt=json&key=%s";
-	protected static final String BUZZ_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
-	protected static final String BUZZ_COMMENT_BODY = "{\"data\":{\"content\":\"%s\"}}";
-	protected static final String BUZZ_ACTIVITY_BODY = "{\"data\":{\"object\":{\"type\":\"note\",\"content\":\"%s\"}}}";
 
 	protected static final int FOURSQUARE = 4;
 	protected static final String FOURSQUARE_BASE_URL = "https://api.foursquare.com/v2/";
@@ -173,6 +156,7 @@ public class Sonet {
 	protected static final String GOOGLEPLUS_ACTIVITIES = "%speople/%s/activities/%s?maxResults=%s&access_token=%s";
 	protected static final String GOOGLEPLUS_ACTIVITY = "%sactivities/%s?access_token=%s";
 	protected static final String GOOGLEPLUS_PROFILE = "https://plus.google.com/%s";
+	protected static final String GOOGLEPLUS_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 	
 	protected static final int PINTEREST = 10;
 	protected static final String PINTEREST_BASE_URL = "https://api.pinterest.com/v2/";
@@ -200,7 +184,6 @@ public class Sonet {
 	protected static final String ACCOUNTS_QUERY = "(case when " + Accounts.SERVICE + "=" + TWITTER + " then 'Twitter: ' when "
 	+ Accounts.SERVICE + "=" + FACEBOOK + " then 'Facebook: ' when "
 	+ Accounts.SERVICE + "=" + MYSPACE + " then 'MySpace: ' when "
-	+ Accounts.SERVICE + "=" + BUZZ + " then 'Buzz: ' when "
 	+ Accounts.SERVICE + "=" + LINKEDIN + " then 'LinkedIn: ' when "
 	+ Accounts.SERVICE + "=" + FOURSQUARE + " then 'Foursquare: ' when "
 	+ Accounts.SERVICE + "=" + CHATTER + " then 'Chatter: ' when "
@@ -631,6 +614,19 @@ public class Sonet {
 		} else {
 			return String.format("%s %d", Sonet.MONTHS[calendar.get(Calendar.MONTH)], calendar.get(Calendar.DATE));
 		}
+	}
+	
+	protected static String getServiceName(Resources r, int service) {
+		String name = null;
+		String[] entries = r.getStringArray(R.array.service_entries);
+		String[] values = r.getStringArray(R.array.service_values);
+		for (int i = 0, l = values.length; i < l; i++) {
+			if (Integer.toString(service).equals(values[i])) {
+				name = entries[i];
+				break;
+			}
+		}
+		return name;
 	}
 
 	protected static int[] arrayCat(int[] a, int[] b) {

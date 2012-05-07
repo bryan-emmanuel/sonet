@@ -324,7 +324,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 				"(case when " + Accounts.SERVICE + "=" + Sonet.TWITTER + " then 'Twitter: ' when "
 				+ Accounts.SERVICE + "=" + Sonet.FACEBOOK + " then 'Facebook: ' when "
 				+ Accounts.SERVICE + "=" + Sonet.MYSPACE + " then 'MySpace: ' when "
-				+ Accounts.SERVICE + "=" + Sonet.BUZZ + " then 'Buzz: ' when "
 				+ Accounts.SERVICE + "=" + Sonet.LINKEDIN + " then 'LinkedIn: ' when "
 				+ Accounts.SERVICE + "=" + Sonet.FOURSQUARE + " then 'Foursquare: ' when "
 				+ Accounts.SERVICE + "=" + Sonet.CHATTER + " then 'Chatter: ' when "
@@ -336,7 +335,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 				"(case when " + Accounts.SERVICE + "=" + Sonet.TWITTER + " then 'Twitter: ' when "
 				+ Accounts.SERVICE + "=" + Sonet.FACEBOOK + " then 'Facebook: ' when "
 				+ Accounts.SERVICE + "=" + Sonet.MYSPACE + " then 'MySpace: ' when "
-				+ Accounts.SERVICE + "=" + Sonet.BUZZ + " then 'Buzz: ' when "
 				+ Accounts.SERVICE + "=" + Sonet.LINKEDIN + " then 'LinkedIn: ' when "
 				+ Accounts.SERVICE + "=" + Sonet.FOURSQUARE + " then 'Foursquare: ' when "
 				+ Accounts.SERVICE + "=" + Sonet.CHATTER + " then 'Chatter: ' when "
@@ -410,7 +408,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 
 	public void onClick(DialogInterface dialog, int which) {
 		mAddingAccount = true;
-		startActivityForResult(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, which).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID), RESULT_REFRESH);
+		startActivityForResult(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, Integer.parseInt(getResources().getStringArray(R.array.service_values)[which])).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID), RESULT_REFRESH);
 		dialog.cancel();
 	}
 

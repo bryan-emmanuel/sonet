@@ -178,7 +178,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 						String response = null;
 						HttpPost httpPost;
 						SonetOAuth sonetOAuth;
-						String serviceName = getResources().getStringArray(R.array.service_entries)[mService];
+						String serviceName = Sonet.getServiceName(getResources(), mService);
 						publishProgress(serviceName);
 						switch (mService) {
 						case TWITTER:
@@ -237,17 +237,6 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							try {
 								httpPost = new HttpPost(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mEsid, mSid));
 								httpPost.setEntity(new StringEntity(String.format(MYSPACE_STATUSMOODCOMMENTS_BODY, mMessage.getText().toString())));
-								response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
-							} catch (IOException e) {
-								Log.e(TAG, e.toString());
-							}
-							break;
-						case BUZZ:
-							sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, mToken, mSecret);
-							try {
-								httpPost = new HttpPost(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, mSid, BUZZ_API_KEY));
-								httpPost.setEntity(new StringEntity(String.format(BUZZ_COMMENT_BODY, mMessage.getText().toString())));
-								httpPost.addHeader(new BasicHeader("Content-Type", "application/json"));
 								response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
 							} catch (IOException e) {
 								Log.e(TAG, e.toString());
@@ -503,86 +492,6 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 				.setOnCancelListener(this)
 				.create();
 				mDialog.show();
-				break;
-			case BUZZ:
-				if (position == 0) {
-					items = new String[count + 1];
-					items[0] = getString(mComments.get(position).get(getString(R.string.like)) == getString(R.string.like) ? R.string.like : R.string.unlike);
-					count = 1;
-					m.reset();
-					while (m.find()) {
-						items[count++] = m.group();
-					}
-					mDialog = (new AlertDialog.Builder(this))
-					.setItems(items, new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							if (which == 0) {
-								AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
-									@Override
-									protected String doInBackground(String... arg0) {
-										SonetOAuth sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, mToken, mSecret);
-										return SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(liked.equals(getString(R.string.like)) ? new HttpPut(String.format(BUZZ_LIKE, BUZZ_BASE_URL, mSid, BUZZ_API_KEY)) :  new HttpDelete(String.format(BUZZ_LIKE, BUZZ_BASE_URL, mSid, BUZZ_API_KEY))));
-									}
-
-									@Override
-									protected void onPostExecute(String response) {
-										if (response != null) {
-											setCommentStatus(position, getString(liked.equals(getString(R.string.like)) ? R.string.unlike : R.string.like));
-											(Toast.makeText(SonetComments.this, mServiceName + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-										} else {
-											setCommentStatus(position, getString(liked.equals(getString(R.string.like)) ? R.string.like : R.string.unlike));
-											(Toast.makeText(SonetComments.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
-										}
-									}
-								};
-								setCommentStatus(position, getString(R.string.loading));
-								asyncTask.execute();
-							} else {
-								if ((which < items.length) && (items[which] != null)) {
-									// open link
-									Matcher m = Sonet.getLinksMatcher(items[which]);
-									if (m.find()) {
-										startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(m.group())));
-									}
-								} else {
-									(Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-								}
-							}
-						}
-					})
-					.setCancelable(true)
-					.setOnCancelListener(this)
-					.create();
-					mDialog.show();
-				} else {
-					// no like option here
-					items = new String[count];
-					count = 1;
-					m.reset();
-					while (m.find()) {
-						items[count++] = m.group();
-					}
-					mDialog = (new AlertDialog.Builder(this))
-					.setItems(items, new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							if ((which < items.length) && (items[which] != null)) {
-								// open link
-								Matcher m = Sonet.getLinksMatcher(items[which]);
-								if (m.find()) {
-									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(m.group())));
-								}
-							} else {
-								(Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-							}
-						}
-					})
-					.setCancelable(true)
-					.setOnCancelListener(this)
-					.create();
-					mDialog.show();
-				}
 				break;
 			case LINKEDIN:
 				if (position == 0) {
@@ -1018,28 +927,6 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 						sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, mToken, mSecret);
 						response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mEsid, mSid))));
 						break;
-					case BUZZ:
-						sonetOAuth = new SonetOAuth(BUZZ_KEY, BUZZ_SECRET, mToken, mSecret);
-						if ((response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_GET_LIKE, BUZZ_BASE_URL, mSid, BUZZ_API_KEY))))) != null) {
-							try {
-								JSONObject data = new JSONObject(response).getJSONObject(Sdata);
-								if (data.has(Sentry)) {
-									JSONArray entries = data.getJSONArray(Sentry);
-									for (int i = 0, i2 = entries.length(); i < i2; i++) {
-										JSONObject entry = entries.getJSONObject(i);
-										if (entry.getString(Sid).equals(mAccountSid)) {
-											liked = true;
-											break;
-										}
-									}
-								}
-							} catch (JSONException e) {
-								Log.e(TAG,e.toString());
-							}
-						}
-						publishProgress(getString(liked ? R.string.unlike : R.string.like));
-						response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(BUZZ_COMMENT, BUZZ_BASE_URL, mSid, BUZZ_API_KEY))));
-						break;
 					case LINKEDIN:
 						sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, mToken, mSecret);
 						httpGet = new HttpGet(String.format(LINKEDIN_UPDATE, LINKEDIN_BASE_URL, mSid));
@@ -1217,27 +1104,6 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 								}
 							} else {
 								noComments();
-							}
-							break;
-						case BUZZ:
-							JSONObject data = new JSONObject(response).getJSONObject(Sdata);
-							if (data.has(Sitems)) {
-								comments = data.getJSONArray(Sitems);
-								if ((i2 = comments.length()) > 0) {
-									for (int i = 0; i < i2; i++) {
-										JSONObject comment = comments.getJSONObject(i);
-										String id = comment.getString(Sid);
-										HashMap<String, String> commentMap = new HashMap<String, String>();
-										commentMap.put(Statuses.SID, id);
-										commentMap.put(Entities.FRIEND, comment.getJSONObject(Sactor).getString(Sname));
-										commentMap.put(Statuses.MESSAGE, comment.getString(Scontent));
-										commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(parseDate(comment.getString(Spublished), BUZZ_DATE_FORMAT), mTime24hr));
-										commentMap.put(getString(R.string.like), "");
-										mComments.add(commentMap);
-									}
-								} else {
-									noComments();
-								}
 							}
 							break;
 						case LINKEDIN:
