@@ -459,7 +459,7 @@ public class SonetService extends Service {
 								String message = getString(response != null ? R.string.success : R.string.failure);
 //								Log.d(TAG,"upload finished:" + message);
 								Notification notification = new Notification(R.drawable.notification, "photo upload " + message, System.currentTimeMillis());
-								notification.setLatestEventInfo(getBaseContext(), "photo upload", message, null);
+								notification.setLatestEventInfo(getBaseContext(), "photo upload", message, PendingIntent.getActivity(SonetService.this, 0, (new Intent(SonetService.this, About.class)), 0));
 								((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
 							}
 

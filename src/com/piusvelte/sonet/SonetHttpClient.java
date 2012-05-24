@@ -159,7 +159,6 @@ public class SonetHttpClient {
 			HttpResponse httpResponse;
 			HttpEntity entity = null;
 			try {
-				Log.d(TAG,"request: "+httpRequest.getURI().getHost().toString());
 				httpResponse = httpClient.execute(httpRequest);
 				StatusLine statusLine = httpResponse.getStatusLine();
 				entity = httpResponse.getEntity();

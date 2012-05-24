@@ -361,7 +361,14 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 						(Toast.makeText(OAuthLogin.this, "Pinterest has already been added.", Toast.LENGTH_LONG)).show();
 					} else {
 						(Toast.makeText(OAuthLogin.this, "Pinterest currently allows only public, non-authenticated viewing.", Toast.LENGTH_LONG)).show();
-						addAccount(getResources().getStringArray(R.array.service_entries)[PINTEREST], null, null, 0, PINTEREST, null);
+						String[] values = getResources().getStringArray(R.array.service_values);
+						String[] entries = getResources().getStringArray(R.array.service_entries);
+						for (int i = 0, l = values.length; i < l; i++) {
+							if (Integer.toString(PINTEREST).equals(values[i])) {
+								addAccount(entries[i], null, null, 0, PINTEREST, null);
+								break;
+							}
+						}
 					}
 					pinterestAccount.close();
 					finish();
