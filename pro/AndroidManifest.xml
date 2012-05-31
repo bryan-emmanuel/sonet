@@ -49,7 +49,7 @@
 			android:theme="@style/SonetDialog" android:clearTaskOnLaunch="true" android:taskAffinity="" />"
 		<activity android:name=".SonetNotifications" android:clearTaskOnLaunch="true" android:taskAffinity="" />
 		<activity android:name="com.google.ads.AdActivity"
-			android:configChanges="orientation|keyboard|keyboardHidden" />
+			android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
 		<!-- Broadcast Receiver that will process AppWidget updates -->
 		<receiver android:name=".SonetWidget_4x2" android:label="@string/sonet_4x2">
 			<intent-filter>
