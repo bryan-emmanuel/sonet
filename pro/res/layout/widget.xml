@@ -1,0 +1,1004 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ * Sonet - Android Social Networking Widget
+ * Copyright (C) 2009 Bryan Emmanuel
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *  
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  
+ *  Bryan Emmanuel piusvelte@gmail.com
+-->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" >
+
+    <RelativeLayout
+        android:id="@+id/buttons"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true" >
+
+        <TextView
+            android:id="@+id/buttons_bg_clear"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:padding="4dip"
+            android:text="@string/buttons_bg_clear"
+            android:textColor="#00000000" />
+
+        <TextView
+            android:id="@+id/bg_clear"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@id/buttons_bg_clear"
+            android:height="0dip"
+            android:textColor="#00000000" />
+
+        <ImageView
+            android:id="@+id/buttons_bg"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_above="@id/bg_clear"
+            android:scaleType="fitXY" />
+
+        <TextView
+            android:id="@+id/button_post"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:clickable="true"
+            android:padding="4dip"
+            android:text="@string/button_post" />
+
+        <TextView
+            android:id="@+id/button_configure"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_toRightOf="@id/button_post"
+            android:clickable="true"
+            android:padding="4dip"
+            android:text="@string/settings" />
+
+        <TextView
+            android:id="@+id/button_refresh"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_toRightOf="@id/button_configure"
+            android:clickable="true"
+            android:padding="4dip"
+            android:text="@string/button_refresh" />
+
+        <TextView
+            android:id="@+id/page_down"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:clickable="true"
+            android:padding="4dip"
+            android:text="@string/greater_than" />
+
+        <TextView
+            android:id="@+id/page_up"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_toLeftOf="@id/page_down"
+            android:clickable="true"
+            android:padding="4dip"
+            android:text="@string/less_than" />
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/messages"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_below="@id/buttons"
+        android:orientation="vertical" >
+
+        <RelativeLayout
+            android:id="@+id/item0"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:id="@+id/friend_bg_clear0"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginLeft="52dip"
+                android:paddingBottom="4dip"
+                android:paddingLeft="4dip"
+                android:paddingTop="4dip"
+                android:singleLine="true"
+                android:textColor="#00000000"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/message_bg_clear0"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_below="@id/friend_bg_clear0"
+                android:layout_marginLeft="52dip"
+                android:paddingBottom="4dip"
+                android:paddingLeft="4dip"
+                android:paddingRight="4dip"
+                android:textColor="#00000000" />
+
+            <TextView
+                android:id="@+id/bg_clear0"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_below="@id/message_bg_clear0"
+                android:height="0dip"
+                android:textColor="#00000000" />
+
+            <ImageView
+                android:id="@+id/profile_bg0"
+                android:layout_width="48dip"
+                android:layout_height="fill_parent"
+                android:layout_above="@id/bg_clear0"
+                android:layout_alignParentLeft="true"
+                android:scaleType="fitXY" />
+
+            <ImageView
+                android:id="@+id/friend_bg0"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_above="@id/message_bg_clear0"
+                android:layout_toRightOf="@id/profile_bg0"
+                android:scaleType="fitXY" />
+
+            <ImageView
+                android:id="@+id/status_bg0"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_above="@id/bg_clear0"
+                android:layout_below="@id/friend_bg0"
+                android:layout_toRightOf="@id/profile_bg0"
+                android:scaleType="fitXY" />
+
+            <ImageView
+                android:id="@+id/profile0"
+                android:layout_width="48dip"
+                android:layout_height="48dip"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true" />
+
+            <TextView
+                android:id="@+id/friend0"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_marginRight="4dip"
+                android:layout_toRightOf="@id/profile0"
+                android:paddingBottom="4dip"
+                android:paddingLeft="4dip"
+                android:paddingTop="4dip"
+                android:singleLine="true"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/created0"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:layout_toRightOf="@id/friend0"
+                android:gravity="right"
+                android:paddingRight="4dip"
+                android:paddingTop="4dip"
+                android:singleLine="true" />
+
+            <TextView
+                android:id="@+id/message0"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/friend0"
+                android:layout_toRightOf="@id/profile0"
+                android:paddingBottom="4dip"
+                android:paddingLeft="4dip"
+                android:paddingRight="4dip"
+                android:text="@string/loading"
+                android:textColor="@color/default_message_color" />
+
+            <ImageView
+                android:id="@+id/icon0"
+                android:layout_width="16dip"
+                android:layout_height="16dip"
+                android:layout_alignBottom="@id/message_bg_clear0"
+                android:layout_alignParentRight="true"
+                android:paddingBottom="4dip"
+                android:paddingRight="4dip" />
+        </RelativeLayout>
+        <!--
+		<RelativeLayout android:id="@+id/item1"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+	<TextView android:paddingBottom="4dip" android:id="@+id/friend_bg_clear1"
+		android:singleLine="true" android:layout_alignParentLeft="true"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_alignParentTop="true" android:textStyle="bold"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingTop="4dip" />
+	<TextView android:layout_below="@id/friend_bg_clear1"
+		android:id="@+id/message_bg_clear1" android:layout_alignParentLeft="true"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingRight="4dip"
+		android:paddingBottom="4dip" />
+	<TextView android:id="@+id/bg_clear1" android:layout_width="fill_parent"
+		android:layout_alignParentLeft="true" android:height="0dip"
+		android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear1"
+		android:textColor="#00000000" />
+	<ImageView android:layout_alignParentLeft="true" android:id="@+id/profile_bg1"
+	    android:layout_width="48dip" android:layout_height="fill_parent"
+	    android:scaleType="fitXY" android:layout_above="@id/bg_clear1" />
+	<ImageView android:id="@+id/friend_bg1" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/message_bg_clear1" android:layout_toRightOf="@id/profile_bg1" />
+	<ImageView android:id="@+id/status_bg1" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/bg_clear1" android:layout_toRightOf="@id/profile_bg1"
+		android:layout_below="@id/friend_bg1" />
+	<ImageView android:id="@+id/profile1" android:layout_width="48dip"
+		android:layout_height="48dip" android:layout_alignParentTop="true"
+		android:layout_alignParentLeft="true" />
+			<TextView android:paddingLeft="4dip" android:layout_marginRight="4dip" android:paddingBottom="4dip" android:id="@+id/friend1"
+				android:singleLine="true" android:layout_toRightOf="@id/profile1"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold"
+				android:paddingTop="4dip" />
+			<TextView android:gravity="right" android:id="@+id/created1"
+				android:singleLine="true" android:layout_toRightOf="@id/friend1"
+				android:layout_alignParentRight="true" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:paddingTop="4dip" android:paddingRight="4dip" />
+			<TextView android:layout_below="@id/friend1" android:paddingLeft="4dip" android:id="@+id/message1"
+				android:layout_toRightOf="@id/profile1" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:paddingRight="4dip"
+				android:paddingBottom="4dip" />
+			<ImageView android:id="@+id/icon1" android:layout_width="16dip"
+				android:layout_height="16dip" android:layout_alignParentRight="true"
+				android:layout_alignBottom="@id/message_bg_clear1"
+				android:paddingBottom="4dip" android:paddingRight="4dip" />
+		</RelativeLayout>
+		<RelativeLayout android:id="@+id/item2"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+	<TextView android:paddingBottom="4dip" android:id="@+id/friend_bg_clear2"
+		android:singleLine="true" android:layout_alignParentLeft="true"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_alignParentTop="true" android:textStyle="bold"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingTop="4dip" />
+	<TextView android:layout_below="@id/friend_bg_clear2"
+		android:id="@+id/message_bg_clear2" android:layout_alignParentLeft="true"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingRight="4dip"
+		android:paddingBottom="4dip" />
+	<TextView android:id="@+id/bg_clear2" android:layout_width="fill_parent"
+		android:layout_alignParentLeft="true" android:height="0dip"
+		android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear2"
+		android:textColor="#00000000" />
+	<ImageView android:layout_alignParentLeft="true" android:id="@+id/profile_bg2"
+	    android:layout_width="48dip" android:layout_height="fill_parent"
+	    android:scaleType="fitXY" android:layout_above="@id/bg_clear2" />
+	<ImageView android:id="@+id/friend_bg2" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/message_bg_clear2" android:layout_toRightOf="@id/profile_bg2" />
+	<ImageView android:id="@+id/status_bg2" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/bg_clear2" android:layout_toRightOf="@id/profile_bg2"
+		android:layout_below="@id/friend_bg2" />
+	<ImageView android:id="@+id/profile2" android:layout_width="48dip"
+		android:layout_height="48dip" android:layout_alignParentTop="true"
+		android:layout_alignParentLeft="true" />
+			<TextView android:paddingLeft="4dip" android:layout_marginRight="4dip" android:paddingBottom="4dip" android:id="@+id/friend2"
+				android:singleLine="true" android:layout_toRightOf="@id/profile2"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold"
+				android:paddingTop="4dip" />
+			<TextView android:gravity="right" android:id="@+id/created2"
+				android:singleLine="true" android:layout_toRightOf="@id/friend2"
+				android:layout_alignParentRight="true" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:paddingTop="4dip" android:paddingRight="4dip" />
+			<TextView android:layout_below="@id/friend2" android:paddingLeft="4dip" android:id="@+id/message2"
+				android:layout_toRightOf="@id/profile2" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:paddingRight="4dip"
+				android:paddingBottom="4dip" />
+			<ImageView android:id="@+id/icon2" android:layout_width="16dip"
+				android:layout_height="16dip" android:layout_alignParentRight="true"
+				android:layout_alignBottom="@id/message_bg_clear2"
+				android:paddingBottom="4dip" android:paddingRight="4dip" />
+		</RelativeLayout>
+		<RelativeLayout android:id="@+id/item3"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+	<TextView android:paddingBottom="4dip" android:id="@+id/friend_bg_clear3"
+		android:singleLine="true" android:layout_alignParentLeft="true"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_alignParentTop="true" android:textStyle="bold"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingTop="4dip" />
+	<TextView android:layout_below="@id/friend_bg_clear3"
+		android:id="@+id/message_bg_clear3" android:layout_alignParentLeft="true"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingRight="4dip"
+		android:paddingBottom="4dip" />
+	<TextView android:id="@+id/bg_clear3" android:layout_width="fill_parent"
+		android:layout_alignParentLeft="true" android:height="0dip"
+		android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear3"
+		android:textColor="#00000000" />
+	<ImageView android:layout_alignParentLeft="true" android:id="@+id/profile_bg3"
+	    android:layout_width="48dip" android:layout_height="fill_parent"
+	    android:scaleType="fitXY" android:layout_above="@id/bg_clear3" />
+	<ImageView android:id="@+id/friend_bg3" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/message_bg_clear3" android:layout_toRightOf="@id/profile_bg3" />
+	<ImageView android:id="@+id/status_bg3" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/bg_clear3" android:layout_toRightOf="@id/profile_bg3"
+		android:layout_below="@id/friend_bg3" />
+	<ImageView android:id="@+id/profile3" android:layout_width="48dip"
+		android:layout_height="48dip" android:layout_alignParentTop="true"
+		android:layout_alignParentLeft="true" />
+			<TextView android:paddingLeft="4dip" android:layout_marginRight="4dip" android:paddingBottom="4dip" android:id="@+id/friend3"
+				android:singleLine="true" android:layout_toRightOf="@id/profile3"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold"
+				android:paddingTop="4dip" />
+			<TextView android:gravity="right" android:id="@+id/created3"
+				android:singleLine="true" android:layout_toRightOf="@id/friend3"
+				android:layout_alignParentRight="true" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:paddingTop="4dip" android:paddingRight="4dip" />
+			<TextView android:layout_below="@id/friend3" android:paddingLeft="4dip" android:id="@+id/message3"
+				android:layout_toRightOf="@id/profile3" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:paddingRight="4dip"
+				android:paddingBottom="4dip" />
+			<ImageView android:id="@+id/icon3" android:layout_width="16dip"
+				android:layout_height="16dip" android:layout_alignParentRight="true"
+				android:layout_alignBottom="@id/message_bg_clear3"
+				android:paddingBottom="4dip" android:paddingRight="4dip" />
+		</RelativeLayout>
+		<RelativeLayout android:id="@+id/item4"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+	<TextView android:paddingBottom="4dip" android:id="@+id/friend_bg_clear4"
+		android:singleLine="true" android:layout_alignParentLeft="true"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_alignParentTop="true" android:textStyle="bold"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingTop="4dip" />
+	<TextView android:layout_below="@id/friend_bg_clear4"
+		android:id="@+id/message_bg_clear4" android:layout_alignParentLeft="true"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingRight="4dip"
+		android:paddingBottom="4dip" />
+	<TextView android:id="@+id/bg_clear4" android:layout_width="fill_parent"
+		android:layout_alignParentLeft="true" android:height="0dip"
+		android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear4"
+		android:textColor="#00000000" />
+	<ImageView android:layout_alignParentLeft="true" android:id="@+id/profile_bg4"
+	    android:layout_width="48dip" android:layout_height="fill_parent"
+	    android:scaleType="fitXY" android:layout_above="@id/bg_clear4" />
+	<ImageView android:id="@+id/friend_bg4" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/message_bg_clear4" android:layout_toRightOf="@id/profile_bg4" />
+	<ImageView android:id="@+id/status_bg4" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/bg_clear4" android:layout_toRightOf="@id/profile_bg4"
+		android:layout_below="@id/friend_bg4" />
+	<ImageView android:id="@+id/profile4" android:layout_width="48dip"
+		android:layout_height="48dip" android:layout_alignParentTop="true"
+		android:layout_alignParentLeft="true" />
+			<TextView android:paddingLeft="4dip" android:layout_marginRight="4dip" android:paddingBottom="4dip" android:id="@+id/friend4"
+				android:singleLine="true" android:layout_toRightOf="@id/profile4"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold"
+				android:paddingTop="4dip" />
+			<TextView android:gravity="right" android:id="@+id/created4"
+				android:singleLine="true" android:layout_toRightOf="@id/friend4"
+				android:layout_alignParentRight="true" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:paddingTop="4dip" android:paddingRight="4dip" />
+			<TextView android:layout_below="@id/friend4" android:paddingLeft="4dip" android:id="@+id/message4"
+				android:layout_toRightOf="@id/profile4" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:paddingRight="4dip"
+				android:paddingBottom="4dip" />
+			<ImageView android:id="@+id/icon4" android:layout_width="16dip"
+				android:layout_height="16dip" android:layout_alignParentRight="true"
+				android:layout_alignBottom="@id/message_bg_clear4"
+				android:paddingBottom="4dip" android:paddingRight="4dip" />
+		</RelativeLayout>
+		<RelativeLayout android:id="@+id/item5"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+	<TextView android:paddingBottom="4dip" android:id="@+id/friend_bg_clear5"
+		android:singleLine="true" android:layout_alignParentLeft="true"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_alignParentTop="true" android:textStyle="bold"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingTop="4dip" />
+	<TextView android:layout_below="@id/friend_bg_clear5"
+		android:id="@+id/message_bg_clear5" android:layout_alignParentLeft="true"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingRight="4dip"
+		android:paddingBottom="4dip" />
+	<TextView android:id="@+id/bg_clear5" android:layout_width="fill_parent"
+		android:layout_alignParentLeft="true" android:height="0dip"
+		android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear5"
+		android:textColor="#00000000" />
+	<ImageView android:layout_alignParentLeft="true" android:id="@+id/profile_bg5"
+	    android:layout_width="48dip" android:layout_height="fill_parent"
+	    android:scaleType="fitXY" android:layout_above="@id/bg_clear5" />
+	<ImageView android:id="@+id/friend_bg5" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/message_bg_clear5" android:layout_toRightOf="@id/profile_bg5" />
+	<ImageView android:id="@+id/status_bg5" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/bg_clear5" android:layout_toRightOf="@id/profile_bg5"
+		android:layout_below="@id/friend_bg5" />
+	<ImageView android:id="@+id/profile5" android:layout_width="48dip"
+		android:layout_height="48dip" android:layout_alignParentTop="true"
+		android:layout_alignParentLeft="true" />
+			<TextView android:paddingLeft="4dip" android:layout_marginRight="4dip" android:paddingBottom="4dip" android:id="@+id/friend5"
+				android:singleLine="true" android:layout_toRightOf="@id/profile5"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold"
+				android:paddingTop="4dip" />
+			<TextView android:gravity="right" android:id="@+id/created5"
+				android:singleLine="true" android:layout_toRightOf="@id/friend5"
+				android:layout_alignParentRight="true" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:paddingTop="4dip" android:paddingRight="4dip" />
+			<TextView android:layout_below="@id/friend5" android:paddingLeft="4dip" android:id="@+id/message5"
+				android:layout_toRightOf="@id/profile5" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:paddingRight="4dip"
+				android:paddingBottom="4dip" />
+			<ImageView android:id="@+id/icon5" android:layout_width="16dip"
+				android:layout_height="16dip" android:layout_alignParentRight="true"
+				android:layout_alignBottom="@id/message_bg_clear5"
+				android:paddingBottom="4dip" android:paddingRight="4dip" />
+		</RelativeLayout>
+		<RelativeLayout android:id="@+id/item6"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+	<TextView android:paddingBottom="4dip" android:id="@+id/friend_bg_clear6"
+		android:singleLine="true" android:layout_alignParentLeft="true"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_alignParentTop="true" android:textStyle="bold"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingTop="4dip" />
+	<TextView android:layout_below="@id/friend_bg_clear6"
+		android:id="@+id/message_bg_clear6" android:layout_alignParentLeft="true"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingRight="4dip"
+		android:paddingBottom="4dip" />
+	<TextView android:id="@+id/bg_clear6" android:layout_width="fill_parent"
+		android:layout_alignParentLeft="true" android:height="0dip"
+		android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear6"
+		android:textColor="#00000000" />
+	<ImageView android:layout_alignParentLeft="true" android:id="@+id/profile_bg6"
+	    android:layout_width="48dip" android:layout_height="fill_parent"
+	    android:scaleType="fitXY" android:layout_above="@id/bg_clear6" />
+	<ImageView android:id="@+id/friend_bg6" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/message_bg_clear6" android:layout_toRightOf="@id/profile_bg6" />
+	<ImageView android:id="@+id/status_bg6" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/bg_clear6" android:layout_toRightOf="@id/profile_bg6"
+		android:layout_below="@id/friend_bg6" />
+	<ImageView android:id="@+id/profile6" android:layout_width="48dip"
+		android:layout_height="48dip" android:layout_alignParentTop="true"
+		android:layout_alignParentLeft="true" />
+			<TextView android:paddingLeft="4dip" android:layout_marginRight="4dip" android:paddingBottom="4dip" android:id="@+id/friend6"
+				android:singleLine="true" android:layout_toRightOf="@id/profile6"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold"
+				android:paddingTop="4dip" />
+			<TextView android:gravity="right" android:id="@+id/created6"
+				android:singleLine="true" android:layout_toRightOf="@id/friend6"
+				android:layout_alignParentRight="true" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:paddingTop="4dip" android:paddingRight="4dip" />
+			<TextView android:layout_below="@id/friend6" android:paddingLeft="4dip" android:id="@+id/message6"
+				android:layout_toRightOf="@id/profile6" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:paddingRight="4dip"
+				android:paddingBottom="4dip" />
+			<ImageView android:id="@+id/icon6" android:layout_width="16dip"
+				android:layout_height="16dip" android:layout_alignParentRight="true"
+				android:layout_alignBottom="@id/message_bg_clear6"
+				android:paddingBottom="4dip" android:paddingRight="4dip" />
+		</RelativeLayout>
+		<RelativeLayout android:id="@+id/item7"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+	<TextView android:paddingBottom="4dip" android:id="@+id/friend_bg_clear7"
+		android:singleLine="true" android:layout_alignParentLeft="true"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_alignParentTop="true" android:textStyle="bold"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingTop="4dip" />
+	<TextView android:layout_below="@id/friend_bg_clear7"
+		android:id="@+id/message_bg_clear7" android:layout_alignParentLeft="true"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingRight="4dip"
+		android:paddingBottom="4dip" />
+	<TextView android:id="@+id/bg_clear7" android:layout_width="fill_parent"
+		android:layout_alignParentLeft="true" android:height="0dip"
+		android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear7"
+		android:textColor="#00000000" />
+	<ImageView android:layout_alignParentLeft="true" android:id="@+id/profile_bg7"
+	    android:layout_width="48dip" android:layout_height="fill_parent"
+	    android:scaleType="fitXY" android:layout_above="@id/bg_clear7" />
+	<ImageView android:id="@+id/friend_bg7" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/message_bg_clear7" android:layout_toRightOf="@id/profile_bg7" />
+	<ImageView android:id="@+id/status_bg7" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/bg_clear7" android:layout_toRightOf="@id/profile_bg7"
+		android:layout_below="@id/friend_bg7" />
+	<ImageView android:id="@+id/profile7" android:layout_width="48dip"
+		android:layout_height="48dip" android:layout_alignParentTop="true"
+		android:layout_alignParentLeft="true" />
+			<TextView android:paddingLeft="4dip" android:layout_marginRight="4dip" android:paddingBottom="4dip" android:id="@+id/friend7"
+				android:singleLine="true" android:layout_toRightOf="@id/profile7"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold"
+				android:paddingTop="4dip" />
+			<TextView android:gravity="right" android:id="@+id/created7"
+				android:singleLine="true" android:layout_toRightOf="@id/friend7"
+				android:layout_alignParentRight="true" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:paddingTop="4dip" android:paddingRight="4dip" />
+			<TextView android:layout_below="@id/friend7" android:paddingLeft="4dip" android:id="@+id/message7"
+				android:layout_toRightOf="@id/profile7" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:paddingRight="4dip"
+				android:paddingBottom="4dip" />
+			<ImageView android:id="@+id/icon7" android:layout_width="16dip"
+				android:layout_height="16dip" android:layout_alignParentRight="true"
+				android:layout_alignBottom="@id/message_bg_clear7"
+				android:paddingBottom="4dip" android:paddingRight="4dip" />
+		</RelativeLayout>
+		<RelativeLayout android:id="@+id/item8"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+	<TextView android:paddingBottom="4dip" android:id="@+id/friend_bg_clear8"
+		android:singleLine="true" android:layout_alignParentLeft="true"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_alignParentTop="true" android:textStyle="bold"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingTop="4dip" />
+	<TextView android:layout_below="@id/friend_bg_clear8"
+		android:id="@+id/message_bg_clear8" android:layout_alignParentLeft="true"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingRight="4dip"
+		android:paddingBottom="4dip" />
+	<TextView android:id="@+id/bg_clear8" android:layout_width="fill_parent"
+		android:layout_alignParentLeft="true" android:height="0dip"
+		android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear8"
+		android:textColor="#00000000" />
+	<ImageView android:layout_alignParentLeft="true" android:id="@+id/profile_bg8"
+	    android:layout_width="48dip" android:layout_height="fill_parent"
+	    android:scaleType="fitXY" android:layout_above="@id/bg_clear8" />
+	<ImageView android:id="@+id/friend_bg8" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/message_bg_clear8" android:layout_toRightOf="@id/profile_bg8" />
+	<ImageView android:id="@+id/status_bg8" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/bg_clear8" android:layout_toRightOf="@id/profile_bg8"
+		android:layout_below="@id/friend_bg8" />
+	<ImageView android:id="@+id/profile8" android:layout_width="48dip"
+		android:layout_height="48dip" android:layout_alignParentTop="true"
+		android:layout_alignParentLeft="true" />
+			<TextView android:paddingLeft="4dip" android:layout_marginRight="4dip" android:paddingBottom="4dip" android:id="@+id/friend8"
+				android:singleLine="true" android:layout_toRightOf="@id/profile8"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold"
+				android:paddingTop="4dip" />
+			<TextView android:gravity="right" android:id="@+id/created8"
+				android:singleLine="true" android:layout_toRightOf="@id/friend8"
+				android:layout_alignParentRight="true" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:paddingTop="4dip" android:paddingRight="4dip" />
+			<TextView android:layout_below="@id/friend8" android:paddingLeft="4dip" android:id="@+id/message8"
+				android:layout_toRightOf="@id/profile8" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:paddingRight="4dip"
+				android:paddingBottom="4dip" />
+			<ImageView android:id="@+id/icon8" android:layout_width="16dip"
+				android:layout_height="16dip" android:layout_alignParentRight="true"
+				android:layout_alignBottom="@id/message_bg_clear8"
+				android:paddingBottom="4dip" android:paddingRight="4dip" />
+		</RelativeLayout>
+		<RelativeLayout android:id="@+id/item9"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+	<TextView android:paddingBottom="4dip" android:id="@+id/friend_bg_clear9"
+		android:singleLine="true" android:layout_alignParentLeft="true"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_alignParentTop="true" android:textStyle="bold"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingTop="4dip" />
+	<TextView android:layout_below="@id/friend_bg_clear9"
+		android:id="@+id/message_bg_clear9" android:layout_alignParentLeft="true"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingRight="4dip"
+		android:paddingBottom="4dip" />
+	<TextView android:id="@+id/bg_clear9" android:layout_width="fill_parent"
+		android:layout_alignParentLeft="true" android:height="0dip"
+		android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear9"
+		android:textColor="#00000000" />
+	<ImageView android:layout_alignParentLeft="true" android:id="@+id/profile_bg9"
+	    android:layout_width="48dip" android:layout_height="fill_parent"
+	    android:scaleType="fitXY" android:layout_above="@id/bg_clear9" />
+	<ImageView android:id="@+id/friend_bg9" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/message_bg_clear9" android:layout_toRightOf="@id/profile_bg9" />
+	<ImageView android:id="@+id/status_bg9" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/bg_clear9" android:layout_toRightOf="@id/profile_bg9"
+		android:layout_below="@id/friend_bg9" />
+	<ImageView android:id="@+id/profile9" android:layout_width="48dip"
+		android:layout_height="48dip" android:layout_alignParentTop="true"
+		android:layout_alignParentLeft="true" />
+			<TextView android:paddingLeft="4dip" android:layout_marginRight="4dip" android:paddingBottom="4dip" android:id="@+id/friend9"
+				android:singleLine="true" android:layout_toRightOf="@id/profile9"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold"
+				android:paddingTop="4dip" />
+			<TextView android:gravity="right" android:id="@+id/created9"
+				android:singleLine="true" android:layout_toRightOf="@id/friend9"
+				android:layout_alignParentRight="true" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:paddingTop="4dip" android:paddingRight="4dip" />
+			<TextView android:layout_below="@id/friend9" android:paddingLeft="4dip" android:id="@+id/message9"
+				android:layout_toRightOf="@id/profile9" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:paddingRight="4dip"
+				android:paddingBottom="4dip" />
+			<ImageView android:id="@+id/icon9" android:layout_width="16dip"
+				android:layout_height="16dip" android:layout_alignParentRight="true"
+				android:layout_alignBottom="@id/message_bg_clear9"
+				android:paddingBottom="4dip" android:paddingRight="4dip" />
+		</RelativeLayout>
+		<RelativeLayout android:id="@+id/item10"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+	<TextView android:paddingBottom="4dip" android:id="@+id/friend_bg_clear10"
+		android:singleLine="true" android:layout_alignParentLeft="true"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_alignParentTop="true" android:textStyle="bold"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingTop="4dip" />
+	<TextView android:layout_below="@id/friend_bg_clear10"
+		android:id="@+id/message_bg_clear10" android:layout_alignParentLeft="true"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingRight="4dip"
+		android:paddingBottom="4dip" />
+	<TextView android:id="@+id/bg_clear10" android:layout_width="fill_parent"
+		android:layout_alignParentLeft="true" android:height="0dip"
+		android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear10"
+		android:textColor="#00000000" />
+	<ImageView android:layout_alignParentLeft="true" android:id="@+id/profile_bg10"
+	    android:layout_width="48dip" android:layout_height="fill_parent"
+	    android:scaleType="fitXY" android:layout_above="@id/bg_clear10" />
+	<ImageView android:id="@+id/friend_bg10" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/message_bg_clear10" android:layout_toRightOf="@id/profile_bg10" />
+	<ImageView android:id="@+id/status_bg10" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/bg_clear10" android:layout_toRightOf="@id/profile_bg10"
+		android:layout_below="@id/friend_bg10" />
+	<ImageView android:id="@+id/profile10" android:layout_width="48dip"
+		android:layout_height="48dip" android:layout_alignParentTop="true"
+		android:layout_alignParentLeft="true" />
+			<TextView android:paddingLeft="4dip" android:layout_marginRight="4dip" android:paddingBottom="4dip" android:id="@+id/friend10"
+				android:singleLine="true" android:layout_toRightOf="@id/profile10"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold"
+				android:paddingTop="4dip" />
+			<TextView android:gravity="right" android:id="@+id/created10"
+				android:singleLine="true" android:layout_toRightOf="@id/friend10"
+				android:layout_alignParentRight="true" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:paddingTop="4dip" android:paddingRight="4dip" />
+			<TextView android:layout_below="@id/friend10" android:paddingLeft="4dip" android:id="@+id/message10"
+				android:layout_toRightOf="@id/profile10" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:paddingRight="4dip"
+				android:paddingBottom="4dip" />
+			<ImageView android:id="@+id/icon10" android:layout_width="16dip"
+				android:layout_height="16dip" android:layout_alignParentRight="true"
+				android:layout_alignBottom="@id/message_bg_clear10"
+				android:paddingBottom="4dip" android:paddingRight="4dip" />
+		</RelativeLayout>
+		<RelativeLayout android:id="@+id/item11"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+	<TextView android:paddingBottom="4dip" android:id="@+id/friend_bg_clear11"
+		android:singleLine="true" android:layout_alignParentLeft="true"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_alignParentTop="true" android:textStyle="bold"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingTop="4dip" />
+	<TextView android:layout_below="@id/friend_bg_clear11"
+		android:id="@+id/message_bg_clear11" android:layout_alignParentLeft="true"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingRight="4dip"
+		android:paddingBottom="4dip" />
+	<TextView android:id="@+id/bg_clear11" android:layout_width="fill_parent"
+		android:layout_alignParentLeft="true" android:height="0dip"
+		android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear11"
+		android:textColor="#00000000" />
+	<ImageView android:layout_alignParentLeft="true" android:id="@+id/profile_bg11"
+	    android:layout_width="48dip" android:layout_height="fill_parent"
+	    android:scaleType="fitXY" android:layout_above="@id/bg_clear11" />
+	<ImageView android:id="@+id/friend_bg11" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/message_bg_clear11" android:layout_toRightOf="@id/profile_bg11" />
+	<ImageView android:id="@+id/status_bg11" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/bg_clear11" android:layout_toRightOf="@id/profile_bg11"
+		android:layout_below="@id/friend_bg11" />
+	<ImageView android:id="@+id/profile11" android:layout_width="48dip"
+		android:layout_height="48dip" android:layout_alignParentTop="true"
+		android:layout_alignParentLeft="true" />
+			<TextView android:paddingLeft="4dip" android:layout_marginRight="4dip" android:paddingBottom="4dip" android:id="@+id/friend11"
+				android:singleLine="true" android:layout_toRightOf="@id/profile11"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold"
+				android:paddingTop="4dip" />
+			<TextView android:gravity="right" android:id="@+id/created11"
+				android:singleLine="true" android:layout_toRightOf="@id/friend11"
+				android:layout_alignParentRight="true" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:paddingTop="4dip" android:paddingRight="4dip" />
+			<TextView android:layout_below="@id/friend11" android:paddingLeft="4dip" android:id="@+id/message11"
+				android:layout_toRightOf="@id/profile11" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:paddingRight="4dip"
+				android:paddingBottom="4dip" />
+			<ImageView android:id="@+id/icon11" android:layout_width="16dip"
+				android:layout_height="16dip" android:layout_alignParentRight="true"
+				android:layout_alignBottom="@id/message_bg_clear11"
+				android:paddingBottom="4dip" android:paddingRight="4dip" />
+		</RelativeLayout>
+		<RelativeLayout android:id="@+id/item12"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+	<TextView android:paddingBottom="4dip" android:id="@+id/friend_bg_clear12"
+		android:singleLine="true" android:layout_alignParentLeft="true"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_alignParentTop="true" android:textStyle="bold"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingTop="4dip" />
+	<TextView android:layout_below="@id/friend_bg_clear12"
+		android:id="@+id/message_bg_clear12" android:layout_alignParentLeft="true"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingRight="4dip"
+		android:paddingBottom="4dip" />
+	<TextView android:id="@+id/bg_clear12" android:layout_width="fill_parent"
+		android:layout_alignParentLeft="true" android:height="0dip"
+		android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear12"
+		android:textColor="#00000000" />
+	<ImageView android:layout_alignParentLeft="true" android:id="@+id/profile_bg12"
+	    android:layout_width="48dip" android:layout_height="fill_parent"
+	    android:scaleType="fitXY" android:layout_above="@id/bg_clear12" />
+	<ImageView android:id="@+id/friend_bg12" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/message_bg_clear12" android:layout_toRightOf="@id/profile_bg12" />
+	<ImageView android:id="@+id/status_bg12" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/bg_clear12" android:layout_toRightOf="@id/profile_bg12"
+		android:layout_below="@id/friend_bg12" />
+	<ImageView android:id="@+id/profile12" android:layout_width="48dip"
+		android:layout_height="48dip" android:layout_alignParentTop="true"
+		android:layout_alignParentLeft="true" />
+			<TextView android:paddingLeft="4dip" android:layout_marginRight="4dip" android:paddingBottom="4dip" android:id="@+id/friend12"
+				android:singleLine="true" android:layout_toRightOf="@id/profile12"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold"
+				android:paddingTop="4dip" />
+			<TextView android:gravity="right" android:id="@+id/created12"
+				android:singleLine="true" android:layout_toRightOf="@id/friend12"
+				android:layout_alignParentRight="true" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:paddingTop="4dip" android:paddingRight="4dip" />
+			<TextView android:layout_below="@id/friend12" android:paddingLeft="4dip" android:id="@+id/message12"
+				android:layout_toRightOf="@id/profile12" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:paddingRight="4dip"
+				android:paddingBottom="4dip" />
+			<ImageView android:id="@+id/icon12" android:layout_width="16dip"
+				android:layout_height="16dip" android:layout_alignParentRight="true"
+				android:layout_alignBottom="@id/message_bg_clear12"
+				android:paddingBottom="4dip" android:paddingRight="4dip" />
+		</RelativeLayout>
+		<RelativeLayout android:id="@+id/item13"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+	<TextView android:paddingBottom="4dip" android:id="@+id/friend_bg_clear13"
+		android:singleLine="true" android:layout_alignParentLeft="true"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_alignParentTop="true" android:textStyle="bold"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingTop="4dip" />
+	<TextView android:layout_below="@id/friend_bg_clear13"
+		android:id="@+id/message_bg_clear13" android:layout_alignParentLeft="true"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingRight="4dip"
+		android:paddingBottom="4dip" />
+	<TextView android:id="@+id/bg_clear13" android:layout_width="fill_parent"
+		android:layout_alignParentLeft="true" android:height="0dip"
+		android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear13"
+		android:textColor="#00000000" />
+	<ImageView android:layout_alignParentLeft="true" android:id="@+id/profile_bg13"
+	    android:layout_width="48dip" android:layout_height="fill_parent"
+	    android:scaleType="fitXY" android:layout_above="@id/bg_clear13" />
+	<ImageView android:id="@+id/friend_bg13" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/message_bg_clear13" android:layout_toRightOf="@id/profile_bg13" />
+	<ImageView android:id="@+id/status_bg13" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/bg_clear13" android:layout_toRightOf="@id/profile_bg13"
+		android:layout_below="@id/friend_bg13" />
+	<ImageView android:id="@+id/profile13" android:layout_width="48dip"
+		android:layout_height="48dip" android:layout_alignParentTop="true"
+		android:layout_alignParentLeft="true" />
+			<TextView android:paddingLeft="4dip" android:layout_marginRight="4dip" android:paddingBottom="4dip" android:id="@+id/friend13"
+				android:singleLine="true" android:layout_toRightOf="@id/profile13"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold"
+				android:paddingTop="4dip" />
+			<TextView android:gravity="right" android:id="@+id/created13"
+				android:singleLine="true" android:layout_toRightOf="@id/friend13"
+				android:layout_alignParentRight="true" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:paddingTop="4dip" android:paddingRight="4dip" />
+			<TextView android:layout_below="@id/friend13" android:paddingLeft="4dip" android:id="@+id/message13"
+				android:layout_toRightOf="@id/profile13" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:paddingRight="4dip"
+				android:paddingBottom="4dip" />
+			<ImageView android:id="@+id/icon13" android:layout_width="16dip"
+				android:layout_height="16dip" android:layout_alignParentRight="true"
+				android:layout_alignBottom="@id/message_bg_clear13"
+				android:paddingBottom="4dip" android:paddingRight="4dip" />
+		</RelativeLayout>
+		<RelativeLayout android:id="@+id/item14"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+	<TextView android:paddingBottom="4dip" android:id="@+id/friend_bg_clear14"
+		android:singleLine="true" android:layout_alignParentLeft="true"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_alignParentTop="true" android:textStyle="bold"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingTop="4dip" />
+	<TextView android:layout_below="@id/friend_bg_clear14"
+		android:id="@+id/message_bg_clear14" android:layout_alignParentLeft="true"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingRight="4dip"
+		android:paddingBottom="4dip" />
+	<TextView android:id="@+id/bg_clear14" android:layout_width="fill_parent"
+		android:layout_alignParentLeft="true" android:height="0dip"
+		android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear14"
+		android:textColor="#00000000" />
+	<ImageView android:layout_alignParentLeft="true" android:id="@+id/profile_bg14"
+	    android:layout_width="48dip" android:layout_height="fill_parent"
+	    android:scaleType="fitXY" android:layout_above="@id/bg_clear14" />
+	<ImageView android:id="@+id/friend_bg14" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/message_bg_clear14" android:layout_toRightOf="@id/profile_bg14" />
+	<ImageView android:id="@+id/status_bg14" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/bg_clear14" android:layout_toRightOf="@id/profile_bg14"
+		android:layout_below="@id/friend_bg14" />
+	<ImageView android:id="@+id/profile14" android:layout_width="48dip"
+		android:layout_height="48dip" android:layout_alignParentTop="true"
+		android:layout_alignParentLeft="true" />
+			<TextView android:paddingLeft="4dip" android:layout_marginRight="4dip" android:paddingBottom="4dip" android:id="@+id/friend14"
+				android:singleLine="true" android:layout_toRightOf="@id/profile14"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold"
+				android:paddingTop="4dip" />
+			<TextView android:gravity="right" android:id="@+id/created14"
+				android:singleLine="true" android:layout_toRightOf="@id/friend14"
+				android:layout_alignParentRight="true" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:paddingTop="4dip" android:paddingRight="4dip" />
+			<TextView android:layout_below="@id/friend14" android:paddingLeft="4dip" android:id="@+id/message14"
+				android:layout_toRightOf="@id/profile14" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:paddingRight="4dip"
+				android:paddingBottom="4dip" />
+			<ImageView android:id="@+id/icon14" android:layout_width="16dip"
+				android:layout_height="16dip" android:layout_alignParentRight="true"
+				android:layout_alignBottom="@id/message_bg_clear14"
+				android:paddingBottom="4dip" android:paddingRight="4dip" />
+		</RelativeLayout>
+		<RelativeLayout android:id="@+id/item15"
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+	<TextView android:paddingBottom="4dip" android:id="@+id/friend_bg_clear15"
+		android:singleLine="true" android:layout_alignParentLeft="true"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_alignParentTop="true" android:textStyle="bold"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingTop="4dip" />
+	<TextView android:layout_below="@id/friend_bg_clear15"
+		android:id="@+id/message_bg_clear15" android:layout_alignParentLeft="true"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:textColor="#00000000" android:layout_marginLeft="52dip"
+		android:paddingLeft="4dip" android:paddingRight="4dip"
+		android:paddingBottom="4dip" />
+	<TextView android:id="@+id/bg_clear15" android:layout_width="fill_parent"
+		android:layout_alignParentLeft="true" android:height="0dip"
+		android:layout_height="wrap_content" android:layout_below="@id/message_bg_clear15"
+		android:textColor="#00000000" />
+	<ImageView android:layout_alignParentLeft="true" android:id="@+id/profile_bg15"
+	    android:layout_width="48dip" android:layout_height="fill_parent"
+	    android:scaleType="fitXY" android:layout_above="@id/bg_clear15" />
+	<ImageView android:id="@+id/friend_bg15" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/message_bg_clear15" android:layout_toRightOf="@id/profile_bg15" />
+	<ImageView android:id="@+id/status_bg15" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:scaleType="fitXY"
+		android:layout_above="@id/bg_clear15" android:layout_toRightOf="@id/profile_bg15"
+		android:layout_below="@id/friend_bg15" />
+	<ImageView android:id="@+id/profile15" android:layout_width="48dip"
+		android:layout_height="48dip" android:layout_alignParentTop="true"
+		android:layout_alignParentLeft="true" />
+			<TextView android:paddingLeft="4dip" android:layout_marginRight="4dip" android:paddingBottom="4dip" android:id="@+id/friend15"
+				android:singleLine="true" android:layout_toRightOf="@id/profile15"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_alignParentTop="true" android:textStyle="bold"
+				android:paddingTop="4dip" />
+			<TextView android:gravity="right" android:id="@+id/created15"
+				android:singleLine="true" android:layout_toRightOf="@id/friend15"
+				android:layout_alignParentRight="true" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:layout_alignParentTop="true"
+				android:paddingTop="4dip" android:paddingRight="4dip" />
+			<TextView android:layout_below="@id/friend15" android:paddingLeft="4dip" android:id="@+id/message15"
+				android:layout_toRightOf="@id/profile15" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:paddingRight="4dip"
+				android:paddingBottom="4dip" />
+			<ImageView android:id="@+id/icon15" android:layout_width="16dip"
+				android:layout_height="16dip" android:layout_alignParentRight="true"
+				android:layout_alignBottom="@id/message_bg_clear15"
+				android:paddingBottom="4dip" android:paddingRight="4dip" />
+		</RelativeLayout>
+        -->
+    </LinearLayout>
+
+</RelativeLayout>

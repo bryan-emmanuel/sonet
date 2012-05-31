@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ * Sonet - Android Social Networking Widget
+ * Copyright (C) 2009 Bryan Emmanuel
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *  
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  
+ *  Bryan Emmanuel piusvelte@gmail.com
+-->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="fill_parent">
+	<LinearLayout android:id="@+id/ad" android:layout_width="fill_parent"
+		android:layout_height="wrap_content" />
+	<ScrollView android:layout_below="@id/ad" android:layout_width="fill_parent" android:layout_height="wrap_content">
+		<LinearLayout
+			android:layout_width="fill_parent" android:layout_height="fill_parent"
+			android:orientation="vertical">
+			<Button android:id="@+id/interval" android:text="@string/interval"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/statuses_per_account" android:text="@string/statuses_per_account"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<CheckBox android:id="@+id/hasbuttons" android:text="@string/hasbuttons"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
+			<Button android:id="@+id/buttons_bg_color" android:text="@string/buttons_bg_color"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/buttons_color" android:text="@string/buttons_color"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/buttons_textsize" android:text="@string/buttons_textsize"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/messages_bg_color" android:text="@string/message_bg_color"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/messages_color" android:text="@string/message_color"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/messages_textsize" android:text="@string/messages_textsize"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/friend_color" android:text="@string/friend_color"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/friend_textsize" android:text="@string/friend_textsize"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/friend_bg_color" android:text="@string/friend_bg_color"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/created_color" android:text="@string/created_color"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<Button android:id="@+id/created_textsize" android:text="@string/created_textsize"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<CheckBox android:id="@+id/time24hr" android:text="@string/time24hr"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
+			<CheckBox android:id="@+id/icon" android:text="@string/icon"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="true" />
+			<CheckBox android:id="@+id/background_update" android:text="@string/background_update"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="true" />
+			<CheckBox android:id="@+id/sound" android:text="@string/sound"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
+			<CheckBox android:id="@+id/vibrate" android:text="@string/vibrate"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
+			<CheckBox android:id="@+id/lights" android:text="@string/lights"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
+			<CheckBox android:id="@+id/display_profile" android:text="@string/display_profile"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="true" />
+			<Button android:id="@+id/profile_bg_color" android:text="@string/profile_bg_color"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+			<CheckBox android:id="@+id/instantupload" android:text="@string/instantupload"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
+			<Button android:id="@+id/margin" android:text="@string/margin"
+				android:layout_width="fill_parent" android:layout_height="wrap_content" />
+		</LinearLayout>
+	</ScrollView>
+</RelativeLayout>
