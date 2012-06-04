@@ -21,6 +21,14 @@ package com.piusvelte.sonet.core;
 
 import static com.piusvelte.sonet.core.Sonet.sDatabaseLock;
 
+//import java.io.File;
+//import java.io.FileInputStream;
+//import java.io.FileNotFoundException;
+//import java.io.FileOutputStream;
+//import java.io.IOException;
+//import java.io.InputStream;
+//import java.io.OutputStream;
+//import java.nio.channels.FileChannel;
 import java.util.HashMap;
 
 import com.piusvelte.sonet.core.Sonet.Accounts;
@@ -46,8 +54,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
+import android.util.Log;
 
 public class SonetProvider extends ContentProvider {
+
+	private static final String TAG = "SonetProvider";
 
 	public static final String AUTHORITY = "com.piusvelte.sonet.SonetProvider";
 
@@ -103,7 +114,7 @@ public class SonetProvider extends ContentProvider {
 	private static HashMap<String, String> status_linksProjectionMap;
 
 	private static final String ACCOUNTS_STYLES = "accounts_styles";
-	
+
 	protected static final String TABLE_STATUS_IMAGES = "status_images";
 	private static HashMap<String, String> status_imagesProjectionMap;
 
@@ -253,7 +264,7 @@ public class SonetProvider extends ContentProvider {
 		status_linksProjectionMap.put(Status_links.STATUS_ID, Status_links.STATUS_ID);
 		status_linksProjectionMap.put(Status_links.LINK_URI, Status_links.LINK_URI);
 		status_linksProjectionMap.put(Status_links.LINK_TYPE, Status_links.LINK_TYPE);
-		
+
 		sUriMatcher.addURI(AUTHORITY, TABLE_STATUS_IMAGES, STATUS_IMAGES);
 		status_imagesProjectionMap = new HashMap<String, String>();
 		status_imagesProjectionMap.put(Status_images._ID, Status_images._ID);
@@ -592,10 +603,69 @@ public class SonetProvider extends ContentProvider {
 
 		public DatabaseHelper(Context context) {
 			super(context, DATABASE_NAME, null, DATABASE_VERSION);
+			// need to move the db file
+//			File oldFile = new File("/data/data/com.piusvelte.sonetpro/databases/sonet.db");
+//			if (!oldFile.exists()) {
+//				Log.d(TAG, "pro db does not exist");
+//				oldFile = new File("/data/data/com.piusvelte.sonet/databases/sonet.db");
+//			}
+//			if (oldFile.exists()) {
+//				Log.d(TAG, "old db exists, move");
+//				File newFile = new File("/data/data/com.piusvelte.sonet.core/databases/sonet.db");
+//				FileInputStream oldFIS = null;
+//				try {
+//					oldFIS = new FileInputStream(oldFile);
+//				} catch (FileNotFoundException e) {
+//					Log.e(TAG, e.getMessage());
+//				}
+//				if (oldFIS != null) {
+//					Log.d(TAG, "got oldFIS");
+//					FileInputStream newFIS = null;
+//					try {
+//						newFIS = new FileInputStream(newFile);
+//					} catch (FileNotFoundException e) {
+//						Log.e(TAG, e.getMessage());
+//					}
+//					if (newFIS != null) {
+//						Log.d(TAG, "got newFIS");
+//						FileChannel fromChannel = null;
+//						FileChannel toChannel = null;
+//						try {
+//							fromChannel = oldFIS.getChannel();
+//							toChannel = newFIS.getChannel();
+//							fromChannel.transferTo(0, fromChannel.size(), toChannel);
+//							Log.d(TAG, "copied");
+//						} catch (IOException e) {
+//							Log.e(TAG, e.getMessage());
+//						} finally {
+//							try {
+//								if (fromChannel != null) {
+//									fromChannel.close();
+//								}
+//							} catch (IOException e) {
+//								Log.e(TAG, e.getMessage());
+//							} finally {
+//								if (toChannel != null) {
+//									try {
+//										toChannel.close();
+//									} catch (IOException e) {
+//										Log.e(TAG, e.getMessage());
+//									} finally {
+//										Log.d(TAG, "delete oldFile");
+//										oldFile.delete();
+//									}
+//								}
+//							}
+//						}
+//						getWritableDatabase().close();
+//					}
+//				}
+//			}
 		}
 
 		@Override
 		public void onCreate(SQLiteDatabase db) {
+			Log.d(TAG, "onCreate");
 			db.execSQL("create table if not exists " + TABLE_ACCOUNTS
 					+ " (" + Accounts._ID + " integer primary key autoincrement, "
 					+ Accounts.USERNAME + " text, "

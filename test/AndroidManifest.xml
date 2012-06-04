@@ -92,7 +92,7 @@
 		<service android:name="com.piusvelte.sonet.core.SonetService" />
 		<service android:name="com.piusvelte.sonet.core.SonetScrollableBuilder" />
 		<service android:name="com.piusvelte.sonet.core.SonetUploader" />
-		<receiver android:name="com.piusvelte.sonetpro.SonetSMSReceiver">
+		<receiver android:name="com.piusvelte.sonet.core.SonetSMSReceiver">
 			<intent-filter>
 				<action android:name="android.provider.Telephony.SMS_RECEIVED" />
 			</intent-filter>

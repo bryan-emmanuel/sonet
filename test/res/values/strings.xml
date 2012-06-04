@@ -18,14 +18,9 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
-<!--
-min dip size = (#cells*74dip)-2dip
--->
-<appwidget-provider
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  android:minWidth="250dip"
-  android:minHeight="110dip"
-  android:updatePeriodMillis="0"
-  android:resizeMode="3"
-  android:initialLayout="@layout/widget_nobuttons"
-  android:configure="com.piusvelte.sonet.core.ManageAccounts" />
+<resources>
+    <string name="app_name">Sonet Pro</string>
+    <string name="sonet_4x2">Sonet Pro 4x2</string>
+    <string name="sonet_4x3">Sonet Pro 4x3</string>
+    <string name="sonet_4x4">Sonet Pro 4x4</string>
+</resources>
