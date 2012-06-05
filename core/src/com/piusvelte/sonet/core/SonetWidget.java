@@ -55,6 +55,7 @@ public class SonetWidget extends AppWidgetProvider {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
+		Log.d(TAG, "context package: " + context.getPackageName());
 		final String action = intent.getAction();
 		if (action.equals(ACTION_REFRESH)) {
 			Sonet.acquire(context);
@@ -97,17 +98,17 @@ public class SonetWidget extends AppWidgetProvider {
 		super.onDeleted(context, appWidgetIds);
 		for (int appWidgetId : appWidgetIds) {
 			((AlarmManager) context.getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getService(context, 0, new Intent(context, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
-			context.getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
-			context.getContentResolver().delete(Widget_accounts.CONTENT_URI, Widget_accounts.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
-			Cursor statuses = context.getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID}, Statuses.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
+			context.getContentResolver().delete(Widgets.getContentUri(context), Widgets.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
+			context.getContentResolver().delete(Widget_accounts.getContentUri(context), Widget_accounts.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
+			Cursor statuses = context.getContentResolver().query(Statuses.getContentUri(context), new String[]{Statuses._ID}, Statuses.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
 			if (statuses.moveToFirst()) {
 				while (!statuses.isAfterLast()) {
-					context.getContentResolver().delete(Status_links.CONTENT_URI, Status_links.STATUS_ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
+					context.getContentResolver().delete(Status_links.getContentUri(context), Status_links.STATUS_ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
 					statuses.moveToNext();
 				}
 			}
 			statuses.close();
-			context.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
+			context.getContentResolver().delete(Statuses.getContentUri(context), Statuses.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
 		}
 	}
 
@@ -120,7 +121,7 @@ public class SonetWidget extends AppWidgetProvider {
 			statusId = intent.getStringExtra(Sonet.Status_links.STATUS_ID);		
 		}
 		Log.d(TAG,"onClick:"+statusId);
-		context.startActivity(intent.setClass(context, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, statusId)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+		context.startActivity(intent.setClass(context, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.getContentUri(context), statusId)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
 	}
 
 }

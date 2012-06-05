@@ -100,7 +100,7 @@
         <service android:name=".SonetRemoteViewsService"
             android:permission="android.permission.BIND_REMOTEVIEWS"
             android:exported="false" />
-		<provider android:name=".SonetProvider" android:authorities="com.piusvelte.sonet.SonetProvider"
+		<provider android:name=".SonetProvider" android:authorities="com.piusvelte.sonet.SonetProvider;com.piusvelte.sonetpro.SonetProvider"
 			android:multiprocess="true" android:grantUriPermissions="true" />
 	</application>
 

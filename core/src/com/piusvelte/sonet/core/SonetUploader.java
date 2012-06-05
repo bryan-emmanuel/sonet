@@ -49,7 +49,7 @@ public class SonetUploader extends Service {
 			@Override
 			protected Boolean doInBackground(Void... arg0) {
 				Boolean upload = false;
-				Cursor c = getContentResolver().query(Widgets.CONTENT_URI, new String[]{Widgets._ID}, Widgets.INSTANT_UPLOAD + "=1", null, null);
+				Cursor c = getContentResolver().query(Widgets.getContentUri(SonetUploader.this), new String[]{Widgets._ID}, Widgets.INSTANT_UPLOAD + "=1", null, null);
 				upload = c.moveToFirst();
 				c.close();
 				return upload;

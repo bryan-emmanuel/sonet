@@ -268,7 +268,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 				} else if (mService == PINTEREST) {
 					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
 				} else {
-					startActivity(new Intent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.CONTENT_URI, Long.toString(mAccount))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+					startActivity(new Intent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(mAccount))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 				}
 				dialog.cancel();
 			} else {
@@ -281,7 +281,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 						public void onClick(DialogInterface arg0, int arg1) {
 							// no account, dialog to select one
 							// don't limit accounts to the widget
-							Cursor c = StatusDialog.this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY}, null, null, null);
+							Cursor c = StatusDialog.this.getContentResolver().query(Accounts.getContentUri(StatusDialog.this), new String[]{Accounts._ID, ACCOUNTS_QUERY}, null, null, null);
 							if (c.moveToFirst()) {
 								int iid = c.getColumnIndex(Accounts._ID),
 										iusername = c.getColumnIndex(Accounts.USERNAME),
@@ -300,7 +300,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 								.setSingleChoiceItems(accounts, -1, new OnClickListener() {
 									@Override
 									public void onClick(DialogInterface arg0, int which) {
-										startActivity(new Intent(StatusDialog.this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.CONTENT_URI, Long.toString(accountIndexes[which]))));
+										startActivity(new Intent(StatusDialog.this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(accountIndexes[which]))));
 										arg0.cancel();
 									}
 								})
@@ -415,7 +415,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 			// get the resources
 			switch (mService) {
 			case TWITTER:
-				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				account = this.getContentResolver().query(Accounts.getContentUri(StatusDialog.this), new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 				if (account.moveToFirst()) {
 					final ProgressDialog loadingDialog = new ProgressDialog(this);
 					asyncTask = new AsyncTask<String, Void, String>() {
@@ -461,7 +461,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 				account.close();
 				break;
 			case FACEBOOK:
-				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				account = this.getContentResolver().query(Accounts.getContentUri(StatusDialog.this), new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 				if (account.moveToFirst()) {
 					final ProgressDialog loadingDialog = new ProgressDialog(this);
 					asyncTask = new AsyncTask<String, Void, String>() {
@@ -505,7 +505,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 				account.close();
 				break;
 			case MYSPACE:
-				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				account = this.getContentResolver().query(Accounts.getContentUri(StatusDialog.this), new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 				if (account.moveToFirst()) {
 					final ProgressDialog loadingDialog = new ProgressDialog(this);
 					asyncTask = new AsyncTask<String, Void, String>() {
@@ -553,7 +553,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(FOURSQUARE_URL_PROFILE, mEsid))));
 				break;
 			case LINKEDIN:
-				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				account = this.getContentResolver().query(Accounts.getContentUri(StatusDialog.this), new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 				if (account.moveToFirst()) {
 					final ProgressDialog loadingDialog = new ProgressDialog(this);
 					asyncTask = new AsyncTask<String, Void, String>() {
@@ -600,7 +600,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 				account.close();
 				break;
 			case IDENTICA:
-				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				account = this.getContentResolver().query(Accounts.getContentUri(StatusDialog.this), new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 				if (account.moveToFirst()) {
 					final ProgressDialog loadingDialog = new ProgressDialog(this);
 					asyncTask = new AsyncTask<String, Void, String>() {
@@ -656,7 +656,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 				}
 				break;
 			case CHATTER:
-				account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+				account = this.getContentResolver().query(Accounts.getContentUri(StatusDialog.this), new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 				if (account.moveToFirst()) {
 					final ProgressDialog loadingDialog = new ProgressDialog(this);
 					asyncTask = new AsyncTask<String, Void, String>() {
@@ -730,9 +730,9 @@ public class StatusDialog extends Activity implements OnClickListener {
 								appWidgetManager.getAppWidgetIds(new ComponentName(this,
 										SonetWidget_4x4.class)));
 		int[] removeAppWidgets = new int[0];
-		this.getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=?", new String[] { "" });
-		this.getContentResolver().delete(Widget_accounts.CONTENT_URI, Widget_accounts.WIDGET + "=?", new String[] { "" });
-		Cursor widgets = this.getContentResolver().query(Widgets.CONTENT_URI, new String[] {Widgets._ID, Widgets.WIDGET}, Widgets.ACCOUNT + "=?", new String[] { Long.toString(Sonet.INVALID_ACCOUNT_ID) }, null);
+		this.getContentResolver().delete(Widgets.getContentUri(StatusDialog.this), Widgets.WIDGET + "=?", new String[] { "" });
+		this.getContentResolver().delete(Widget_accounts.getContentUri(StatusDialog.this), Widget_accounts.WIDGET + "=?", new String[] { "" });
+		Cursor widgets = this.getContentResolver().query(Widgets.getContentUri(StatusDialog.this), new String[] {Widgets._ID, Widgets.WIDGET}, Widgets.ACCOUNT + "=?", new String[] { Long.toString(Sonet.INVALID_ACCOUNT_ID) }, null);
 		if (widgets.moveToFirst()) {
 			int iwidget = widgets.getColumnIndex(Widgets.WIDGET), appWidgetId;
 			while (!widgets.isAfterLast()) {
@@ -745,9 +745,9 @@ public class StatusDialog extends Activity implements OnClickListener {
 		if (removeAppWidgets.length > 0) {
 			// remove phantom widgets
 			for (int appWidgetId : removeAppWidgets) {
-				this.getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
-				this.getContentResolver().delete(Widget_accounts.CONTENT_URI, Widget_accounts.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
-				this.getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
+				this.getContentResolver().delete(Widgets.getContentUri(StatusDialog.this), Widgets.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
+				this.getContentResolver().delete(Widget_accounts.getContentUri(StatusDialog.this), Widget_accounts.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
+				this.getContentResolver().delete(Statuses.getContentUri(StatusDialog.this), Statuses.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
 			}
 		}
 		String[] widgetsOptions = new String[mAppWidgetIds.length];
@@ -768,7 +768,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 		@Override
 		protected Void doInBackground(Void... params) {
 			Log.d(TAG,"get status: "+mData.getLastPathSegment());
-			Cursor c = getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.WIDGET, Statuses_styles.ACCOUNT, Statuses_styles.ESID, Statuses_styles.MESSAGE, Statuses_styles.FRIEND, Statuses_styles.SERVICE, Statuses_styles.SID}, Statuses_styles._ID + "=?", new String[] {mData.getLastPathSegment()}, null);
+			Cursor c = getContentResolver().query(Statuses_styles.getContentUri(StatusDialog.this), new String[]{Statuses_styles._ID, Statuses_styles.WIDGET, Statuses_styles.ACCOUNT, Statuses_styles.ESID, Statuses_styles.MESSAGE, Statuses_styles.FRIEND, Statuses_styles.SERVICE, Statuses_styles.SID}, Statuses_styles._ID + "=?", new String[] {mData.getLastPathSegment()}, null);
 			if (c.moveToFirst()) {
 				mAppWidgetId = c.getInt(1);
 				mAccount = c.getLong(2);
@@ -802,7 +802,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 						//							count++;
 						//						}
 						// get links from table
-						Cursor links = getContentResolver().query(Status_links.CONTENT_URI, new String[]{Status_links.LINK_URI, Status_links.LINK_TYPE}, Status_links.STATUS_ID + "=?", new String[]{Long.toString(c.getLong(0))}, null);
+						Cursor links = getContentResolver().query(Status_links.getContentUri(StatusDialog.this), new String[]{Status_links.LINK_URI, Status_links.LINK_TYPE}, Status_links.STATUS_ID + "=?", new String[]{Long.toString(c.getLong(0))}, null);
 						//						count += links.getCount();
 						int count = links.getCount();
 						items = new String[PROFILE + count + 1];

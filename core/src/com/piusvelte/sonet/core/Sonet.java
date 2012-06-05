@@ -19,12 +19,18 @@
  */
 package com.piusvelte.sonet.core;
 
+import static com.piusvelte.sonet.core.Sonet.PRO;
+
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.google.ads.AdRequest;
+import com.google.ads.AdSize;
+import com.google.ads.AdView;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -34,6 +40,7 @@ import android.net.Uri;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.provider.BaseColumns;
+import android.widget.LinearLayout;
 
 public class Sonet {
 
@@ -338,13 +345,19 @@ public class Sonet {
 
 	public Sonet() {
 	}
+	
+	public static String getAuthority(Context context) {
+		return !context.getPackageName().toLowerCase().contains(PRO) ? SonetProvider.AUTHORITY : SonetProvider.PRO_AUTHORITY;
+	}
 
 	public static final class Accounts implements BaseColumns {
 
 		private Accounts() {
 		}
-
-		public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/accounts");
+		
+		public static Uri getContentUri(Context context) {
+			return Uri.parse("content://" + Sonet.getAuthority(context) + "/accounts");
+		}
 
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.accounts";
 
@@ -363,7 +376,9 @@ public class Sonet {
 		private Widget_accounts() {
 		}
 
-		public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/widget_accounts");
+		public static Uri getContentUri(Context context) {
+			return Uri.parse("content://" + Sonet.getAuthority(context) + "/widget_accounts");
+		}
 
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.widget_accounts";
 
@@ -376,7 +391,9 @@ public class Sonet {
 		private Widget_accounts_view() {
 		}
 
-		public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/widget_accounts_view");
+		public static Uri getContentUri(Context context) {
+			return Uri.parse("content://" + Sonet.getAuthority(context) + "/widget_accounts_view");
+		}
 
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.widget_accounts_view";
 
@@ -395,7 +412,9 @@ public class Sonet {
 		private Widgets() {
 		}
 
-		public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/widgets");
+		public static Uri getContentUri(Context context) {
+			return Uri.parse("content://" + Sonet.getAuthority(context) + "/widgets");
+		}
 
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.widgets";
 
@@ -436,8 +455,13 @@ public class Sonet {
 		private Widgets_settings() {
 		}
 
-		public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/widgets_settings");
-		public static final Uri DISTINCT_CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/distinct_widgets_settings");
+		public static Uri getContentUri(Context context) {
+			return Uri.parse("content://" + Sonet.getAuthority(context) + "/widgets_settings");
+		}
+		
+		public static Uri getDistinctContentUri(Context context) {
+			return Uri.parse("content://" + Sonet.getAuthority(context) + "/distinct_widgets_settings");
+		}
 
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.widgets_settings";
 		
@@ -448,7 +472,9 @@ public class Sonet {
 		private Accounts_styles() {
 		}
 
-		public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/accounts_styles");
+		public static Uri getContentUri(Context context) {
+			return Uri.parse("content://" + Sonet.getAuthority(context) + "/accounts_styles");
+		}
 
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.accounts_styles";
 		
@@ -459,7 +485,9 @@ public class Sonet {
 		private Statuses() {
 		}
 
-		public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/statuses");
+		public static Uri getContentUri(Context context) {
+			return Uri.parse("content://" + Sonet.getAuthority(context) + "/statuses");
+		}
 
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.statuses";
 
@@ -489,7 +517,9 @@ public class Sonet {
 		private Statuses_styles() {
 		}
 
-		public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/statuses_styles");
+		public static Uri getContentUri(Context context) {
+			return Uri.parse("content://" + Sonet.getAuthority(context) + "/statuses_styles");
+		}
 
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.statuses_styles";
 
@@ -527,7 +557,9 @@ public class Sonet {
 		private Entities() {
 		}
 
-		public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/entities");
+		public static Uri getContentUri(Context context) {
+			return Uri.parse("content://" + Sonet.getAuthority(context) + "/entities");
+		}
 
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.entities";
 
@@ -544,7 +576,11 @@ public class Sonet {
 		// notifications are deleted when the feeds are updated, they are not in the new feeds and are marked cleared
 		private Notifications() {
 		}
-		public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/notifications");
+		
+		public static Uri getContentUri(Context context) {
+			return Uri.parse("content://" + Sonet.getAuthority(context) + "/notifications");
+		}
+		
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.notifications";
 		public static final String SID = "sid";
 		public static final String ESID = "esid";
@@ -562,7 +598,9 @@ public class Sonet {
 		private Status_links() {
 		}
 
-		public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/status_links");
+		public static Uri getContentUri(Context context) {
+			return Uri.parse("content://" + Sonet.getAuthority(context) + "/status_links");
+		}
 
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.status_links";
 		public static final String STATUS_ID = "status_id";
@@ -576,7 +614,9 @@ public class Sonet {
 		private Status_images() {
 		}
 
-		public static final Uri CONTENT_URI = Uri.parse("content://" + SonetProvider.AUTHORITY + "/status_images");
+		public static Uri getContentUri(Context context) {
+			return Uri.parse("content://" + Sonet.getAuthority(context) + "/status_images");
+		}
 
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.status_images";
 		public static final String STATUS_ID = "status_id";

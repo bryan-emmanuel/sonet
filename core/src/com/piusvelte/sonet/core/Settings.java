@@ -123,23 +123,23 @@ public class Settings extends Activity implements View.OnClickListener, OnChecke
 
 		int scrollableVersion = 0;
 
-		Cursor c = this.getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.BACKGROUND_UPDATE, Widgets.SCROLLABLE, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.DISPLAY_PROFILE, Widgets.INSTANT_UPLOAD, Widgets.MARGIN, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+		Cursor c = this.getContentResolver().query(Widgets_settings.getContentUri(this), new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.BACKGROUND_UPDATE, Widgets.SCROLLABLE, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.DISPLAY_PROFILE, Widgets.INSTANT_UPLOAD, Widgets.MARGIN, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 		if (!c.moveToFirst()) {
 			c.close();
-			c = this.getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.BACKGROUND_UPDATE, Widgets.SCROLLABLE, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.DISPLAY_PROFILE, Widgets.INSTANT_UPLOAD, Widgets.MARGIN, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+			c = this.getContentResolver().query(Widgets_settings.getContentUri(this), new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.BACKGROUND_UPDATE, Widgets.SCROLLABLE, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.DISPLAY_PROFILE, Widgets.INSTANT_UPLOAD, Widgets.MARGIN, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 			if (!c.moveToFirst()) {
 				// initialize widget settings
 				ContentValues values = new ContentValues();
 				values.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
 				values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-				mWidgetSettingsId = getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
+				mWidgetSettingsId = getContentResolver().insert(Widgets.getContentUri(this), values).getLastPathSegment();
 			}
 			if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
 				// initialize widget settings
 				ContentValues values = new ContentValues();
 				values.put(Widgets.WIDGET, mAppWidgetId);
 				values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-				mWidgetSettingsId = getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
+				mWidgetSettingsId = getContentResolver().insert(Widgets.getContentUri(this), values).getLastPathSegment();
 			}
 		}
 		if (c.moveToFirst()) {
@@ -215,7 +215,7 @@ public class Settings extends Activity implements View.OnClickListener, OnChecke
 	private void updateDatabase(String column, int value) {
 		ContentValues values = new ContentValues();
 		values.put(column, value);
-		this.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets._ID + "=?", new String[]{mWidgetSettingsId});
+		this.getContentResolver().update(Widgets.getContentUri(this), values, Widgets._ID + "=?", new String[]{mWidgetSettingsId});
 		setResult(RESULT_OK);
 	}
 

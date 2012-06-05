@@ -61,6 +61,7 @@ public class SonetProvider extends ContentProvider {
 	private static final String TAG = "SonetProvider";
 
 	public static final String AUTHORITY = "com.piusvelte.sonet.SonetProvider";
+	public static final String PRO_AUTHORITY = "com.piusvelte.sonetpro.SonetProvider";
 
 	private static final UriMatcher sUriMatcher;
 
@@ -124,7 +125,9 @@ public class SonetProvider extends ContentProvider {
 		sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_ACCOUNTS, ACCOUNTS);
+		sUriMatcher.addURI(PRO_AUTHORITY, TABLE_ACCOUNTS, ACCOUNTS);
 		sUriMatcher.addURI(AUTHORITY, ACCOUNTS_STYLES, ACCOUNTS_STYLES_VIEW);
+		sUriMatcher.addURI(PRO_AUTHORITY, ACCOUNTS_STYLES, ACCOUNTS_STYLES_VIEW);
 
 		accountsProjectionMap = new HashMap<String, String>();
 		accountsProjectionMap.put(Accounts._ID, Accounts._ID);
@@ -136,6 +139,7 @@ public class SonetProvider extends ContentProvider {
 		accountsProjectionMap.put(Accounts.SID, Accounts.SID);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_WIDGET_ACCOUNTS, WIDGET_ACCOUNTS);
+		sUriMatcher.addURI(PRO_AUTHORITY, TABLE_WIDGET_ACCOUNTS, WIDGET_ACCOUNTS);
 
 		widget_accountsProjectionMap = new HashMap<String, String>();
 		widget_accountsProjectionMap.put(Widget_accounts._ID, Widget_accounts._ID);
@@ -143,6 +147,7 @@ public class SonetProvider extends ContentProvider {
 		widget_accountsProjectionMap.put(Widget_accounts.WIDGET, Widget_accounts.WIDGET);
 
 		sUriMatcher.addURI(AUTHORITY, VIEW_WIDGET_ACCOUNTS, WIDGET_ACCOUNTS_VIEW);
+		sUriMatcher.addURI(PRO_AUTHORITY, VIEW_WIDGET_ACCOUNTS, WIDGET_ACCOUNTS_VIEW);
 
 		widget_accounts_viewProjectionMap = new HashMap<String, String>();
 		widget_accounts_viewProjectionMap.put(Widget_accounts_view._ID, Widget_accounts_view._ID);
@@ -156,6 +161,7 @@ public class SonetProvider extends ContentProvider {
 		widget_accounts_viewProjectionMap.put(Widget_accounts_view.SID, Widget_accounts_view.SID);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_WIDGETS, WIDGETS);
+		sUriMatcher.addURI(PRO_AUTHORITY, TABLE_WIDGETS, WIDGETS);
 
 		widgetsProjectionMap = new HashMap<String, String>();
 		widgetsProjectionMap.put(Widgets._ID, Widgets._ID);
@@ -188,6 +194,7 @@ public class SonetProvider extends ContentProvider {
 		widgetsProjectionMap.put(Widgets.FRIEND_BG_COLOR, Widgets.FRIEND_BG_COLOR);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_STATUSES, STATUSES);
+		sUriMatcher.addURI(PRO_AUTHORITY, TABLE_STATUSES, STATUSES);
 
 		statusesProjectionMap = new HashMap<String, String>();
 		statusesProjectionMap.put(Statuses._ID, Statuses._ID);
@@ -204,7 +211,9 @@ public class SonetProvider extends ContentProvider {
 		statusesProjectionMap.put(Statuses.FRIEND_BG, Statuses.FRIEND_BG);
 
 		sUriMatcher.addURI(AUTHORITY, VIEW_STATUSES_STYLES, STATUSES_STYLES);
+		sUriMatcher.addURI(PRO_AUTHORITY, VIEW_STATUSES_STYLES, STATUSES_STYLES);
 		sUriMatcher.addURI(AUTHORITY, VIEW_STATUSES_STYLES + "/*", STATUSES_STYLES_WIDGET);
+		sUriMatcher.addURI(PRO_AUTHORITY, VIEW_STATUSES_STYLES + "/*", STATUSES_STYLES_WIDGET);
 
 		statuses_stylesProjectionMap = new HashMap<String, String>();
 		statuses_stylesProjectionMap.put(Statuses_styles._ID, Statuses_styles._ID);
@@ -233,6 +242,7 @@ public class SonetProvider extends ContentProvider {
 		statuses_stylesProjectionMap.put(Statuses_styles.IMAGE, Statuses_styles.IMAGE);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_ENTITIES, ENTITIES);
+		sUriMatcher.addURI(PRO_AUTHORITY, TABLE_ENTITIES, ENTITIES);
 
 		entitiesProjectionMap = new HashMap<String, String>();
 		entitiesProjectionMap.put(Entities._ID, Entities._ID);
@@ -242,6 +252,7 @@ public class SonetProvider extends ContentProvider {
 		entitiesProjectionMap.put(Entities.ACCOUNT, Entities.ACCOUNT);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_NOTIFICATIONS, NOTIFICATIONS);
+		sUriMatcher.addURI(PRO_AUTHORITY, TABLE_NOTIFICATIONS, NOTIFICATIONS);
 		notificationsProjectionMap = new HashMap<String, String>();
 		notificationsProjectionMap.put(Notifications._ID, Notifications._ID);
 		notificationsProjectionMap.put(Notifications.SID, Notifications.SID);
@@ -255,10 +266,13 @@ public class SonetProvider extends ContentProvider {
 		notificationsProjectionMap.put(Notifications.UPDATED, Notifications.UPDATED);
 
 		sUriMatcher.addURI(AUTHORITY, VIEW_WIDGETS_SETTINGS, WIDGETS_SETTINGS);
+		sUriMatcher.addURI(PRO_AUTHORITY, VIEW_WIDGETS_SETTINGS, WIDGETS_SETTINGS);
 
 		sUriMatcher.addURI(AUTHORITY, VIEW_DISTINCT_WIDGETS_SETTINGS, DISTINCT_WIDGETS_SETTINGS);
+		sUriMatcher.addURI(PRO_AUTHORITY, VIEW_DISTINCT_WIDGETS_SETTINGS, DISTINCT_WIDGETS_SETTINGS);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_STATUS_LINKS, STATUS_LINKS);
+		sUriMatcher.addURI(PRO_AUTHORITY, TABLE_STATUS_LINKS, STATUS_LINKS);
 		status_linksProjectionMap = new HashMap<String, String>();
 		status_linksProjectionMap.put(Status_links._ID, Status_links._ID);
 		status_linksProjectionMap.put(Status_links.STATUS_ID, Status_links.STATUS_ID);
@@ -266,6 +280,7 @@ public class SonetProvider extends ContentProvider {
 		status_linksProjectionMap.put(Status_links.LINK_TYPE, Status_links.LINK_TYPE);
 
 		sUriMatcher.addURI(AUTHORITY, TABLE_STATUS_IMAGES, STATUS_IMAGES);
+		sUriMatcher.addURI(PRO_AUTHORITY, TABLE_STATUS_IMAGES, STATUS_IMAGES);
 		status_imagesProjectionMap = new HashMap<String, String>();
 		status_imagesProjectionMap.put(Status_images._ID, Status_images._ID);
 		status_imagesProjectionMap.put(Status_images.STATUS_ID, Status_images.STATUS_ID);
@@ -386,17 +401,17 @@ public class SonetProvider extends ContentProvider {
 					values.put(Accounts.SID, sonetCrypto.Encrypt(values.getAsString(Accounts.SID)));
 				}
 				rowId = db.insert(TABLE_ACCOUNTS, Accounts._ID, values);
-				returnUri = ContentUris.withAppendedId(Accounts.CONTENT_URI, rowId);
+				returnUri = ContentUris.withAppendedId(Accounts.getContentUri(getContext()), rowId);
 				getContext().getContentResolver().notifyChange(returnUri, null);
 				break;
 			case WIDGET_ACCOUNTS:
 				rowId = db.insert(TABLE_WIDGET_ACCOUNTS, Widget_accounts._ID, values);
-				returnUri = ContentUris.withAppendedId(Widget_accounts.CONTENT_URI, rowId);
+				returnUri = ContentUris.withAppendedId(Widget_accounts.getContentUri(getContext()), rowId);
 				getContext().getContentResolver().notifyChange(returnUri, null);
 				break;
 			case WIDGETS:
 				rowId = db.insert(TABLE_WIDGETS, Widgets._ID, values);
-				returnUri = ContentUris.withAppendedId(Widgets.CONTENT_URI, rowId);
+				returnUri = ContentUris.withAppendedId(Widgets.getContentUri(getContext()), rowId);
 				getContext().getContentResolver().notifyChange(returnUri, null);
 				break;
 			case STATUSES:
@@ -406,7 +421,7 @@ public class SonetProvider extends ContentProvider {
 					values.put(Statuses.SID, sonetCrypto.Encrypt(values.getAsString(Statuses.SID)));
 				}
 				rowId = db.insert(TABLE_STATUSES, Accounts._ID, values);
-				returnUri = ContentUris.withAppendedId(Accounts.CONTENT_URI, rowId);
+				returnUri = ContentUris.withAppendedId(Accounts.getContentUri(getContext()), rowId);
 				// many statuses will be inserted at once, so don't trigger a refresh for each one
 				//			getContext().getContentResolver().notifyChange(returnUri, null);
 				break;
@@ -417,7 +432,7 @@ public class SonetProvider extends ContentProvider {
 					values.put(Entities.ESID, sonetCrypto.Encrypt(values.getAsString(Entities.ESID)));
 				}
 				rowId = db.insert(TABLE_ENTITIES, Entities._ID, values);
-				returnUri = ContentUris.withAppendedId(Entities.CONTENT_URI, rowId);
+				returnUri = ContentUris.withAppendedId(Entities.getContentUri(getContext()), rowId);
 				break;
 			case NOTIFICATIONS:
 				// encrypt the data
@@ -429,22 +444,22 @@ public class SonetProvider extends ContentProvider {
 					values.put(Notifications.ESID, sonetCrypto.Encrypt(values.getAsString(Notifications.ESID)));
 				}
 				rowId = db.insert(TABLE_NOTIFICATIONS, Notifications._ID, values);
-				returnUri = ContentUris.withAppendedId(Notifications.CONTENT_URI, rowId);
+				returnUri = ContentUris.withAppendedId(Notifications.getContentUri(getContext()), rowId);
 				getContext().getContentResolver().notifyChange(returnUri, null);
 				break;
 			case WIDGETS_SETTINGS:
 				rowId = db.insert(VIEW_WIDGETS_SETTINGS, Widgets_settings._ID, values);
-				returnUri = ContentUris.withAppendedId(Widgets_settings.CONTENT_URI, rowId);
+				returnUri = ContentUris.withAppendedId(Widgets_settings.getContentUri(getContext()), rowId);
 				getContext().getContentResolver().notifyChange(returnUri, null);
 				break;
 			case STATUS_LINKS:
 				rowId = db.insert(TABLE_STATUS_LINKS, Status_links._ID, values);
-				returnUri = ContentUris.withAppendedId(Status_links.CONTENT_URI, rowId);
+				returnUri = ContentUris.withAppendedId(Status_links.getContentUri(getContext()), rowId);
 				getContext().getContentResolver().notifyChange(returnUri, null);
 				break;
 			case STATUS_IMAGES:
 				rowId = db.insert(TABLE_STATUS_IMAGES, Status_images._ID, values);
-				returnUri = ContentUris.withAppendedId(Status_images.CONTENT_URI, rowId);
+				returnUri = ContentUris.withAppendedId(Status_images.getContentUri(getContext()), rowId);
 				getContext().getContentResolver().notifyChange(returnUri, null);
 				break;
 			default:

@@ -108,33 +108,33 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 		int scrollableVersion = 0;
 
 		// get this account/widgets settings, falling back on the defaults...
-		Cursor c = this.getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SCROLLABLE, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(mAccountId)}, null);
+		Cursor c = this.getContentResolver().query(Widgets_settings.getContentUri(this), new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SCROLLABLE, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(mAccountId)}, null);
 		if (!c.moveToFirst()) {
 			c.close();
-			c = this.getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SCROLLABLE, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+			c = this.getContentResolver().query(Widgets_settings.getContentUri(this), new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SCROLLABLE, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 			if (!c.moveToFirst()) {
 				c.close();
-				c = this.getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SCROLLABLE, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+				c = this.getContentResolver().query(Widgets_settings.getContentUri(this), new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SCROLLABLE, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 				if (!c.moveToFirst()) {
 					// initialize account settings
 					ContentValues values = new ContentValues();
 					values.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
 					values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-					mWidgetAccountSettingsId = getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
+					mWidgetAccountSettingsId = getContentResolver().insert(Widgets.getContentUri(this), values).getLastPathSegment();
 				}
 				if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
 					// initialize account settings
 					ContentValues values = new ContentValues();
 					values.put(Widgets.WIDGET, mAppWidgetId);
 					values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-					mWidgetAccountSettingsId = getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
+					mWidgetAccountSettingsId = getContentResolver().insert(Widgets.getContentUri(this), values).getLastPathSegment();
 				}
 			}
 			// initialize account settings
 			ContentValues values = new ContentValues();
 			values.put(Widgets.WIDGET, mAppWidgetId);
 			values.put(Widgets.ACCOUNT, mAccountId);
-			mWidgetAccountSettingsId = getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
+			mWidgetAccountSettingsId = getContentResolver().insert(Widgets.getContentUri(this), values).getLastPathSegment();
 		}
 		if (c.moveToFirst()) {
 			// if settings were initialized, then use that mWidgetAccountSettingsId
@@ -191,7 +191,7 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 	private void updateDatabase(String column, int value) {
 		ContentValues values = new ContentValues();
 		values.put(column, value);
-		this.getContentResolver().update(Widgets.CONTENT_URI, values, Widgets._ID + "=?", new String[]{mWidgetAccountSettingsId});
+		this.getContentResolver().update(Widgets.getContentUri(this), values, Widgets._ID + "=?", new String[]{mWidgetAccountSettingsId});
 		setResult(RESULT_OK);
 	}
 

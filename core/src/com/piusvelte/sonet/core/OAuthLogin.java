@@ -188,7 +188,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 					loadingDialog.show();
 					break;
 				case SMS:
-					Cursor c = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID}, Accounts.SERVICE + "=?", new String[]{Integer.toString(SMS)}, null);
+					Cursor c = getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID}, Accounts.SERVICE + "=?", new String[]{Integer.toString(SMS)}, null);
 					if (c.moveToFirst()) {
 						(Toast.makeText(OAuthLogin.this, "SMS has already been added.", Toast.LENGTH_LONG)).show();
 					} else {
@@ -360,7 +360,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 					mSonetWebView.open(String.format(CHATTER_URL_AUTHORIZE, CHATTER_KEY, CHATTER_CALLBACK.toString()));
 					break;
 				case PINTEREST:
-					Cursor pinterestAccount = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID}, Accounts.SERVICE + "=?", new String[]{Integer.toString(PINTEREST)}, null);
+					Cursor pinterestAccount = getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID}, Accounts.SERVICE + "=?", new String[]{Integer.toString(PINTEREST)}, null);
 					if (pinterestAccount.moveToFirst()) {
 						(Toast.makeText(OAuthLogin.this, "Pinterest has already been added.", Toast.LENGTH_LONG)).show();
 					} else {
@@ -396,14 +396,14 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 		if (mAccountId != Sonet.INVALID_ACCOUNT_ID) {
 			// re-authenticating
 			accountId = Long.toString(mAccountId);
-			getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Long.toString(mAccountId)});
+			getContentResolver().update(Accounts.getContentUri(this), values, Accounts._ID + "=?", new String[]{Long.toString(mAccountId)});
 		} else {
 			// new account
-			accountId = getContentResolver().insert(Accounts.CONTENT_URI, values).getLastPathSegment();
+			accountId = getContentResolver().insert(Accounts.getContentUri(this), values).getLastPathSegment();
 			values.clear();
 			values.put(Widget_accounts.ACCOUNT, accountId);
 			values.put(Widget_accounts.WIDGET, mWidgetId);
-			getContentResolver().insert(Widget_accounts.CONTENT_URI, values);
+			getContentResolver().insert(Widget_accounts.getContentUri(this), values);
 		}
 		setResult(RESULT_OK);
 		return accountId;

@@ -104,7 +104,7 @@ public class SonetCrypto {
 				editor.putString(PASSWORD, password);
 				editor.commit();
 				// encrypt the oauth data
-				Cursor accounts = context.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET, Accounts.SID}, Accounts.SERVICE + "!=?", new String[]{Integer.toString(Sonet.SMS)}, null);
+				Cursor accounts = context.getContentResolver().query(Accounts.getContentUri(context), new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET, Accounts.SID}, Accounts.SERVICE + "!=?", new String[]{Integer.toString(Sonet.SMS)}, null);
 				if (accounts.moveToFirst()) {
 					while (!accounts.isAfterLast()) {
 						// encryption will occur in the provider, pass unencrypted data back in
@@ -112,28 +112,28 @@ public class SonetCrypto {
 						values.put(Accounts.TOKEN, RemoveUnderscore(accounts.getString(1)));
 						values.put(Accounts.SECRET, RemoveUnderscore(accounts.getString(2)));
 						values.put(Accounts.SID, RemoveUnderscore(accounts.getString(3)));
-						context.getContentResolver().update(Accounts.CONTENT_URI, values, Accounts._ID + "=?", new String[]{Long.toString(accounts.getLong(0))});
+						context.getContentResolver().update(Accounts.getContentUri(context), values, Accounts._ID + "=?", new String[]{Long.toString(accounts.getLong(0))});
 						accounts.moveToNext();
 					}
 				}
 				accounts.close();
 				// encrypt the SIDs and ESIDs everywhere
-				Cursor entities = context.getContentResolver().query(Entities.CONTENT_URI, new String[]{Entities._ID, Entities.ESID}, null, null, null);
+				Cursor entities = context.getContentResolver().query(Entities.getContentUri(context), new String[]{Entities._ID, Entities.ESID}, null, null, null);
 				if (entities.moveToFirst()) {
 					while (!entities.isAfterLast()) {
 						ContentValues values = new ContentValues();
 						values.put(Entities.ESID, RemoveUnderscore(entities.getString(1)));
-						context.getContentResolver().update(Entities.CONTENT_URI, values, Entities._ID + "=?", new String[]{Long.toString(entities.getLong(0))});
+						context.getContentResolver().update(Entities.getContentUri(context), values, Entities._ID + "=?", new String[]{Long.toString(entities.getLong(0))});
 						entities.moveToNext();
 					}
 				}
 				entities.close();
-				Cursor statuses = context.getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID, Statuses.SID}, null, null, null);
+				Cursor statuses = context.getContentResolver().query(Statuses.getContentUri(context), new String[]{Statuses._ID, Statuses.SID}, null, null, null);
 				if (statuses.moveToFirst()) {
 					while (!statuses.isAfterLast()) {
 						ContentValues values = new ContentValues();
 						values.put(Statuses.SID, RemoveUnderscore(statuses.getString(1)));
-						context.getContentResolver().update(Statuses.CONTENT_URI, values, Statuses._ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
+						context.getContentResolver().update(Statuses.getContentUri(context), values, Statuses._ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
 						statuses.moveToNext();
 					}
 				}

@@ -796,27 +796,28 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 				if (mData != null) {
 					SonetCrypto sonetCrypto = SonetCrypto.getInstance(getApplicationContext());
 					UriMatcher um = new UriMatcher(UriMatcher.NO_MATCH);
-					um.addURI(SonetProvider.AUTHORITY, SonetProvider.VIEW_STATUSES_STYLES + "/*", SonetProvider.STATUSES_STYLES);
-					um.addURI(SonetProvider.AUTHORITY, SonetProvider.TABLE_NOTIFICATIONS + "/*", SonetProvider.NOTIFICATIONS);
+					String authority = Sonet.getAuthority(SonetComments.this);
+					um.addURI(authority, SonetProvider.VIEW_STATUSES_STYLES + "/*", SonetProvider.STATUSES_STYLES);
+					um.addURI(authority, SonetProvider.TABLE_NOTIFICATIONS + "/*", SonetProvider.NOTIFICATIONS);
 					Cursor status;
 					switch (um.match(mData)) {
 					case SonetProvider.STATUSES_STYLES:
-						status = getContentResolver().query(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles.ACCOUNT, Statuses_styles.SID, Statuses_styles.ESID, Statuses_styles.WIDGET, Statuses_styles.SERVICE, Statuses_styles.FRIEND, Statuses_styles.MESSAGE, Statuses_styles.CREATED}, Statuses_styles._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
+						status = getContentResolver().query(Statuses_styles.getContentUri(SonetComments.this), new String[]{Statuses_styles.ACCOUNT, Statuses_styles.SID, Statuses_styles.ESID, Statuses_styles.WIDGET, Statuses_styles.SERVICE, Statuses_styles.FRIEND, Statuses_styles.MESSAGE, Statuses_styles.CREATED}, Statuses_styles._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
 						if (status.moveToFirst()) {
 							mService = status.getInt(4);
 							mServiceName = getResources().getStringArray(R.array.service_entries)[mService];
 							mAccount = status.getLong(0);
 							mSid = sonetCrypto.Decrypt(status.getString(1));
 							mEsid = sonetCrypto.Decrypt(status.getString(2));
-							Cursor widget = getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(status.getInt(3)), Long.toString(mAccount)}, null);
+							Cursor widget = getContentResolver().query(Widgets_settings.getContentUri(SonetComments.this), new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(status.getInt(3)), Long.toString(mAccount)}, null);
 							if (widget.moveToFirst()) {
 								mTime24hr = widget.getInt(0) == 1;
 							} else {
-								Cursor b = getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(status.getInt(3)), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+								Cursor b = getContentResolver().query(Widgets_settings.getContentUri(SonetComments.this), new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(status.getInt(3)), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 								if (b.moveToFirst()) {
 									mTime24hr = b.getInt(0) == 1;
 								} else {
-									Cursor c = getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+									Cursor c = getContentResolver().query(Widgets_settings.getContentUri(SonetComments.this), new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 									if (c.moveToFirst()) {
 										mTime24hr = c.getInt(0) == 1;
 									} else {
@@ -835,7 +836,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							commentMap.put(getString(R.string.like), mService == TWITTER ? getString(R.string.retweet) : mService == IDENTICA ? getString(R.string.repeat) : "");
 							mComments.add(commentMap);
 							// load the session
-							Cursor account = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts.TOKEN, Accounts.SECRET, Accounts.SID}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+							Cursor account = getContentResolver().query(Accounts.getContentUri(SonetComments.this), new String[]{Accounts.TOKEN, Accounts.SECRET, Accounts.SID}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 							if (account.moveToFirst()) {
 								mToken = sonetCrypto.Decrypt(account.getString(0));
 								mSecret = sonetCrypto.Decrypt(account.getString(1));
@@ -846,18 +847,18 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 						status.close();
 						break;
 					case SonetProvider.NOTIFICATIONS:
-						Cursor notification = getContentResolver().query(Notifications.CONTENT_URI, new String[]{Notifications.ACCOUNT, Notifications.SID, Notifications.ESID, Notifications.FRIEND, Notifications.MESSAGE, Notifications.CREATED}, Notifications._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
+						Cursor notification = getContentResolver().query(Notifications.getContentUri(SonetComments.this), new String[]{Notifications.ACCOUNT, Notifications.SID, Notifications.ESID, Notifications.FRIEND, Notifications.MESSAGE, Notifications.CREATED}, Notifications._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
 						if (notification.moveToFirst()) {
 							// clear notification
 							ContentValues values = new ContentValues();
 							values.put(Notifications.CLEARED, 1);
-							getContentResolver().update(Notifications.CONTENT_URI, values, Notifications._ID + "=?", new String[]{mData.getLastPathSegment()});
+							getContentResolver().update(Notifications.getContentUri(SonetComments.this), values, Notifications._ID + "=?", new String[]{mData.getLastPathSegment()});
 							mAccount = notification.getLong(0);
 							mSid = sonetCrypto.Decrypt(notification.getString(1));
 							mEsid = sonetCrypto.Decrypt(notification.getString(2));
 							mTime24hr = false;
 							// load the session
-							Cursor account = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts.TOKEN, Accounts.SECRET, Accounts.SID, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+							Cursor account = getContentResolver().query(Accounts.getContentUri(SonetComments.this), new String[]{Accounts.TOKEN, Accounts.SECRET, Accounts.SID, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
 							if (account.moveToFirst()) {
 								mToken = sonetCrypto.Decrypt(account.getString(0));
 								mSecret = sonetCrypto.Decrypt(account.getString(1));

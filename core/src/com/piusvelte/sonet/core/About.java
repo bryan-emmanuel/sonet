@@ -204,7 +204,7 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 		super.onListItemClick(list, view, position, id);
 		Rect r = new Rect();
 		view.getHitRect(r);
-		startActivity(new Intent(this, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.CONTENT_URI, Long.toString(id))).putExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS, r).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+		startActivity(new Intent(this, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.getContentUri(this), Long.toString(id))).putExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS, r).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
 	}
 
 	private final SimpleCursorAdapter.ViewBinder mViewBinder = new SimpleCursorAdapter.ViewBinder() {
@@ -316,9 +316,9 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 			Log.d(TAG,"WidgetsDataLoader executing");
 			int[] removeAppWidgets = new int[0];
 			// remove old widgets that didn't have ids
-			getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=?", new String[] {""});
-			getContentResolver().delete(Widget_accounts.CONTENT_URI, Widget_accounts.WIDGET + "=?", new String[] {""});
-			Cursor widgets = getContentResolver().query(Widgets.CONTENT_URI, new String[] {Widgets._ID, Widgets.WIDGET}, Widgets.ACCOUNT + "=?", new String[] { Long.toString(Sonet.INVALID_ACCOUNT_ID) }, null);
+			getContentResolver().delete(Widgets.getContentUri(About.this), Widgets.WIDGET + "=?", new String[] {""});
+			getContentResolver().delete(Widget_accounts.getContentUri(About.this), Widget_accounts.WIDGET + "=?", new String[] {""});
+			Cursor widgets = getContentResolver().query(Widgets.getContentUri(About.this), new String[] {Widgets._ID, Widgets.WIDGET}, Widgets.ACCOUNT + "=?", new String[] { Long.toString(Sonet.INVALID_ACCOUNT_ID) }, null);
 			if (widgets.moveToFirst()) {
 				int iwidget = widgets.getColumnIndex(Widgets.WIDGET), appWidgetId;
 				while (!widgets.isAfterLast()) {
@@ -331,16 +331,16 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 			if (removeAppWidgets.length > 0) {
 				// remove phantom widgets
 				for (int appWidgetId : removeAppWidgets) {
-					getContentResolver().delete(Widgets.CONTENT_URI, Widgets.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
-					getContentResolver().delete(Widget_accounts.CONTENT_URI, Widget_accounts.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
-					getContentResolver().delete(Statuses.CONTENT_URI, Statuses.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
+					getContentResolver().delete(Widgets.getContentUri(About.this), Widgets.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
+					getContentResolver().delete(Widget_accounts.getContentUri(About.this), Widget_accounts.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
+					getContentResolver().delete(Statuses.getContentUri(About.this), Statuses.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
 				}
 			}
 			int result = 0;
 			boolean profile = true;
-			Cursor accounts = getContentResolver().query(Widget_accounts.CONTENT_URI, new String[]{Widget_accounts._ID}, Widget_accounts.WIDGET + "=0", null, null);
+			Cursor accounts = getContentResolver().query(Widget_accounts.getContentUri(About.this), new String[]{Widget_accounts._ID}, Widget_accounts.WIDGET + "=0", null, null);
 			if (accounts.moveToFirst()) {
-				Cursor widget = getContentResolver().query(Widgets_settings.CONTENT_URI, new String[]{Widgets.DISPLAY_PROFILE}, Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1", null, null);
+				Cursor widget = getContentResolver().query(Widgets_settings.getContentUri(About.this), new String[]{Widgets.DISPLAY_PROFILE}, Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1", null, null);
 				if (widget.moveToFirst()) {
 					profile = widget.getInt(0) == 1;
 				} else {
@@ -348,10 +348,10 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 					ContentValues values = new ContentValues();
 					values.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
 					values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-					getContentResolver().insert(Widgets.CONTENT_URI, values).getLastPathSegment();
+					getContentResolver().insert(Widgets.getContentUri(About.this), values).getLastPathSegment();
 				}
 				widget.close();
-				Cursor statuses = getContentResolver().query(Widget_accounts.CONTENT_URI, new String[]{Statuses._ID}, Statuses.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
+				Cursor statuses = getContentResolver().query(Widget_accounts.getContentUri(About.this), new String[]{Statuses._ID}, Statuses.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, null);
 				if (!statuses.moveToFirst()) {
 					// no statuses, load them
 					result = 1;
@@ -372,10 +372,10 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 			Cursor c;
 			SimpleCursorAdapter sca;
 			if (profile[0]) {
-				c = managedQuery(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.FRIEND + " as " + Statuses_styles.FRIEND + "2", Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.MESSAGE + " as " + Statuses_styles.MESSAGE + "2", Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.PROFILE_BG, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE}, Statuses_styles.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, Statuses_styles.CREATED + " desc");
+				c = managedQuery(Statuses_styles.getContentUri(About.this), new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.FRIEND + " as " + Statuses_styles.FRIEND + "2", Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.MESSAGE + " as " + Statuses_styles.MESSAGE + "2", Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.PROFILE_BG, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE}, Statuses_styles.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, Statuses_styles.CREATED + " desc");
 				sca = new SimpleCursorAdapter(About.this, R.layout.widget_item, c, new String[] {Statuses_styles.FRIEND, Statuses_styles.FRIEND + "2", Statuses_styles.MESSAGE, Statuses_styles.MESSAGE + "2", Statuses_styles.STATUS_BG, Statuses_styles.CREATEDTEXT, Statuses_styles.PROFILE, Statuses_styles.ICON, Statuses_styles.PROFILE_BG, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE}, new int[] {R.id.friend_bg_clear, R.id.friend, R.id.message_bg_clear, R.id.message, R.id.status_bg, R.id.created, R.id.profile, R.id.icon, R.id.profile_bg, R.id.friend_bg, R.id.image_clear, R.id.image});
 			} else {
-				c = managedQuery(Statuses_styles.CONTENT_URI, new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.FRIEND + " as " + Statuses_styles.FRIEND + "2", Statuses_styles.MESSAGE, Statuses_styles.MESSAGE + " as " + Statuses_styles.MESSAGE + "2", Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE}, Statuses_styles.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, Statuses_styles.CREATED + " desc");
+				c = managedQuery(Statuses_styles.getContentUri(About.this), new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.FRIEND + " as " + Statuses_styles.FRIEND + "2", Statuses_styles.MESSAGE, Statuses_styles.MESSAGE + " as " + Statuses_styles.MESSAGE + "2", Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE}, Statuses_styles.WIDGET + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)}, Statuses_styles.CREATED + " desc");
 				sca = new SimpleCursorAdapter(About.this, R.layout.widget_item_noprofile, c, new String[] {Statuses_styles.FRIEND, Statuses_styles.FRIEND + "2", Statuses_styles.MESSAGE, Statuses_styles.MESSAGE + "2", Statuses_styles.STATUS_BG, Statuses_styles.CREATEDTEXT, Statuses_styles.ICON, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE}, new int[] {R.id.friend_bg_clear, R.id.friend, R.id.message_bg_clear, R.id.message, R.id.status_bg, R.id.created, R.id.icon, R.id.friend_bg, R.id.image_clear, R.id.image});
 			}
 			sca.setViewBinder(mViewBinder);

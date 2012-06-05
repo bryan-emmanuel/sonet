@@ -133,9 +133,9 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				chooseAccounts();
 			} else {
 				Uri data = i.getData();
-				if ((data != null) && data.toString().contains(Accounts.CONTENT_URI.toString())) {
+				if ((data != null) && data.toString().contains(Accounts.getContentUri(this).toString())) {
 					// default to the account passed in, but allow selecting additional accounts
-					Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{data.getLastPathSegment()}, null);
+					Cursor account = this.getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{data.getLastPathSegment()}, null);
 					if (account.moveToFirst()) {
 						mAccountsToPost.put(account.getLong(0), null);
 						switch (account.getInt(2)) {
@@ -180,7 +180,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 
 			@Override
 			protected String doInBackground(Void... none) {
-				Cursor account = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SERVICE, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
+				Cursor account = getContentResolver().query(Accounts.getContentUri(SonetCreatePost.this), new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SERVICE, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
 				if (account.moveToFirst()) {
 					SonetOAuth sonetOAuth;
 					serviceId = account.getInt(account.getColumnIndex(Accounts.SERVICE));
@@ -344,7 +344,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 						Iterator<Long> accountIds = mAccountsToPost.keySet().iterator();
 						HashMap<Long, String> accountEntries = new HashMap<Long, String>();
 						while (accountIds.hasNext()) {
-							Cursor account = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(accountIds.next())}, null);
+							Cursor account = this.getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(accountIds.next())}, null);
 							if (account.moveToFirst()) {
 								int service = account.getInt(account.getColumnIndex(Accounts.SERVICE));
 								// only get accounts which have been selected and are supported for location
@@ -403,7 +403,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 							final long accountId = entry.getKey();
 							final String placeId = entry.getValue();
 							// post or comment!
-							Cursor account = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
+							Cursor account = getContentResolver().query(Accounts.getContentUri(SonetCreatePost.this), new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
 							if (account.moveToFirst()) {
 								int service = account.getInt(account.getColumnIndex(Accounts.SERVICE));
 								final String serviceName = Sonet.getServiceName(getResources(), service);
@@ -759,7 +759,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 
 	protected void chooseAccounts() {
 		// don't limit accounts to the widget...
-		Cursor c = this.getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, null, null, null);
+		Cursor c = this.getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, null, null, null);
 		if (c.moveToFirst()) {
 			int i = 0,
 					count = c.getCount();

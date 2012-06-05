@@ -102,7 +102,7 @@ public class SonetNotifications extends ListActivity {
 	protected void onListItemClick(ListView list, final View view, int position, final long id) {
 		super.onListItemClick(list, view, position, id);
 		// load SonetComments.java, the notification will be clear there
-		startActivityForResult(new Intent(this, SonetComments.class).setData(Uri.withAppendedPath(Notifications.CONTENT_URI, Long.toString(id))), RESULT_REFRESH);
+		startActivityForResult(new Intent(this, SonetComments.class).setData(Uri.withAppendedPath(Notifications.getContentUri(this), Long.toString(id))), RESULT_REFRESH);
 	}
 
 	@Override
@@ -123,7 +123,7 @@ public class SonetNotifications extends ListActivity {
 					// clear all notifications
 					ContentValues values = new ContentValues();
 					values.put(Notifications.CLEARED, 1);
-					SonetNotifications.this.getContentResolver().update(Notifications.CONTENT_URI, values, Notifications._ID + "=?", new String[]{Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
+					SonetNotifications.this.getContentResolver().update(Notifications.getContentUri(SonetNotifications.this), values, Notifications._ID + "=?", new String[]{Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id)});
 					return null;
 				}
 
@@ -174,14 +174,14 @@ public class SonetNotifications extends ListActivity {
 				switch (arg0[0]) {
 				case REFRESH:
 					// select all accounts with notifications set
-					Cursor widgets = getContentResolver().query(Widgets_settings.DISTINCT_CONTENT_URI, new String[]{Widgets.ACCOUNT}, Widgets.ACCOUNT + "!=-1 and (" + Widgets.LIGHTS + "=1 or " + Widgets.VIBRATE + "=1 or " + Widgets.SOUND + "=1)", null, null);
+					Cursor widgets = getContentResolver().query(Widgets_settings.getDistinctContentUri(SonetNotifications.this), new String[]{Widgets.ACCOUNT}, Widgets.ACCOUNT + "!=-1 and (" + Widgets.LIGHTS + "=1 or " + Widgets.VIBRATE + "=1 or " + Widgets.SOUND + "=1)", null, null);
 					if (widgets.moveToFirst()) {
 						mSonetCrypto = SonetCrypto.getInstance(getApplicationContext());
 						HttpClient httpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
 						while (!widgets.isAfterLast()) {
 							long accountId = widgets.getLong(0);
 							ArrayList<String> notificationSids = new ArrayList<String>();
-							Cursor account = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.SID}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
+							Cursor account = getContentResolver().query(Accounts.getContentUri(SonetNotifications.this), new String[]{Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE, Accounts.SID}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
 							if (account.moveToFirst()) {
 								// for each account, for each notification, check for updates
 								// if there are no updates past 24hrs and cleared, delete
@@ -191,7 +191,7 @@ public class SonetNotifications extends ListActivity {
 								String accountEsid = mSonetCrypto.Decrypt(account.getString(3));
 								mSimpleDateFormat = null;
 								if (service == TWITTER) {
-									Cursor currentNotifications = getContentResolver().query(Notifications.CONTENT_URI, new String[]{Notifications.SID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(accountId)}, null);
+									Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(SonetNotifications.this), new String[]{Notifications.SID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(accountId)}, null);
 									// loop over notifications
 									if (currentNotifications.moveToFirst()) {
 										// store sids, to avoid duplicates when requesting the latest feed
@@ -204,7 +204,7 @@ public class SonetNotifications extends ListActivity {
 									// limit to newest status
 									SonetOAuth sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, token, secret);
 									String last_sid = null;
-									Cursor last_status = getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses.SID}, Statuses.ACCOUNT + "=?", new String[]{Long.toString(accountId)}, Statuses.CREATED + " ASC LIMIT 1");
+									Cursor last_status = getContentResolver().query(Statuses.getContentUri(SonetNotifications.this), new String[]{Statuses.SID}, Statuses.ACCOUNT + "=?", new String[]{Long.toString(accountId)}, Statuses.CREATED + " ASC LIMIT 1");
 									if (last_status.moveToFirst()) {
 										last_sid = mSonetCrypto.Decrypt(last_status.getString(0));
 									}
@@ -227,7 +227,7 @@ public class SonetNotifications extends ListActivity {
 										}
 									}
 								} else if (service == IDENTICA) {
-									Cursor currentNotifications = getContentResolver().query(Notifications.CONTENT_URI, new String[]{Notifications.SID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(accountId)}, null);
+									Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(SonetNotifications.this), new String[]{Notifications.SID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(accountId)}, null);
 									// loop over notifications
 									if (currentNotifications.moveToFirst()) {
 										// store sids, to avoid duplicates when requesting the latest feed
@@ -240,7 +240,7 @@ public class SonetNotifications extends ListActivity {
 									// limit to newest status
 									SonetOAuth sonetOAuth = new SonetOAuth(IDENTICA_KEY, IDENTICA_SECRET, token, secret);
 									String last_sid = null;
-									Cursor last_status = getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses.SID}, Statuses.ACCOUNT + "=?", new String[]{Long.toString(accountId)}, Statuses.CREATED + " ASC LIMIT 1");
+									Cursor last_status = getContentResolver().query(Statuses.getContentUri(SonetNotifications.this), new String[]{Statuses.SID}, Statuses.ACCOUNT + "=?", new String[]{Long.toString(accountId)}, Statuses.CREATED + " ASC LIMIT 1");
 									if (last_status.moveToFirst()) {
 										last_sid = mSonetCrypto.Decrypt(last_status.getString(0));
 									}
@@ -263,7 +263,7 @@ public class SonetNotifications extends ListActivity {
 										}
 									}
 								} else {
-									Cursor currentNotifications = getContentResolver().query(Notifications.CONTENT_URI, new String[]{Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(accountId)}, null);
+									Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(SonetNotifications.this), new String[]{Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(accountId)}, null);
 									if (currentNotifications.moveToFirst()) {
 										String response;
 										SonetOAuth sonetOAuth;
@@ -303,7 +303,7 @@ public class SonetNotifications extends ListActivity {
 																	} else {
 																		values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), from.getString(Sname) + " and others"));
 																	}
-																	getContentResolver().update(Notifications.CONTENT_URI, values, Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
+																	getContentResolver().update(Notifications.getContentUri(SonetNotifications.this), values, Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
 																}
 															}
 														}
@@ -432,7 +432,7 @@ public class SonetNotifications extends ListActivity {
 																	} else {
 																		values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), comment.getString(SdisplayName) + " and others"));
 																	}
-																	getContentResolver().update(Notifications.CONTENT_URI, values, Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
+																	getContentResolver().update(Notifications.getContentUri(SonetNotifications.this), values, Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
 																}
 															}
 														}
@@ -536,7 +536,7 @@ public class SonetNotifications extends ListActivity {
 																	} else {
 																		values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), user.getString(SfirstName) + " " + user.getString(SlastName) + " and others"));
 																	}
-																	getContentResolver().update(Notifications.CONTENT_URI, values, Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
+																	getContentResolver().update(Notifications.getContentUri(SonetNotifications.this), values, Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
 																}
 															}
 														}
@@ -655,7 +655,7 @@ public class SonetNotifications extends ListActivity {
 																		} else {
 																			values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), person.getString(SfirstName) + " " + person.getString(SlastName) + " and others"));
 																		}
-																		getContentResolver().update(Notifications.CONTENT_URI, values, Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
+																		getContentResolver().update(Notifications.getContentUri(SonetNotifications.this), values, Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
 																	}
 																}
 															}
@@ -903,7 +903,7 @@ public class SonetNotifications extends ListActivity {
 									currentNotifications.close();
 								}
 								// remove old notifications
-								getContentResolver().delete(Notifications.CONTENT_URI, Notifications.CLEARED + "=1 and " + Notifications.ACCOUNT + "=? and " + Notifications.CREATED + "<?", new String[]{Long.toString(accountId), Long.toString(System.currentTimeMillis() - 86400000)});
+								getContentResolver().delete(Notifications.getContentUri(SonetNotifications.this), Notifications.CLEARED + "=1 and " + Notifications.ACCOUNT + "=? and " + Notifications.CREATED + "<?", new String[]{Long.toString(accountId), Long.toString(System.currentTimeMillis() - 86400000)});
 							}
 							account.close();
 							widgets.moveToNext();
@@ -917,7 +917,7 @@ public class SonetNotifications extends ListActivity {
 					// clear all notifications
 					ContentValues values = new ContentValues();
 					values.put(Notifications.CLEARED, 1);
-					SonetNotifications.this.getContentResolver().update(Notifications.CONTENT_URI, values, null, null);
+					SonetNotifications.this.getContentResolver().update(Notifications.getContentUri(SonetNotifications.this), values, null, null);
 					return true;
 				}
 				return false;
@@ -949,7 +949,7 @@ public class SonetNotifications extends ListActivity {
 				values.put(Notifications.NOTIFICATION, notification);
 				values.put(Notifications.CLEARED, 0);
 				values.put(Notifications.UPDATED, created);
-				getContentResolver().insert(Notifications.CONTENT_URI, values);
+				getContentResolver().insert(Notifications.getContentUri(SonetNotifications.this), values);
 			}
 
 			private long parseDate(String date, String format) {
@@ -1039,7 +1039,7 @@ public class SonetNotifications extends ListActivity {
 	};
 
 	private void loadNotifications() {
-		Cursor c = this.managedQuery(Notifications.CONTENT_URI, new String[]{Notifications._ID, Notifications.CLEARED, Notifications.NOTIFICATION}, Notifications.CLEARED + "!=1", null, null);
+		Cursor c = this.managedQuery(Notifications.getContentUri(SonetNotifications.this), new String[]{Notifications._ID, Notifications.CLEARED, Notifications.NOTIFICATION}, Notifications.CLEARED + "!=1", null, null);
 		SimpleCursorAdapter sca = new SimpleCursorAdapter(this, R.layout.notifications_row, c, new String[] {Notifications.CLEARED, Notifications.NOTIFICATION}, new int[] {R.id.notification, R.id.notification});
 		sca.setViewBinder(mViewBinder);
 		setListAdapter(sca);

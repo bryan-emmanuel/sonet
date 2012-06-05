@@ -192,7 +192,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 				switch (which) {
 				case REAUTH_ID:
 					// need the account id if reauthenticating
-					Cursor c = getContentResolver().query(Accounts.CONTENT_URI, new String[]{Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(id)}, null);
+					Cursor c = getContentResolver().query(Accounts.getContentUri(ManageAccounts.this), new String[]{Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(id)}, null);
 					if (c.moveToFirst()) {
 						int service = c.getInt(0);
 						if ((service != SMS) && (service != RSS)) {
@@ -209,25 +209,25 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 				case ENABLE_ID:
 					if (((TextView) view.findViewById(R.id.message)).getText().toString().contains("enabled")) {
 						// disable the account, remove settings and statuses
-						getContentResolver().delete(Widgets.CONTENT_URI, Widgets.ACCOUNT + "=? and " + Widgets.WIDGET + "=?", new String[]{Long.toString(id), Integer.toString(mAppWidgetId)});
-						getContentResolver().delete(Widget_accounts.CONTENT_URI, Widget_accounts.ACCOUNT + "=? and " + Widget_accounts.WIDGET + "=?", new String[]{Long.toString(id), Integer.toString(mAppWidgetId)});
-						Cursor statuses = getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID}, Statuses.ACCOUNT + "=? and " + Statuses.WIDGET + "=?", new String[]{Long.toString(id), Integer.toString(mAppWidgetId)}, null);
+						getContentResolver().delete(Widgets.getContentUri(ManageAccounts.this), Widgets.ACCOUNT + "=? and " + Widgets.WIDGET + "=?", new String[]{Long.toString(id), Integer.toString(mAppWidgetId)});
+						getContentResolver().delete(Widget_accounts.getContentUri(ManageAccounts.this), Widget_accounts.ACCOUNT + "=? and " + Widget_accounts.WIDGET + "=?", new String[]{Long.toString(id), Integer.toString(mAppWidgetId)});
+						Cursor statuses = getContentResolver().query(Statuses.getContentUri(ManageAccounts.this), new String[]{Statuses._ID}, Statuses.ACCOUNT + "=? and " + Statuses.WIDGET + "=?", new String[]{Long.toString(id), Integer.toString(mAppWidgetId)}, null);
 						if (statuses.moveToFirst()) {
 							while (!statuses.isAfterLast()) {
-								getContentResolver().delete(Status_links.CONTENT_URI, Status_links.STATUS_ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
-								getContentResolver().delete(Status_images.CONTENT_URI, Status_images.STATUS_ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
+								getContentResolver().delete(Status_links.getContentUri(ManageAccounts.this), Status_links.STATUS_ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
+								getContentResolver().delete(Status_images.getContentUri(ManageAccounts.this), Status_images.STATUS_ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
 								statuses.moveToNext();
 							}
 						}
 						statuses.close();
-						getContentResolver().delete(Statuses.CONTENT_URI, Statuses.ACCOUNT + "=? and " + Statuses.WIDGET + "=?", new String[]{Long.toString(id), Integer.toString(mAppWidgetId)});
+						getContentResolver().delete(Statuses.getContentUri(ManageAccounts.this), Statuses.ACCOUNT + "=? and " + Statuses.WIDGET + "=?", new String[]{Long.toString(id), Integer.toString(mAppWidgetId)});
 						listAccounts();
 					} else {
 						// enable the account
 						ContentValues values = new ContentValues();
 						values.put(Widget_accounts.ACCOUNT, id);
 						values.put(Widget_accounts.WIDGET, mAppWidgetId);
-						ManageAccounts.this.getContentResolver().insert(Widget_accounts.CONTENT_URI, values);
+						ManageAccounts.this.getContentResolver().insert(Widget_accounts.getContentUri(ManageAccounts.this), values);
 						listAccounts();
 					}
 					mUpdateWidget = true;
@@ -252,21 +252,21 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		if (item.getItemId() == DELETE_ID) {
 			mUpdateWidget = true;
 			String accountId = Long.toString(((AdapterContextMenuInfo) item.getMenuInfo()).id);
-			getContentResolver().delete(Accounts.CONTENT_URI, Accounts._ID + "=?", new String[]{accountId});
+			getContentResolver().delete(Accounts.getContentUri(this), Accounts._ID + "=?", new String[]{accountId});
 			// need to delete the statuses and settings for all accounts
-			getContentResolver().delete(Widgets.CONTENT_URI, Widgets.ACCOUNT + "=?", new String[]{accountId});
-			Cursor statuses = getContentResolver().query(Statuses.CONTENT_URI, new String[]{Statuses._ID}, Statuses.ACCOUNT + "=?", new String[]{accountId}, null);
+			getContentResolver().delete(Widgets.getContentUri(this), Widgets.ACCOUNT + "=?", new String[]{accountId});
+			Cursor statuses = getContentResolver().query(Statuses.getContentUri(this), new String[]{Statuses._ID}, Statuses.ACCOUNT + "=?", new String[]{accountId}, null);
 			if (statuses.moveToFirst()) {
 				while (!statuses.isAfterLast()) {
-					getContentResolver().delete(Status_links.CONTENT_URI, Status_links.STATUS_ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
-					getContentResolver().delete(Status_images.CONTENT_URI, Status_images.STATUS_ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
+					getContentResolver().delete(Status_links.getContentUri(this), Status_links.STATUS_ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
+					getContentResolver().delete(Status_images.getContentUri(this), Status_images.STATUS_ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
 					statuses.moveToNext();
 				}
 			}
 			statuses.close();
-			getContentResolver().delete(Statuses.CONTENT_URI, Statuses.ACCOUNT + "=?", new String[]{accountId});
-			getContentResolver().delete(Widget_accounts.CONTENT_URI, Widget_accounts.ACCOUNT + "=?", new String[]{accountId});
-			getContentResolver().delete(Notifications.CONTENT_URI, Notifications.ACCOUNT + "=?", new String[]{accountId});
+			getContentResolver().delete(Statuses.getContentUri(this), Statuses.ACCOUNT + "=?", new String[]{accountId});
+			getContentResolver().delete(Widget_accounts.getContentUri(this), Widget_accounts.ACCOUNT + "=?", new String[]{accountId});
+			getContentResolver().delete(Notifications.getContentUri(this), Notifications.ACCOUNT + "=?", new String[]{accountId});
 		}
 		return super.onContextItemSelected(item);
 	}
@@ -318,7 +318,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		// list all accounts, checking the checkbox if they are enabled for this widget
 		// prepend service name to username
 		
-		Cursor c = this.managedQuery(Accounts_styles.CONTENT_URI, new String[]{
+		Cursor c = this.managedQuery(Accounts_styles.getContentUri(this), new String[]{
 				Accounts._ID,
 				
 				"(case when " + Accounts.SERVICE + "=" + Sonet.TWITTER + " then 'Twitter: ' when "
