@@ -18,12 +18,14 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
-<resources>
-    <string name="app_name">Sonet Pro</string>
-    <string name="sonet_2x2">Sonet Pro Compact 2x2</string>
-    <string name="sonet_2x3">Sonet Pro Compact 2x3</string>
-    <string name="sonet_2x4">Sonet Pro Compact 2x4</string>
-    <string name="sonet_4x2">Sonet Pro 4x2</string>
-    <string name="sonet_4x3">Sonet Pro 4x3</string>
-    <string name="sonet_4x4">Sonet Pro 4x4</string>
-</resources>
+<!--
+70 × n − 30
+-->
+<appwidget-provider
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:minWidth="110dip"
+  android:minHeight="250dip"
+  android:updatePeriodMillis="0"
+  android:resizeMode="3"
+  android:initialLayout="@layout/widget_nobuttons"
+  android:configure="com.piusvelte.sonet.core.ManageAccounts" />

@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+/*
  * Sonet - Android Social Networking Widget
  * Copyright (C) 2009 Bryan Emmanuel
  * 
@@ -17,13 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
--->
-<resources>
-    <string name="app_name">Sonet Pro</string>
-    <string name="sonet_2x2">Sonet Pro Compact 2x2</string>
-    <string name="sonet_2x3">Sonet Pro Compact 2x3</string>
-    <string name="sonet_2x4">Sonet Pro Compact 2x4</string>
-    <string name="sonet_4x2">Sonet Pro 4x2</string>
-    <string name="sonet_4x3">Sonet Pro 4x3</string>
-    <string name="sonet_4x4">Sonet Pro 4x4</string>
-</resources>
+ */
+package com.piusvelte.sonet.core;
+
+public class SonetWidget_2x4 extends SonetWidget {
+}

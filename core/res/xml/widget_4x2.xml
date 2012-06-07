@@ -19,7 +19,7 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <!--
-min dip size = (#cells*74dip)-2dip
+70 × n − 30
 -->
 <appwidget-provider
   xmlns:android="http://schemas.android.com/apk/res/android"

@@ -412,8 +412,32 @@ public class SonetService extends Service {
 					(new AsyncTask<Integer, Void, Void>() {
 						@Override
 						protected Void doInBackground(Integer... arg0) {
+							int appWidgetId = arg0[0];
+							boolean display_profile = true;			
+							boolean hasbuttons = false;
+							int scrollable = 0;
+							int buttons_bg_color = Sonet.default_buttons_bg_color;
+							int buttons_color = Sonet.default_buttons_color;
+							int buttons_textsize = Sonet.default_buttons_textsize;			
+							int margin = Sonet.default_margin;
+							Cursor settings = getSettingsCursor(appWidgetId);
+							if (settings.moveToFirst()) {
+								hasbuttons = settings.getInt(0) == 1;
+								buttons_color = settings.getInt(1);
+								buttons_bg_color = settings.getInt(2);
+								buttons_textsize = settings.getInt(3);
+								scrollable = settings.getInt(4);
+								display_profile = settings.getInt(5) == 1;
+								margin = settings.getInt(6);
+							}
+							settings.close();
+							// override display_profile if this is a compact widget
+							boolean isCompact = Sonet.IsCompact(AppWidgetManager.getInstance(SonetService.this).getAppWidgetInfo(appWidgetId).provider.getClassName());
+							if (display_profile) {
+								display_profile = !isCompact;
+							}
 							// rebuild the widget, using the paging criteria passed in
-							buildWidgetButtons(arg0[0], true, arg0[1]);
+							buildWidgetButtons(appWidgetId, true, arg0[1], hasbuttons, scrollable, buttons_bg_color, buttons_color, buttons_textsize, display_profile, margin, isCompact);
 							return null;
 						}
 					}).execute(Integer.parseInt(intent.getData().getLastPathSegment()), intent.getIntExtra(ACTION_PAGE_DOWN, 0));
@@ -421,8 +445,32 @@ public class SonetService extends Service {
 					(new AsyncTask<Integer, Void, Void>() {
 						@Override
 						protected Void doInBackground(Integer... arg0) {
+							int appWidgetId = arg0[0];
+							boolean display_profile = true;			
+							boolean hasbuttons = false;
+							int scrollable = 0;
+							int buttons_bg_color = Sonet.default_buttons_bg_color;
+							int buttons_color = Sonet.default_buttons_color;
+							int buttons_textsize = Sonet.default_buttons_textsize;			
+							int margin = Sonet.default_margin;
+							Cursor settings = getSettingsCursor(appWidgetId);
+							if (settings.moveToFirst()) {
+								hasbuttons = settings.getInt(0) == 1;
+								buttons_color = settings.getInt(1);
+								buttons_bg_color = settings.getInt(2);
+								buttons_textsize = settings.getInt(3);
+								scrollable = settings.getInt(4);
+								display_profile = settings.getInt(5) == 1;
+								margin = settings.getInt(6);
+							}
+							settings.close();
+							// override display_profile if this is a compact widget
+							boolean isCompact = Sonet.IsCompact(AppWidgetManager.getInstance(SonetService.this).getAppWidgetInfo(appWidgetId).provider.getClassName());
+							if (display_profile) {
+								display_profile = !isCompact;
+							}
 							// rebuild the widget, using the paging criteria passed in
-							buildWidgetButtons(arg0[0], true, arg0[1]);
+							buildWidgetButtons(arg0[0], true, arg0[1], hasbuttons, scrollable, buttons_bg_color, buttons_color, buttons_textsize, display_profile, margin, isCompact);
 							return null;
 						}
 					}).execute(Integer.parseInt(intent.getData().getLastPathSegment()), intent.getIntExtra(ACTION_PAGE_UP, 0));
@@ -435,6 +483,7 @@ public class SonetService extends Service {
 							protected String doInBackground(String... params) {
 								String response = null;
 								if (params.length > 2) {
+									Log.d(TAG, "upload file: " + params[2]);
 									HttpPost httpPost = new HttpPost(String.format(FACEBOOK_PHOTOS, FACEBOOK_BASE_URL, Saccess_token, mSonetCrypto.Decrypt(params[0])));
 									MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
 									File file = new File(params[2]);
@@ -444,7 +493,6 @@ public class SonetService extends Service {
 									try {
 										entity.addPart("message", new StringBody(params[1]));
 										httpPost.setEntity(entity);
-//										Log.d(TAG,"begin upload");
 										response = SonetHttpClient.httpResponse(httpClient, httpPost);
 									} catch (UnsupportedEncodingException e) {
 										Log.e(TAG,e.toString());
@@ -457,7 +505,7 @@ public class SonetService extends Service {
 							protected void onPostExecute(String response) {
 								// notify photo success
 								String message = getString(response != null ? R.string.success : R.string.failure);
-//								Log.d(TAG,"upload finished:" + message);
+								Log.d(TAG,"upload finished:" + message);
 								Notification notification = new Notification(R.drawable.notification, "photo upload " + message, System.currentTimeMillis());
 								notification.setLatestEventInfo(getBaseContext(), "photo upload", message, PendingIntent.getActivity(SonetService.this, 0, (new Intent(SonetService.this, About.class)), 0));
 								((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
@@ -543,6 +591,30 @@ public class SonetService extends Service {
 		}
 		super.onDestroy();
 	}
+	
+	private Cursor getSettingsCursor(int appWidgetId) {
+		Cursor settings = getContentResolver().query(Widgets_settings.getContentUri(SonetService.this), new String[]{Widgets.HASBUTTONS, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.SCROLLABLE, Widgets.DISPLAY_PROFILE, Widgets.MARGIN, Widgets.INTERVAL, Widgets.BACKGROUND_UPDATE}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(appWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+		if (!settings.moveToFirst()) {
+			settings.close();
+			settings = getContentResolver().query(Widgets_settings.getContentUri(SonetService.this), new String[]{Widgets.HASBUTTONS, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.SCROLLABLE, Widgets.DISPLAY_PROFILE, Widgets.MARGIN, Widgets.INTERVAL, Widgets.BACKGROUND_UPDATE}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+			if (!settings.moveToFirst()) {
+				// initialize account settings
+				ContentValues values = new ContentValues();
+				values.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
+				values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
+				getContentResolver().insert(Widgets.getContentUri(SonetService.this), values);
+			}
+			// don't insert a duplicate row
+			if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+				// initialize account settings
+				ContentValues values = new ContentValues();
+				values.put(Widgets.WIDGET, appWidgetId);
+				values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
+				getContentResolver().insert(Widgets.getContentUri(SonetService.this), values);
+			}
+		}
+		return settings;
+	}
 
 	class StatusesLoader extends AsyncTask<Integer, String, Integer> {
 
@@ -555,33 +627,31 @@ public class SonetService extends Service {
 			Log.d(TAG,"StatusesLoader;widget:"+widget+",reload:"+reload);
 			int refreshInterval = Sonet.default_interval;
 			boolean backgroundUpdate = true;
-			boolean display_profile = true;
-			Cursor settings = getContentResolver().query(Widgets_settings.getContentUri(SonetService.this), new String[]{Widgets.INTERVAL, Widgets.BACKGROUND_UPDATE, Widgets.DISPLAY_PROFILE}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{widget, Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
-			if (!settings.moveToFirst()) {
-				settings.close();
-				settings = getContentResolver().query(Widgets_settings.getContentUri(SonetService.this), new String[]{Widgets.INTERVAL, Widgets.BACKGROUND_UPDATE, Widgets.DISPLAY_PROFILE}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
-				if (!settings.moveToFirst()) {
-					// initialize account settings
-					ContentValues values = new ContentValues();
-					values.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
-					values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-					getContentResolver().insert(Widgets.getContentUri(SonetService.this), values);
-				}
-				// don't insert a duplicate row
-				if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-					// initialize account settings
-					ContentValues values = new ContentValues();
-					values.put(Widgets.WIDGET, widget);
-					values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-					getContentResolver().insert(Widgets.getContentUri(SonetService.this), values);
-				}
-			}
+			boolean display_profile = true;			
+			boolean hasbuttons = false;
+			int scrollable = 0;
+			int buttons_bg_color = Sonet.default_buttons_bg_color;
+			int buttons_color = Sonet.default_buttons_color;
+			int buttons_textsize = Sonet.default_buttons_textsize;			
+			int margin = Sonet.default_margin;
+			Cursor settings = getSettingsCursor(appWidgetId);
 			if (settings.moveToFirst()) {
-				refreshInterval = settings.getInt(0);
-				backgroundUpdate = settings.getInt(1) == 1;
-				display_profile = settings.getInt(2) == 1;
+				hasbuttons = settings.getInt(0) == 1;
+				buttons_color = settings.getInt(1);
+				buttons_bg_color = settings.getInt(2);
+				buttons_textsize = settings.getInt(3);
+				scrollable = settings.getInt(4);
+				display_profile = settings.getInt(5) == 1;
+				margin = settings.getInt(6);
+				refreshInterval = settings.getInt(7);
+				backgroundUpdate = settings.getInt(8) == 1;
 			}
 			settings.close();
+			// override display_profile if this is a compact widget
+			boolean isCompact = Sonet.IsCompact(AppWidgetManager.getInstance(SonetService.this).getAppWidgetInfo(appWidgetId).provider.getClassName());
+			if (display_profile) {
+				display_profile = !isCompact;
+			}
 			// the widget will start out as the default widget.xml, which simply says "loading..."
 			// if there's a cache, that should be quickly reloaded while new updates come down
 			// otherwise, replace the widget with "loading..."
@@ -668,7 +738,7 @@ public class SonetService extends Service {
 			if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
 				// build the widget
 //				Log.d(TAG,"temp widget build");
-				buildWidgetButtons(appWidgetId, false, 0);
+				buildWidgetButtons(appWidgetId, false, 0, hasbuttons, scrollable, buttons_bg_color, buttons_color, buttons_textsize, display_profile, margin, isCompact);
 			} else {
 				// update the About.java for in-app viewing
 //				Log.d(TAG,"temp About build");
@@ -752,7 +822,7 @@ public class SonetService extends Service {
 								updateTwitter(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications, httpClient);
 								break;
 							case FACEBOOK:
-								updateFacebook(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications, httpClient);
+								updateFacebook(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications, httpClient, isCompact);
 								break;
 							case MYSPACE:
 								updateMySpace(token, secret, accountEsid, appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications, httpClient);
@@ -832,7 +902,7 @@ public class SonetService extends Service {
 			// non-scrollable widgets will be completely rebuilt, while scrollable widgets while be notified to requery
 			if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
 //				Log.d(TAG,"full widget build");
-				buildWidgetButtons(appWidgetId, true, 0);
+				buildWidgetButtons(appWidgetId, true, 0, hasbuttons, scrollable, buttons_bg_color, buttons_color, buttons_textsize, display_profile, margin, isCompact);
 			} else {
 //				Log.d(TAG,"full About build");
 				// notify change to About.java
@@ -1350,7 +1420,7 @@ public class SonetService extends Service {
 			}
 		}
 
-		private void updateFacebook(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
+		private void updateFacebook(String token, String secret, String accountEsid, int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient, boolean isCompact) {
 			String response;
 			JSONArray statusesArray;
 			ArrayList<String[]> links = new ArrayList<String[]>();
@@ -1462,7 +1532,9 @@ public class SonetService extends Service {
 										if (t.has(Sdata)) {
 											JSONObject n = t.getJSONArray(Sdata).getJSONObject(0);
 											if (n.has(Sname)) {
-												friend += " > " + n.getString(Sname);
+												if (!isCompact) {
+													friend += " > " + n.getString(Sname);
+												}
 												if (!notificationSids.contains(sid) && n.has(Sid) && (n.getString(Sid).equals(accountEsid))) {
 													notification = String.format(getString(R.string.friendcommented), friend);
 												}
@@ -2468,45 +2540,8 @@ public class SonetService extends Service {
 		}
 	}
 
-	private void buildWidgetButtons(Integer appWidgetId, boolean updatesReady, int page) {
-		boolean hasbuttons = false;
-		int scrollable = 0;
-		int buttons_bg_color = Sonet.default_buttons_bg_color,
-				buttons_color = Sonet.default_buttons_color,
-				buttons_textsize = Sonet.default_buttons_textsize;
-		boolean display_profile = true;
-		int margin = Sonet.default_margin;
+	private void buildWidgetButtons(Integer appWidgetId, boolean updatesReady, int page, boolean hasbuttons, int scrollable, int buttons_bg_color, int buttons_color, int buttons_textsize, boolean display_profile, int margin, boolean isCompact) {
 		final String widget = Integer.toString(appWidgetId);
-		Cursor settings = getContentResolver().query(Widgets_settings.getContentUri(SonetService.this), new String[]{Widgets.HASBUTTONS, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.SCROLLABLE, Widgets.DISPLAY_PROFILE, Widgets.MARGIN}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{widget, Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
-		if (!settings.moveToFirst()) {
-			settings.close();
-			settings = getContentResolver().query(Widgets_settings.getContentUri(SonetService.this), new String[]{Widgets.HASBUTTONS, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.SCROLLABLE, Widgets.DISPLAY_PROFILE, Widgets.MARGIN}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
-			if (!settings.moveToFirst()) {
-				// initialize account settings
-				ContentValues values = new ContentValues();
-				values.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
-				values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-				getContentResolver().insert(Widgets.getContentUri(SonetService.this), values);
-			}
-			// don't insert a duplicate row
-			if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-				// initialize account settings
-				ContentValues values = new ContentValues();
-				values.put(Widgets.WIDGET, appWidgetId);
-				values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-				getContentResolver().insert(Widgets.getContentUri(SonetService.this), values);
-			}
-		}
-		if (settings.moveToFirst()) {
-			hasbuttons = settings.getInt(0) == 1;
-			buttons_color = settings.getInt(1);
-			buttons_bg_color = settings.getInt(2);
-			buttons_textsize = settings.getInt(3);
-			scrollable = settings.getInt(4);
-			display_profile = settings.getInt(5) == 1;
-			margin = settings.getInt(6);
-		}
-		settings.close();
 		// Push update for this widget to the home screen
 		int layout;
 		if (hasbuttons) {
@@ -2729,11 +2764,11 @@ public class SonetService extends Service {
 			getContentResolver().notifyChange(Statuses_styles.getContentUri(SonetService.this), null);
 		} else {
 			AppWidgetManager.getInstance(SonetService.this).updateAppWidget(Integer.parseInt(widget), views);
-			buildScrollableWidget(appWidgetId, scrollable, display_profile);
+			buildScrollableWidget(appWidgetId, scrollable, display_profile, isCompact);
 		}
 	}
 
-	private void buildScrollableWidget(Integer appWidgetId, int scrollableVersion, boolean display_profile) {
+	private void buildScrollableWidget(Integer appWidgetId, int scrollableVersion, boolean display_profile, boolean isCompact) {
 		// set widget as scrollable
 		Intent replaceDummy = new Intent(LauncherIntent.Action.ACTION_SCROLL_WIDGET_START);
 		replaceDummy.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
@@ -2745,8 +2780,14 @@ public class SonetService extends Service {
 		//provider
 		Uri uri = Uri.withAppendedPath(Statuses_styles.getContentUri(SonetService.this), Integer.toString(appWidgetId));
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_URI, uri.toString());
-		String[] projection = display_profile ? new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.PROFILE_BG, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE}
-		: new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE};
+		String[] projection;
+		if (isCompact) {
+			projection = new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE};
+		} else if (display_profile) {
+			projection = new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.PROFILE_BG, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE};
+		} else {
+			projection = new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE};
+		}
 		String sortOrder = Statuses_styles.CREATED + " DESC";
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_PROJECTION, projection);
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SORT_ORDER, sortOrder);
@@ -2758,7 +2799,59 @@ public class SonetService extends Service {
 
 		switch (scrollableVersion) {
 		case 1:
-			if (display_profile) {
+			if (isCompact) {
+				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_ID, R.layout.widget_item_noprofile);
+				int[] cursorIndices = new int[]{SonetProvider.StatusesStylesColumnsCompact.friend.ordinal(),
+						SonetProvider.StatusesStylesColumnsCompact.message.ordinal(),
+						SonetProvider.StatusesStylesColumnsCompact.status_bg.ordinal(),
+						SonetProvider.StatusesStylesColumnsCompact.friend.ordinal(),
+						SonetProvider.StatusesStylesColumnsCompact.message.ordinal(),
+						SonetProvider.StatusesStylesColumnsCompact.icon.ordinal(),
+						SonetProvider.StatusesStylesColumnsCompact.friend_bg.ordinal(),
+						SonetProvider.StatusesStylesColumnsCompact.image_bg.ordinal(),
+						SonetProvider.StatusesStylesColumnsCompact.image.ordinal()};
+				int[] viewTypes = new int[]{LauncherIntent.Extra.Scroll.Types.TEXTVIEW,
+						LauncherIntent.Extra.Scroll.Types.TEXTVIEW,
+						LauncherIntent.Extra.Scroll.Types.IMAGEBLOB,
+						LauncherIntent.Extra.Scroll.Types.TEXTVIEW,
+						LauncherIntent.Extra.Scroll.Types.TEXTVIEW,
+						LauncherIntent.Extra.Scroll.Types.IMAGEBLOB,
+						LauncherIntent.Extra.Scroll.Types.IMAGEBLOB,
+						LauncherIntent.Extra.Scroll.Types.IMAGEBLOB,
+						LauncherIntent.Extra.Scroll.Types.IMAGEBLOB};
+				int[] layoutIds = new int[]{R.id.friend_bg_clear,
+						R.id.message_bg_clear,
+						R.id.status_bg,
+						R.id.friend,
+						R.id.message,
+						R.id.icon,
+						R.id.friend_bg,
+						R.id.image_clear,
+						R.id.image};
+				int[] defaultResource = new int[]{0,
+						0,
+						0,
+						0,
+						0,
+						0,
+						0,
+						0,
+						0};
+				boolean[] clickable = new boolean[]{false,
+						false,
+						true,
+						false,
+						false,
+						false,
+						false,
+						false,
+						false};
+				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_CURSOR_INDICES, cursorIndices);
+				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_VIEW_TYPES, viewTypes);
+				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_VIEW_IDS, layoutIds);
+				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_DEFAULT_RESOURCES, defaultResource);
+				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_VIEW_CLICKABLE, clickable);
+			} else if (display_profile) {
 				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_ID, R.layout.widget_item);
 				int[] cursorIndices = new int[]{SonetProvider.StatusesStylesColumns.friend.ordinal(),
 						SonetProvider.StatusesStylesColumns.message.ordinal(),
@@ -2827,16 +2920,16 @@ public class SonetService extends Service {
 				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_VIEW_CLICKABLE, clickable);			
 			} else {
 				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_ID, R.layout.widget_item_noprofile);
-				int[] cursorIndices = new int[]{SonetProvider.StatusesStylesColumns.friend.ordinal(),
-						SonetProvider.StatusesStylesColumns.message.ordinal(),
-						SonetProvider.StatusesStylesColumns.status_bg.ordinal(),
-						SonetProvider.StatusesStylesColumns.friend.ordinal(),
-						SonetProvider.StatusesStylesColumns.createdtext.ordinal(),
-						SonetProvider.StatusesStylesColumns.message.ordinal(),
-						SonetProvider.StatusesStylesColumns.icon.ordinal(),
-						SonetProvider.StatusesStylesColumns.friend_bg.ordinal(),
-						SonetProvider.StatusesStylesColumns.image_bg.ordinal(),
-						SonetProvider.StatusesStylesColumns.image.ordinal()};
+				int[] cursorIndices = new int[]{SonetProvider.StatusesStylesColumnsNoProfile.friend.ordinal(),
+						SonetProvider.StatusesStylesColumnsNoProfile.message.ordinal(),
+						SonetProvider.StatusesStylesColumnsNoProfile.status_bg.ordinal(),
+						SonetProvider.StatusesStylesColumnsNoProfile.friend.ordinal(),
+						SonetProvider.StatusesStylesColumnsNoProfile.createdtext.ordinal(),
+						SonetProvider.StatusesStylesColumnsNoProfile.message.ordinal(),
+						SonetProvider.StatusesStylesColumnsNoProfile.icon.ordinal(),
+						SonetProvider.StatusesStylesColumnsNoProfile.friend_bg.ordinal(),
+						SonetProvider.StatusesStylesColumnsNoProfile.image_bg.ordinal(),
+						SonetProvider.StatusesStylesColumnsNoProfile.image.ordinal()};
 				int[] viewTypes = new int[]{LauncherIntent.Extra.Scroll.Types.TEXTVIEW,
 						LauncherIntent.Extra.Scroll.Types.TEXTVIEW,
 						LauncherIntent.Extra.Scroll.Types.IMAGEBLOB,
@@ -2885,7 +2978,44 @@ public class SonetService extends Service {
 			}
 			break;
 		case 2:
-			if (display_profile) {
+			if (isCompact) {
+				BoundRemoteViews itemViews = new BoundRemoteViews(R.layout.widget_item_noprofile);
+
+				Intent i = new Intent(SonetService.this, SonetWidget.class)
+				.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
+				.setData(uri)
+				.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+				PendingIntent pi = PendingIntent.getBroadcast(SonetService.this, 0, i, 0);
+
+				itemViews.SetBoundOnClickIntent(R.id.item, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.StatusesStylesColumnsCompact._id.ordinal());
+
+				itemViews.setBoundCharSequence(R.id.friend_bg_clear, "setText", SonetProvider.StatusesStylesColumnsCompact.friend.ordinal(), 0);
+				itemViews.setBoundFloat(R.id.friend_bg_clear, "setTextSize", SonetProvider.StatusesStylesColumnsCompact.friend_textsize.ordinal());
+
+				itemViews.setBoundCharSequence(R.id.message_bg_clear, "setText", SonetProvider.StatusesStylesColumnsCompact.message.ordinal(), 0);
+				itemViews.setBoundFloat(R.id.message_bg_clear, "setTextSize", SonetProvider.StatusesStylesColumnsCompact.messages_textsize.ordinal());
+
+				itemViews.setBoundBitmap(R.id.status_bg, "setImageBitmap", SonetProvider.StatusesStylesColumnsCompact.status_bg.ordinal(), 0);
+
+				itemViews.setBoundBitmap(R.id.image_clear, "setImageBitmap", SonetProvider.StatusesStylesColumnsCompact.image_bg.ordinal(), 0);
+
+				itemViews.setBoundBitmap(R.id.image, "setImageBitmap", SonetProvider.StatusesStylesColumnsCompact.image.ordinal(), 0);
+
+				itemViews.setBoundCharSequence(R.id.friend, "setText", SonetProvider.StatusesStylesColumnsCompact.friend.ordinal(), 0);
+				itemViews.setBoundCharSequence(R.id.message, "setText", SonetProvider.StatusesStylesColumnsCompact.message.ordinal(), 0);
+
+				itemViews.setBoundInt(R.id.friend, "setTextColor", SonetProvider.StatusesStylesColumnsCompact.friend_color.ordinal());
+				itemViews.setBoundInt(R.id.message, "setTextColor", SonetProvider.StatusesStylesColumnsCompact.messages_color.ordinal());
+
+				itemViews.setBoundFloat(R.id.friend, "setTextSize", SonetProvider.StatusesStylesColumnsCompact.friend_textsize.ordinal());
+				itemViews.setBoundFloat(R.id.message, "setTextSize", SonetProvider.StatusesStylesColumnsCompact.messages_textsize.ordinal());
+
+				itemViews.setBoundBitmap(R.id.icon, "setImageBitmap", SonetProvider.StatusesStylesColumnsCompact.icon.ordinal(), 0);
+
+				itemViews.setBoundBitmap(R.id.friend_bg, "setImageBitmap", SonetProvider.StatusesStylesColumnsCompact.friend_bg.ordinal(), 0);
+
+				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_REMOTEVIEWS, itemViews);
+			} else if (display_profile) {
 				BoundRemoteViews itemViews = new BoundRemoteViews(R.layout.widget_item);
 
 				Intent i = new Intent(SonetService.this, SonetWidget.class)
@@ -2947,9 +3077,9 @@ public class SonetService extends Service {
 
 				itemViews.setBoundBitmap(R.id.status_bg, "setImageBitmap", SonetProvider.StatusesStylesColumnsNoProfile.status_bg.ordinal(), 0);
 
-				itemViews.setBoundBitmap(R.id.image_clear, "setImageBitmap", SonetProvider.StatusesStylesColumns.image_bg.ordinal(), 0);
+				itemViews.setBoundBitmap(R.id.image_clear, "setImageBitmap", SonetProvider.StatusesStylesColumnsNoProfile.image_bg.ordinal(), 0);
 
-				itemViews.setBoundBitmap(R.id.image, "setImageBitmap", SonetProvider.StatusesStylesColumns.image.ordinal(), 0);
+				itemViews.setBoundBitmap(R.id.image, "setImageBitmap", SonetProvider.StatusesStylesColumnsNoProfile.image.ordinal(), 0);
 
 				itemViews.setBoundCharSequence(R.id.friend, "setText", SonetProvider.StatusesStylesColumnsNoProfile.friend.ordinal(), 0);
 				itemViews.setBoundCharSequence(R.id.created, "setText", SonetProvider.StatusesStylesColumnsNoProfile.createdtext.ordinal(), 0);
@@ -2965,7 +3095,7 @@ public class SonetService extends Service {
 
 				itemViews.setBoundBitmap(R.id.icon, "setImageBitmap", SonetProvider.StatusesStylesColumnsNoProfile.icon.ordinal(), 0);
 
-				itemViews.setBoundBitmap(R.id.friend_bg, "setImageBitmap", SonetProvider.StatusesStylesColumns.friend_bg.ordinal(), 0);
+				itemViews.setBoundBitmap(R.id.friend_bg, "setImageBitmap", SonetProvider.StatusesStylesColumnsNoProfile.friend_bg.ordinal(), 0);
 
 				replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_REMOTEVIEWS, itemViews);
 			}

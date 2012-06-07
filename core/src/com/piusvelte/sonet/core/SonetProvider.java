@@ -297,6 +297,10 @@ public class SonetProvider extends ContentProvider {
 		_id, friend, message, createdtext, messages_color, friend_color, created_color, messages_textsize, friend_textsize, created_textsize, status_bg, icon, friend_bg, image_bg, image
 	}
 
+	public enum StatusesStylesColumnsCompact {
+		_id, friend, message, messages_color, friend_color, messages_textsize, friend_textsize, status_bg, icon, friend_bg, image_bg, image
+	}
+
 	@Override
 	public boolean onCreate() {
 		mDatabaseHelper = new DatabaseHelper(getContext());

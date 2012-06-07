@@ -20,6 +20,9 @@
 -->
 <resources>
     <string name="app_name">Sonet</string>
+    <string name="sonet_2x2">Sonet Compact 2x2</string>
+    <string name="sonet_2x3">Sonet Compact 2x3</string>
+    <string name="sonet_2x4">Sonet Compact 2x4</string>
     <string name="sonet_4x2">Sonet 4x2</string>
     <string name="sonet_4x3">Sonet 4x3</string>
     <string name="sonet_4x4">Sonet 4x4</string>

@@ -24,6 +24,8 @@ import static com.piusvelte.sonet.core.Sonet.PRO;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -667,6 +669,10 @@ public class Sonet {
 			}
 		}
 		return name;
+	}
+	
+	protected static boolean IsCompact(String className) {
+		return className.equals(SonetWidget_2x2.class.getName()) || className.equals(SonetWidget_2x3.class.getName()) || className.equals(SonetWidget_2x4.class.getName());
 	}
 
 	protected static int[] arrayCat(int[] a, int[] b) {
