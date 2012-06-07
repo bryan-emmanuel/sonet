@@ -37,7 +37,6 @@ import android.app.ListActivity;
 import android.app.WallpaperManager;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
-import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
@@ -168,13 +167,7 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 		mAppWidgetIds = new int[0];
 		// validate appwidgetids from appwidgetmanager
 		mAppWidgetManager = AppWidgetManager.getInstance(About.this);
-		mAppWidgetIds = Sonet.arrayCat(
-				Sonet.arrayCat(mAppWidgetManager.getAppWidgetIds(new ComponentName(
-						About.this, SonetWidget_4x2.class)),
-						mAppWidgetManager.getAppWidgetIds(new ComponentName(
-								About.this, SonetWidget_4x3.class))),
-								mAppWidgetManager.getAppWidgetIds(new ComponentName(About.this,
-										SonetWidget_4x4.class)));
+		mAppWidgetIds = Sonet.getWidgets(getApplicationContext(), mAppWidgetManager);
 		(new WidgetsDataLoader()).execute();
 	}
 

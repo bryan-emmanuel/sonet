@@ -19,21 +19,15 @@
  */
 package com.piusvelte.sonet.core;
 
-import static com.piusvelte.sonet.core.Sonet.PRO;
-
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Calendar;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.ads.AdRequest;
-import com.google.ads.AdSize;
-import com.google.ads.AdView;
-
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -42,7 +36,6 @@ import android.net.Uri;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.provider.BaseColumns;
-import android.widget.LinearLayout;
 
 public class Sonet {
 
@@ -156,7 +149,7 @@ public class Sonet {
 	protected static final String IDENTICA_DATE_FORMAT = "EEE MMM dd HH:mm:ss Z yyyy";
 	protected static final String IDENTICA_MENTIONS = "%sstatuses/mentions.json%s";
 	protected static final String IDENTICA_SINCE_ID = "?since_id=%s";
-	
+
 	protected static final int GOOGLEPLUS = 9;
 	protected static final String GOOGLEPLUS_AUTHORIZE = "https://accounts.google.com/o/oauth2/auth?client_id=%s&redirect_uri=%s&scope=https://www.googleapis.com/auth/plus.me&response_type=code";
 	protected static final String GOOGLE_ACCESS = "https://accounts.google.com/o/oauth2/token";
@@ -166,7 +159,7 @@ public class Sonet {
 	protected static final String GOOGLEPLUS_ACTIVITY = "%sactivities/%s?access_token=%s";
 	protected static final String GOOGLEPLUS_PROFILE = "https://plus.google.com/%s";
 	protected static final String GOOGLEPLUS_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
-	
+
 	protected static final int PINTEREST = 10;
 	protected static final String PINTEREST_BASE_URL = "https://api.pinterest.com/v2/";
 	protected static final String PINTEREST_URL_FEED = "%spopular/";
@@ -191,16 +184,16 @@ public class Sonet {
 	protected static final String[] MONTHS = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 	protected static final String ACCOUNTS_QUERY = "(case when " + Accounts.SERVICE + "=" + TWITTER + " then 'Twitter: ' when "
-	+ Accounts.SERVICE + "=" + FACEBOOK + " then 'Facebook: ' when "
-	+ Accounts.SERVICE + "=" + MYSPACE + " then 'MySpace: ' when "
-	+ Accounts.SERVICE + "=" + LINKEDIN + " then 'LinkedIn: ' when "
-	+ Accounts.SERVICE + "=" + FOURSQUARE + " then 'Foursquare: ' when "
-	+ Accounts.SERVICE + "=" + CHATTER + " then 'Chatter: ' when "
-	+ Accounts.SERVICE + "=" + RSS + " then 'RSS: ' when "
-	+ Accounts.SERVICE + "=" + IDENTICA + " then 'Identi.ca: ' when "
-	+ Accounts.SERVICE + "=" + GOOGLEPLUS + " then 'Google+: ' when "
-	+ Accounts.SERVICE + "=" + PINTEREST + " then 'Pinterest: ' else '' end)||" + Accounts.USERNAME + " as " + Accounts.USERNAME;
-	
+			+ Accounts.SERVICE + "=" + FACEBOOK + " then 'Facebook: ' when "
+			+ Accounts.SERVICE + "=" + MYSPACE + " then 'MySpace: ' when "
+			+ Accounts.SERVICE + "=" + LINKEDIN + " then 'LinkedIn: ' when "
+			+ Accounts.SERVICE + "=" + FOURSQUARE + " then 'Foursquare: ' when "
+			+ Accounts.SERVICE + "=" + CHATTER + " then 'Chatter: ' when "
+			+ Accounts.SERVICE + "=" + RSS + " then 'RSS: ' when "
+			+ Accounts.SERVICE + "=" + IDENTICA + " then 'Identi.ca: ' when "
+			+ Accounts.SERVICE + "=" + GOOGLEPLUS + " then 'Google+: ' when "
+			+ Accounts.SERVICE + "=" + PINTEREST + " then 'Pinterest: ' else '' end)||" + Accounts.USERNAME + " as " + Accounts.USERNAME;
+
 	protected static final String Sid = "id";
 	protected static final String Sname = "name";
 	protected static final String Suser = "user";
@@ -305,7 +298,7 @@ public class Sonet {
 	protected static final String Spicture = "picture";
 	protected static final String Sboard = "board";
 	protected static final String Simgur = "i.imgur.com";
-	
+
 	private static final String POWER_SERVICE = Context.POWER_SERVICE;
 	private static WakeLock sWakeLock;
 
@@ -347,7 +340,7 @@ public class Sonet {
 
 	public Sonet() {
 	}
-	
+
 	public static String getAuthority(Context context) {
 		return !context.getPackageName().toLowerCase().contains(PRO) ? SonetProvider.AUTHORITY : SonetProvider.PRO_AUTHORITY;
 	}
@@ -356,7 +349,7 @@ public class Sonet {
 
 		private Accounts() {
 		}
-		
+
 		public static Uri getContentUri(Context context) {
 			return Uri.parse("content://" + Sonet.getAuthority(context) + "/accounts");
 		}
@@ -451,7 +444,7 @@ public class Sonet {
 		public static final String FRIEND_BG_COLOR = "friend_bg_color";
 
 	}
-	
+
 	public static final class Widgets_settings implements BaseColumns  {
 
 		private Widgets_settings() {
@@ -460,13 +453,13 @@ public class Sonet {
 		public static Uri getContentUri(Context context) {
 			return Uri.parse("content://" + Sonet.getAuthority(context) + "/widgets_settings");
 		}
-		
+
 		public static Uri getDistinctContentUri(Context context) {
 			return Uri.parse("content://" + Sonet.getAuthority(context) + "/distinct_widgets_settings");
 		}
 
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.widgets_settings";
-		
+
 	}
 
 	public static final class Accounts_styles implements BaseColumns  {
@@ -479,9 +472,9 @@ public class Sonet {
 		}
 
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.accounts_styles";
-		
+
 	}
-	
+
 	public static final class Statuses implements BaseColumns {
 
 		private Statuses() {
@@ -578,11 +571,11 @@ public class Sonet {
 		// notifications are deleted when the feeds are updated, they are not in the new feeds and are marked cleared
 		private Notifications() {
 		}
-		
+
 		public static Uri getContentUri(Context context) {
 			return Uri.parse("content://" + Sonet.getAuthority(context) + "/notifications");
 		}
-		
+
 		public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.notifications";
 		public static final String SID = "sid";
 		public static final String ESID = "esid";
@@ -594,7 +587,7 @@ public class Sonet {
 		public static final String CLEARED = "cleared";
 		public static final String UPDATED = "updated";
 	}
-	
+
 	public static final class Status_links implements BaseColumns  {
 
 		private Status_links() {
@@ -608,9 +601,9 @@ public class Sonet {
 		public static final String STATUS_ID = "status_id";
 		public static final String LINK_URI = "link_uri";
 		public static final String LINK_TYPE = "link_type";
-		
+
 	}
-	
+
 	public static final class Status_images implements BaseColumns {
 
 		private Status_images() {
@@ -624,7 +617,7 @@ public class Sonet {
 		public static final String STATUS_ID = "status_id";
 		public static final String IMAGE = "image";
 		public static final String IMAGE_BG = "image_bg";
-		
+
 	}
 
 	protected static final TimeZone sTimeZone = TimeZone.getTimeZone("GMT");
@@ -657,7 +650,21 @@ public class Sonet {
 			return String.format("%s %d", Sonet.MONTHS[calendar.get(Calendar.MONTH)], calendar.get(Calendar.DATE));
 		}
 	}
-	
+
+	protected static int[] getWidgets(Context context, AppWidgetManager awm) {
+		return Sonet.arrayCat(
+				Sonet.arrayCat(
+				Sonet.arrayCat(
+				Sonet.arrayCat(
+				Sonet.arrayCat(
+						awm.getAppWidgetIds(new ComponentName(context, SonetWidget_4x2.class)),
+						awm.getAppWidgetIds(new ComponentName(context, SonetWidget_4x3.class))),
+						awm.getAppWidgetIds(new ComponentName(context,SonetWidget_4x4.class))),
+						awm.getAppWidgetIds(new ComponentName(context,SonetWidget_2x2.class))),
+						awm.getAppWidgetIds(new ComponentName(context,SonetWidget_2x3.class))),
+						awm.getAppWidgetIds(new ComponentName(context,SonetWidget_2x4.class)));
+	}
+
 	protected static String getServiceName(Resources r, int service) {
 		String name = null;
 		String[] entries = r.getStringArray(R.array.service_entries);
@@ -670,7 +677,7 @@ public class Sonet {
 		}
 		return name;
 	}
-	
+
 	protected static boolean IsCompact(String className) {
 		return className.equals(SonetWidget_2x2.class.getName()) || className.equals(SonetWidget_2x3.class.getName()) || className.equals(SonetWidget_2x4.class.getName());
 	}
@@ -799,7 +806,7 @@ public class Sonet {
 		}
 		return null;
 	}
-	
+
 	protected static Matcher getLinksMatcher(String raw) {
 		return Pattern.compile("\\bhttp(s)?://\\S+\\b", Pattern.CASE_INSENSITIVE).matcher(raw);
 	}

@@ -51,11 +51,19 @@ class SonetRemoteViewsFactory implements android.widget.RemoteViewsService.Remot
 	private Cursor mCursor;
 	private int mAppWidgetId;
 	private boolean mDisplay_profile;
+	private boolean mIsCompact;
 
 	public SonetRemoteViewsFactory(Context context, Intent intent) {
 		mContext = context;
 		mAppWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 		mDisplay_profile = intent.getBooleanExtra(Widgets.DISPLAY_PROFILE, true);
+		if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+			// override display_profile if this is a compact widget
+			mIsCompact = Sonet.IsCompact(AppWidgetManager.getInstance(context).getAppWidgetInfo(mAppWidgetId).provider.getClassName());
+			if (mDisplay_profile) {
+				mDisplay_profile = !mIsCompact;
+			}
+		}
 	}
 
 	@Override
@@ -134,9 +142,11 @@ class SonetRemoteViewsFactory implements android.widget.RemoteViewsService.Remot
 			views.setTextViewText(R.id.friend, mCursor.getString(1));
 			views.setTextColor(R.id.friend, friend_color);
 			views.setFloat(R.id.friend, "setTextSize", friend_textsize);
-			views.setTextViewText(R.id.created, mCursor.getString(4));
-			views.setTextColor(R.id.created, created_color);
-			views.setFloat(R.id.created, "setTextSize", created_textsize);
+			if (!mIsCompact) {
+				views.setTextViewText(R.id.created, mCursor.getString(4));
+				views.setTextColor(R.id.created, created_color);
+				views.setFloat(R.id.created, "setTextSize", created_textsize);
+			}
 			byte[] image_bg = mCursor.getBlob(15);
 			if (image_bg != null) {
 				Bitmap image_bgbmp = BitmapFactory.decodeByteArray(image_bg, 0, image_bg.length, sBFOptions);

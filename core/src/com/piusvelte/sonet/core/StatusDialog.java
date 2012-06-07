@@ -43,7 +43,6 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
-import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
@@ -722,13 +721,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 		mAppWidgetIds = new int[0];
 		// validate appwidgetids from appwidgetmanager
 		AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
-		mAppWidgetIds = Sonet.arrayCat(
-				Sonet.arrayCat(appWidgetManager.getAppWidgetIds(new ComponentName(
-						this, SonetWidget_4x2.class)),
-						appWidgetManager.getAppWidgetIds(new ComponentName(
-								this, SonetWidget_4x3.class))),
-								appWidgetManager.getAppWidgetIds(new ComponentName(this,
-										SonetWidget_4x4.class)));
+		mAppWidgetIds = Sonet.getWidgets(getApplicationContext(), appWidgetManager);
 		int[] removeAppWidgets = new int[0];
 		this.getContentResolver().delete(Widgets.getContentUri(StatusDialog.this), Widgets.WIDGET + "=?", new String[] { "" });
 		this.getContentResolver().delete(Widget_accounts.getContentUri(StatusDialog.this), Widget_accounts.WIDGET + "=?", new String[] { "" });
