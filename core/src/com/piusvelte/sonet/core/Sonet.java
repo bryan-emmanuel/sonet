@@ -678,10 +678,6 @@ public class Sonet {
 		return name;
 	}
 
-	protected static boolean IsCompact(String className) {
-		return className.equals(SonetWidget_2x2.class.getName()) || className.equals(SonetWidget_2x3.class.getName()) || className.equals(SonetWidget_2x4.class.getName());
-	}
-
 	protected static int[] arrayCat(int[] a, int[] b) {
 		int[] c;
 		for (int i = 0, i2 = b.length; i < i2; i++) {

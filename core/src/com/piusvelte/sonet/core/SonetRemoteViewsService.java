@@ -51,19 +51,11 @@ class SonetRemoteViewsFactory implements android.widget.RemoteViewsService.Remot
 	private Cursor mCursor;
 	private int mAppWidgetId;
 	private boolean mDisplay_profile;
-	private boolean mIsCompact;
 
 	public SonetRemoteViewsFactory(Context context, Intent intent) {
 		mContext = context;
 		mAppWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 		mDisplay_profile = intent.getBooleanExtra(Widgets.DISPLAY_PROFILE, true);
-		if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-			// override display_profile if this is a compact widget
-			mIsCompact = Sonet.IsCompact(AppWidgetManager.getInstance(context).getAppWidgetInfo(mAppWidgetId).provider.getClassName());
-			if (mDisplay_profile) {
-				mDisplay_profile = !mIsCompact;
-			}
-		}
 	}
 
 	@Override
@@ -94,11 +86,11 @@ class SonetRemoteViewsFactory implements android.widget.RemoteViewsService.Remot
 		RemoteViews views;
 		if (mCursor.moveToPosition(position)) {
 			int friend_color = mCursor.getInt(6),
-			created_color = mCursor.getInt(7),
-			friend_textsize = mCursor.getInt(9),
-			created_textsize = mCursor.getInt(10),
-			messages_color = mCursor.getInt(5),
-			messages_textsize = mCursor.getInt(8);
+					created_color = mCursor.getInt(7),
+					friend_textsize = mCursor.getInt(9),
+					created_textsize = mCursor.getInt(10),
+					messages_color = mCursor.getInt(5),
+					messages_textsize = mCursor.getInt(8);
 			views = new RemoteViews(mContext.getPackageName(), mDisplay_profile ? R.layout.widget_item : R.layout.widget_item_noprofile);
 			// set icons
 			byte[] icon = mCursor.getBlob(12);
@@ -123,14 +115,14 @@ class SonetRemoteViewsFactory implements android.widget.RemoteViewsService.Remot
 			views.setTextViewText(R.id.message, mCursor.getString(3));
 			views.setTextColor(R.id.message, messages_color);
 			views.setFloat(R.id.message, "setTextSize", messages_textsize);
-			
+
 			// Set the click intent so that we can handle it and show a toast message
 			final Intent fillInIntent = new Intent();
 			final Bundle extras = new Bundle();
 			extras.putString(Sonet.Status_links.STATUS_ID, Long.toString(mCursor.getLong(0)));
 			fillInIntent.putExtras(extras);
 			views.setOnClickFillInIntent(R.id.item, fillInIntent);
-			
+
 			byte[] friend_bg = mCursor.getBlob(14);
 			if (friend_bg != null) {
 				Bitmap friendbmp = BitmapFactory.decodeByteArray(friend_bg, 0, friend_bg.length, sBFOptions);
@@ -138,15 +130,13 @@ class SonetRemoteViewsFactory implements android.widget.RemoteViewsService.Remot
 					views.setImageViewBitmap(R.id.friend_bg, friendbmp);
 				}
 			}
-			
+
 			views.setTextViewText(R.id.friend, mCursor.getString(1));
 			views.setTextColor(R.id.friend, friend_color);
 			views.setFloat(R.id.friend, "setTextSize", friend_textsize);
-			if (!mIsCompact) {
-				views.setTextViewText(R.id.created, mCursor.getString(4));
-				views.setTextColor(R.id.created, created_color);
-				views.setFloat(R.id.created, "setTextSize", created_textsize);
-			}
+			views.setTextViewText(R.id.created, mCursor.getString(4));
+			views.setTextColor(R.id.created, created_color);
+			views.setFloat(R.id.created, "setTextSize", created_textsize);
 			byte[] image_bg = mCursor.getBlob(15);
 			if (image_bg != null) {
 				Bitmap image_bgbmp = BitmapFactory.decodeByteArray(image_bg, 0, image_bg.length, sBFOptions);
@@ -203,11 +193,11 @@ class SonetRemoteViewsFactory implements android.widget.RemoteViewsService.Remot
 
 	@Override
 	public void onDataSetChanged() {
-        // Refresh the cursor
-        if (mCursor != null) {
-            mCursor.close();
-        }
-        mCursor = mContext.getContentResolver().query(Uri.withAppendedPath(Statuses_styles.getContentUri(mContext), Integer.toString(mAppWidgetId)), new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.PROFILE_BG, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE}, null, null, Statuses_styles.CREATED + " DESC");
+		// Refresh the cursor
+		if (mCursor != null) {
+			mCursor.close();
+		}
+		mCursor = mContext.getContentResolver().query(Uri.withAppendedPath(Statuses_styles.getContentUri(mContext), Integer.toString(mAppWidgetId)), new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.PROFILE_BG, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE}, null, null, Statuses_styles.CREATED + " DESC");
 	}
 
 	@Override
