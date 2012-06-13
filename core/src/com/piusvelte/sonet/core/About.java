@@ -107,19 +107,19 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case REFRESH:
-			startService(new Intent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID).setAction(ACTION_REFRESH));
+			startService(Sonet.getPackageIntent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID).setAction(ACTION_REFRESH));
 			return true;
 		case MANAGE_ACCOUNTS:
-			startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
+			startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
 			return true;
 		case DEFAULT_SETTINGS:
-			startActivityForResult(new Intent(this, Settings.class), RESULT_REFRESH);
+			startActivityForResult(Sonet.getPackageIntent(this, Settings.class), RESULT_REFRESH);
 			return true;
 		case REFRESH_WIDGETS:
-			startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
+			startService(Sonet.getPackageIntent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
 			return true;
 		case NOTIFICATIONS:
-			startActivity(new Intent(this, SonetNotifications.class));
+			startActivity(Sonet.getPackageIntent(this, SonetNotifications.class));
 			return true;
 		case WIDGET_SETTINGS:
 			if (mAppWidgetIds.length > 0) {
@@ -127,11 +127,7 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 				for (int i = 0, i2 = mAppWidgetIds.length; i < i2; i++) {
 					AppWidgetProviderInfo info = mAppWidgetManager.getAppWidgetInfo(mAppWidgetIds[i]);
 					String providerName = info.provider.getClassName();
-					widgets[i] = Integer.toString(mAppWidgetIds[i])
-					+ " ("
-					+ (providerName == SonetWidget_4x2.class.getName() ? "4x2"
-							: providerName == SonetWidget_4x3.class
-							.getName() ? "4x3" : "4x4") + ")";
+					widgets[i] = Integer.toString(mAppWidgetIds[i]) + " (" + providerName + ")";
 				}
 				(new AlertDialog.Builder(this))
 				.setItems(widgets, this)
@@ -176,7 +172,7 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 		super.onPause();
 		if (mUpdateWidget) {
 			(Toast.makeText(getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
-			startService(new Intent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
+			startService(Sonet.getPackageIntent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
 		}
 	}
 
@@ -188,7 +184,7 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 
 	@Override
 	public void onClick(DialogInterface dialog, int which) {
-		startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[which]));
+		startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[which]));
 		dialog.cancel();
 	}
 
@@ -197,7 +193,7 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 		super.onListItemClick(list, view, position, id);
 		Rect r = new Rect();
 		view.getHitRect(r);
-		startActivity(new Intent(this, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.getContentUri(this), Long.toString(id))).putExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS, r).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+		startActivity(Sonet.getPackageIntent(this, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.getContentUri(this), Long.toString(id))).putExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS, r).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
 	}
 
 	private final SimpleCursorAdapter.ViewBinder mViewBinder = new SimpleCursorAdapter.ViewBinder() {
@@ -383,7 +379,7 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 			Log.d(TAG,"result:"+result);
 			if (result > 0) {
 				// accounts, but no statuses
-				startService(new Intent(About.this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID).setAction(ACTION_REFRESH));
+				startService(Sonet.getPackageIntent(About.this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID).setAction(ACTION_REFRESH));
 				if (result > 1) {
 					// no accounts
 					AlertDialog.Builder dialog = new AlertDialog.Builder(About.this);

@@ -83,6 +83,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.appwidget.AppWidgetManager;
+import android.appwidget.AppWidgetProviderInfo;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
@@ -139,7 +140,7 @@ public class SonetService extends Service {
 		mConnectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 		mSonetCrypto = SonetCrypto.getInstance(getApplicationContext());
 		// check the instant upload settings
-		startService(new Intent(getApplicationContext(), SonetUploader.class));
+		startService(Sonet.getPackageIntent(getApplicationContext(), SonetUploader.class));
 	}
 
 	@Override
@@ -388,7 +389,7 @@ public class SonetService extends Service {
 								int notifications = Integer.parseInt(updates[0]);
 								if (notifications != 0) {
 									Notification notification = new Notification(R.drawable.notification, updates[1], System.currentTimeMillis());
-									notification.setLatestEventInfo(getBaseContext(), "New messages", updates[1], PendingIntent.getActivity(SonetService.this, 0, (new Intent(SonetService.this, SonetNotifications.class)), 0));
+									notification.setLatestEventInfo(getBaseContext(), "New messages", updates[1], PendingIntent.getActivity(SonetService.this, 0, (Sonet.getPackageIntent(SonetService.this, SonetNotifications.class)), 0));
 									notification.defaults |= notifications;
 									((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
 								}
@@ -496,7 +497,7 @@ public class SonetService extends Service {
 								String message = getString(response != null ? R.string.success : R.string.failure);
 								Log.d(TAG,"upload finished:" + message);
 								Notification notification = new Notification(R.drawable.notification, "photo upload " + message, System.currentTimeMillis());
-								notification.setLatestEventInfo(getBaseContext(), "photo upload", message, PendingIntent.getActivity(SonetService.this, 0, (new Intent(SonetService.this, About.class)), 0));
+								notification.setLatestEventInfo(getBaseContext(), "photo upload", message, PendingIntent.getActivity(SonetService.this, 0, (Sonet.getPackageIntent(SonetService.this, About.class)), 0));
 								((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
 							}
 
@@ -639,8 +640,8 @@ public class SonetService extends Service {
 			// the alarm should always be set, rather than depend on the tasks to complete
 			//			Log.d(TAG,"awi:"+appWidgetId+",hasCache:"+hasCache+",reload:"+reload+",refreshInterval:"+refreshInterval);
 			if ((appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) && (!hasCache || reload) && (refreshInterval > 0)) {
-				mAlarmManager.cancel(PendingIntent.getService(SonetService.this, 0, new Intent(SonetService.this, SonetService.class).setAction(widget), 0));
-				mAlarmManager.set(backgroundUpdate ? AlarmManager.RTC_WAKEUP : AlarmManager.RTC, System.currentTimeMillis() + refreshInterval, PendingIntent.getService(SonetService.this, 0, new Intent(SonetService.this, SonetService.class).setData(Uri.withAppendedPath(Widgets.getContentUri(SonetService.this), widget)).setAction(ACTION_REFRESH), 0));
+				mAlarmManager.cancel(PendingIntent.getService(SonetService.this, 0, Sonet.getPackageIntent(SonetService.this, SonetService.class).setAction(widget), 0));
+				mAlarmManager.set(backgroundUpdate ? AlarmManager.RTC_WAKEUP : AlarmManager.RTC, System.currentTimeMillis() + refreshInterval, PendingIntent.getService(SonetService.this, 0, Sonet.getPackageIntent(SonetService.this, SonetService.class).setData(Uri.withAppendedPath(Widgets.getContentUri(SonetService.this), widget)).setAction(ACTION_REFRESH), 0));
 				//				Log.d(TAG,"alarm set");
 			}
 			// get the accounts
@@ -897,7 +898,7 @@ public class SonetService extends Service {
 			int notifications = Integer.parseInt(updates[0]);
 			if (notifications != 0) {
 				Notification notification = new Notification(R.drawable.notification, mNotify, System.currentTimeMillis());
-				notification.setLatestEventInfo(getBaseContext(), "New messages", mNotify, PendingIntent.getActivity(SonetService.this, 0, (new Intent(SonetService.this, SonetNotifications.class)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP), 0));
+				notification.setLatestEventInfo(getBaseContext(), "New messages", mNotify, PendingIntent.getActivity(SonetService.this, 0, (Sonet.getPackageIntent(SonetService.this, SonetNotifications.class)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP), 0));
 				notification.defaults |= notifications;
 				((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
 			}
@@ -2568,13 +2569,13 @@ public class SonetService extends Service {
 			views.setImageViewBitmap(R.id.buttons_bg, buttons_bg);
 			views.setTextColor(R.id.buttons_bg_clear, buttons_bg_color);
 			views.setFloat(R.id.buttons_bg_clear, "setTextSize", buttons_textsize);
-			views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(SonetService.this, 0, new Intent(SonetService.this, SonetCreatePost.class).setAction(LauncherIntent.Action.ACTION_VIEW_CLICK).setData(Uri.withAppendedPath(Widgets.getContentUri(SonetService.this), widget)), 0));
+			views.setOnClickPendingIntent(R.id.button_post, PendingIntent.getActivity(SonetService.this, 0, Sonet.getPackageIntent(SonetService.this, SonetCreatePost.class).setAction(LauncherIntent.Action.ACTION_VIEW_CLICK).setData(Uri.withAppendedPath(Widgets.getContentUri(SonetService.this), widget)), 0));
 			views.setTextColor(R.id.button_post, buttons_color);
 			views.setFloat(R.id.button_post, "setTextSize", buttons_textsize);
-			views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(SonetService.this, 0, new Intent(SonetService.this, ManageAccounts.class).setAction(widget), 0));
+			views.setOnClickPendingIntent(R.id.button_configure, PendingIntent.getActivity(SonetService.this, 0, Sonet.getPackageIntent(SonetService.this, ManageAccounts.class).setAction(widget), 0));
 			views.setTextColor(R.id.button_configure, buttons_color);
 			views.setFloat(R.id.button_configure, "setTextSize", buttons_textsize);
-			views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(SonetService.this, 0, new Intent(SonetService.this, SonetService.class).setAction(widget), 0));
+			views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent.getService(SonetService.this, 0, Sonet.getPackageIntent(SonetService.this, SonetService.class).setAction(widget), 0));
 			views.setTextColor(R.id.button_refresh, buttons_color);
 			views.setFloat(R.id.button_refresh, "setTextSize", buttons_textsize);
 			views.setTextColor(R.id.page_up, buttons_color);
@@ -2585,6 +2586,8 @@ public class SonetService extends Service {
 		// set margin
 		if (scrollable == 0) {
 			final AppWidgetManager mgr = AppWidgetManager.getInstance(SonetService.this);
+			AppWidgetProviderInfo awi = mgr.getAppWidgetInfo(appWidgetId);
+			Log.d(TAG, "widget: " + appWidgetId + ", package: " + awi.provider.getPackageName() + ", provider: " + awi.provider.getClassName());
 			// check if native scrolling is supported
 			if (sNativeScrollingSupported) {
 				// native scrolling
@@ -2600,7 +2603,7 @@ public class SonetService extends Service {
 						sSetEmptyView.invoke(views, R.id.messages, R.id.empty_messages);
 						// onclick
 						// Bind a click listener template for the contents of the message list
-						final Intent onClickIntent = new Intent(SonetService.this, SonetWidget.class);
+						final Intent onClickIntent = Sonet.getPackageIntent(SonetService.this, SonetWidget.class);
 						onClickIntent.setAction(ACTION_ON_CLICK);
 						onClickIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
 						onClickIntent.setData(Uri.parse(onClickIntent.toUri(Intent.URI_INTENT_SCHEME)));
@@ -2689,7 +2692,7 @@ public class SonetService extends Service {
 						itemView.setTextViewText(R.id.message, statuses_styles.getString(3));
 						itemView.setTextColor(R.id.message, messages_color);
 						itemView.setFloat(R.id.message, "setTextSize", messages_textsize);
-						itemView.setOnClickPendingIntent(R.id.item, PendingIntent.getActivity(SonetService.this, 0, new Intent(SonetService.this, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.getContentUri(SonetService.this), Long.toString(statuses_styles.getLong(0)))), 0));
+						itemView.setOnClickPendingIntent(R.id.item, PendingIntent.getActivity(SonetService.this, 0, Sonet.getPackageIntent(SonetService.this, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.getContentUri(SonetService.this), Long.toString(statuses_styles.getLong(0)))), 0));
 						itemView.setTextViewText(R.id.friend, statuses_styles.getString(1));
 						itemView.setTextColor(R.id.friend, friend_color);
 						itemView.setFloat(R.id.friend, "setTextSize", friend_textsize);
@@ -2710,18 +2713,18 @@ public class SonetService extends Service {
 					}
 					if (hasbuttons && (page < statuses_styles.getCount())) {
 						// there are more statuses to show, allow paging down
-						views.setOnClickPendingIntent(R.id.page_down, PendingIntent.getService(SonetService.this, 0, new Intent(SonetService.this, SonetService.class).setAction(ACTION_PAGE_DOWN).setData(Uri.withAppendedPath(Widgets.getContentUri(SonetService.this), widget)).putExtra(ACTION_PAGE_DOWN, page + 1), PendingIntent.FLAG_UPDATE_CURRENT));
+						views.setOnClickPendingIntent(R.id.page_down, PendingIntent.getService(SonetService.this, 0, Sonet.getPackageIntent(SonetService.this, SonetService.class).setAction(ACTION_PAGE_DOWN).setData(Uri.withAppendedPath(Widgets.getContentUri(SonetService.this), widget)).putExtra(ACTION_PAGE_DOWN, page + 1), PendingIntent.FLAG_UPDATE_CURRENT));
 					}
 				}
 				statuses_styles.close();
 				if (hasbuttons && (page > 0)) {
-					views.setOnClickPendingIntent(R.id.page_up, PendingIntent.getService(SonetService.this, 0, new Intent(SonetService.this, SonetService.class).setAction(ACTION_PAGE_UP).setData(Uri.withAppendedPath(Widgets.getContentUri(SonetService.this), widget)).putExtra(ACTION_PAGE_UP, page - 1), PendingIntent.FLAG_UPDATE_CURRENT));
+					views.setOnClickPendingIntent(R.id.page_up, PendingIntent.getService(SonetService.this, 0, Sonet.getPackageIntent(SonetService.this, SonetService.class).setAction(ACTION_PAGE_UP).setData(Uri.withAppendedPath(Widgets.getContentUri(SonetService.this), widget)).putExtra(ACTION_PAGE_UP, page - 1), PendingIntent.FLAG_UPDATE_CURRENT));
 				}
 			}
-			Log.d(TAG, "update native widget");
+			Log.d(TAG, "update native widget: " + appWidgetId);
 			mgr.updateAppWidget(appWidgetId, views);
 			if (sNativeScrollingSupported) {
-				Log.d(TAG, "trigger widget query");
+				Log.d(TAG, "trigger widget query: " + appWidgetId);
 				try {
 					// trigger query
 					sNotifyAppWidgetViewDataChanged.invoke(mgr, appWidgetId, R.id.messages);
@@ -2903,7 +2906,7 @@ public class SonetService extends Service {
 			if (display_profile) {
 				BoundRemoteViews itemViews = new BoundRemoteViews(R.layout.widget_item);
 
-				Intent i = new Intent(SonetService.this, SonetWidget.class)
+				Intent i = Sonet.getPackageIntent(SonetService.this, SonetWidget.class)
 				.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
 				.setData(uri)
 				.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
@@ -2932,8 +2935,8 @@ public class SonetService extends Service {
 				itemViews.setBoundInt(R.id.created, "setTextColor", SonetProvider.StatusesStylesColumns.created_color.ordinal());
 				itemViews.setBoundInt(R.id.message, "setTextColor", SonetProvider.StatusesStylesColumns.messages_color.ordinal());
 
-				
-				
+
+
 				itemViews.setBoundFloat(R.id.friend, "setTextSize", SonetProvider.StatusesStylesColumns.friend_textsize.ordinal());
 				itemViews.setBoundFloat(R.id.created, "setTextSize", SonetProvider.StatusesStylesColumns.created_textsize.ordinal());
 				itemViews.setBoundFloat(R.id.message, "setTextSize", SonetProvider.StatusesStylesColumns.messages_textsize.ordinal());
@@ -2948,7 +2951,7 @@ public class SonetService extends Service {
 			} else {
 				BoundRemoteViews itemViews = new BoundRemoteViews(R.layout.widget_item_noprofile);
 
-				Intent i = new Intent(SonetService.this, SonetWidget.class)
+				Intent i = Sonet.getPackageIntent(SonetService.this, SonetWidget.class)
 				.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
 				.setData(uri)
 				.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);

@@ -478,7 +478,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 													// beta message to user
 													finish = false;
 													AlertDialog.Builder dialog = new AlertDialog.Builder(OAuthLogin.this);
-													dialog.setTitle(getResources().getStringArray(R.array.service_entries)[GOOGLEPLUS]);
+													dialog.setTitle(getResources().getStringArray(R.array.service_entries)[Integer.parseInt(getResources().getStringArray(R.array.service_values)[GOOGLEPLUS])]);
 													dialog.setMessage(R.string.googleplusbeta);
 													dialog.setPositiveButton(android.R.string.ok, new OnClickListener() {
 

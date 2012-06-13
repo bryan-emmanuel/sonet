@@ -51,73 +51,7 @@
 		<activity android:name="com.google.ads.AdActivity"
 			android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
 		<!-- Broadcast Receiver that will process AppWidget updates -->
-		<receiver android:name="com.piusvelte.sonet.core.SonetWidget_2x2" android:label="@string/sonet_2x2">
-			<intent-filter>
-				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-			</intent-filter>
-			<meta-data android:name="android.appwidget.provider"
-				android:resource="@xml/widget_2x2" />
-			<meta-data android:name="LauncherMetadata.Requirements.APIVersion"
-				android:value="2" />
-			<meta-data android:name="LauncherMetadata.Requirements.Scrollable"
-				android:value="true" />
-		</receiver>
-		<receiver android:name="com.piusvelte.sonet.core.SonetWidget_2x3" android:label="@string/sonet_2x3">
-			<intent-filter>
-				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-			</intent-filter>
-			<meta-data android:name="android.appwidget.provider"
-				android:resource="@xml/widget_2x3" />
-			<meta-data android:name="LauncherMetadata.Requirements.APIVersion"
-				android:value="2" />
-			<meta-data android:name="LauncherMetadata.Requirements.Scrollable"
-				android:value="true" />
-		</receiver>
-		<receiver android:name="com.piusvelte.sonet.core.SonetWidget_2x4" android:label="@string/sonet_2x4">
-			<intent-filter>
-				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-			</intent-filter>
-			<meta-data android:name="android.appwidget.provider"
-				android:resource="@xml/widget_2x4" />
-			<meta-data android:name="LauncherMetadata.Requirements.APIVersion"
-				android:value="2" />
-			<meta-data android:name="LauncherMetadata.Requirements.Scrollable"
-				android:value="true" />
-		</receiver>
-		<receiver android:name="com.piusvelte.sonet.core.SonetWidget_4x2" android:label="@string/sonet_4x2">
-			<intent-filter>
-				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-			</intent-filter>
-			<meta-data android:name="android.appwidget.provider"
-				android:resource="@xml/widget_4x2" />
-			<meta-data android:name="LauncherMetadata.Requirements.APIVersion"
-				android:value="2" />
-			<meta-data android:name="LauncherMetadata.Requirements.Scrollable"
-				android:value="true" />
-		</receiver>
-		<receiver android:name="com.piusvelte.sonet.core.SonetWidget_4x3" android:label="@string/sonet_4x3">
-			<intent-filter>
-				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-			</intent-filter>
-			<meta-data android:name="android.appwidget.provider"
-				android:resource="@xml/widget_4x3" />
-			<meta-data android:name="LauncherMetadata.Requirements.APIVersion"
-				android:value="2" />
-			<meta-data android:name="LauncherMetadata.Requirements.Scrollable"
-				android:value="true" />
-		</receiver>
-		<receiver android:name="com.piusvelte.sonet.core.SonetWidget_4x4" android:label="@string/sonet_4x4">
-			<intent-filter>
-				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-			</intent-filter>
-			<meta-data android:name="android.appwidget.provider"
-				android:resource="@xml/widget_4x4" />
-			<meta-data android:name="LauncherMetadata.Requirements.APIVersion"
-				android:value="2" />
-			<meta-data android:name="LauncherMetadata.Requirements.Scrollable"
-				android:value="true" />
-		</receiver>
-		<receiver android:name="com.piusvelte.sonet.core.SonetWidget">
+		<receiver android:name=".SonetWidget">
 			<intent-filter>
 				<action android:name="com.piusvelte.sonet.Sonet.REFRESH" />
 			</intent-filter>

@@ -197,14 +197,14 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 						int service = c.getInt(0);
 						if ((service != SMS) && (service != RSS)) {
 							mAddingAccount = true;
-							startActivityForResult(new Intent(ManageAccounts.this, OAuthLogin.class).putExtra(Accounts.SERVICE, service).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id), RESULT_REFRESH);
+							startActivityForResult(Sonet.getPackageIntent(ManageAccounts.this, OAuthLogin.class).putExtra(Accounts.SERVICE, service).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id), RESULT_REFRESH);
 						}
 					}
 					c.close();
 					break;
 				case SETTINGS_ID:
 					mAddingAccount = true;
-					startActivityForResult(new Intent(ManageAccounts.this, AccountSettings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id), RESULT_REFRESH);
+					startActivityForResult(Sonet.getPackageIntent(ManageAccounts.this, AccountSettings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id), RESULT_REFRESH);
 					break;
 				case ENABLE_ID:
 					if (((TextView) view.findViewById(R.id.message)).getText().toString().contains("enabled")) {
@@ -281,7 +281,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			mDialog.show();
 		} else if (v.getId() == R.id.default_widget_settings) {
 			mAddingAccount = true;
-			startActivityForResult(new Intent(this, Settings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId), RESULT_REFRESH);
+			startActivityForResult(Sonet.getPackageIntent(this, Settings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId), RESULT_REFRESH);
 		} else if (v.getId() == R.id.save) {
 			finish();
 		}
@@ -299,7 +299,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		super.onPause();
 		if (!mAddingAccount && mUpdateWidget) {
 			(Toast.makeText(getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
-			startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
+			startService(Sonet.getPackageIntent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
 		}
 		if ((mDialog != null) && mDialog.isShowing()) {
 			mDialog.dismiss();
@@ -408,7 +408,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 
 	public void onClick(DialogInterface dialog, int which) {
 		mAddingAccount = true;
-		startActivityForResult(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, Integer.parseInt(getResources().getStringArray(R.array.service_values)[which])).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID), RESULT_REFRESH);
+		startActivityForResult(Sonet.getPackageIntent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, Integer.parseInt(getResources().getStringArray(R.array.service_values)[which])).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID), RESULT_REFRESH);
 		dialog.cancel();
 	}
 

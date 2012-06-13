@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -36,6 +37,7 @@ import android.net.Uri;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.provider.BaseColumns;
+import android.util.Log;
 
 public class Sonet {
 
@@ -44,14 +46,14 @@ public class Sonet {
 	protected static final String PRO = "pro";
 	protected static final String Saccess_token = "access_token";
 	protected static final String Sexpires_in = "expires_in";
-	protected static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
+	public static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
 	protected static final String ACTION_PAGE_UP = "com.piusvelte.sonet.Sonet.PAGE_UP";
 	protected static final String ACTION_PAGE_DOWN = "com.piusvelte.sonet.Sonet.PAGE_DOWN";
-	protected static final String ACTION_ON_CLICK = "com.piusvelte.sonet.Sonet.ON_CLICK";
+	public static final String ACTION_ON_CLICK = "com.piusvelte.sonet.Sonet.ON_CLICK";
 	protected static final String ACTION_UPLOAD = "com.piusvelte.sonet.Sonet.UPLOAD";
 	protected static final String SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED";
 	protected static final String EXTRA_ACCOUNT_ID = "com.piusvelte.sonet.Sonet.ACCOUNT_ID";
-	protected static final String EXTRA_SCROLLABLE_VERSION = "com.piusvelte.sonet.Sonet.SCROLLABLE_VERSION";
+	public static final String EXTRA_SCROLLABLE_VERSION = "com.piusvelte.sonet.Sonet.SCROLLABLE_VERSION";
 	protected static final long INVALID_ACCOUNT_ID = -1;
 	protected static final int RESULT_REFRESH = 1;
 	protected static int NOTIFY_ID = 1;
@@ -306,7 +308,7 @@ public class Sonet {
 		return (sWakeLock != null);
 	}
 
-	static void acquire(Context context) {
+	public static void acquire(Context context) {
 		if (hasLock()) sWakeLock.release();
 		PowerManager pm = (PowerManager) context.getSystemService(POWER_SERVICE);
 		sWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
@@ -650,19 +652,40 @@ public class Sonet {
 			return String.format("%s %d", Sonet.MONTHS[calendar.get(Calendar.MONTH)], calendar.get(Calendar.DATE));
 		}
 	}
+	
+	protected static Intent getPackageIntent(Context context, Class clazz) {
+		try {
+			return new Intent(context, getPackageClass(context, clazz));
+		} catch (ClassNotFoundException e) {
+			Log.e(TAG, e.getMessage());
+		}
+		return new Intent(context, clazz);
+	}
+	
+	protected static Class getPackageClass(Context context, Class clazz) throws ClassNotFoundException {
+		return getPackageClass(context.getPackageName(), clazz.getSimpleName());
+	}
+	
+	protected static Class getPackageClass(String pkg, String clazz) throws ClassNotFoundException {
+		return Class.forName(pkg + "." + clazz);
+	}
 
 	protected static int[] getWidgets(Context context, AppWidgetManager awm) {
-		return Sonet.arrayCat(
-				Sonet.arrayCat(
-				Sonet.arrayCat(
-				Sonet.arrayCat(
-				Sonet.arrayCat(
-						awm.getAppWidgetIds(new ComponentName(context, SonetWidget_4x2.class)),
-						awm.getAppWidgetIds(new ComponentName(context, SonetWidget_4x3.class))),
-						awm.getAppWidgetIds(new ComponentName(context,SonetWidget_4x4.class))),
-						awm.getAppWidgetIds(new ComponentName(context,SonetWidget_2x2.class))),
-						awm.getAppWidgetIds(new ComponentName(context,SonetWidget_2x3.class))),
-						awm.getAppWidgetIds(new ComponentName(context,SonetWidget_2x4.class)));
+		String pkg = context.getPackageName();
+		Log.d(TAG,"pkg: " + pkg);
+		String[] classes = new String[]{"SonetWidget_2x2", "SonetWidget_2x3", "SonetWidget_2x4", "SonetWidget_4x2", "SonetWidget_4x3", "SonetWidget_4x4"};
+		int[] widgets = new int[0];
+		for (String clazz : classes) { 
+			try {
+				widgets = Sonet.arrayCat(widgets, awm.getAppWidgetIds(new ComponentName(context, getPackageClass(pkg, clazz))));
+			} catch (ClassNotFoundException e) {
+				Log.d(TAG, e.getMessage());
+			}
+		}
+		for (int w : widgets) {
+			Log.d(TAG, "found widget: " + w);
+		}
+		return widgets;
 	}
 
 	protected static String getServiceName(Resources r, int service) {
