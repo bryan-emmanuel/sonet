@@ -197,14 +197,14 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 						int service = c.getInt(0);
 						if ((service != SMS) && (service != RSS)) {
 							mAddingAccount = true;
-							startActivityForResult(Sonet.getPackageIntent(ManageAccounts.this, OAuthLogin.class).putExtra(Accounts.SERVICE, service).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id), RESULT_REFRESH);
+							startActivityForResult(new Intent(ManageAccounts.this, OAuthLogin.class).putExtra(Accounts.SERVICE, service).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id), RESULT_REFRESH);
 						}
 					}
 					c.close();
 					break;
 				case SETTINGS_ID:
 					mAddingAccount = true;
-					startActivityForResult(Sonet.getPackageIntent(ManageAccounts.this, AccountSettings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id), RESULT_REFRESH);
+					startActivityForResult(new Intent(ManageAccounts.this, AccountSettings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id), RESULT_REFRESH);
 					break;
 				case ENABLE_ID:
 					if (((TextView) view.findViewById(R.id.message)).getText().toString().contains("enabled")) {
@@ -281,7 +281,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 			mDialog.show();
 		} else if (v.getId() == R.id.default_widget_settings) {
 			mAddingAccount = true;
-			startActivityForResult(Sonet.getPackageIntent(this, Settings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId), RESULT_REFRESH);
+			startActivityForResult(new Intent(this, Settings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId), RESULT_REFRESH);
 		} else if (v.getId() == R.id.save) {
 			finish();
 		}
@@ -292,6 +292,52 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		super.onResume();
 		listAccounts();
 		mAddingAccount = false;
+		// check for old settings and offer to load them for restoring a previous widget
+		int appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
+		Cursor widgets = getContentResolver().query(Widgets.getContentUri(this), new String[] {Widgets._ID, Widgets.WIDGET}, Widgets.ACCOUNT + "=?", new String[] { Long.toString(Sonet.INVALID_ACCOUNT_ID) }, null);
+		if (widgets.moveToFirst()) {
+			int[] appWidgetIds = Sonet.getWidgets(getApplicationContext(), AppWidgetManager.getInstance(getApplicationContext()));
+			int iwidget = widgets.getColumnIndex(Widgets.WIDGET);
+			while (!widgets.isAfterLast()) {
+				appWidgetId = widgets.getInt(iwidget);
+				if ((appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) && !Sonet.arrayContains(appWidgetIds, appWidgetId)) {
+					break;
+				}
+				appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
+				widgets.moveToNext();
+			}
+		}
+		widgets.close();
+		if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+			final int unusedAppWidget = appWidgetId;
+			mDialog = (new AlertDialog.Builder(this))
+					.setMessage(R.string.widget_load_msg)
+					.setPositiveButton(R.string.load, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							// load widget
+							ContentValues values = new ContentValues();
+							values.put(Widgets.WIDGET, unusedAppWidget);
+							getContentResolver().update(Widgets.getContentUri(ManageAccounts.this), values, Widgets.WIDGET + "=?", new String[] { Integer.toString(mAppWidgetId) });
+							values.clear();
+							values.put(Widget_accounts.WIDGET, unusedAppWidget);
+							getContentResolver().update(Widget_accounts.getContentUri(ManageAccounts.this), values, Widget_accounts.WIDGET + "=?", new String[] { Integer.toString(mAppWidgetId) });
+							values.clear();
+							values.put(Statuses.WIDGET, unusedAppWidget);
+							getContentResolver().update(Statuses.getContentUri(ManageAccounts.this), values, Statuses.WIDGET + "=?", new String[] { Integer.toString(mAppWidgetId) });
+						}})
+					.setNegativeButton(R.string.delete, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							// remove unused widget
+							getContentResolver().delete(Widgets.getContentUri(ManageAccounts.this), Widgets.WIDGET + "=?", new String[] { Integer.toString(unusedAppWidget) });
+							getContentResolver().delete(Widget_accounts.getContentUri(ManageAccounts.this), Widget_accounts.WIDGET + "=?", new String[] { Integer.toString(unusedAppWidget) });
+							getContentResolver().delete(Statuses.getContentUri(ManageAccounts.this), Statuses.WIDGET + "=?", new String[] { Integer.toString(unusedAppWidget) });
+						}
+					})
+					.create();
+			mDialog.show();
+		}
 	}
 
 	@Override
@@ -299,7 +345,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		super.onPause();
 		if (!mAddingAccount && mUpdateWidget) {
 			(Toast.makeText(getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
-			startService(Sonet.getPackageIntent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
+			startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
 		}
 		if ((mDialog != null) && mDialog.isShowing()) {
 			mDialog.dismiss();
@@ -408,7 +454,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 
 	public void onClick(DialogInterface dialog, int which) {
 		mAddingAccount = true;
-		startActivityForResult(Sonet.getPackageIntent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, Integer.parseInt(getResources().getStringArray(R.array.service_values)[which])).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID), RESULT_REFRESH);
+		startActivityForResult(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, Integer.parseInt(getResources().getStringArray(R.array.service_values)[which])).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID), RESULT_REFRESH);
 		dialog.cancel();
 	}
 

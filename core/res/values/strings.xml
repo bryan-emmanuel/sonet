@@ -20,9 +20,9 @@
 -->
 <resources>
     <string name="app_name">Sonet</string>
-    <string name="sonet_2x2">Sonet Compact 2x2</string>
-    <string name="sonet_2x3">Sonet Compact 2x3</string>
-    <string name="sonet_2x4">Sonet Compact 2x4</string>
+    <string name="sonet_2x2">Sonet 2x2</string>
+    <string name="sonet_2x3">Sonet 2x3</string>
+    <string name="sonet_2x4">Sonet 2x4</string>
     <string name="sonet_4x2">Sonet 4x2</string>
     <string name="sonet_4x3">Sonet 4x3</string>
     <string name="sonet_4x4">Sonet 4x4</string>
@@ -136,4 +136,7 @@
 	<string name="googleplusbeta">Google\u002B currently allows reading of your own public posts only. Comments are not provided yet by Google. As new features are available from Google, they will be included in Sonet.</string>
 	<string name="less_than">\u0020\u003c\u003c\u0020</string>
 	<string name="greater_than">\u0020\u003e\u003e\u0020</string>
+	<string name="load">Load</string>
+	<string name="delete">Delete</string>
+	<string name="widget_load_msg">There are settings for a Sonet widget which is no longer in use. Would you like to load those settings now, or delete those settings?</string>
 </resources>

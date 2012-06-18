@@ -17,7 +17,7 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
  */
-package com.piusvelte.sonet;
+package com.piusvelte.sonet.core;
 
 public class SonetWidget_2x4 extends SonetWidget {
 }

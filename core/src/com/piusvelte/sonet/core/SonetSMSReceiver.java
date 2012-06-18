@@ -33,7 +33,7 @@ public class SonetSMSReceiver extends BroadcastReceiver {
 		if (intent.getAction().equals(SMS_RECEIVED)) {
 			Bundle bundle = intent.getExtras();
 			if (bundle != null) {
-				context.startService(Sonet.getPackageIntent(context, SonetService.class).setAction(SMS_RECEIVED).putExtras(bundle));
+				context.startService(new Intent(context, SonetService.class).setAction(SMS_RECEIVED).putExtras(bundle));
 			}
 		}
 	}

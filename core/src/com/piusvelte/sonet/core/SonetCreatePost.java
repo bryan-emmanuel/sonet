@@ -463,7 +463,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 										// upload photo
 										// uploading a photo takes a long time, have the service handle it
 										startService(
-												Sonet.getPackageIntent(SonetCreatePost.this.getApplicationContext(), SonetService.class)
+												new Intent(SonetCreatePost.this.getApplicationContext(), SonetService.class)
 												.setAction(Sonet.ACTION_UPLOAD)
 												.putExtra(Accounts.TOKEN, account.getString(account.getColumnIndex(Accounts.TOKEN)))
 												.putExtra(Widgets.INSTANT_UPLOAD, mPhotoPath)

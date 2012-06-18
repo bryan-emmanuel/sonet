@@ -653,37 +653,38 @@ public class Sonet {
 		}
 	}
 	
-	protected static Intent getPackageIntent(Context context, Class clazz) {
-		try {
-			return new Intent(context, getPackageClass(context, clazz));
-		} catch (ClassNotFoundException e) {
-			Log.e(TAG, e.getMessage());
-		}
-		return new Intent(context, clazz);
-	}
-	
-	protected static Class getPackageClass(Context context, Class clazz) throws ClassNotFoundException {
-		return getPackageClass(context.getPackageName(), clazz.getSimpleName());
-	}
-	
-	protected static Class getPackageClass(String pkg, String clazz) throws ClassNotFoundException {
-		return Class.forName(pkg + "." + clazz);
-	}
+//	protected static Intent getPackageIntent(Context context, Class clazz) {
+//		try {
+//			return new Intent(context, getPackageClass(context, clazz));
+//		} catch (ClassNotFoundException e) {
+//			Log.e(TAG, e.getMessage());
+//		}
+//		return new Intent(context, clazz);
+//	}
+//	
+//	protected static Class getPackageClass(Context context, Class clazz) throws ClassNotFoundException {
+//		return getPackageClass(context.getPackageName(), clazz.getSimpleName());
+//	}
+//	
+//	protected static Class getPackageClass(String pkg, String clazz) throws ClassNotFoundException {
+//		return Class.forName(pkg + "." + clazz);
+//	}
 
 	protected static int[] getWidgets(Context context, AppWidgetManager awm) {
-		String pkg = context.getPackageName();
-		Log.d(TAG,"pkg: " + pkg);
-		String[] classes = new String[]{"SonetWidget_2x2", "SonetWidget_2x3", "SonetWidget_2x4", "SonetWidget_4x2", "SonetWidget_4x3", "SonetWidget_4x4"};
+//		String pkg = context.getPackageName();
+//		String[] classes = new String[]{"SonetWidget_2x2", "SonetWidget_2x3", "SonetWidget_2x4", "SonetWidget_4x2", "SonetWidget_4x3", "SonetWidget_4x4"};
+//		int[] widgets = new int[0];
+//		for (String clazz : classes) { 
+//			try {
+//				widgets = Sonet.arrayCat(widgets, awm.getAppWidgetIds(new ComponentName(context, getPackageClass(pkg, clazz))));
+//			} catch (ClassNotFoundException e) {
+//				Log.d(TAG, e.getMessage());
+//			}
+//		}
 		int[] widgets = new int[0];
-		for (String clazz : classes) { 
-			try {
-				widgets = Sonet.arrayCat(widgets, awm.getAppWidgetIds(new ComponentName(context, getPackageClass(pkg, clazz))));
-			} catch (ClassNotFoundException e) {
-				Log.d(TAG, e.getMessage());
-			}
-		}
-		for (int w : widgets) {
-			Log.d(TAG, "found widget: " + w);
+		Class[] clazzes = new Class[]{SonetWidget_2x2.class, SonetWidget_2x3.class, SonetWidget_2x4.class, SonetWidget_4x2.class, SonetWidget_4x3.class, SonetWidget_4x4.class};
+		for (Class clazz : clazzes) {
+			widgets = Sonet.arrayCat(widgets, awm.getAppWidgetIds(new ComponentName(context, clazz)));
 		}
 		return widgets;
 	}

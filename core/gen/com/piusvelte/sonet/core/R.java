@@ -218,6 +218,7 @@ containing a value of this type.
         public static int created_textsize=0x7f070024;
         public static int defaultsettings=0x7f07003e;
         public static int defaultwidgetsettings=0x7f07006a;
+        public static int delete=0x7f070076;
         public static int delete_account=0x7f070013;
         public static int disable=0x7f07005c;
         public static int display_profile=0x7f070064;
@@ -253,6 +254,7 @@ containing a value of this type.
         public static int less_than=0x7f070073;
         public static int lights=0x7f070069;
         public static int like=0x7f070046;
+        public static int load=0x7f070075;
         public static int loading=0x7f070007;
         public static int location=0x7f07004c;
         public static int location_unavailable=0x7f070056;
@@ -306,6 +308,7 @@ containing a value of this type.
         public static int uploadprompt=0x7f070070;
         public static int userProfile=0x7f070059;
         public static int vibrate=0x7f070068;
+        public static int widget_load_msg=0x7f070077;
         public static int widget_settings=0x7f07005d;
         public static int widgets=0x7f07003a;
     }

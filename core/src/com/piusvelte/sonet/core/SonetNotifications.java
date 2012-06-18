@@ -102,7 +102,7 @@ public class SonetNotifications extends ListActivity {
 	protected void onListItemClick(ListView list, final View view, int position, final long id) {
 		super.onListItemClick(list, view, position, id);
 		// load SonetComments.java, the notification will be clear there
-		startActivityForResult(Sonet.getPackageIntent(this, SonetComments.class).setData(Uri.withAppendedPath(Notifications.getContentUri(this), Long.toString(id))), RESULT_REFRESH);
+		startActivityForResult(new Intent(this, SonetComments.class).setData(Uri.withAppendedPath(Notifications.getContentUri(this), Long.toString(id))), RESULT_REFRESH);
 	}
 
 	@Override

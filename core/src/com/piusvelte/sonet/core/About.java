@@ -107,19 +107,19 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case REFRESH:
-			startService(Sonet.getPackageIntent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID).setAction(ACTION_REFRESH));
+			startService(new Intent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID).setAction(ACTION_REFRESH));
 			return true;
 		case MANAGE_ACCOUNTS:
-			startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
+			startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
 			return true;
 		case DEFAULT_SETTINGS:
-			startActivityForResult(Sonet.getPackageIntent(this, Settings.class), RESULT_REFRESH);
+			startActivityForResult(new Intent(this, Settings.class), RESULT_REFRESH);
 			return true;
 		case REFRESH_WIDGETS:
-			startService(Sonet.getPackageIntent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
+			startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
 			return true;
 		case NOTIFICATIONS:
-			startActivity(Sonet.getPackageIntent(this, SonetNotifications.class));
+			startActivity(new Intent(this, SonetNotifications.class));
 			return true;
 		case WIDGET_SETTINGS:
 			if (mAppWidgetIds.length > 0) {
@@ -172,7 +172,7 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 		super.onPause();
 		if (mUpdateWidget) {
 			(Toast.makeText(getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
-			startService(Sonet.getPackageIntent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
+			startService(new Intent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
 		}
 	}
 
@@ -184,7 +184,7 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 
 	@Override
 	public void onClick(DialogInterface dialog, int which) {
-		startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[which]));
+		startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[which]));
 		dialog.cancel();
 	}
 
@@ -193,7 +193,7 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 		super.onListItemClick(list, view, position, id);
 		Rect r = new Rect();
 		view.getHitRect(r);
-		startActivity(Sonet.getPackageIntent(this, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.getContentUri(this), Long.toString(id))).putExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS, r).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+		startActivity(new Intent(this, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.getContentUri(this), Long.toString(id))).putExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS, r).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
 	}
 
 	private final SimpleCursorAdapter.ViewBinder mViewBinder = new SimpleCursorAdapter.ViewBinder() {
@@ -303,28 +303,30 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 		@Override
 		protected Integer doInBackground(Void... arg0) {
 			Log.d(TAG,"WidgetsDataLoader executing");
-			int[] removeAppWidgets = new int[0];
 			// remove old widgets that didn't have ids
 			getContentResolver().delete(Widgets.getContentUri(About.this), Widgets.WIDGET + "=?", new String[] {""});
 			getContentResolver().delete(Widget_accounts.getContentUri(About.this), Widget_accounts.WIDGET + "=?", new String[] {""});
-			Cursor widgets = getContentResolver().query(Widgets.getContentUri(About.this), new String[] {Widgets._ID, Widgets.WIDGET}, Widgets.ACCOUNT + "=?", new String[] { Long.toString(Sonet.INVALID_ACCOUNT_ID) }, null);
-			if (widgets.moveToFirst()) {
-				int iwidget = widgets.getColumnIndex(Widgets.WIDGET), appWidgetId;
-				while (!widgets.isAfterLast()) {
-					appWidgetId = widgets.getInt(iwidget);
-					if ((appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) && !Sonet.arrayContains(mAppWidgetIds, appWidgetId)) removeAppWidgets = Sonet.arrayAdd(removeAppWidgets, appWidgetId);
-					widgets.moveToNext();
-				}
-			}
-			widgets.close();
-			if (removeAppWidgets.length > 0) {
-				// remove phantom widgets
-				for (int appWidgetId : removeAppWidgets) {
-					getContentResolver().delete(Widgets.getContentUri(About.this), Widgets.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
-					getContentResolver().delete(Widget_accounts.getContentUri(About.this), Widget_accounts.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
-					getContentResolver().delete(Statuses.getContentUri(About.this), Statuses.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
-				}
-			}
+			// don't remove old widgets,
+			// instead, allow a user to load them into a new widget
+//			int[] removeAppWidgets = new int[0];
+//			Cursor widgets = getContentResolver().query(Widgets.getContentUri(About.this), new String[] {Widgets._ID, Widgets.WIDGET}, Widgets.ACCOUNT + "=?", new String[] { Long.toString(Sonet.INVALID_ACCOUNT_ID) }, null);
+//			if (widgets.moveToFirst()) {
+//				int iwidget = widgets.getColumnIndex(Widgets.WIDGET), appWidgetId;
+//				while (!widgets.isAfterLast()) {
+//					appWidgetId = widgets.getInt(iwidget);
+//					if ((appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) && !Sonet.arrayContains(mAppWidgetIds, appWidgetId)) removeAppWidgets = Sonet.arrayAdd(removeAppWidgets, appWidgetId);
+//					widgets.moveToNext();
+//				}
+//			}
+//			widgets.close();
+//			if (removeAppWidgets.length > 0) {
+//				// remove phantom widgets
+//				for (int appWidgetId : removeAppWidgets) {
+//					getContentResolver().delete(Widgets.getContentUri(About.this), Widgets.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
+//					getContentResolver().delete(Widget_accounts.getContentUri(About.this), Widget_accounts.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
+//					getContentResolver().delete(Statuses.getContentUri(About.this), Statuses.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
+//				}
+//			}
 			int result = 0;
 			boolean profile = true;
 			Cursor accounts = getContentResolver().query(Widget_accounts.getContentUri(About.this), new String[]{Widget_accounts._ID}, Widget_accounts.WIDGET + "=0", null, null);
@@ -379,7 +381,7 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 			Log.d(TAG,"result:"+result);
 			if (result > 0) {
 				// accounts, but no statuses
-				startService(Sonet.getPackageIntent(About.this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID).setAction(ACTION_REFRESH));
+				startService(new Intent(About.this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID).setAction(ACTION_REFRESH));
 				if (result > 1) {
 					// no accounts
 					AlertDialog.Builder dialog = new AlertDialog.Builder(About.this);

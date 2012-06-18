@@ -143,7 +143,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 			.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					startActivityForResult(Sonet.getPackageIntent(getApplicationContext(), SonetCreatePost.class).putExtra(Widgets.INSTANT_UPLOAD, mFilePath), RESULT_REFRESH);
+					startActivityForResult(new Intent(getApplicationContext(), SonetCreatePost.class).putExtra(Widgets.INSTANT_UPLOAD, mFilePath), RESULT_REFRESH);
 					dialog.dismiss();
 				}
 			})
@@ -222,11 +222,11 @@ public class StatusDialog extends Activity implements OnClickListener {
 			if (mAppWidgetId != Sonet.INVALID_ACCOUNT_ID) {
 				// informational messages go to settings
 				mFinish = true;
-				startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 			} else {
 				(Toast.makeText(StatusDialog.this, "This widget is reloading. Please try again after it has completed or use the app to update the widget.", Toast.LENGTH_LONG)).show();
 				// force widgets rebuild
-				startService(Sonet.getPackageIntent(this, SonetService.class).setAction(ACTION_REFRESH));
+				startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH));
 				finish();
 			}
 		}
@@ -252,7 +252,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 						startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
 					}
 				} else {
-					startActivity(Sonet.getPackageIntent(this, SonetComments.class).setData(mData).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+					startActivity(new Intent(this, SonetComments.class).setData(mData).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 				}
 			} else {
 				(Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
@@ -267,7 +267,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 				} else if (mService == PINTEREST) {
 					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
 				} else {
-					startActivity(Sonet.getPackageIntent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(mAccount))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+					startActivity(new Intent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(mAccount))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 				}
 				dialog.cancel();
 			} else {
@@ -299,7 +299,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 								.setSingleChoiceItems(accounts, -1, new OnClickListener() {
 									@Override
 									public void onClick(DialogInterface arg0, int which) {
-										startActivity(Sonet.getPackageIntent(StatusDialog.this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(accountIndexes[which]))));
+										startActivity(new Intent(StatusDialog.this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(accountIndexes[which]))));
 										arg0.cancel();
 									}
 								})
@@ -335,7 +335,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 			break;
 		case SETTINGS:
 			if (mAppWidgetId != -1) {
-				startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 				dialog.cancel();
 			} else {
 				// no widget sent in, dialog to select one
@@ -345,7 +345,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 					.setItems(widgets, new OnClickListener() {
 						@Override
 						public void onClick(DialogInterface arg0, int arg1) {
-							startActivity(Sonet.getPackageIntent(StatusDialog.this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[arg1]));
+							startActivity(new Intent(StatusDialog.this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[arg1]));
 							arg0.cancel();
 						}					
 					})
@@ -365,12 +365,12 @@ public class StatusDialog extends Activity implements OnClickListener {
 			}
 			break;
 		case NOTIFICATIONS:
-			startActivity(Sonet.getPackageIntent(this, SonetNotifications.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+			startActivity(new Intent(this, SonetNotifications.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 			dialog.cancel();
 		case REFRESH:
 			if (mAppWidgetId != -1) {
 				(Toast.makeText(getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
-				startService(Sonet.getPackageIntent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
+				startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
 				dialog.cancel();
 			} else {
 				// no widget sent in, dialog to select one
@@ -381,7 +381,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 						@Override
 						public void onClick(DialogInterface arg0, int arg1) {
 							(Toast.makeText(StatusDialog.this.getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
-							startService(Sonet.getPackageIntent(StatusDialog.this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetIds[arg1]}));
+							startService(new Intent(StatusDialog.this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetIds[arg1]}));
 							arg0.cancel();
 						}					
 					})
@@ -390,7 +390,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 						public void onClick(DialogInterface arg0, int which) {
 							// refresh all
 							(Toast.makeText(StatusDialog.this.getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
-							startService(Sonet.getPackageIntent(StatusDialog.this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
+							startService(new Intent(StatusDialog.this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
 							arg0.cancel();
 						}
 					})
@@ -719,30 +719,35 @@ public class StatusDialog extends Activity implements OnClickListener {
 
 	private String[] getAllWidgets() {
 		mAppWidgetIds = new int[0];
-		// validate appwidgetids from appwidgetmanager
+		// validate appwidgetids with appwidgetmanager
 		AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
 		mAppWidgetIds = Sonet.getWidgets(getApplicationContext(), appWidgetManager);
-		int[] removeAppWidgets = new int[0];
+		
+		// older versions had a null widget, remove them
 		this.getContentResolver().delete(Widgets.getContentUri(StatusDialog.this), Widgets.WIDGET + "=?", new String[] { "" });
 		this.getContentResolver().delete(Widget_accounts.getContentUri(StatusDialog.this), Widget_accounts.WIDGET + "=?", new String[] { "" });
-		Cursor widgets = this.getContentResolver().query(Widgets.getContentUri(StatusDialog.this), new String[] {Widgets._ID, Widgets.WIDGET}, Widgets.ACCOUNT + "=?", new String[] { Long.toString(Sonet.INVALID_ACCOUNT_ID) }, null);
-		if (widgets.moveToFirst()) {
-			int iwidget = widgets.getColumnIndex(Widgets.WIDGET), appWidgetId;
-			while (!widgets.isAfterLast()) {
-				appWidgetId = widgets.getInt(iwidget);
-				if ((appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) && !Sonet.arrayContains(mAppWidgetIds, appWidgetId)) removeAppWidgets = Sonet.arrayAdd(removeAppWidgets, appWidgetId);
-				widgets.moveToNext();
-			}
-		}
-		widgets.close();
-		if (removeAppWidgets.length > 0) {
-			// remove phantom widgets
-			for (int appWidgetId : removeAppWidgets) {
-				this.getContentResolver().delete(Widgets.getContentUri(StatusDialog.this), Widgets.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
-				this.getContentResolver().delete(Widget_accounts.getContentUri(StatusDialog.this), Widget_accounts.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
-				this.getContentResolver().delete(Statuses.getContentUri(StatusDialog.this), Statuses.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
-			}
-		}
+		
+		// don't remove old widgets,
+		// instead, allow a user to load them into a new widget
+//		int[] removeAppWidgets = new int[0];
+//		Cursor widgets = this.getContentResolver().query(Widgets.getContentUri(StatusDialog.this), new String[] {Widgets._ID, Widgets.WIDGET}, Widgets.ACCOUNT + "=?", new String[] { Long.toString(Sonet.INVALID_ACCOUNT_ID) }, null);
+//		if (widgets.moveToFirst()) {
+//			int iwidget = widgets.getColumnIndex(Widgets.WIDGET), appWidgetId;
+//			while (!widgets.isAfterLast()) {
+//				appWidgetId = widgets.getInt(iwidget);
+//				if ((appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) && !Sonet.arrayContains(mAppWidgetIds, appWidgetId)) removeAppWidgets = Sonet.arrayAdd(removeAppWidgets, appWidgetId);
+//				widgets.moveToNext();
+//			}
+//		}
+//		widgets.close();
+//		if (removeAppWidgets.length > 0) {
+//			// remove phantom widgets
+//			for (int appWidgetId : removeAppWidgets) {
+//				this.getContentResolver().delete(Widgets.getContentUri(StatusDialog.this), Widgets.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
+//				this.getContentResolver().delete(Widget_accounts.getContentUri(StatusDialog.this), Widget_accounts.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
+//				this.getContentResolver().delete(Statuses.getContentUri(StatusDialog.this), Statuses.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
+//			}
+//		}
 		String[] widgetsOptions = new String[mAppWidgetIds.length];
 		for (int i = 0; i < mAppWidgetIds.length; i++) {
 			AppWidgetProviderInfo info = appWidgetManager.getAppWidgetInfo(mAppWidgetIds[i]);
