@@ -22,19 +22,8 @@
 	android:layout_width="fill_parent" android:layout_height="fill_parent">
 	<LinearLayout android:id="@+id/ad" android:layout_width="fill_parent"
 		android:layout_height="wrap_content" />
-	<Button android:layout_below="@id/ad" android:id="@+id/default_widget_settings"
-		android:layout_width="fill_parent" android:layout_height="wrap_content"
-		android:text="@string/defaultwidgetsettings" />
-	<Button android:id="@+id/button_add_account" android:text="@string/button_add_account"
-		android:layout_width="fill_parent" android:layout_height="wrap_content"
-		android:layout_below="@id/default_widget_settings" />
-	<Button android:id="@+id/save" android:text="@string/save"
-		android:layout_width="fill_parent" android:layout_height="wrap_content"
-		android:layout_alignParentBottom="true" />
 	<ListView android:id="@android:id/list" android:layout_width="fill_parent"
-		android:layout_height="fill_parent" android:layout_below="@id/button_add_account"
-		android:layout_above="@id/save" />
+		android:layout_height="fill_parent" android:layout_below="@id/ad" />
 	<TextView android:id="@android:id/empty" android:layout_width="fill_parent"
-		android:layout_height="fill_parent" android:layout_below="@id/button_add_account"
-		android:layout_above="@id/save" android:text="@string/no_accounts" />
+		android:layout_height="fill_parent" android:layout_below="@id/ad" android:text="@string/no_accounts" />
 </RelativeLayout>

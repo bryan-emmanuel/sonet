@@ -30,6 +30,7 @@ import static com.piusvelte.sonet.core.SonetProvider.TABLE_ACCOUNTS;
 import static com.piusvelte.sonet.core.SonetProvider.TABLE_WIDGETS;
 import static com.piusvelte.sonet.core.SonetProvider.TABLE_WIDGET_ACCOUNTS;
 
+import com.example.android.actionbarcompat.ActionBarListActivity;
 import com.google.ads.*;
 import com.piusvelte.sonet.core.Sonet.Accounts;
 import com.piusvelte.sonet.core.Sonet.Accounts_styles;
@@ -42,7 +43,6 @@ import com.piusvelte.sonet.core.Sonet.Widget_accounts;
 import com.piusvelte.sonet.core.Sonet.Widgets;
 
 import android.app.AlertDialog;
-import android.app.ListActivity;
 import android.app.WallpaperManager;
 import android.appwidget.AppWidgetManager;
 import android.content.ContentValues;
@@ -57,11 +57,10 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.view.View.OnClickListener;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -70,7 +69,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class ManageAccounts extends ListActivity implements OnClickListener, DialogInterface.OnClickListener {
+public class ManageAccounts extends ActionBarListActivity implements DialogInterface.OnClickListener {
 	private static final int REAUTH_ID = Menu.FIRST;
 	private static final int SETTINGS_ID = Menu.FIRST + 1;
 	private static final int ENABLE_ID = Menu.FIRST + 2;
@@ -108,14 +107,35 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		setResult(RESULT_OK, resultValue);
 
 		registerForContextMenu(getListView());
-		((Button) findViewById(R.id.default_widget_settings)).setOnClickListener(this);
-		((Button) findViewById(R.id.button_add_account)).setOnClickListener(this);
-		((Button) findViewById(R.id.save)).setOnClickListener(this);
 		
 		Drawable wp = WallpaperManager.getInstance(getApplicationContext()).getDrawable();
 		if (wp != null) {
 			findViewById(R.id.ad).getRootView().setBackgroundDrawable(wp);
 		}
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater menuInflater = getMenuInflater();
+		menuInflater.inflate(R.menu.menu_manageaccounts, menu);
+		return super.onCreateOptionsMenu(menu);
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		int itemId = item.getItemId();
+		if (itemId == R.id.button_add_account) {
+			// add a new account
+			String[] services = getResources().getStringArray(R.array.service_entries);
+			mDialog = (new AlertDialog.Builder(this))
+			.setItems(services, this)
+			.create();
+			mDialog.show();
+		} else if (itemId == R.id.default_widget_settings) {
+			mAddingAccount = true;
+			startActivityForResult(new Intent(this, Settings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId), RESULT_REFRESH);
+		}
+		return super.onOptionsItemSelected(item);
 	}
 
 	private final SimpleCursorAdapter.ViewBinder mViewBinder = new SimpleCursorAdapter.ViewBinder() {
@@ -271,22 +291,6 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 		return super.onContextItemSelected(item);
 	}
 
-	public void onClick(View v) {
-		if (v.getId() == R.id.button_add_account) {
-			// add a new account
-			String[] services = getResources().getStringArray(R.array.service_entries);
-			mDialog = (new AlertDialog.Builder(this))
-			.setItems(services, this)
-			.create();
-			mDialog.show();
-		} else if (v.getId() == R.id.default_widget_settings) {
-			mAddingAccount = true;
-			startActivityForResult(new Intent(this, Settings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId), RESULT_REFRESH);
-		} else if (v.getId() == R.id.save) {
-			finish();
-		}
-	}
-
 	@Override
 	protected void onResume() {
 		super.onResume();
@@ -325,6 +329,7 @@ public class ManageAccounts extends ListActivity implements OnClickListener, Dia
 							values.clear();
 							values.put(Statuses.WIDGET, unusedAppWidget);
 							getContentResolver().update(Statuses.getContentUri(ManageAccounts.this), values, Statuses.WIDGET + "=?", new String[] { Integer.toString(mAppWidgetId) });
+							listAccounts();
 						}})
 					.setNegativeButton(R.string.delete, new DialogInterface.OnClickListener() {
 						@Override

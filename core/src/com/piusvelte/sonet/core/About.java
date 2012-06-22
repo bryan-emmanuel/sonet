@@ -51,6 +51,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
@@ -64,13 +65,6 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 	private int[] mAppWidgetIds;
 	private AppWidgetManager mAppWidgetManager;
 	private boolean mUpdateWidget = false;
-	private static final int REFRESH = 1;
-	private static final int MANAGE_ACCOUNTS = 2;
-	private static final int REFRESH_WIDGETS = 3;
-	private static final int DEFAULT_SETTINGS = 4;
-	private static final int NOTIFICATIONS = 5;
-	private static final int WIDGET_SETTINGS = 6;
-	private static final int ABOUT = 7;
 	private static final String TAG = "About";
 
 	@Override
@@ -92,36 +86,25 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		boolean result = super.onCreateOptionsMenu(menu);
-		menu.add(0, REFRESH, 0, R.string.button_refresh).setIcon(android.R.drawable.ic_menu_rotate);
-		menu.add(0, MANAGE_ACCOUNTS, 0, R.string.accounts_and_settings).setIcon(android.R.drawable.ic_menu_manage);
-		menu.add(0, REFRESH_WIDGETS, 0, R.string.refreshallwidgets).setIcon(android.R.drawable.ic_menu_rotate);
-		menu.add(0, DEFAULT_SETTINGS, 0, R.string.defaultsettings).setIcon(android.R.drawable.ic_menu_preferences);
-		menu.add(0, NOTIFICATIONS, 0, R.string.notifications).setIcon(android.R.drawable.ic_menu_more);
-		menu.add(0, WIDGET_SETTINGS, 0, R.string.widget_settings).setIcon(android.R.drawable.ic_menu_preferences);
-		menu.add(0, ABOUT, 0, R.string.about_title).setIcon(android.R.drawable.ic_menu_more);
-		return result;
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.menu_about, menu);
+		return super.onCreateOptionsMenu(menu);
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case REFRESH:
+		int itemId = item.getItemId();
+		if (itemId == R.id.menu_about_refresh) {
 			startService(new Intent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID).setAction(ACTION_REFRESH));
-			return true;
-		case MANAGE_ACCOUNTS:
+		} else if (itemId == R.id.menu_about_accounts_and_settings) {
 			startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
-			return true;
-		case DEFAULT_SETTINGS:
+		} else if (itemId == R.id.menu_about_default_settings) {
 			startActivityForResult(new Intent(this, Settings.class), RESULT_REFRESH);
-			return true;
-		case REFRESH_WIDGETS:
+		} else if (itemId == R.id.menu_about_refresh_widgets) {
 			startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
-			return true;
-		case NOTIFICATIONS:
+		} else if (itemId == R.id.menu_about_notifications) {
 			startActivity(new Intent(this, SonetNotifications.class));
-			return true;
-		case WIDGET_SETTINGS:
+		} else if (itemId == R.id.menu_about_widget_settings) {
 			if (mAppWidgetIds.length > 0) {
 				String[] widgets = new String[mAppWidgetIds.length];
 				for (int i = 0, i2 = mAppWidgetIds.length; i < i2; i++) {
@@ -136,8 +119,7 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 			} else {
 				Toast.makeText(this, getString(R.string.nowidgets),	Toast.LENGTH_LONG).show();
 			}
-			return true;
-		case ABOUT:
+		} else if (itemId == R.id.menu_about_about) {
 			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
 			dialog.setTitle(R.string.about_title);
 			dialog.setMessage(R.string.about);
@@ -151,7 +133,6 @@ public class About extends ListActivity implements DialogInterface.OnClickListen
 			});
 			dialog.setCancelable(true);
 			dialog.show();
-			return true;
 		}
 		return super.onOptionsItemSelected(item);
 	}

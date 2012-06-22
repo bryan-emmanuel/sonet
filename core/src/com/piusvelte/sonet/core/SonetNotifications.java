@@ -63,6 +63,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -158,10 +159,9 @@ public class SonetNotifications extends ListActivity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		boolean result = super.onCreateOptionsMenu(menu);
-		menu.add(0, REFRESH, 0, R.string.button_refresh).setIcon(android.R.drawable.ic_menu_rotate);
-		menu.add(0, CLEAR_ALL, 0, R.string.clear_all).setIcon(android.R.drawable.ic_menu_rotate);
-		return result;
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.menu_notifications, menu);
+		return super.onCreateOptionsMenu(menu);
 	}
 
 	@Override
@@ -171,8 +171,7 @@ public class SonetNotifications extends ListActivity {
 
 			@Override
 			protected Boolean doInBackground(Integer... arg0) {
-				switch (arg0[0]) {
-				case REFRESH:
+				if (arg0[0] == R.id.menu_notifications_refresh) {
 					// select all accounts with notifications set
 					Cursor widgets = getContentResolver().query(Widgets_settings.getDistinctContentUri(SonetNotifications.this), new String[]{Widgets.ACCOUNT}, Widgets.ACCOUNT + "!=-1 and (" + Widgets.LIGHTS + "=1 or " + Widgets.VIBRATE + "=1 or " + Widgets.SOUND + "=1)", null, null);
 					if (widgets.moveToFirst()) {
@@ -913,7 +912,7 @@ public class SonetNotifications extends ListActivity {
 					}
 					widgets.close();
 					return false;
-				case CLEAR_ALL:
+				} else if (arg0[0] == R.id.menu_notifications_clear_all) {
 					// clear all notifications
 					ContentValues values = new ContentValues();
 					values.put(Notifications.CLEARED, 1);
