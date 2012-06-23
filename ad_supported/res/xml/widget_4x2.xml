@@ -28,4 +28,4 @@
   android:updatePeriodMillis="0"
   android:resizeMode="3"
   android:initialLayout="@layout/widget_nobuttons"
-  android:configure=".ManageAccounts" />
+  android:configure="com.piusvelte.sonet.ManageAccounts" />

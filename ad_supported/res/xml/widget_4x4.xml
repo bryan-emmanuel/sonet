@@ -19,13 +19,13 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <!--
-70 × n − 30
+min dip size = (#cells*74dip)-2dip
 -->
 <appwidget-provider
   xmlns:android="http://schemas.android.com/apk/res/android"
-  android:minWidth="110dip"
+  android:minWidth="250dip"
   android:minHeight="250dip"
   android:updatePeriodMillis="0"
   android:resizeMode="3"
   android:initialLayout="@layout/widget_nobuttons"
-  android:configure=".ManageAccounts" />
+  android:configure="com.piusvelte.sonet.ManageAccounts" />
