@@ -21,6 +21,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/default_widget_settings"
         android:title="@string/defaultwidgetsettings"
+        android:icon="@android:drawable/ic_menu_manage"
         android:orderInCategory="0"
         android:showAsAction="always" />
     <item android:id="@+id/button_add_account"

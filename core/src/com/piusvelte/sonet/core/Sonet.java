@@ -670,7 +670,7 @@ public class Sonet {
 		int[] widgets = new int[0];
 		Class[] clazzes = new Class[]{SonetWidget_2x2.class, SonetWidget_2x3.class, SonetWidget_2x4.class, SonetWidget_4x2.class, SonetWidget_4x3.class, SonetWidget_4x4.class};
 		for (Class clazz : clazzes) {
-			widgets = Sonet.arrayCat(widgets, awm.getAppWidgetIds(new ComponentName(context, clazz)));
+			widgets = Sonet.arrayCat(widgets, awm.getAppWidgetIds(new ComponentName(context, getPackageClass(context, clazz))));
 		}
 		return widgets;
 	}

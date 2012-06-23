@@ -534,7 +534,9 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 					if (url != null) {
 						mLoadingDialog.show();
 						Uri uri = Uri.parse(url);
-						if (TWITTER_CALLBACK.getHost().equals(uri.getHost())) {
+						String host = uri.getHost();
+						Log.d(TAG, "shouldOverrideUrlLoading, host: " + host);
+						if (TWITTER_CALLBACK.getHost().equals(host)) {
 							final ProgressDialog loadingDialog = new ProgressDialog(OAuthLogin.this);
 							final AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
 
@@ -580,7 +582,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 							asyncTask.execute(uri.getQueryParameter(OAUTH_VERIFIER));
 							mLoadingDialog.dismiss();
 							loadingDialog.show();
-						} else if (FOURSQUARE_CALLBACK.getHost().equals(uri.getHost())) {
+						} else if (FOURSQUARE_CALLBACK.getHost().equals(host)) {
 							// get the access_token
 							String token = "";
 							String[] parameters = getParams(url);
@@ -639,7 +641,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 							asyncTask.execute(token, String.format(FOURSQUARE_URL_ME, FOURSQUARE_BASE_URL, token));
 							mLoadingDialog.dismiss();
 							loadingDialog.show();
-						} else if (FACEBOOK_CALLBACK.getHost().equals(uri.getHost())) {
+						} else if (FACEBOOK_CALLBACK.getHost().equals(host)) {
 							String token = "";
 							int expiry = 0;
 							String[] parameters = getParams(url);
@@ -700,7 +702,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 							asyncTask.execute(token, Integer.toString(expiry), String.format(FACEBOOK_URL_ME, FACEBOOK_BASE_URL, Saccess_token, token));
 							mLoadingDialog.dismiss();
 							loadingDialog.show();
-						} else if (MYSPACE_CALLBACK.getHost().equals(uri.getHost())) {
+						} else if (MYSPACE_CALLBACK.getHost().equals(host)) {
 							final ProgressDialog loadingDialog = new ProgressDialog(OAuthLogin.this);
 							final AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
 
@@ -751,7 +753,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 							asyncTask.execute(uri.getQueryParameter(OAUTH_VERIFIER));
 							mLoadingDialog.dismiss();
 							loadingDialog.show();
-						} else if (LINKEDIN_CALLBACK.getHost().equals(uri.getHost())) {
+						} else if (LINKEDIN_CALLBACK.getHost().equals(host)) {
 							final ProgressDialog loadingDialog = new ProgressDialog(OAuthLogin.this);
 							final AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
 
@@ -803,7 +805,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 							asyncTask.execute(uri.getQueryParameter(OAUTH_VERIFIER));
 							mLoadingDialog.dismiss();
 							loadingDialog.show();
-						} else if (IDENTICA_CALLBACK.getHost().equals(uri.getHost())) {
+						} else if (IDENTICA_CALLBACK.getHost().equals(host)) {
 							final ProgressDialog loadingDialog = new ProgressDialog(OAuthLogin.this);
 							final AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
 
@@ -849,7 +851,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 							asyncTask.execute(uri.getQueryParameter(OAUTH_VERIFIER));
 							mLoadingDialog.dismiss();
 							loadingDialog.show();
-						} else if (CHATTER_CALLBACK.getHost().equals(uri.getHost())) {
+						} else if (CHATTER_CALLBACK.getHost().equals(host)) {
 							// get the access_token
 							String token = null,
 							refresh_token = null,
