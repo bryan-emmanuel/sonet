@@ -55,6 +55,7 @@ import android.graphics.Canvas;
 import android.graphics.Bitmap.Config;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -78,6 +79,7 @@ public class ManageAccounts extends ActionBarListActivity implements DialogInter
 	private boolean mAddingAccount,
 	mUpdateWidget = false;
 	private AlertDialog mDialog;
+	private static final String TAG = "ManageAccounts";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -93,13 +95,11 @@ public class ManageAccounts extends ActionBarListActivity implements DialogInter
 		Intent intent = getIntent();
 		if (intent != null) {
 			Bundle extras = intent.getExtras();
-			if (extras != null) {
+			if (extras != null)
 				mAppWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
-			}
 			// if called from widget, the id is set in the action, as pendingintents must have a unique action
-			else if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH)) && (!intent.getAction().equals(Intent.ACTION_VIEW))) {
+			else if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH)) && (!intent.getAction().equals(Intent.ACTION_VIEW)))
 				mAppWidgetId = Integer.parseInt(intent.getAction());
-			}
 		}
 
 		Intent resultValue = new Intent();
@@ -109,9 +109,8 @@ public class ManageAccounts extends ActionBarListActivity implements DialogInter
 		registerForContextMenu(getListView());
 		
 		Drawable wp = WallpaperManager.getInstance(getApplicationContext()).getDrawable();
-		if (wp != null) {
+		if (wp != null)
 			findViewById(R.id.ad).getRootView().setBackgroundDrawable(wp);
-		}
 	}
 	
 	@Override
@@ -133,7 +132,7 @@ public class ManageAccounts extends ActionBarListActivity implements DialogInter
 			mDialog.show();
 		} else if (itemId == R.id.default_widget_settings) {
 			mAddingAccount = true;
-			startActivityForResult(new Intent(this, Settings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId), RESULT_REFRESH);
+			startActivityForResult(Sonet.getPackageIntent(this, Settings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId), RESULT_REFRESH);
 		}
 		return super.onOptionsItemSelected(item);
 	}
@@ -178,9 +177,8 @@ public class ManageAccounts extends ActionBarListActivity implements DialogInter
 				return true;
 			} else if (columnIndex == cursor.getColumnIndex(Statuses_styles.ICON)) {
 				Bitmap bmp = BitmapFactory.decodeResource(getResources(), map_icons[cursor.getInt(columnIndex)], sBFOptions);
-				if (bmp != null) {
+				if (bmp != null)
 					((ImageView) view).setImageBitmap(bmp);
-				}
 				return true;
 			} else if (columnIndex == cursor.getColumnIndex(Statuses_styles.PROFILE_BG)) {
 				Bitmap bmp = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
@@ -194,9 +192,8 @@ public class ManageAccounts extends ActionBarListActivity implements DialogInter
 				canvas.drawColor(cursor.getInt(columnIndex));
 				((ImageView) view).setImageBitmap(bmp);
 				return true;
-			} else {
+			} else
 				return false;
-			}
 		}
 	};
 	
@@ -217,14 +214,14 @@ public class ManageAccounts extends ActionBarListActivity implements DialogInter
 						int service = c.getInt(0);
 						if ((service != SMS) && (service != RSS)) {
 							mAddingAccount = true;
-							startActivityForResult(new Intent(ManageAccounts.this, OAuthLogin.class).putExtra(Accounts.SERVICE, service).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id), RESULT_REFRESH);
+							startActivityForResult(Sonet.getPackageIntent(ManageAccounts.this, OAuthLogin.class).putExtra(Accounts.SERVICE, service).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id), RESULT_REFRESH);
 						}
 					}
 					c.close();
 					break;
 				case SETTINGS_ID:
 					mAddingAccount = true;
-					startActivityForResult(new Intent(ManageAccounts.this, AccountSettings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id), RESULT_REFRESH);
+					startActivityForResult(Sonet.getPackageIntent(ManageAccounts.this, AccountSettings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id), RESULT_REFRESH);
 					break;
 				case ENABLE_ID:
 					if (((TextView) view.findViewById(R.id.message)).getText().toString().contains("enabled")) {
@@ -304,40 +301,44 @@ public class ManageAccounts extends ActionBarListActivity implements DialogInter
 			int iwidget = widgets.getColumnIndex(Widgets.WIDGET);
 			while (!widgets.isAfterLast()) {
 				appWidgetId = widgets.getInt(iwidget);
-				if ((appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) && !Sonet.arrayContains(appWidgetIds, appWidgetId)) {
+				if ((appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) && !Sonet.arrayContains(appWidgetIds, appWidgetId))
 					break;
-				}
 				appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 				widgets.moveToNext();
 			}
 		}
 		widgets.close();
 		if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-			final int unusedAppWidget = appWidgetId;
 			mDialog = (new AlertDialog.Builder(this))
+					.setTitle(Integer.toString(appWidgetId))
 					.setMessage(R.string.widget_load_msg)
 					.setPositiveButton(R.string.load, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
+							TextView titleView = (TextView) mDialog.findViewById(android.R.id.title);
+							int appWidgetId = Integer.parseInt(titleView.getText().toString());
 							// load widget
+							Log.d(TAG, "load widget: " + appWidgetId + ", into: " + mAppWidgetId);
 							ContentValues values = new ContentValues();
-							values.put(Widgets.WIDGET, unusedAppWidget);
+							values.put(Widgets.WIDGET, appWidgetId);
 							getContentResolver().update(Widgets.getContentUri(ManageAccounts.this), values, Widgets.WIDGET + "=?", new String[] { Integer.toString(mAppWidgetId) });
 							values.clear();
-							values.put(Widget_accounts.WIDGET, unusedAppWidget);
+							values.put(Widget_accounts.WIDGET, appWidgetId);
 							getContentResolver().update(Widget_accounts.getContentUri(ManageAccounts.this), values, Widget_accounts.WIDGET + "=?", new String[] { Integer.toString(mAppWidgetId) });
 							values.clear();
-							values.put(Statuses.WIDGET, unusedAppWidget);
+							values.put(Statuses.WIDGET, appWidgetId);
 							getContentResolver().update(Statuses.getContentUri(ManageAccounts.this), values, Statuses.WIDGET + "=?", new String[] { Integer.toString(mAppWidgetId) });
 							listAccounts();
 						}})
 					.setNegativeButton(R.string.delete, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
+							TextView titleView = (TextView) mDialog.findViewById(android.R.id.title);
+							String appWidgetId = titleView.getText().toString();
 							// remove unused widget
-							getContentResolver().delete(Widgets.getContentUri(ManageAccounts.this), Widgets.WIDGET + "=?", new String[] { Integer.toString(unusedAppWidget) });
-							getContentResolver().delete(Widget_accounts.getContentUri(ManageAccounts.this), Widget_accounts.WIDGET + "=?", new String[] { Integer.toString(unusedAppWidget) });
-							getContentResolver().delete(Statuses.getContentUri(ManageAccounts.this), Statuses.WIDGET + "=?", new String[] { Integer.toString(unusedAppWidget) });
+							getContentResolver().delete(Widgets.getContentUri(ManageAccounts.this), Widgets.WIDGET + "=?", new String[] {appWidgetId});
+							getContentResolver().delete(Widget_accounts.getContentUri(ManageAccounts.this), Widget_accounts.WIDGET + "=?", new String[] {appWidgetId});
+							getContentResolver().delete(Statuses.getContentUri(ManageAccounts.this), Statuses.WIDGET + "=?", new String[] {appWidgetId});
 						}
 					})
 					.create();
@@ -350,19 +351,17 @@ public class ManageAccounts extends ActionBarListActivity implements DialogInter
 		super.onPause();
 		if (!mAddingAccount && mUpdateWidget) {
 			(Toast.makeText(getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
-			startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
+			startService(Sonet.getPackageIntent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
 		}
-		if ((mDialog != null) && mDialog.isShowing()) {
+		if ((mDialog != null) && mDialog.isShowing())
 			mDialog.dismiss();
-		}
 	}
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
-		if ((requestCode == RESULT_REFRESH) && (resultCode == RESULT_OK)) {
+		if ((requestCode == RESULT_REFRESH) && (resultCode == RESULT_OK))
 			mUpdateWidget = true;
-		}
 	}
 
 	private void listAccounts() {
@@ -459,7 +458,7 @@ public class ManageAccounts extends ActionBarListActivity implements DialogInter
 
 	public void onClick(DialogInterface dialog, int which) {
 		mAddingAccount = true;
-		startActivityForResult(new Intent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, Integer.parseInt(getResources().getStringArray(R.array.service_values)[which])).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID), RESULT_REFRESH);
+		startActivityForResult(Sonet.getPackageIntent(this, OAuthLogin.class).putExtra(Accounts.SERVICE, Integer.parseInt(getResources().getStringArray(R.array.service_values)[which])).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID), RESULT_REFRESH);
 		dialog.cancel();
 	}
 

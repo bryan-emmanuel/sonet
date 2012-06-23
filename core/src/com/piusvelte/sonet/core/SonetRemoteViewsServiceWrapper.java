@@ -37,7 +37,7 @@ public class SonetRemoteViewsServiceWrapper {
 	
 	public static Intent getRemoteAdapterIntent(Context context) {
 		if (sNativeScrolling) {
-			return new Intent(context, SonetRemoteViewsService.class);
+			return Sonet.getPackageIntent(context, SonetRemoteViewsService.class);
 		} else {
 			return null;
 		}

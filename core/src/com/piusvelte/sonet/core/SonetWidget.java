@@ -50,12 +50,11 @@ public class SonetWidget extends AppWidgetProvider {
 		Sonet.acquire(context);
 		// this is sent on boot
 		// this should reload the widget
-		context.startService(new Intent(context, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds).setAction(Sonet.ACTION_REFRESH));
+		context.startService(Sonet.getPackageIntent(context, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds).setAction(Sonet.ACTION_REFRESH));
 	}
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		Log.d(TAG, "context package: " + context.getPackageName());
 		final String action = intent.getAction();
 		if (action.equals(Sonet.ACTION_REFRESH)) {
 			Sonet.acquire(context);
@@ -68,7 +67,7 @@ public class SonetWidget extends AppWidgetProvider {
 			} else {
 				appWidgetIds = new int[]{AppWidgetManager.INVALID_APPWIDGET_ID};
 			}
-			context.startService(new Intent(context, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds).setAction(action));
+			context.startService(Sonet.getPackageIntent(context, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds).setAction(action));
 		} else if (AppWidgetManager.ACTION_APPWIDGET_DELETED.equals(action)) {
 			final int appWidgetId = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 			if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
@@ -81,7 +80,7 @@ public class SonetWidget extends AppWidgetProvider {
 			// ACTION_READY is sent on screen rotation and on boot
 			// this should only ever requery...
 			final Bundle extras = intent.getExtras();
-			context.startService(new Intent(context, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)).putExtra(Sonet.EXTRA_SCROLLABLE_VERSION, extras.getInt(LauncherIntent.Extra.EXTRA_API_VERSION, 1)).setAction(action));
+			context.startService(Sonet.getPackageIntent(context, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)).putExtra(Sonet.EXTRA_SCROLLABLE_VERSION, extras.getInt(LauncherIntent.Extra.EXTRA_API_VERSION, 1)).setAction(action));
 		} else if (action.equals(LauncherIntent.Action.ACTION_FINISH)) {
 		} else if (action.equals(Sonet.ACTION_ON_CLICK) || action.equals(LauncherIntent.Action.ACTION_VIEW_CLICK) || action.equals(LauncherIntent.Action.ACTION_ITEM_CLICK)) {
 			onClick(context, intent);
@@ -97,7 +96,7 @@ public class SonetWidget extends AppWidgetProvider {
 	public final void onDeleted(Context context, int[] appWidgetIds) {
 		super.onDeleted(context, appWidgetIds);
 		for (int appWidgetId : appWidgetIds) {
-			((AlarmManager) context.getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getService(context, 0, new Intent(context, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
+			((AlarmManager) context.getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getService(context, 0, Sonet.getPackageIntent(context, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
 			context.getContentResolver().delete(Widgets.getContentUri(context), Widgets.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
 			context.getContentResolver().delete(Widget_accounts.getContentUri(context), Widget_accounts.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
 			Cursor statuses = context.getContentResolver().query(Statuses.getContentUri(context), new String[]{Statuses._ID}, Statuses.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
@@ -120,7 +119,7 @@ public class SonetWidget extends AppWidgetProvider {
 		} else if (intent.hasExtra(Sonet.Status_links.STATUS_ID)) {
 			statusId = intent.getStringExtra(Sonet.Status_links.STATUS_ID);		
 		}
-		context.startActivity(intent.setClass(context, StatusDialog.class).setData(Uri.withAppendedPath(Statuses_styles.getContentUri(context), statusId)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+		context.startActivity(intent.setClass(context, Sonet.getPackageClass(context, StatusDialog.class)).setData(Uri.withAppendedPath(Statuses_styles.getContentUri(context), statusId)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
 	}
 
 }

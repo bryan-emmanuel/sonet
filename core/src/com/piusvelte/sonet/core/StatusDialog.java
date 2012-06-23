@@ -143,7 +143,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 			.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					startActivityForResult(new Intent(getApplicationContext(), SonetCreatePost.class).putExtra(Widgets.INSTANT_UPLOAD, mFilePath), RESULT_REFRESH);
+					startActivityForResult(Sonet.getPackageIntent(getApplicationContext(), SonetCreatePost.class).putExtra(Widgets.INSTANT_UPLOAD, mFilePath), RESULT_REFRESH);
 					dialog.dismiss();
 				}
 			})
@@ -222,11 +222,11 @@ public class StatusDialog extends Activity implements OnClickListener {
 			if (mAppWidgetId != Sonet.INVALID_ACCOUNT_ID) {
 				// informational messages go to settings
 				mFinish = true;
-				startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 			} else {
 				(Toast.makeText(StatusDialog.this, "This widget is reloading. Please try again after it has completed or use the app to update the widget.", Toast.LENGTH_LONG)).show();
 				// force widgets rebuild
-				startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH));
+				startService(Sonet.getPackageIntent(this, SonetService.class).setAction(ACTION_REFRESH));
 				finish();
 			}
 		}
@@ -252,7 +252,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 						startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
 					}
 				} else {
-					startActivity(new Intent(this, SonetComments.class).setData(mData).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+					startActivity(Sonet.getPackageIntent(this, SonetComments.class).setData(mData).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 				}
 			} else {
 				(Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
@@ -267,7 +267,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 				} else if (mService == PINTEREST) {
 					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
 				} else {
-					startActivity(new Intent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(mAccount))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+					startActivity(Sonet.getPackageIntent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(mAccount))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 				}
 				dialog.cancel();
 			} else {
@@ -299,7 +299,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 								.setSingleChoiceItems(accounts, -1, new OnClickListener() {
 									@Override
 									public void onClick(DialogInterface arg0, int which) {
-										startActivity(new Intent(StatusDialog.this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(accountIndexes[which]))));
+										startActivity(Sonet.getPackageIntent(StatusDialog.this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(accountIndexes[which]))));
 										arg0.cancel();
 									}
 								})
@@ -335,7 +335,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 			break;
 		case SETTINGS:
 			if (mAppWidgetId != -1) {
-				startActivity(new Intent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 				dialog.cancel();
 			} else {
 				// no widget sent in, dialog to select one
@@ -345,7 +345,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 					.setItems(widgets, new OnClickListener() {
 						@Override
 						public void onClick(DialogInterface arg0, int arg1) {
-							startActivity(new Intent(StatusDialog.this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[arg1]));
+							startActivity(Sonet.getPackageIntent(StatusDialog.this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[arg1]));
 							arg0.cancel();
 						}					
 					})
@@ -365,12 +365,12 @@ public class StatusDialog extends Activity implements OnClickListener {
 			}
 			break;
 		case NOTIFICATIONS:
-			startActivity(new Intent(this, SonetNotifications.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+			startActivity(Sonet.getPackageIntent(this, SonetNotifications.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 			dialog.cancel();
 		case REFRESH:
 			if (mAppWidgetId != -1) {
 				(Toast.makeText(getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
-				startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
+				startService(Sonet.getPackageIntent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
 				dialog.cancel();
 			} else {
 				// no widget sent in, dialog to select one
@@ -381,7 +381,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 						@Override
 						public void onClick(DialogInterface arg0, int arg1) {
 							(Toast.makeText(StatusDialog.this.getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
-							startService(new Intent(StatusDialog.this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetIds[arg1]}));
+							startService(Sonet.getPackageIntent(StatusDialog.this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetIds[arg1]}));
 							arg0.cancel();
 						}					
 					})
@@ -390,7 +390,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 						public void onClick(DialogInterface arg0, int which) {
 							// refresh all
 							(Toast.makeText(StatusDialog.this.getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
-							startService(new Intent(StatusDialog.this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
+							startService(Sonet.getPackageIntent(StatusDialog.this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
 							arg0.cancel();
 						}
 					})

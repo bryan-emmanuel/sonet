@@ -652,6 +652,19 @@ public class Sonet {
 			return String.format("%s %d", Sonet.MONTHS[calendar.get(Calendar.MONTH)], calendar.get(Calendar.DATE));
 		}
 	}
+	
+	protected static Class getPackageClass(Context context, Class cls) {
+		try {
+			return Class.forName(context.getPackageName() + "." + cls.getSimpleName());
+		} catch (ClassNotFoundException e) {
+			Log.e(TAG, e.getMessage());
+		}
+		return cls;
+	}
+	
+	protected static Intent getPackageIntent(Context context, Class cls) {
+		return new Intent(context, getPackageClass(context, cls));
+	}
 
 	protected static int[] getWidgets(Context context, AppWidgetManager awm) {
 		int[] widgets = new int[0];

@@ -22,21 +22,21 @@
 	package="com.piusvelte.sonet.core" android:versionCode="312"
 	android:versionName="3.1.2">
 	<application android:icon="@drawable/icon" android:label="@string/app_name">
-		<activity android:name="com.piusvelte.sonet.core.About" android:label="@string/app_name">
+		<activity android:name=".About" android:label="@string/app_name">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 		</activity>
-		<activity android:name="com.piusvelte.sonet.core.ManageAccounts">
+		<activity android:name=".ManageAccounts">
 			<intent-filter>
 				<action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
 			</intent-filter>
 		</activity>
-		<activity android:name="com.piusvelte.sonet.core.Settings" />
-		<activity android:name="com.piusvelte.sonet.core.AccountSettings" />
-		<activity android:name="com.piusvelte.sonet.core.OAuthLogin" />
-		<activity android:name="com.piusvelte.sonet.core.SonetCreatePost">
+		<activity android:name=".Settings" />
+		<activity android:name=".AccountSettings" />
+		<activity android:name=".OAuthLogin" />
+		<activity android:name=".SonetCreatePost">
 		    <intent-filter>
 		        <action android:name="android.intent.action.SEND" />
 		        <category android:name="android.intent.category.DEFAULT" />
@@ -44,10 +44,10 @@
 		        <data android:mimeType="text/*" />
 		    </intent-filter>
 		</activity>
-		<activity android:name="com.piusvelte.sonet.core.SonetComments" />
-		<activity android:name="com.piusvelte.sonet.core.StatusDialog"
+		<activity android:name=".SonetComments" />
+		<activity android:name=".StatusDialog"
 			android:theme="@style/SonetDialog" android:clearTaskOnLaunch="true" android:taskAffinity="" />"
-		<activity android:name="com.piusvelte.sonet.core.SonetNotifications" android:clearTaskOnLaunch="true" android:taskAffinity="" />
+		<activity android:name=".SonetNotifications" android:clearTaskOnLaunch="true" android:taskAffinity="" />
 		<activity android:name="com.google.ads.AdActivity"
 			android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
 		<!-- Broadcast Receiver that will process AppWidget updates -->
@@ -56,18 +56,17 @@
 				<action android:name="com.piusvelte.sonet.Sonet.REFRESH" />
 			</intent-filter>
 		</receiver>
-		<service android:name="com.piusvelte.sonet.core.SonetService" />
-		<service android:name="com.piusvelte.sonet.core.SonetScrollableBuilder" />
-		<service android:name="com.piusvelte.sonet.core.SonetUploader" />
-		<receiver android:name="com.piusvelte.sonet.core.SonetSMSReceiver">
+		<service android:name=".SonetService" />
+		<service android:name=".SonetUploader" />
+		<receiver android:name=".SonetSMSReceiver">
 			<intent-filter>
 				<action android:name="android.provider.Telephony.SMS_RECEIVED" />
 			</intent-filter>
 		</receiver>
-        <service android:name="com.piusvelte.sonet.core.SonetRemoteViewsService"
+        <service android:name=".SonetRemoteViewsService"
             android:permission="android.permission.BIND_REMOTEVIEWS"
             android:exported="false" />
-		<provider android:name="com.piusvelte.sonet.core.SonetProvider" android:authorities="com.piusvelte.sonet.SonetProvider;com.piusvelte.sonetpro.SonetProvider"
+		<provider android:name=".SonetProvider" android:authorities="com.piusvelte.sonet.SonetProvider;com.piusvelte.sonetpro.SonetProvider"
 			android:multiprocess="true" android:grantUriPermissions="true" />
 	</application>
 
