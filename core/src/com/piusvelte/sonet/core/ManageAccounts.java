@@ -284,6 +284,7 @@ public class ManageAccounts extends ActionBarListActivity implements DialogInter
 			getContentResolver().delete(Statuses.getContentUri(this), Statuses.ACCOUNT + "=?", new String[]{accountId});
 			getContentResolver().delete(Widget_accounts.getContentUri(this), Widget_accounts.ACCOUNT + "=?", new String[]{accountId});
 			getContentResolver().delete(Notifications.getContentUri(this), Notifications.ACCOUNT + "=?", new String[]{accountId});
+			listAccounts();
 		}
 		return super.onContextItemSelected(item);
 	}
@@ -293,60 +294,6 @@ public class ManageAccounts extends ActionBarListActivity implements DialogInter
 		super.onResume();
 		listAccounts();
 		mAddingAccount = false;
-		// don't need to migrate widgets now
-//		// check for old settings and offer to load them for restoring a previous widget
-//		int appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
-//		Cursor widgets = getContentResolver().query(Widgets.getContentUri(this), new String[] {Widgets._ID, Widgets.WIDGET}, Widgets.ACCOUNT + "=?", new String[] { Long.toString(Sonet.INVALID_ACCOUNT_ID) }, null);
-//		if (widgets.moveToFirst()) {
-//			int[] appWidgetIds = Sonet.getWidgets(getApplicationContext(), AppWidgetManager.getInstance(getApplicationContext()));
-//			Log.d(TAG, "launcher reports, " + appWidgetIds.length + " widgets");
-//			int iwidget = widgets.getColumnIndex(Widgets.WIDGET);
-//			while (!widgets.isAfterLast()) {
-//				appWidgetId = widgets.getInt(iwidget);
-//				Log.d(TAG, "test stored widget: " + appWidgetId);
-//				if ((appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) && !Sonet.arrayContains(appWidgetIds, appWidgetId))
-//					break;
-//				appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
-//				widgets.moveToNext();
-//			}
-//		}
-//		widgets.close();
-//		if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-//			mDialog = (new AlertDialog.Builder(this))
-//					.setTitle(Integer.toString(appWidgetId))
-//					.setMessage(R.string.widget_load_msg)
-//					.setPositiveButton(R.string.load, new DialogInterface.OnClickListener() {
-//						@Override
-//						public void onClick(DialogInterface dialog, int which) {
-//							TextView titleView = (TextView) mDialog.findViewById(android.R.id.title);
-//							int appWidgetId = Integer.parseInt(titleView.getText().toString());
-//							// load widget
-//							Log.d(TAG, "load widget: " + appWidgetId + ", into: " + mAppWidgetId);
-//							ContentValues values = new ContentValues();
-//							values.put(Widgets.WIDGET, appWidgetId);
-//							getContentResolver().update(Widgets.getContentUri(ManageAccounts.this), values, Widgets.WIDGET + "=?", new String[] { Integer.toString(mAppWidgetId) });
-//							values.clear();
-//							values.put(Widget_accounts.WIDGET, appWidgetId);
-//							getContentResolver().update(Widget_accounts.getContentUri(ManageAccounts.this), values, Widget_accounts.WIDGET + "=?", new String[] { Integer.toString(mAppWidgetId) });
-//							values.clear();
-//							values.put(Statuses.WIDGET, appWidgetId);
-//							getContentResolver().update(Statuses.getContentUri(ManageAccounts.this), values, Statuses.WIDGET + "=?", new String[] { Integer.toString(mAppWidgetId) });
-//							listAccounts();
-//						}})
-//					.setNegativeButton(R.string.delete, new DialogInterface.OnClickListener() {
-//						@Override
-//						public void onClick(DialogInterface dialog, int which) {
-//							TextView titleView = (TextView) mDialog.findViewById(android.R.id.title);
-//							String appWidgetId = titleView.getText().toString();
-//							// remove unused widget
-//							getContentResolver().delete(Widgets.getContentUri(ManageAccounts.this), Widgets.WIDGET + "=?", new String[] {appWidgetId});
-//							getContentResolver().delete(Widget_accounts.getContentUri(ManageAccounts.this), Widget_accounts.WIDGET + "=?", new String[] {appWidgetId});
-//							getContentResolver().delete(Statuses.getContentUri(ManageAccounts.this), Statuses.WIDGET + "=?", new String[] {appWidgetId});
-//						}
-//					})
-//					.create();
-//			mDialog.show();
-//		}
 	}
 
 	@Override

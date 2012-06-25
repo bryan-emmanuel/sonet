@@ -78,6 +78,7 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -357,17 +358,16 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		boolean result = super.onCreateOptionsMenu(menu);
-		menu.add(0, Menu.FIRST, 0, getString(R.string.button_refresh)).setIcon(android.R.drawable.ic_menu_rotate);
-		return result;
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.menu_notifications, menu);
+		return super.onCreateOptionsMenu(menu);
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case Menu.FIRST:
+		int itemId = item.getItemId();
+		if (itemId == R.id.menu_comments_refresh) {
 			loadComments();
-			return true;
 		}
 		return super.onOptionsItemSelected(item);
 	}

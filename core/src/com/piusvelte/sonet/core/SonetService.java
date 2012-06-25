@@ -525,12 +525,11 @@ public class SonetService extends Service {
 				// About.java will send an invalid appwidget id
 				if ((appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) || Sonet.arrayContains(awi, appWidgetId)) {
 					putNewUpdate(appWidgetId, reload);
-				// don't remove old widgets,
-				// instead, allow a user to load them into a new widget
-//				} else {
-//					getContentResolver().delete(Widgets.getContentUri(SonetService.this), Widgets.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
-//					getContentResolver().delete(Widget_accounts.getContentUri(SonetService.this), Widget_accounts.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
-//					getContentResolver().delete(Statuses.getContentUri(SonetService.this), Statuses.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
+				} else {
+					// remove phantom widgets
+					getContentResolver().delete(Widgets.getContentUri(SonetService.this), Widgets.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
+					getContentResolver().delete(Widget_accounts.getContentUri(SonetService.this), Widget_accounts.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
+					getContentResolver().delete(Statuses.getContentUri(SonetService.this), Statuses.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
 				}
 			}
 		} else if ((awi != null) && (awi.length > 0)) {

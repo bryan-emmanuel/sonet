@@ -157,7 +157,7 @@ containing a value of this type.
         public static final int background_update=0x7f080025;
         public static final int bg_clear=0x7f08002b;
         public static final int bg_clear0=0x7f080036;
-        public static final int button_add_account=0x7f080051;
+        public static final int button_add_account=0x7f080052;
         public static final int button_configure=0x7f08002e;
         public static final int button_post=0x7f08002d;
         public static final int button_refresh=0x7f08002f;
@@ -172,7 +172,7 @@ containing a value of this type.
         public static final int created0=0x7f08003c;
         public static final int created_color=0x7f08000d;
         public static final int created_textsize=0x7f08000e;
-        public static final int default_widget_settings=0x7f080050;
+        public static final int default_widget_settings=0x7f080051;
         public static final int display_profile=0x7f080026;
         public static final int empty_messages=0x7f080048;
         public static final int friend=0x7f080015;
@@ -204,8 +204,9 @@ containing a value of this type.
         public static final int menu_about_refresh=0x7f080049;
         public static final int menu_about_refresh_widgets=0x7f08004b;
         public static final int menu_about_widget_settings=0x7f08004e;
-        public static final int menu_notifications_clear_all=0x7f080053;
-        public static final int menu_notifications_refresh=0x7f080052;
+        public static final int menu_comments_refresh=0x7f080050;
+        public static final int menu_notifications_clear_all=0x7f080054;
+        public static final int menu_notifications_refresh=0x7f080053;
         public static final int menu_refresh=0x7f080004;
         public static final int message=0x7f080017;
         public static final int message0=0x7f08003d;
@@ -263,8 +264,9 @@ containing a value of this type.
     }
     public static final class menu {
         public static final int menu_about=0x7f0b0000;
-        public static final int menu_manageaccounts=0x7f0b0001;
-        public static final int menu_notifications=0x7f0b0002;
+        public static final int menu_comments=0x7f0b0001;
+        public static final int menu_manageaccounts=0x7f0b0002;
+        public static final int menu_notifications=0x7f0b0003;
     }
     public static final class string {
         public static final int about=0x7f090039;

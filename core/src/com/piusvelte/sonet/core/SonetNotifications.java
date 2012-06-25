@@ -77,8 +77,6 @@ public class SonetNotifications extends ListActivity {
 	// list the current notifications
 	// check for cache versions in statuses first, falling back on reloading them from the service
 	private static final int CLEAR = 1;
-	private static final int REFRESH = 2;
-	private static final int CLEAR_ALL = 3;
 	private static final String TAG = "SonetNotifications";
 	private SonetCrypto mSonetCrypto;
 	private SimpleDateFormat mSimpleDateFormat = null;
