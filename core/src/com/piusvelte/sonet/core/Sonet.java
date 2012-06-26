@@ -339,6 +339,14 @@ public class Sonet {
 	protected static final boolean default_include_profile = true;
 	protected static final int default_margin = 0;
 	protected static final int default_friend_bg_color = 0x88000000;
+	protected static final boolean default_hasButtons = false;
+	protected static final boolean default_time24hr = false;
+	protected static final boolean default_hasIcon = true;
+	protected static final boolean default_backgroundUpdate = true;
+	protected static final boolean default_sound = false;
+	protected static final boolean default_vibrate = false;
+	protected static final boolean default_lights = false;
+	protected static final boolean default_instantUpload = false;
 
 	public Sonet() {
 	}

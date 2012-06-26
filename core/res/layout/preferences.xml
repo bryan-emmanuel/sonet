@@ -22,58 +22,46 @@
 	android:layout_width="fill_parent" android:layout_height="fill_parent">
 	<LinearLayout android:id="@+id/ad" android:layout_width="fill_parent"
 		android:layout_height="wrap_content" />
-	<ScrollView android:layout_below="@id/ad" android:layout_width="fill_parent" android:layout_height="wrap_content">
-		<LinearLayout
-			android:layout_width="fill_parent" android:layout_height="fill_parent"
-			android:orientation="vertical">
-			<Button android:id="@+id/interval" android:text="@string/interval"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
-			<Button android:id="@+id/statuses_per_account" android:text="@string/statuses_per_account"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
-			<CheckBox android:id="@+id/hasbuttons" android:text="@string/hasbuttons"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
-			<Button android:id="@+id/buttons_bg_color" android:text="@string/buttons_bg_color"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
-			<Button android:id="@+id/buttons_color" android:text="@string/buttons_color"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
-			<Button android:id="@+id/buttons_textsize" android:text="@string/buttons_textsize"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
-			<Button android:id="@+id/messages_bg_color" android:text="@string/message_bg_color"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
-			<Button android:id="@+id/messages_color" android:text="@string/message_color"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
-			<Button android:id="@+id/messages_textsize" android:text="@string/messages_textsize"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
-			<Button android:id="@+id/friend_color" android:text="@string/friend_color"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
-			<Button android:id="@+id/friend_textsize" android:text="@string/friend_textsize"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
-			<Button android:id="@+id/friend_bg_color" android:text="@string/friend_bg_color"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
-			<Button android:id="@+id/created_color" android:text="@string/created_color"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
-			<Button android:id="@+id/created_textsize" android:text="@string/created_textsize"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
-			<CheckBox android:id="@+id/time24hr" android:text="@string/time24hr"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
-			<CheckBox android:id="@+id/icon" android:text="@string/icon"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="true" />
-			<CheckBox android:id="@+id/background_update" android:text="@string/background_update"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="true" />
-			<CheckBox android:id="@+id/sound" android:text="@string/sound"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
-			<CheckBox android:id="@+id/vibrate" android:text="@string/vibrate"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
-			<CheckBox android:id="@+id/lights" android:text="@string/lights"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
-			<CheckBox android:id="@+id/display_profile" android:text="@string/display_profile"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="true" />
-			<Button android:id="@+id/profile_bg_color" android:text="@string/profile_bg_color"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
-			<CheckBox android:id="@+id/instantupload" android:text="@string/instantupload"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
-			<Button android:id="@+id/margin" android:text="@string/margin"
-				android:layout_width="fill_parent" android:layout_height="wrap_content" />
-		</LinearLayout>
-	</ScrollView>
+	<Button android:id="@+id/settings_update" android:layout_height="wrap_content"
+	    android:layout_width="fill_parent" android:text="@string/settings_update"
+	    android:layout_below="@id/ad" />
+	<Button android:id="@+id/settings_notification" android:layout_height="wrap_content"
+	    android:layout_width="fill_parent" android:text="@string/settings_notification"
+	    android:layout_below="@id/settings_update" />
+	<CheckBox android:id="@+id/instantupload" android:text="@string/instantupload"
+		android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false"
+		android:layout_below="@id/settings_notification" />
+	<Button android:id="@+id/margin" android:text="@string/margin"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:layout_below="@id/instantupload" />
+	<Button android:id="@+id/settings_buttons" android:layout_height="wrap_content"
+	    android:layout_width="fill_parent" android:text="@string/settings_buttons"
+	    android:layout_below="@id/margin" />
+	<LinearLayout android:id="@+id/settings_name_and_time" android:layout_height="wrap_content"
+	    android:layout_width="fill_parent" android:orientation="horizontal" android:weightSum="1"
+	    android:layout_below="@id/settings_buttons" >
+	    <Button android:id="@+id/settings_name" android:layout_height="wrap_content"
+	        android:layout_width="0dp" android:layout_weight=".5" android:text="@string/settings_name"
+	        android:gravity="left|center_vertical" />
+	    <Button android:id="@+id/settings_time" android:layout_height="wrap_content"
+	        android:layout_width="0dp" android:layout_weight=".5" android:text="@string/settings_time"
+	        android:gravity="right|center_vertical" />
+	</LinearLayout>
+	<ImageButton android:id="@+id/settings_profile" android:layout_height="fill_parent"
+	    android:layout_width="48dip" android:layout_alignParentLeft="true"
+	    android:scaleType="fitStart" android:layout_below="@id/settings_name_and_time"
+	    android:src="@drawable/ic_contact_picture" />
+	<Button android:id="@+id/settings_message" android:layout_height="fill_parent"
+	    android:layout_width="fill_parent" android:layout_alignParentRight="true"
+	    android:layout_toRightOf="@id/settings_profile" android:layout_below="@id/settings_name_and_time"
+	    android:text="@string/settings_message" />
+    <ImageView
+        android:id="@+id/icon"
+        android:layout_width="16dip"
+        android:layout_height="16dip"
+        android:layout_alignBottom="@id/settings_message"
+        android:layout_alignParentRight="true"
+        android:paddingBottom="4dip"
+        android:paddingRight="4dip"
+        android:src="@drawable/icon" />
 </RelativeLayout>

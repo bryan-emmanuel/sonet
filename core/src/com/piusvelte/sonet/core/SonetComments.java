@@ -420,15 +420,11 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							setCommentStatus(0, getString(R.string.loading));
 							asyncTask.execute();
 						} else {
-							if ((which < items.length) && (items[which] != null)) {
+							if ((which < items.length) && (items[which] != null))
 								// open link
-								Matcher m = Sonet.getLinksMatcher(items[which]);
-								if (m.find()) {
-									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(m.group())));
-								}
-							} else {
+								startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
+							else
 								(Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-							}
 						}
 					}
 				})
@@ -476,15 +472,11 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							setCommentStatus(position, getString(R.string.loading));
 							asyncTask.execute();
 						} else {
-							if ((which < items.length) && (items[which] != null)) {
+							if ((which < items.length) && (items[which] != null))
 								// open link
-								Matcher m = Sonet.getLinksMatcher(items[which]);
-								if (m.find()) {
-									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(m.group())));
-								}
-							} else {
+								startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
+							else
 								(Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-							}
 						}
 					}
 				})
@@ -536,15 +528,11 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 								setCommentStatus(position, getString(R.string.loading));
 								asyncTask.execute();
 							} else {
-								if ((which < items.length) && (items[which] != null)) {
+								if ((which < items.length) && (items[which] != null))
 									// open link
-									Matcher m = Sonet.getLinksMatcher(items[which]);
-									if (m.find()) {
-										startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(m.group())));
-									}
-								} else {
+									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
+								else
 									(Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-								}
 							}
 						}
 					})
@@ -564,15 +552,11 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					.setItems(items, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
-							if ((which < items.length) && (items[which] != null)) {
+							if ((which < items.length) && (items[which] != null))
 								// open link
-								Matcher m = Sonet.getLinksMatcher(items[which]);
-								if (m.find()) {
-									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(m.group())));
-								}
-							} else {
+								startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
+							else
 								(Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-							}
 						}
 					})
 					.setCancelable(true)
@@ -614,15 +598,11 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							setCommentStatus(0, getString(R.string.loading));
 							asyncTask.execute();
 						} else {
-							if ((which < items.length) && (items[which] != null)) {
+							if ((which < items.length) && (items[which] != null))
 								// open link
-								Matcher m = Sonet.getLinksMatcher(items[which]);
-								if (m.find()) {
-									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(m.group())));
-								}
-							} else {
+								startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
+							else
 								(Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-							}
 						}
 					}
 				})
@@ -644,15 +624,11 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 				.setItems(items, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
-						if ((which < items.length) && (items[which] != null)) {
+						if ((which < items.length) && (items[which] != null))
 							// open link
-							Matcher m = Sonet.getLinksMatcher(items[which]);
-							if (m.find()) {
-								startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(m.group())));
-							}
-						} else {
+							startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
+						else
 							(Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-						}
 					}
 				})
 				.setCancelable(true)
@@ -701,15 +677,11 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 								setCommentStatus(position, getString(R.string.loading));
 								asyncTask.execute();
 							} else {
-								if ((which < items.length) && (items[which] != null)) {
+								if ((which < items.length) && (items[which] != null))
 									// open link
-									Matcher m = Sonet.getLinksMatcher(items[which]);
-									if (m.find()) {
-										startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(m.group())));
-									}
-								} else {
+									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
+								else
 									(Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-								}
 							}
 						}
 					})
@@ -729,15 +701,11 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					.setItems(items, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
-							if ((which < items.length) && (items[which] != null)) {
+							if ((which < items.length) && (items[which] != null))
 								// open link
-								Matcher m = Sonet.getLinksMatcher(items[which]);
-								if (m.find()) {
-									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(m.group())));
-								}
-							} else {
+								startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
+							else
 								(Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-							}
 						}
 					})
 					.setCancelable(true)

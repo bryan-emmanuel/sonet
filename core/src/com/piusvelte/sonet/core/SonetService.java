@@ -1034,13 +1034,11 @@ public class SonetService extends Service {
 		private void addStatusItem(long created, String friend, String url, String message, int service, boolean time24hr, int appWidgetId, long accountId, String sid, String esid, ArrayList<String[]> links, HttpClient httpClient) {
 			long id;
 			byte[] profile = null;
-			if (url != null) {
+			if (url != null)
 				// get profile
 				profile = SonetHttpClient.httpBlobResponse(httpClient, new HttpGet(url));
-			}
-			if (profile == null) {
+			if (profile == null)
 				profile = getBlob(getResources(), R.drawable.ic_contact_picture);
-			}
 			// facebook wall post handling
 			String friend_override = null;
 			if ((service == FACEBOOK) && friend.indexOf(">") > 0) {
@@ -1048,9 +1046,9 @@ public class SonetService extends Service {
 				friend = friend.substring(0, friend.indexOf(">") - 1);
 			}
 			Cursor entity = getContentResolver().query(Entities.getContentUri(SonetService.this), new String[]{Entities._ID}, Entities.ACCOUNT + "=? and " + Entities.ESID + "=?", new String[]{Long.toString(accountId), mSonetCrypto.Encrypt(esid)}, null);
-			if (entity.moveToFirst()) {
+			if (entity.moveToFirst())
 				id = entity.getLong(0);
-			} else {
+			else {
 				ContentValues entityValues = new ContentValues();
 				entityValues.put(Entities.ESID, esid);
 				entityValues.put(Entities.FRIEND, friend);
@@ -1069,7 +1067,6 @@ public class SonetService extends Service {
 			// update the account statuses
 
 			// parse any links
-			//			if ((service != TWITTER) && (service != IDENTICA)) {
 			Matcher m = Pattern.compile("\\bhttp(s)?://\\S+\\b", Pattern.CASE_INSENSITIVE).matcher(message);
 			StringBuffer sb = new StringBuffer(message.length());
 			while (m.find()) {
@@ -1084,14 +1081,12 @@ public class SonetService extends Service {
 				}
 				if (!exists) {
 					links.add(new String[]{Slink, link});
-					if ((service != TWITTER) && (service != IDENTICA)) {
+					if ((service != TWITTER) && (service != IDENTICA))
 						m.appendReplacement(sb, "(" + Slink + ": " + Uri.parse(link).getHost() + ")");
-					}
 				}
 			}
 			m.appendTail(sb);
 			message = sb.toString();
-			//			}
 			ContentValues values = new ContentValues();
 			values.put(Statuses.CREATED, created);
 			values.put(Statuses.ENTITY, id);
@@ -1474,14 +1469,12 @@ public class SonetService extends Service {
 									esid = friendObj.getString(Sid);
 									sid = statusObj.getString(Sid);
 									StringBuilder message = new StringBuilder();
-									if (statusObj.has(Smessage)) {
+									if (statusObj.has(Smessage))
 										message.append(statusObj.getString(Smessage));
-									} else if (statusObj.has(Sstory)) {
+									else if (statusObj.has(Sstory))
 										message.append(statusObj.getString(Sstory));
-									}
-									if (statusObj.has(Spicture)) {
+									if (statusObj.has(Spicture))
 										links.add(new String[]{Spicture, statusObj.getString(Spicture)});
-									}
 									if (statusObj.has(Slink)) {
 										links.add(new String[]{statusObj.getString(Stype), statusObj.getString(Slink)});
 										if (!statusObj.has(Spicture) || !statusObj.getString(Stype).equals(Sphoto)) {

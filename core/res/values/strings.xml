@@ -132,11 +132,21 @@
 	<string name="friendcommented">%s commented on a status</string>
 	<string name="instantupload">Upload new photos automatically</string>
 	<string name="uploadprompt">Sonet: Upload photo?</string>
-	<string name="margin">Widget Margin</string>
+	<string name="margin">Margin</string>
 	<string name="googleplusbeta">Google\u002B currently allows reading of your own public posts only. Comments are not provided yet by Google. As new features are available from Google, they will be included in Sonet.</string>
 	<string name="less_than">\u0020\u003c\u003c\u0020</string>
 	<string name="greater_than">\u0020\u003e\u003e\u0020</string>
 	<string name="load">Load</string>
 	<string name="delete">Delete</string>
 	<string name="widget_load_msg">There are settings for a Sonet widget which is no longer in use. Would you like to load those settings now, or delete those settings?</string>
+	<string name="open_picture">Open picture (%s)</string>
+	<string name="open_page">Open page (%s)</string>
+	<string name="open_link">Open link (%s)</string>
+	<string name="settings_buttons">Buttons</string>
+	<string name="settings_name">Name</string>
+	<string name="settings_time">Time</string>
+	<string name="settings_message">Message</string>
+	<string name="settings_notification">Notification</string>
+	<string name="settings_update">Update</string>
+	<string name="settings_profile">Profile</string>
 </resources>

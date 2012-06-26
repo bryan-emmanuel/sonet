@@ -28,20 +28,26 @@ import com.piusvelte.sonet.core.Sonet.Widgets_settings;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.WallpaperManager;
 import android.appwidget.AppWidgetManager;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 
-public class AccountSettings extends Activity implements View.OnClickListener, OnCheckedChangeListener {
+public class AccountSettings extends Activity implements View.OnClickListener {
 	private int mMessages_bg_color_value = Sonet.default_message_bg_color,
 	mMessages_color_value = Sonet.default_message_color,
 	mMessages_textsize_value = Sonet.default_messages_textsize,
@@ -51,25 +57,24 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 	mCreated_textsize_value = Sonet.default_created_textsize,
 	mStatuses_per_account_value = Sonet.default_statuses_per_account,
 	mProfiles_bg_color_value = Sonet.default_message_bg_color,
-	mFriend_bg_color_value = Sonet.default_friend_bg_color;
-	private Button mMessages_bg_color;
-	private Button mMessages_color;
-	private Button mMessages_textsize;
-	private Button mFriend_color;
-	private Button mFriend_textsize;
-	private Button mCreated_color;
-	private Button mCreated_textsize;
-	private CheckBox mTime24hr;
-	private CheckBox mIcon;
+	mFriend_bg_color_value = Sonet.default_friend_bg_color,
+	mScrollable_version = 0;
+	private boolean mTime24hr_value = Sonet.default_time24hr,
+			mIcon_value = Sonet.default_hasIcon,
+			mSound_value = Sonet.default_sound,
+			mVibrate_value = Sonet.default_vibrate,
+			mLights_value = Sonet.default_lights,
+			mDisplay_profile_value = Sonet.default_include_profile;
 	private Button mStatuses_per_account;
+	private Button mBtn_notification;
+	private Button mBtn_name;
+	private Button mBtn_time;
+	private ImageButton mBtn_profile;
+	private Button mBtn_message;
 	private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 	private long mAccountId = Sonet.INVALID_ACCOUNT_ID;
 	private String mWidgetAccountSettingsId = null;
-	private CheckBox mSound;
-	private CheckBox mVibrate;
-	private CheckBox mLights;
-	private Button mProfiles_bg_color;
-	private Button mFriend_bg_color;
+	private Dialog mDialog;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -89,23 +94,16 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 			mAccountId = i.getLongExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID);
 		}
 
-		mMessages_bg_color = (Button) findViewById(R.id.messages_bg_color);
-		mMessages_color = (Button) findViewById(R.id.messages_color);
-		mMessages_textsize = (Button) findViewById(R.id.messages_textsize);
-		mFriend_color = (Button) findViewById(R.id.friend_color);
-		mFriend_textsize = (Button) findViewById(R.id.friend_textsize);
-		mCreated_color = (Button) findViewById(R.id.created_color);
-		mCreated_textsize = (Button) findViewById(R.id.created_textsize);
-		mTime24hr = (CheckBox) findViewById(R.id.time24hr);
-		mIcon = (CheckBox) findViewById(R.id.icon);
 		mStatuses_per_account = (Button) findViewById(R.id.statuses_per_account);
-		mSound = (CheckBox) findViewById(R.id.sound);
-		mVibrate = (CheckBox) findViewById(R.id.vibrate);
-		mLights = (CheckBox) findViewById(R.id.lights);
-		mProfiles_bg_color = (Button) findViewById(R.id.profile_bg_color);
-		mFriend_bg_color = (Button) findViewById(R.id.friend_bg_color);
+		mBtn_notification = (Button) findViewById(R.id.settings_notification);
+		mBtn_name = (Button) findViewById(R.id.settings_name);
+		mBtn_time = (Button) findViewById(R.id.settings_time);
+		mBtn_profile = (ImageButton) findViewById(R.id.settings_profile);
+		mBtn_message = (Button) findViewById(R.id.settings_message);
 
-		int scrollableVersion = 0;
+		Drawable wp = WallpaperManager.getInstance(getApplicationContext()).getDrawable();
+		if (wp != null)
+			findViewById(R.id.ad).getRootView().setBackgroundDrawable(wp);
 
 		// get this account/widgets settings, falling back on the defaults...
 		Cursor c = this.getContentResolver().query(Widgets_settings.getContentUri(this), new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SCROLLABLE, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(mAccountId)}, null);
@@ -147,44 +145,40 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 			mFriend_textsize_value = c.getInt(4);
 			mCreated_color_value = c.getInt(5);
 			mCreated_textsize_value = c.getInt(6);
-			mTime24hr.setChecked(c.getInt(7) == 1);
+			mTime24hr_value = c.getInt(7) == 1;
 			mMessages_bg_color_value = c.getInt(8);
-			mIcon.setChecked(c.getInt(9) == 1);
+			mIcon_value = c.getInt(9) == 1;
 			mStatuses_per_account_value = c.getInt(10);
-			scrollableVersion = c.getInt(11);
-			mSound.setChecked(c.getInt(12) == 1);
-			mVibrate.setChecked(c.getInt(13) == 1);
-			mLights.setChecked(c.getInt(14) == 1);
+			mScrollable_version = c.getInt(11);
+			mSound_value = c.getInt(12) == 1;
+			mVibrate_value = c.getInt(13) == 1;
+			mLights_value = c.getInt(14) == 1;
 			mProfiles_bg_color_value = c.getInt(15);
 			mFriend_bg_color_value = c.getInt(16);
 		}
 		c.close();
 
-		mMessages_bg_color.setOnClickListener(this);
-		mTime24hr.setOnCheckedChangeListener(this);
-		mIcon.setOnCheckedChangeListener(this);
 		mStatuses_per_account.setOnClickListener(this);
-		mSound.setOnCheckedChangeListener(this);
-		mVibrate.setOnCheckedChangeListener(this);
-		mLights.setOnCheckedChangeListener(this);
-		mProfiles_bg_color.setOnClickListener(this);
-		mFriend_bg_color.setOnClickListener(this);
+		
+		mBtn_notification.setOnClickListener(this);
+		
+		mBtn_name.setBackgroundColor(mFriend_bg_color_value);
+		mBtn_name.setTextColor(mFriend_color_value);
+		mBtn_name.setTextSize(mFriend_textsize_value);
+		mBtn_name.setOnClickListener(this);
 
-		if (scrollableVersion == 1) {
-			mMessages_color.setEnabled(false);
-			mMessages_textsize.setEnabled(false);
-			mFriend_color.setEnabled(false);
-			mFriend_textsize.setEnabled(false);
-			mCreated_color.setEnabled(false);
-			mCreated_textsize.setEnabled(false);			
-		} else {
-			mMessages_color.setOnClickListener(this);
-			mMessages_textsize.setOnClickListener(this);
-			mFriend_color.setOnClickListener(this);
-			mFriend_textsize.setOnClickListener(this);
-			mCreated_color.setOnClickListener(this);
-			mCreated_textsize.setOnClickListener(this);			
-		}
+		mBtn_time.setBackgroundColor(mFriend_bg_color_value);
+		mBtn_time.setTextColor(mCreated_color_value);
+		mBtn_time.setTextSize(mCreated_textsize_value);
+		mBtn_time.setOnClickListener(this);
+
+		mBtn_profile.setBackgroundColor(mProfiles_bg_color_value);
+		mBtn_profile.setOnClickListener(this);
+
+		mBtn_message.setBackgroundColor(mMessages_bg_color_value);
+		mBtn_message.setTextColor(mMessages_color_value);
+		mBtn_message.setTextSize(mMessages_textsize_value);
+		mBtn_message.setOnClickListener(this);
 
 	}
 
@@ -195,187 +189,404 @@ public class AccountSettings extends Activity implements View.OnClickListener, O
 		setResult(RESULT_OK);
 	}
 
-	ColorPickerDialog.OnColorChangedListener mBodyBackgroundColorListener =
-		new ColorPickerDialog.OnColorChangedListener() {
-
-		public void colorChanged(int color) {
-			AccountSettings.this.mMessages_bg_color_value = color;
-			updateDatabase(Widgets.MESSAGES_BG_COLOR, color);
-		}
-
-		public void colorUpdate(int color) {}
-	};
-
-	ColorPickerDialog.OnColorChangedListener mBodyTextColorListener =
-		new ColorPickerDialog.OnColorChangedListener() {
-
-		public void colorChanged(int color) {
-			AccountSettings.this.mMessages_color_value = color;
-			updateDatabase(Widgets.MESSAGES_COLOR, color);
-		}
-
-		public void colorUpdate(int color) {}
-	};
-
-	ColorPickerDialog.OnColorChangedListener mFriendTextColorListener =
-		new ColorPickerDialog.OnColorChangedListener() {
-
-		public void colorChanged(int color) {
-			AccountSettings.this.mFriend_color_value = color;
-			updateDatabase(Widgets.FRIEND_COLOR, color);
-		}
-
-		public void colorUpdate(int color) {}
-	};
-
-	ColorPickerDialog.OnColorChangedListener mCreatedTextColorListener =
-		new ColorPickerDialog.OnColorChangedListener() {
-
-		public void colorChanged(int color) {
-			AccountSettings.this.mCreated_color_value = color;
-			updateDatabase(Widgets.CREATED_COLOR, color);
-		}
-
-		public void colorUpdate(int color) {}
-	};
-
-	ColorPickerDialog.OnColorChangedListener mProfileBackgroundColorListener =
-		new ColorPickerDialog.OnColorChangedListener() {
-
-		public void colorChanged(int color) {
-			AccountSettings.this.mProfiles_bg_color_value = color;
-			updateDatabase(Widgets.PROFILES_BG_COLOR, color);
-		}
-
-		public void colorUpdate(int color) {}
-	};
-
-	ColorPickerDialog.OnColorChangedListener mFriendBackgroundColorListener =
-		new ColorPickerDialog.OnColorChangedListener() {
-
-		public void colorChanged(int color) {
-			AccountSettings.this.mFriend_bg_color_value = color;
-			updateDatabase(Widgets.FRIEND_BG_COLOR, color);
-		}
-
-		public void colorUpdate(int color) {}
-	};
-
 	@Override
 	public void onClick(View v) {
-		if (v == mMessages_bg_color) {
-			ColorPickerDialog cp = new ColorPickerDialog(this, mBodyBackgroundColorListener, this.mMessages_bg_color_value);
-			cp.show();
-		} else if (v == mMessages_color) {
-			ColorPickerDialog cp = new ColorPickerDialog(this, mBodyTextColorListener, this.mMessages_color_value);
-			cp.show();
-		} else if (v == mMessages_textsize) {
-			int index = 0;
-			String[] values = getResources().getStringArray(R.array.textsize_values);
-			for (int i = 0; i < values.length; i++) {
-				if (Integer.parseInt(values[i]) == this.mMessages_textsize_value) {
-					index = i;
-					break;
-				}
-			}
-			(new AlertDialog.Builder(this))
-			.setSingleChoiceItems(R.array.textsize_entries, index, new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					AccountSettings.this.mMessages_textsize_value = Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]);
-					updateDatabase(Widgets.MESSAGES_TEXTSIZE, mMessages_textsize_value);
-					dialog.cancel();
-				}
-			})
-			.setCancelable(true)
-			.show();			
-		} else if (v == mFriend_color) {
-			ColorPickerDialog cp = new ColorPickerDialog(this, mFriendTextColorListener, this.mFriend_color_value);
-			cp.show();
-		} else if (v == mFriend_textsize) {
-			int index = 0;
-			String[] values = getResources().getStringArray(R.array.textsize_values);
-			for (int i = 0; i < values.length; i++) {
-				if (Integer.parseInt(values[i]) == this.mFriend_textsize_value) {
-					index = i;
-					break;
-				}
-			}
-			(new AlertDialog.Builder(this))
-			.setSingleChoiceItems(R.array.textsize_entries, index, new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					AccountSettings.this.mFriend_textsize_value = Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]);
-					updateDatabase(Widgets.FRIEND_TEXTSIZE, mFriend_textsize_value);
-					dialog.cancel();
-				}
-			})
-			.setCancelable(true)
-			.show();			
-		} else if (v == mCreated_color) {
-			ColorPickerDialog cp = new ColorPickerDialog(this, mCreatedTextColorListener, this.mCreated_color_value);
-			cp.show();
-		} else if (v == mCreated_textsize) {
-			int index = 0;
-			String[] values = getResources().getStringArray(R.array.textsize_values);
-			for (int i = 0; i < values.length; i++) {
-				if (Integer.parseInt(values[i]) == this.mCreated_textsize_value) {
-					index = i;
-					break;
-				}
-			}
-			(new AlertDialog.Builder(this))
-			.setSingleChoiceItems(R.array.textsize_entries, index, new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					AccountSettings.this.mCreated_textsize_value = Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]);
-					updateDatabase(Widgets.CREATED_TEXTSIZE, mCreated_textsize_value);
-					dialog.cancel();
-				}
-			})
-			.setCancelable(true)
-			.show();			
-		} else if (v == mStatuses_per_account) {
+		if (v == mStatuses_per_account) {
+			// interval
+			// statuses per account
+			// background
 			int index = 0;
 			String[] values = getResources().getStringArray(R.array.status_count_values);
 			for (int i = 0; i < values.length; i++) {
-				if (Integer.parseInt(values[i]) == this.mStatuses_per_account_value) {
+				if (Integer.parseInt(values[i]) == mStatuses_per_account_value) {
 					index = i;
 					break;
 				}
 			}
-			(new AlertDialog.Builder(this))
-			.setSingleChoiceItems(R.array.status_count_entries, index, new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					AccountSettings.this.mStatuses_per_account_value = Integer.parseInt(getResources().getStringArray(R.array.status_count_values)[which]);
-					updateDatabase(Widgets.STATUSES_PER_ACCOUNT, mStatuses_per_account_value);
-					dialog.cancel();
-				}
-			})
-			.setCancelable(true)
-			.show();
-		} else if (v == mProfiles_bg_color) {
-			ColorPickerDialog cp = new ColorPickerDialog(this, mProfileBackgroundColorListener, this.mProfiles_bg_color_value);
-			cp.show();
-		} else if (v == mFriend_bg_color) {
-			ColorPickerDialog cp = new ColorPickerDialog(this, mFriendBackgroundColorListener, this.mFriend_bg_color_value);
-			cp.show();
-		}
-	}
+			mDialog = (new AlertDialog.Builder(AccountSettings.this))
+					.setSingleChoiceItems(R.array.status_count_entries, index, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							mStatuses_per_account_value = Integer.parseInt(getResources().getStringArray(R.array.status_count_values)[which]);
+							updateDatabase(Widgets.STATUSES_PER_ACCOUNT, mStatuses_per_account_value);
+							dialog.cancel();
+						}
+					})
+					.setCancelable(true)
+					.create();
+			mDialog.show();
+		} else if (v == mBtn_notification) {
+			// sound
+			// light
+			// vibrate
+			mDialog = new Dialog(this);
+			mDialog.setTitle(R.string.settings_notification);
+			mDialog.setContentView(R.layout.settings_notification);
 
-	@Override
-	public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-		if (buttonView == mTime24hr) {
-			updateDatabase(Widgets.TIME24HR, isChecked ? 1 : 0);
-		} else if (buttonView == mIcon) {
-			updateDatabase(Widgets.ICON, isChecked ? 1 : 0);
-		} else if (buttonView == mSound) {
-			updateDatabase(Widgets.SOUND, isChecked ? 1 : 0);
-		} else if (buttonView == mVibrate) {
-			updateDatabase(Widgets.VIBRATE, isChecked ? 1 : 0);
-		} else if (buttonView == mLights) {
-			updateDatabase(Widgets.LIGHTS, isChecked ? 1 : 0);
+			CheckBox chk_sound = (CheckBox) mDialog.findViewById(R.id.sound);
+			chk_sound.setChecked(mSound_value);
+			chk_sound.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+
+				@Override
+				public void onCheckedChanged(CompoundButton arg0, boolean isChecked) {
+					mSound_value = isChecked;
+					updateDatabase(Widgets.SOUND, isChecked ? 1 : 0);
+				}
+
+			});
+
+			CheckBox chk_vibrate = (CheckBox) mDialog.findViewById(R.id.vibrate);
+			chk_vibrate.setChecked(mVibrate_value);
+			chk_vibrate.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+
+				@Override
+				public void onCheckedChanged(CompoundButton arg0, boolean isChecked) {
+					mVibrate_value = isChecked;
+					updateDatabase(Widgets.VIBRATE, isChecked ? 1 : 0);
+				}
+
+			});
+
+			CheckBox chk_lights = (CheckBox) mDialog.findViewById(R.id.lights);
+			chk_lights.setChecked(mLights_value);
+			chk_lights.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+
+				@Override
+				public void onCheckedChanged(CompoundButton arg0, boolean isChecked) {
+					mLights_value = isChecked;
+					updateDatabase(Widgets.LIGHTS, isChecked ? 1 : 0);
+				}
+
+			});
+
+			mDialog.show();
+		} else if (v == mBtn_name) {
+			// bg color
+			// color
+			// textsize
+			mDialog = new Dialog(this);
+			mDialog.setTitle(R.string.settings_name);
+			mDialog.setContentView(R.layout.settings_name);
+
+			Button btn_friend_bg_color = (Button) mDialog.findViewById(R.id.friend_bg_color);
+			btn_friend_bg_color.setOnClickListener(new OnClickListener() {
+
+				@Override
+				public void onClick(View v) {
+					ColorPickerDialog cp = new ColorPickerDialog(AccountSettings.this, new ColorPickerDialog.OnColorChangedListener() {
+
+						@Override
+						public void colorChanged(int color) {
+							mFriend_bg_color_value = color;
+							updateDatabase(Widgets.FRIEND_BG_COLOR, color);
+							mBtn_name.setBackgroundColor(mFriend_bg_color_value);
+							mBtn_time.setBackgroundColor(mFriend_bg_color_value);
+						}
+
+						@Override
+						public void colorUpdate(int color) {
+						}}, mFriend_bg_color_value);
+					cp.show();
+				}
+
+			});
+
+			Button btn_friend_color = (Button) mDialog.findViewById(R.id.friend_color);
+				btn_friend_color.setOnClickListener(new OnClickListener() {
+
+					@Override
+					public void onClick(View v) {
+
+						if (mScrollable_version == 1) {
+							Toast.makeText(AccountSettings.this, "This setting is not supported by the current Android Launcher", Toast.LENGTH_SHORT).show();
+						} else {
+						ColorPickerDialog cp = new ColorPickerDialog(AccountSettings.this, new ColorPickerDialog.OnColorChangedListener() {
+
+							@Override
+							public void colorChanged(int color) {
+								mFriend_color_value = color;
+								updateDatabase(Widgets.FRIEND_COLOR, color);
+								mBtn_name.setTextColor(mFriend_color_value);
+							}
+
+							@Override
+							public void colorUpdate(int color) {
+							}}, mFriend_color_value);
+						cp.show();
+						}
+					}
+
+				});
+
+			Button btn_friend_textsize = (Button) mDialog.findViewById(R.id.friend_textsize);
+				btn_friend_textsize.setOnClickListener(new OnClickListener() {
+
+					@Override
+					public void onClick(View v) {
+
+						if (mScrollable_version == 1) {
+							Toast.makeText(AccountSettings.this, "This setting is not supported by the current Android Launcher", Toast.LENGTH_SHORT).show();
+						} else {
+						mDialog.cancel();
+						int index = 0;
+						String[] values = getResources().getStringArray(R.array.textsize_values);
+						for (int i = 0; i < values.length; i++) {
+							if (Integer.parseInt(values[i]) == mFriend_textsize_value) {
+								index = i;
+								break;
+							}
+						}
+						mDialog = (new AlertDialog.Builder(AccountSettings.this))
+								.setSingleChoiceItems(R.array.textsize_entries, index, new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										mFriend_textsize_value = Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]);
+										updateDatabase(Widgets.FRIEND_TEXTSIZE, mFriend_textsize_value);
+										mBtn_name.setTextSize(mFriend_textsize_value);
+										dialog.cancel();
+									}
+								})
+								.setCancelable(true)
+								.create();
+						mDialog.show();
+						}
+					}
+
+				});
+
+			mDialog.show();
+		} else if (v == mBtn_time) {
+			// color
+			// textsize
+			mDialog = new Dialog(this);
+			mDialog.setTitle(R.string.settings_time);
+			mDialog.setContentView(R.layout.settings_time);
+
+			Button btn_created_color = (Button) mDialog.findViewById(R.id.created_color);
+				btn_created_color.setOnClickListener(new OnClickListener() {
+
+					@Override
+					public void onClick(View v) {
+
+						if (mScrollable_version == 1) {
+							Toast.makeText(AccountSettings.this, "This setting is not supported by the current Android Launcher", Toast.LENGTH_SHORT).show();
+						} else {
+						ColorPickerDialog cp = new ColorPickerDialog(AccountSettings.this, new ColorPickerDialog.OnColorChangedListener() {
+
+							@Override
+							public void colorChanged(int color) {
+								mCreated_color_value = color;
+								updateDatabase(Widgets.CREATED_COLOR, color);
+								mBtn_time.setTextColor(mCreated_color_value);
+							}
+
+							@Override
+							public void colorUpdate(int color) {
+							}}, mCreated_color_value);
+						cp.show();
+						}
+					}
+
+				});
+
+			Button btn_created_textsize = (Button) mDialog.findViewById(R.id.created_textsize);
+				btn_created_textsize.setOnClickListener(new OnClickListener() {
+
+					@Override
+					public void onClick(View v) {
+
+						if (mScrollable_version == 1) {
+							Toast.makeText(AccountSettings.this, "This setting is not supported by the current Android Launcher", Toast.LENGTH_SHORT).show();
+						} else {
+						mDialog.cancel();
+						int index = 0;
+						String[] values = getResources().getStringArray(R.array.textsize_values);
+						for (int i = 0; i < values.length; i++) {
+							if (Integer.parseInt(values[i]) == mCreated_textsize_value) {
+								index = i;
+								break;
+							}
+						}
+						mDialog = (new AlertDialog.Builder(AccountSettings.this))
+								.setSingleChoiceItems(R.array.textsize_entries, index, new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										mCreated_textsize_value = Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]);
+										updateDatabase(Widgets.CREATED_TEXTSIZE, mCreated_textsize_value);
+										mBtn_time.setTextSize(mCreated_textsize_value);
+										dialog.cancel();
+									}
+								})
+								.setCancelable(true)
+								.create();
+						mDialog.show();
+						}
+					}
+
+				});
+
+			CheckBox chk_time24hr = (CheckBox) mDialog.findViewById(R.id.time24hr);
+			chk_time24hr.setChecked(mTime24hr_value);
+			chk_time24hr.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+
+				@Override
+				public void onCheckedChanged(CompoundButton arg0, boolean isChecked) {
+					mTime24hr_value =  isChecked;
+					updateDatabase(Widgets.TIME24HR, isChecked ? 1 : 0);
+				}
+
+			});
+
+			mDialog.show();
+		} else if (v == mBtn_profile) {
+			// enabled
+			// bg color
+			mDialog = new Dialog(this);
+			mDialog.setTitle(R.string.settings_profile);
+			mDialog.setContentView(R.layout.settings_profile);
+
+			CheckBox chk_display_profile = (CheckBox) mDialog.findViewById(R.id.display_profile);
+			chk_display_profile.setChecked(mDisplay_profile_value);
+			chk_display_profile.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+
+				@Override
+				public void onCheckedChanged(CompoundButton arg0, boolean isChecked) {
+					mDisplay_profile_value = isChecked;
+					updateDatabase(Widgets.DISPLAY_PROFILE, isChecked ? 1 : 0);
+				}
+
+			});
+
+			Button btn_profile_color = (Button) mDialog.findViewById(R.id.profile_bg_color);
+			btn_profile_color.setOnClickListener(new OnClickListener() {
+
+				@Override
+				public void onClick(View v) {
+					ColorPickerDialog cp = new ColorPickerDialog(AccountSettings.this, new ColorPickerDialog.OnColorChangedListener() {
+
+						@Override
+						public void colorChanged(int color) {
+							mProfiles_bg_color_value = color;
+							updateDatabase(Widgets.PROFILES_BG_COLOR, color);
+							mBtn_profile.setBackgroundColor(mProfiles_bg_color_value);
+						}
+
+						@Override
+						public void colorUpdate(int color) {
+						}}, mProfiles_bg_color_value);
+					cp.show();
+				}
+
+			});
+
+			mDialog.show();
+		} else if (v == mBtn_message) {
+			// color
+			// bg color
+			// text size
+			// icon enabled
+			mDialog = new Dialog(this);
+			mDialog.setTitle(R.string.settings_message);
+			mDialog.setContentView(R.layout.settings_message);
+
+			Button btn_messages_bg_color = (Button) mDialog.findViewById(R.id.messages_bg_color);
+			btn_messages_bg_color.setOnClickListener(new OnClickListener() {
+
+				@Override
+				public void onClick(View v) {
+					ColorPickerDialog cp = new ColorPickerDialog(AccountSettings.this, new ColorPickerDialog.OnColorChangedListener() {
+
+						@Override
+						public void colorChanged(int color) {
+							mMessages_bg_color_value = color;
+							updateDatabase(Widgets.MESSAGES_BG_COLOR, color);
+							mBtn_message.setBackgroundColor(mMessages_bg_color_value);
+						}
+
+						@Override
+						public void colorUpdate(int color) {
+						}}, mMessages_bg_color_value);
+					cp.show();
+				}
+
+			});
+
+			Button btn_messages_color = (Button) mDialog.findViewById(R.id.messages_color);
+				btn_messages_color.setOnClickListener(new OnClickListener() {
+
+					@Override
+					public void onClick(View v) {
+
+						if (mScrollable_version == 1) {
+							Toast.makeText(AccountSettings.this, "This setting is not supported by the current Android Launcher", Toast.LENGTH_SHORT).show();
+						} else {
+						ColorPickerDialog cp = new ColorPickerDialog(AccountSettings.this, new ColorPickerDialog.OnColorChangedListener() {
+
+							@Override
+							public void colorChanged(int color) {
+								mMessages_color_value = color;
+								updateDatabase(Widgets.MESSAGES_COLOR, color);
+								mBtn_message.setTextColor(mMessages_color_value);
+							}
+
+							@Override
+							public void colorUpdate(int color) {
+							}}, mMessages_color_value);
+						cp.show();
+						}
+					}
+
+				});
+
+			Button btn_messages_textsize = (Button) mDialog.findViewById(R.id.messages_textsize);
+				btn_messages_textsize.setOnClickListener(new OnClickListener() {
+
+					@Override
+					public void onClick(View v) {
+
+						if (mScrollable_version == 1) {
+							Toast.makeText(AccountSettings.this, "This setting is not supported by the current Android Launcher", Toast.LENGTH_SHORT).show();
+						} else {
+						mDialog.cancel();
+						int index = 0;
+						String[] values = getResources().getStringArray(R.array.textsize_values);
+						for (int i = 0; i < values.length; i++) {
+							if (Integer.parseInt(values[i]) == mMessages_textsize_value) {
+								index = i;
+								break;
+							}
+						}
+						mDialog = (new AlertDialog.Builder(AccountSettings.this))
+								.setSingleChoiceItems(R.array.textsize_entries, index, new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										mMessages_textsize_value = Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[which]);
+										updateDatabase(Widgets.MESSAGES_TEXTSIZE, mMessages_textsize_value);
+										mBtn_message.setTextSize(mMessages_textsize_value);
+										dialog.cancel();
+									}
+								})
+								.setCancelable(true)
+								.create();
+						mDialog.show();
+						}
+					}
+
+				});
+
+			CheckBox chk_hasIcon = (CheckBox) mDialog.findViewById(R.id.icon);
+			chk_hasIcon.setChecked(mIcon_value);
+			chk_hasIcon.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+
+				@Override
+				public void onCheckedChanged(CompoundButton arg0, boolean isChecked) {
+					mIcon_value = isChecked;
+					updateDatabase(Widgets.ICON, isChecked ? 1 : 0);
+				}
+
+			});
+
+			mDialog.show();
 		}
 	}
 }

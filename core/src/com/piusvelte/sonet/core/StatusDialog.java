@@ -70,6 +70,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 	private static final int PROFILE = 5;
 	private int[] mAppWidgetIds;
 	private String[] items = null;
+	private String[] itemsData = null;
 	private String mSid = null;
 	private String mEsid = null;
 	private int mService;
@@ -705,15 +706,11 @@ public class StatusDialog extends Activity implements OnClickListener {
 			}
 			break;
 		default:
-			if ((items != null) && (which < items.length) && (items[which] != null)) {
+			if ((itemsData != null) && (which < itemsData.length) && (itemsData[which] != null))
 				// open link
-				Matcher m = Sonet.getLinksMatcher(items[which]);
-				if (m.find()) {
-					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(m.group())));
-				}
-			} else {
+				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(itemsData[which])));
+			else
 				(Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-			}
 		}
 	}
 
@@ -727,27 +724,6 @@ public class StatusDialog extends Activity implements OnClickListener {
 		this.getContentResolver().delete(Widgets.getContentUri(StatusDialog.this), Widgets.WIDGET + "=?", new String[] { "" });
 		this.getContentResolver().delete(Widget_accounts.getContentUri(StatusDialog.this), Widget_accounts.WIDGET + "=?", new String[] { "" });
 		
-		// don't remove old widgets,
-		// instead, allow a user to load them into a new widget
-//		int[] removeAppWidgets = new int[0];
-//		Cursor widgets = this.getContentResolver().query(Widgets.getContentUri(StatusDialog.this), new String[] {Widgets._ID, Widgets.WIDGET}, Widgets.ACCOUNT + "=?", new String[] { Long.toString(Sonet.INVALID_ACCOUNT_ID) }, null);
-//		if (widgets.moveToFirst()) {
-//			int iwidget = widgets.getColumnIndex(Widgets.WIDGET), appWidgetId;
-//			while (!widgets.isAfterLast()) {
-//				appWidgetId = widgets.getInt(iwidget);
-//				if ((appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) && !Sonet.arrayContains(mAppWidgetIds, appWidgetId)) removeAppWidgets = Sonet.arrayAdd(removeAppWidgets, appWidgetId);
-//				widgets.moveToNext();
-//			}
-//		}
-//		widgets.close();
-//		if (removeAppWidgets.length > 0) {
-//			// remove phantom widgets
-//			for (int appWidgetId : removeAppWidgets) {
-//				this.getContentResolver().delete(Widgets.getContentUri(StatusDialog.this), Widgets.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
-//				this.getContentResolver().delete(Widget_accounts.getContentUri(StatusDialog.this), Widget_accounts.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
-//				this.getContentResolver().delete(Statuses.getContentUri(StatusDialog.this), Statuses.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
-//			}
-//		}
 		String[] widgetsOptions = new String[mAppWidgetIds.length];
 		for (int i = 0; i < mAppWidgetIds.length; i++) {
 			AppWidgetProviderInfo info = appWidgetManager.getAppWidgetInfo(mAppWidgetIds[i]);
@@ -771,40 +747,32 @@ public class StatusDialog extends Activity implements OnClickListener {
 				if (mAccount != Sonet.INVALID_ACCOUNT_ID) {
 					mService = c.getInt(6);
 					Log.d(TAG,"service: "+mService);
-					if (mService == PINTEREST) {
+					if (mService == PINTEREST)
 						// pinterest uses the username for the profile page
 						mEsid = c.getString(5);
-					} else {
+					else
 						mEsid = mSonetCrypto.Decrypt(c.getString(3));
-					}
 					mSid = mSonetCrypto.Decrypt(c.getString(7));
 					if (mService == SMS) {
 						// lookup the contact, else null mRect
 						Cursor phones = getContentResolver().query(Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(mEsid)), new String[]{ContactsContract.PhoneLookup.LOOKUP_KEY}, null, null, null);
-						if (phones.moveToFirst()) {
+						if (phones.moveToFirst())
 							mEsid = phones.getString(0);
-						} else {
+						else
 							mRect = null;
-						}
 						phones.close();
 					} else if (mService != RSS) {
 						mServiceName = Sonet.getServiceName(getResources(), mService);
-						//						// parse any links
-						//						Matcher m = Sonet.getLinksMatcher(c.getString(4));
-						//						int count = 0;
-						//						while (m.find()) {
-						//							count++;
-						//						}
 						// get links from table
 						Cursor links = getContentResolver().query(Status_links.getContentUri(StatusDialog.this), new String[]{Status_links.LINK_URI, Status_links.LINK_TYPE}, Status_links.STATUS_ID + "=?", new String[]{Long.toString(c.getLong(0))}, null);
 						//						count += links.getCount();
 						int count = links.getCount();
 						items = new String[PROFILE + count + 1];
+						itemsData = new String[items.length];
 						// for facebook wall posts, remove everything after the " > "
 						String friend = c.getString(5);
-						if (friend.indexOf(">") > 0) {
+						if (friend.indexOf(">") > 0) 
 							friend = friend.substring(0, friend.indexOf(">") - 1);
-						}
 						if (mService == TWITTER) {
 							items[COMMENT] = getString(R.string.reply) + " @" + friend;
 							items[POST] = getString(R.string.tweet);
@@ -820,14 +788,19 @@ public class StatusDialog extends Activity implements OnClickListener {
 						items[REFRESH] = getString(R.string.button_refresh);
 						items[PROFILE] = String.format(getString(R.string.userProfile), friend);
 						count = PROFILE + 1;
-						//						m.reset();
-						//						while (m.find()) {
-						//							items[count++] = m.group();
-						//						}
 						// links
 						if (links.moveToFirst()) {
 							while (!links.isAfterLast()) {
-								items[count++] = links.getString(1) + ": " + links.getString(0);
+								itemsData[count] = links.getString(0);
+								String host = Uri.parse(links.getString(0)).getHost();
+								String type = links.getString(1);
+								if (type.equals(Sonet.Spicture))
+									items[count] = String.format(getString(R.string.open_picture), host);
+								else if (type.equals(Sonet.Sphoto))
+									items[count] = String.format(getString(R.string.open_page), host);
+								else
+									items[count] = String.format(getString(R.string.open_link), host);
+								count++;
 								links.moveToNext();
 							}
 						}
