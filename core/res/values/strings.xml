@@ -146,6 +146,7 @@
 	<string name="settings_name">Name</string>
 	<string name="settings_time">Time</string>
 	<string name="settings_message">Message</string>
+	<string name="settings_message_extended">Press on areas such as Buttons, Name, Time, the Profile to the left, or here for additional display settings. These areas will display in the current colors and text sizes.</string>
 	<string name="settings_notification">Notification</string>
 	<string name="settings_update">Update</string>
 	<string name="settings_profile">Profile</string>

@@ -208,6 +208,13 @@ public class Settings extends Activity implements View.OnClickListener {
 		mBtn_message.setOnClickListener(this);
 
 	}
+	
+	@Override
+	protected void onPause() {
+		if ((mDialog != null) && mDialog.isShowing())
+			mDialog.cancel();
+		super.onPause();
+	}
 
 	private void updateDatabase(String column, int value) {
 		ContentValues values = new ContentValues();

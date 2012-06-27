@@ -54,7 +54,7 @@
 	<Button android:id="@+id/settings_message" android:layout_height="fill_parent"
 	    android:layout_width="fill_parent" android:layout_alignParentRight="true"
 	    android:layout_toRightOf="@id/settings_profile" android:layout_below="@id/settings_name_and_time"
-	    android:text="@string/settings_message" />
+	    android:text="@string/settings_message_extended" />
     <ImageView
         android:id="@+id/icon"
         android:layout_width="16dip"

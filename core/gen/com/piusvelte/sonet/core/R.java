@@ -385,11 +385,12 @@ containing a value of this type.
         public static int settings=0x7f08000d;
         public static int settings_buttons=0x7f08007b;
         public static int settings_message=0x7f08007e;
+        public static int settings_message_extended=0x7f08007f;
         public static int settings_name=0x7f08007c;
-        public static int settings_notification=0x7f08007f;
-        public static int settings_profile=0x7f080081;
+        public static int settings_notification=0x7f080080;
+        public static int settings_profile=0x7f080082;
         public static int settings_time=0x7f08007d;
-        public static int settings_update=0x7f080080;
+        public static int settings_update=0x7f080081;
         public static int sonet_2x2=0x7f080001;
         public static int sonet_2x3=0x7f080002;
         public static int sonet_2x4=0x7f080003;
