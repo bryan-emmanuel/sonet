@@ -51,16 +51,16 @@
 <!-- 		<item>Chatter</item> -->
 	</string-array>
 	<string-array name="service_values">
-		<item>0</item>
-		<item>1</item>
-		<item>2</item>
-		<item>4</item>
-		<item>5</item>
-		<item>6</item>
-		<item>7</item>
-		<item>8</item>
-		<item>9</item>
-		<item>10</item>
+		<item>0</item><!-- Twitter -->
+		<item>1</item><!-- Facebook -->
+		<item>2</item><!-- MySpace -->
+		<item>4</item><!-- Foursquare -->
+		<item>5</item><!-- LinkedIn -->
+		<item>6</item><!-- SMS -->
+		<item>7</item><!-- RSS -->
+		<item>8</item><!-- Identi.ca -->
+		<item>9</item><!-- Google+ -->
+		<item>10</item><!-- Pinterest -->
 <!-- 		<item>11</item> -->
 	</string-array>
 	<string-array name="textsize_entries">

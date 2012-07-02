@@ -478,7 +478,7 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 													// beta message to user
 													finish = false;
 													AlertDialog.Builder dialog = new AlertDialog.Builder(OAuthLogin.this);
-													dialog.setTitle(getResources().getStringArray(R.array.service_entries)[Integer.parseInt(getResources().getStringArray(R.array.service_values)[GOOGLEPLUS])]);
+													dialog.setTitle(Sonet.getServiceName(getResources(), GOOGLEPLUS));
 													dialog.setMessage(R.string.googleplusbeta);
 													dialog.setPositiveButton(android.R.string.ok, new OnClickListener() {
 
@@ -774,17 +774,15 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 									if (response != null) {
 										try {
 											JSONObject jobj = new JSONObject(response);
-											if (jobj.has("firstName") && jobj.has(Sid)) {
+											if (jobj.has("firstName") && jobj.has(Sid))
 												addAccount(jobj.getString("firstName") + " " + jobj.getString("lastName"), mSonetOAuth.getToken(), mSonetOAuth.getTokenSecret(), 0, LINKEDIN, jobj.getString(Sid));
-											} else {
+											else
 												(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
-											}
 										} catch (JSONException e) {
 											Log.e(TAG, e.getMessage());
 										}
-									} else {
+									} else
 										(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
-									}
 									OAuthLogin.this.finish();
 								}
 							};
@@ -811,11 +809,10 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 
 								@Override
 								protected String doInBackground(String... args) {
-									if (mSonetOAuth.retrieveAccessToken(args[0])) {
+									if (mSonetOAuth.retrieveAccessToken(args[0]))
 										return SonetHttpClient.httpResponse(mHttpClient, mSonetOAuth.getSignedRequest(new HttpGet("https://identi.ca/api/account/verify_credentials.json")));
-									} else {
+									else
 										return null;
-									}
 								}
 
 								@Override
@@ -828,9 +825,8 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 										} catch (JSONException e) {
 											Log.e(TAG, e.getMessage());
 										}
-									} else {
+									} else
 										(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
-									}
 									OAuthLogin.this.finish();
 								}
 							};
@@ -839,7 +835,8 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 							loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
 								@Override
 								public void onCancel(DialogInterface dialog) {
-									if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+									if (!asyncTask.isCancelled())
+										asyncTask.cancel(true);
 								}
 							});
 							loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
@@ -859,13 +856,12 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 							String[] parameters = getParams(url);
 							for (String parameter : parameters) {
 								String[] param = parameter.split("=");
-								if (Saccess_token.equals(param[0])) {
+								if (Saccess_token.equals(param[0]))
 									token = Uri.decode(param[1]);
-								} else if ("refresh_token".equals(param[0])) {
+								else if ("refresh_token".equals(param[0]))
 									refresh_token = Uri.decode(param[1]);
-								} else if ("instance_url".equals(param[0])) {
+								else if ("instance_url".equals(param[0]))
 									instance_url = Uri.decode(param[1]);
-								}
 							}
 							if ((token != null) && (refresh_token != null) && (instance_url != null)) {
 								final ProgressDialog loadingDialog = new ProgressDialog(OAuthLogin.this);
@@ -886,12 +882,11 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 										if (response != null) {
 											try {
 												JSONObject jobj = new JSONObject(response);
-												if (jobj.has(Sname) && jobj.has(Sid)) {
+												if (jobj.has(Sname) && jobj.has(Sid))
 													// save the refresh_token to retrieve updated access_token
 													addAccount(jobj.getString(Sname), refresh_token, "", 0, CHATTER, jobj.getString(Sid));
-												} else {
+												else
 													(Toast.makeText(OAuthLogin.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
-												}
 											} catch (JSONException e) {
 												Log.e(TAG, e.getMessage());
 											}
@@ -924,9 +919,8 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 								mLoadingDialog.dismiss();
 								OAuthLogin.this.finish();
 							}
-						} else {
+						} else
 							return false;// allow google to redirect
-						}
 					}
 					return true;
 				}
@@ -938,23 +932,21 @@ public class OAuthLogin extends Activity implements OnCancelListener, OnClickLis
 		}
 
 		public void open(String url) {
-			if (url != null) {
+			if (url != null)
 				mWebView.loadUrl(url);
-			} else {
+			else
 				OAuthLogin.this.finish();
-			}
 		}
 
 	}
 
 	private String[] getParams(String url) {
-		if (url.contains("?")) {
+		if (url.contains("?"))
 			return url.substring(url.indexOf("?") + 1).replace("#", "&").split("&");
-		} else if (url.contains("#")) {
+		else if (url.contains("#"))
 			return url.substring(url.indexOf("#") + 1).split("&");
-		} else {
+		else
 			return new String[0];
-		}
 	}
 
 	@Override

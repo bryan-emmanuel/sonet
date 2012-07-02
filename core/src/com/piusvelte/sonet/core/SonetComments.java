@@ -366,9 +366,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		int itemId = item.getItemId();
-		if (itemId == R.id.menu_comments_refresh) {
+		if (itemId == R.id.menu_comments_refresh)
 			loadComments();
-		}
 		return super.onOptionsItemSelected(item);
 	}
 

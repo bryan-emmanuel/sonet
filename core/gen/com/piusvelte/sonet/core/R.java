@@ -16,7 +16,8 @@ public final class R {
         /**  		<item>Chatter</item> 
          */
         public static int service_entries=0x7f040002;
-        /**  		<item>11</item> 
+        /**  Pinterest 
+ 		<item>11</item> 
          */
         public static int service_values=0x7f040003;
         public static int status_count_entries=0x7f040006;
