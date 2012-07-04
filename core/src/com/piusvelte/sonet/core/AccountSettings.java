@@ -203,7 +203,7 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 			// statuses per account
 			// background
 			int index = 0;
-			String[] values = getResources().getStringArray(R.array.status_count_values);
+			String[] values = getResources().getStringArray(R.array.status_counts);
 			for (int i = 0; i < values.length; i++) {
 				if (Integer.parseInt(values[i]) == mStatuses_per_account_value) {
 					index = i;
@@ -211,10 +211,10 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 				}
 			}
 			mDialog = (new AlertDialog.Builder(AccountSettings.this))
-					.setSingleChoiceItems(R.array.status_count_entries, index, new DialogInterface.OnClickListener() {
+					.setSingleChoiceItems(R.array.status_counts, index, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
-							mStatuses_per_account_value = Integer.parseInt(getResources().getStringArray(R.array.status_count_values)[which]);
+							mStatuses_per_account_value = Integer.parseInt(getResources().getStringArray(R.array.status_counts)[which]);
 							updateDatabase(Widgets.STATUSES_PER_ACCOUNT, mStatuses_per_account_value);
 							dialog.cancel();
 						}

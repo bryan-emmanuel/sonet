@@ -359,7 +359,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.menu_notifications, menu);
+		inflater.inflate(R.menu.menu_comments, menu);
 		return super.onCreateOptionsMenu(menu);
 	}
 

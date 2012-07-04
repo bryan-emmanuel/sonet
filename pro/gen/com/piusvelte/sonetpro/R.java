@@ -11,8 +11,8 @@ public final class R {
     public static final class array {
         public static final int interval_entries=0x7f050000;
         public static final int interval_values=0x7f050001;
-        public static final int margin_entries=0x7f050008;
-        public static final int margin_values=0x7f050009;
+        public static final int margin_entries=0x7f050007;
+        public static final int margin_values=0x7f050008;
         /**  		<item>Chatter</item> 
          */
         public static final int service_entries=0x7f050002;
@@ -20,8 +20,7 @@ public final class R {
  		<item>11</item> 
          */
         public static final int service_values=0x7f050003;
-        public static final int status_count_entries=0x7f050006;
-        public static final int status_count_values=0x7f050007;
+        public static final int status_counts=0x7f050006;
         public static final int textsize_entries=0x7f050004;
         public static final int textsize_values=0x7f050005;
     }
