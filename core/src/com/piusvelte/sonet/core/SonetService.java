@@ -83,7 +83,6 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.appwidget.AppWidgetManager;
-import android.appwidget.AppWidgetProviderInfo;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
@@ -2580,8 +2579,6 @@ public class SonetService extends Service {
 		// set margin
 		if (scrollable == 0) {
 			final AppWidgetManager mgr = AppWidgetManager.getInstance(SonetService.this);
-			AppWidgetProviderInfo awi = mgr.getAppWidgetInfo(appWidgetId);
-			Log.d(TAG, "widget: " + appWidgetId + ", package: " + awi.provider.getPackageName() + ", provider: " + awi.provider.getClassName());
 			// check if native scrolling is supported
 			if (sNativeScrollingSupported) {
 				// native scrolling
