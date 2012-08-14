@@ -1,8 +1,14 @@
 ad_supported/bin
 ad_supported/gen
+ad_supported/.classpath
+ad_supported/.project
 core/bin
 core/gen
+core/src/com/piusvelte/sonet/core/SonetTokens.java
+core/.classpath
+core/.project
 pro/bin
 pro/gen
-test/gen
-test/bin
+pro/.classpath
+pro/.project
+test
