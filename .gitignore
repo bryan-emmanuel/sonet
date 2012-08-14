@@ -1,0 +1,8 @@
+ad_supported/bin
+ad_supported/gen
+core/bin
+core/gen
+pro/bin
+pro/gen
+test/gen
+test/bin
