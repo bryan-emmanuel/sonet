@@ -1450,7 +1450,6 @@ public class SonetService extends Service {
 			}
 			// parse the response
 			if ((response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(FACEBOOK_HOME, FACEBOOK_BASE_URL, Saccess_token, token)))) != null) {
-				String profile = "http://graph.facebook.com/%s/picture";
 				try {
 					statusesArray = new JSONObject(response).getJSONArray(Sdata);
 					// if there are updates, clear the cache
@@ -1549,7 +1548,7 @@ public class SonetService extends Service {
 									if (d < status_count) {
 										addStatusItem(date,
 												friend,
-												display_profile ? String.format(profile, esid) : null,
+												display_profile ? String.format(FACEBOOK_PICTURE, esid) : null,
 														String.format(getString(R.string.messageWithCommentCount), message.toString(), commentCount),
 														service,
 														time24hr,

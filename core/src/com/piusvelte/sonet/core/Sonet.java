@@ -89,6 +89,8 @@ public class Sonet {
 	protected static final String FACEBOOK_COORDINATES = "{\"latitude\":\"%s\",\"longitude\":\"%s\"}";
 	protected static final String FACEBOOK_USER = "%s%s?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_PHOTOS = "%sme/photos?format=json&sdk=android&%s=%s";
+	protected static final String FACEBOOK_FRIENDS = "%sme/friends?format=json&sdk=android&%s=%s";
+	protected static final String FACEBOOK_PICTURE = "http://graph.facebook.com/%s/picture";
 
 	protected static final int MYSPACE = 2;
 	protected static final String MYSPACE_BASE_URL = "http://api.myspace.com/1.0/";
