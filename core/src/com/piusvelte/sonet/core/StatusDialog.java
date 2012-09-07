@@ -158,11 +158,10 @@ public class StatusDialog extends Activity implements OnClickListener {
 			mDialog.show();
 		} else {
 			// check if the dialog is still loading
-			if (mFinish) {
+			if (mFinish)
 				finish();
-			} else if ((mLoadingDialog == null) || !mLoadingDialog.isShowing()) {
+			else if ((mLoadingDialog == null) || !mLoadingDialog.isShowing())
 				showDialog();
-			}
 		}
 	}
 
@@ -191,17 +190,19 @@ public class StatusDialog extends Activity implements OnClickListener {
 	private void showDialog() {
 		if (mService == SMS) {
 			// if mRect go straight to message app...
-			if (mRect != null) {
+			if (mRect != null)
 				QuickContact.showQuickContact(this, mRect, Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, mEsid), QuickContact.MODE_LARGE, null);
-			} else {
+			else {
 				startActivity(new Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + mEsid)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				finish();
 			}
 		} else if (mService == RSS) {
 			if (mEsid != null) {
 				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(mEsid)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				finish();
 			} else {
 				(Toast.makeText(StatusDialog.this, "RSS item has no link", Toast.LENGTH_LONG)).show();
-				StatusDialog.this.finish();
+				finish();
 			}
 		} else if (items != null) {
 			// offer options for Comment, Post, Settings and Refresh
@@ -213,7 +214,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 
 				@Override
 				public void onCancel(DialogInterface arg0) {
-					StatusDialog.this.finish();
+					finish();
 				}
 				
 			})
@@ -224,6 +225,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 				// informational messages go to settings
 				mFinish = true;
 				startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				finish();
 			} else {
 				(Toast.makeText(StatusDialog.this, "This widget is reloading. Please try again after it has completed or use the app to update the widget.", Toast.LENGTH_LONG)).show();
 				// force widgets rebuild
@@ -235,7 +237,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 
 	private void onErrorExit(String serviceName) {
 		(Toast.makeText(StatusDialog.this, serviceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
-		StatusDialog.this.finish();
+		finish();
 	}
 
 	@Override
@@ -243,34 +245,30 @@ public class StatusDialog extends Activity implements OnClickListener {
 		switch (which) {
 		case COMMENT:
 			if (mAppWidgetId != -1) {
-				if (mService == GOOGLEPLUS) {
-					//TODO: open browser for now...
+				if (mService == GOOGLEPLUS)
 					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://plus.google.com")));
-				} else if (mService == PINTEREST) {
-					if (mSid != null) {
-						startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(PINTEREST_PIN, mSid))));
-					} else {
-						startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
-					}
-				} else {
+				else if (mService == PINTEREST) {
+					if (mSid != null)
+						startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(PINTEREST_PIN, mSid))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+					else
+						startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				} else
 					startActivity(Sonet.getPackageIntent(this, SonetComments.class).setData(mData).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-				}
-			} else {
+			} else
 				(Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-			}
 			dialog.cancel();
+			finish();
 			break;
 		case POST:
 			if (mAppWidgetId != -1) {
-				if (mService == GOOGLEPLUS) {
-					//TODO: open browser for now...
+				if (mService == GOOGLEPLUS)
 					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://plus.google.com")));
-				} else if (mService == PINTEREST) {
+				else if (mService == PINTEREST)
 					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
-				} else {
+				else
 					startActivity(Sonet.getPackageIntent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(mAccount))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-				}
 				dialog.cancel();
+				finish();
 			} else {
 				// no widget sent in, dialog to select one
 				String[] widgets = getAllWidgets();
@@ -300,7 +298,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 								.setSingleChoiceItems(accounts, -1, new OnClickListener() {
 									@Override
 									public void onClick(DialogInterface arg0, int which) {
-										startActivity(Sonet.getPackageIntent(StatusDialog.this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(accountIndexes[which]))));
+										startActivity(Sonet.getPackageIntent(StatusDialog.this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(accountIndexes[which]))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 										arg0.cancel();
 									}
 								})
@@ -318,6 +316,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 								dialog.cancel();
 							}
 							c.close();
+							finish();
 						}					
 					})
 					.setCancelable(true)
@@ -325,12 +324,14 @@ public class StatusDialog extends Activity implements OnClickListener {
 						@Override
 						public void onCancel(DialogInterface arg0) {
 							dialog.cancel();
+							finish();
 						}						
 					}).create();
 					mDialog.show();
 				} else {
 					(Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
 					dialog.cancel();
+					finish();
 				}
 			}
 			break;
@@ -338,6 +339,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 			if (mAppWidgetId != -1) {
 				startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 				dialog.cancel();
+				finish();
 			} else {
 				// no widget sent in, dialog to select one
 				String[] widgets = getAllWidgets();
@@ -346,8 +348,9 @@ public class StatusDialog extends Activity implements OnClickListener {
 					.setItems(widgets, new OnClickListener() {
 						@Override
 						public void onClick(DialogInterface arg0, int arg1) {
-							startActivity(Sonet.getPackageIntent(StatusDialog.this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[arg1]));
+							startActivity(Sonet.getPackageIntent(StatusDialog.this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[arg1]).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 							arg0.cancel();
+							finish();
 						}					
 					})
 					.setCancelable(true)
@@ -355,6 +358,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 						@Override
 						public void onCancel(DialogInterface arg0) {
 							dialog.cancel();
+							finish();
 						}
 					})
 					.create();
@@ -362,12 +366,15 @@ public class StatusDialog extends Activity implements OnClickListener {
 				} else {
 					(Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
 					dialog.cancel();
+					finish();
 				}
 			}
 			break;
 		case NOTIFICATIONS:
 			startActivity(Sonet.getPackageIntent(this, SonetNotifications.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 			dialog.cancel();
+			finish();
+			break;
 		case REFRESH:
 			if (mAppWidgetId != -1) {
 				(Toast.makeText(getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
@@ -384,6 +391,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 							(Toast.makeText(StatusDialog.this.getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
 							startService(Sonet.getPackageIntent(StatusDialog.this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetIds[arg1]}));
 							arg0.cancel();
+							finish();
 						}					
 					})
 					.setPositiveButton(R.string.refreshallwidgets, new OnClickListener() {
@@ -393,6 +401,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 							(Toast.makeText(StatusDialog.this.getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
 							startService(Sonet.getPackageIntent(StatusDialog.this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
 							arg0.cancel();
+							finish();
 						}
 					})
 					.setCancelable(true)
@@ -400,12 +409,14 @@ public class StatusDialog extends Activity implements OnClickListener {
 						@Override
 						public void onCancel(DialogInterface arg0) {
 							dialog.cancel();
+							finish();
 						}						
 					})
 					.create();
 					mDialog.show();
 				} else {
 					dialog.cancel();
+					finish();
 				}
 			}
 			break;
@@ -431,7 +442,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 							if (response != null) {
 								try {
 									JSONObject user = new JSONObject(response);
-									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(TWITTER_PROFILE, user.getString("screen_name")))));
+									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(TWITTER_PROFILE, user.getString("screen_name")))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 								} catch (JSONException e) {
 									Log.e(TAG, e.toString());
 									onErrorExit(mServiceName);
@@ -439,6 +450,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 							} else {
 								onErrorExit(mServiceName);
 							}
+							finish();
 						}
 					};
 					loadingDialog.setMessage(getString(R.string.loading));
@@ -446,13 +458,15 @@ public class StatusDialog extends Activity implements OnClickListener {
 					loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
 						@Override
 						public void onCancel(DialogInterface dialog) {
-							if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+							if (!asyncTask.isCancelled())
+								asyncTask.cancel(true);
 						}
 					});
 					loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
 							dialog.cancel();
+							finish();
 						}
 					});
 					loadingDialog.show();
@@ -475,7 +489,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 							if (loadingDialog.isShowing()) loadingDialog.dismiss();
 							if (response != null) {
 								try {
-									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getString("link"))));
+									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getString("link"))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 								} catch (JSONException e) {
 									Log.e(TAG, e.toString());
 									onErrorExit(mServiceName);
@@ -483,6 +497,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 							} else {
 								onErrorExit(mServiceName);
 							}
+							finish();
 						}
 					};
 					loadingDialog.setMessage(getString(R.string.loading));
@@ -497,6 +512,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
 							dialog.cancel();
+							finish();
 						}
 					});
 					loadingDialog.show();
@@ -520,7 +536,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 							if (loadingDialog.isShowing()) loadingDialog.dismiss();
 							if (response != null) {
 								try {
-									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getJSONObject("person").getString("profileUrl"))));
+									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getJSONObject("person").getString("profileUrl"))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 								} catch (JSONException e) {
 									Log.e(TAG, e.toString());
 									onErrorExit(mServiceName);
@@ -528,6 +544,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 							} else {
 								onErrorExit(mServiceName);
 							}
+							finish();
 						}
 					};
 					loadingDialog.setMessage(getString(R.string.loading));
@@ -542,6 +559,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
 							dialog.cancel();
+							finish();
 						}
 					});
 					loadingDialog.show();
@@ -550,7 +568,8 @@ public class StatusDialog extends Activity implements OnClickListener {
 				account.close();
 				break;
 			case FOURSQUARE:
-				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(FOURSQUARE_URL_PROFILE, mEsid))));
+				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(FOURSQUARE_URL_PROFILE, mEsid))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				finish();
 				break;
 			case LINKEDIN:
 				account = this.getContentResolver().query(Accounts.getContentUri(StatusDialog.this), new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
@@ -570,7 +589,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 							if (loadingDialog.isShowing()) loadingDialog.dismiss();
 							if (response != null) {
 								try {
-									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getJSONObject("siteStandardProfileRequest").getString("url").replaceAll("\\\\", ""))));
+									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getJSONObject("siteStandardProfileRequest").getString("url").replaceAll("\\\\", ""))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 								} catch (JSONException e) {
 									Log.e(TAG, e.toString());
 									onErrorExit(mServiceName);
@@ -578,6 +597,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 							} else {
 								onErrorExit(mServiceName);
 							}
+							finish();
 						}
 					};
 					loadingDialog.setMessage(getString(R.string.loading));
@@ -592,6 +612,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
 							dialog.cancel();
+							finish();
 						}
 					});
 					loadingDialog.show();
@@ -616,7 +637,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 							if (response != null) {
 								try {
 									JSONObject user = new JSONObject(response);
-									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(IDENTICA_PROFILE, user.getString("screen_name")))));
+									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(IDENTICA_PROFILE, user.getString("screen_name")))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 								} catch (JSONException e) {
 									Log.e(TAG, e.toString());
 									onErrorExit(mServiceName);
@@ -624,6 +645,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 							} else {
 								onErrorExit(mServiceName);
 							}
+							finish();
 						}
 					};
 					loadingDialog.setMessage(getString(R.string.loading));
@@ -638,6 +660,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
 							dialog.cancel();
+							finish();
 						}
 					});
 					loadingDialog.show();
@@ -646,14 +669,15 @@ public class StatusDialog extends Activity implements OnClickListener {
 				account.close();
 				break;
 			case GOOGLEPLUS:
-				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(GOOGLEPLUS_PROFILE, mEsid))));
+				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(GOOGLEPLUS_PROFILE, mEsid))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				finish();
 				break;
 			case PINTEREST:
-				if (mEsid != null) {
-					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(PINTEREST_PROFILE, mEsid))));
-				} else {
-					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
-				}
+				if (mEsid != null)
+					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(PINTEREST_PROFILE, mEsid))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				else
+					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				finish();
 				break;
 			case CHATTER:
 				account = this.getContentResolver().query(Accounts.getContentUri(StatusDialog.this), new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
@@ -673,7 +697,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 								try {
 									JSONObject jobj = new JSONObject(response);
 									if (jobj.has("instance_url")) {
-										startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(jobj.getString("instance_url") + "/" + mEsid)));
+										startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(jobj.getString("instance_url") + "/" + mEsid)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 									}
 								} catch (JSONException e) {
 									Log.e(TAG, e.toString());
@@ -682,6 +706,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 							} else {
 								onErrorExit(mServiceName);
 							}
+							finish();
 						}
 					};
 					loadingDialog.setMessage(getString(R.string.loading));
@@ -696,6 +721,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
 							dialog.cancel();
+							finish();
 						}
 					});
 					loadingDialog.show();
@@ -708,9 +734,11 @@ public class StatusDialog extends Activity implements OnClickListener {
 		default:
 			if ((itemsData != null) && (which < itemsData.length) && (itemsData[which] != null))
 				// open link
-				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(itemsData[which])));
+				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(itemsData[which])).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 			else
 				(Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
+			finish();
+			break;
 		}
 	}
 

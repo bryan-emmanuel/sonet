@@ -6,6 +6,7 @@ import static com.piusvelte.sonet.core.Sonet.sBFOptions;
 import com.piusvelte.sonet.core.Sonet.Statuses_styles;
 import com.piusvelte.sonet.core.Sonet.Widgets;
 
+import android.annotation.SuppressLint;
 import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.content.Intent;
@@ -17,6 +18,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.RemoteViews;
 
+@SuppressLint("NewApi")
 public class SonetRemoteViewsFactory implements android.widget.RemoteViewsService.RemoteViewsFactory {
 	private static final String TAG = "SonetRemoteViewsFactory";
 	private Context mContext;
@@ -32,18 +34,16 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
 
 	@Override
 	public int getCount() {
-		if (mCursor != null) {
+		if (mCursor != null)
 			return mCursor.getCount();
-		} else {
+		else
 			return 0;
-		}
 	}
 
 	@Override
 	public long getItemId(int position) {
-		if (mCursor.moveToPosition(position)) {
+		if ((mCursor != null) && !mCursor.isClosed() && mCursor.moveToPosition(position))
 			return mCursor.getLong(mCursor.getColumnIndex(Statuses_styles._ID));
-		}
 		return position;
 	}
 
@@ -56,7 +56,7 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
 	public RemoteViews getViewAt(int position) {
 		// load the item
 		RemoteViews views;
-		if (mCursor.moveToPosition(position)) {
+		if ((mCursor != null) && !mCursor.isClosed() && mCursor.moveToPosition(position)) {
 			int friend_color = mCursor.getInt(6),
 					created_color = mCursor.getInt(7),
 					friend_textsize = mCursor.getInt(9),
@@ -68,9 +68,8 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
 			byte[] icon = mCursor.getBlob(12);
 			if (icon != null) {
 				Bitmap iconbmp = BitmapFactory.decodeByteArray(icon, 0, icon.length, sBFOptions);
-				if (iconbmp != null) {
+				if (iconbmp != null)
 					views.setImageViewBitmap(R.id.icon, iconbmp);
-				}
 			}
 			views.setTextViewText(R.id.friend_bg_clear, mCursor.getString(1));
 			views.setFloat(R.id.friend_bg_clear, "setTextSize", friend_textsize);
@@ -80,9 +79,8 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
 			byte[] status_bg = mCursor.getBlob(11);
 			if (status_bg != null) {
 				Bitmap status_bgbmp = BitmapFactory.decodeByteArray(status_bg, 0, status_bg.length, sBFOptions);
-				if (status_bgbmp != null) {
+				if (status_bgbmp != null)
 					views.setImageViewBitmap(R.id.status_bg, status_bgbmp);
-				}
 			}
 			views.setTextViewText(R.id.message, mCursor.getString(3));
 			views.setTextColor(R.id.message, messages_color);
@@ -98,9 +96,8 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
 			byte[] friend_bg = mCursor.getBlob(14);
 			if (friend_bg != null) {
 				Bitmap friendbmp = BitmapFactory.decodeByteArray(friend_bg, 0, friend_bg.length, sBFOptions);
-				if (friendbmp != null) {
+				if (friendbmp != null)
 					views.setImageViewBitmap(R.id.friend_bg, friendbmp);
-				}
 			}
 
 			views.setTextViewText(R.id.friend, mCursor.getString(1));
@@ -117,9 +114,8 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
 					byte[] image = mCursor.getBlob(16);
 					if (image != null) {
 						Bitmap imagebmp = BitmapFactory.decodeByteArray(image, 0, image.length, sBFOptions);
-						if (imagebmp != null) {
+						if (imagebmp != null)
 							views.setImageViewBitmap(R.id.image, imagebmp);
-						}
 					}
 				}
 			}
@@ -127,24 +123,20 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
 			if (mDisplay_profile) {
 				if (profile_bg != null) {
 					Bitmap profilebmp = BitmapFactory.decodeByteArray(profile_bg, 0, profile_bg.length, sBFOptions);
-					if (profilebmp != null) {
+					if (profilebmp != null)
 						views.setImageViewBitmap(R.id.profile_bg, profilebmp);
-					}
 				}
 			}
 			byte[] profile = mCursor.getBlob(2);
 			if (mDisplay_profile) {
-				if (profile == null) {
+				if (profile == null)
 					profile = getBlob(mContext.getResources(), R.drawable.ic_contact_picture);
-				}
 				Bitmap profilebmp = BitmapFactory.decodeByteArray(profile, 0, profile.length, sBFOptions);
-				if (profilebmp != null) {
+				if (profilebmp != null)
 					views.setImageViewBitmap(R.id.profile, profilebmp);
-				}
 			}
-		} else {
+		} else
 			views = null;
-		}
 
 		return views;
 	}
@@ -165,19 +157,17 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
 
 	@Override
 	public void onDataSetChanged() {
-		// Refresh the cursor
-		if (mCursor != null) {
+		// Refresh the cursor, warning: the resulting cursor could be null
+		if (mCursor != null)
 			mCursor.close();
-		}
 		Log.d(TAG, "onDataSetChanged: " + mAppWidgetId);
 		mCursor = mContext.getContentResolver().query(Uri.withAppendedPath(Statuses_styles.getContentUri(mContext), Integer.toString(mAppWidgetId)), new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.PROFILE_BG, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE}, null, null, Statuses_styles.CREATED + " DESC");
 	}
 
 	@Override
 	public void onDestroy() {
-		if (mCursor != null) {
+		if (mCursor != null)
 			mCursor.close();
-		}
 	}
 
 }

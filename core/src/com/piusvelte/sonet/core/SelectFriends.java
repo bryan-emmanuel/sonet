@@ -62,6 +62,7 @@ import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.SimpleAdapter;
 
 public class SelectFriends extends ListActivity {
@@ -69,7 +70,7 @@ public class SelectFriends extends ListActivity {
 	private HttpClient mHttpClient;
 	private List<HashMap<String, String>> mFriends = new ArrayList<HashMap<String, String>>();
 	private List<String> mSelectedFriends = new ArrayList<String>();
-	private Uri mData = null;
+	private long mAccountId = Sonet.INVALID_ACCOUNT_ID;
 	private String mToken = null;
 	private String mSecret = null;
 	private int mService;
@@ -88,13 +89,12 @@ public class SelectFriends extends ListActivity {
 			adView.loadAd(new AdRequest());
 		}
 		Intent intent = getIntent();
-		if (intent != null) {
-			mData = intent.getData();
-		}
+		if ((intent != null) && intent.hasExtra(Accounts.SID))
+			mAccountId = intent.getLongExtra(Accounts.SID, Sonet.INVALID_ACCOUNT_ID);
 
 		mHttpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
 		registerForContextMenu(getListView());
-//		setResult(RESULT_OK);
+		setResult(RESULT_CANCELED);
 	}
 
 	@Override
@@ -106,13 +106,14 @@ public class SelectFriends extends ListActivity {
 	private final SimpleAdapter.ViewBinder mViewBinder = new SimpleAdapter.ViewBinder() {
 		@Override
 		public boolean setViewValue(View view, Object data, String textRepresentation) {
-			if (view.getId() == R.id.profile) {
-				BitmapDownloadTask task = new BitmapDownloadTask((ImageView) view, mHttpClient);
-                DownloadedDrawable downloadedDrawable = new DownloadedDrawable(task);
-                ((ImageView) view).setImageDrawable(downloadedDrawable);
-                task.execute(textRepresentation);
-				return true;
-			} else if (view.getId() == R.id.selected) {
+//			if (view.getId() == R.id.profile) {
+//				BitmapDownloadTask task = new BitmapDownloadTask((ImageView) view, mHttpClient);
+//				DownloadedDrawable downloadedDrawable = new DownloadedDrawable(task);
+//				((ImageView) view).setImageDrawable(downloadedDrawable);
+//				task.execute(textRepresentation);
+//				return true;
+//			} else 
+			if (view.getId() == R.id.selected) {
 				((CheckBox) view).setChecked(mSelectedFriends.contains(textRepresentation));
 				return true;
 			} else
@@ -127,32 +128,41 @@ public class SelectFriends extends ListActivity {
 		if (mFriends.size() > position) {
 			HashMap<String, String> friend = mFriends.get(position);
 			String esid = friend.get(Entities.ESID);
-			if (mSelectedFriends.contains(esid)) {
+			boolean checked = false;
+			if (mSelectedFriends.contains(esid))
 				mSelectedFriends.remove(esid);
-				((CheckBox) view).setChecked(false);
-			} else {
+			else {
 				mSelectedFriends.add(esid);
-				((CheckBox) view).setChecked(true);
+				checked = true;
 			}
+			((CheckBox) ((RelativeLayout) view).getChildAt(1)).setChecked(checked);
+			String[] friends = new String[mSelectedFriends.size()];
+			for (int i = 0, l = friends.length; i < l; i++)
+				friends[i] = mSelectedFriends.get(i);
+			Intent i = new Intent();
+			i.putExtra(Accounts.SID, mAccountId);
+			i.putExtra(Entities.FRIEND, friends);
+			setResult(RESULT_OK, i);
 		}
 	}
 
 	protected void loadFriends() {
 		mFriends.clear();
-		SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend, new String[]{Entities.PROFILE, Entities.FRIEND, Entities.ESID}, new int[]{R.id.profile, R.id.name, R.id.selected});
+//		SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend, new String[]{Entities.PROFILE, Entities.FRIEND, Entities.ESID}, new int[]{R.id.profile, R.id.name, R.id.selected});
+		SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend, new String[]{Entities.FRIEND, Entities.ESID}, new int[]{R.id.name, R.id.selected});
 		setListAdapter(sa);
 		final ProgressDialog loadingDialog = new ProgressDialog(this);
-		final AsyncTask<Void, String, Boolean> asyncTask = new AsyncTask<Void, String, Boolean>() {
+		final AsyncTask<Long, String, Boolean> asyncTask = new AsyncTask<Long, String, Boolean>() {
 			@Override
-			protected Boolean doInBackground(Void... none) {
+			protected Boolean doInBackground(Long... params) {
 				boolean loadList = false;
 				SonetCrypto sonetCrypto = SonetCrypto.getInstance(getApplicationContext());
 				// load the session
-				Cursor account = getContentResolver().query(Accounts.getContentUri(SelectFriends.this), new String[]{Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
+				Cursor account = getContentResolver().query(Accounts.getContentUri(SelectFriends.this), new String[]{Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(params[0])}, null);
 				if (account.moveToFirst()) {
 					mToken = sonetCrypto.Decrypt(account.getString(0));
 					mSecret = sonetCrypto.Decrypt(account.getString(1));
-					mService = account.getInt(3);
+					mService = account.getInt(2);
 				}
 				account.close();
 				String response;
@@ -163,13 +173,74 @@ public class SelectFriends extends ListActivity {
 					if ((response = SonetHttpClient.httpResponse(mHttpClient, new HttpGet(String.format(FACEBOOK_FRIENDS, FACEBOOK_BASE_URL, Saccess_token, mToken)))) != null) {
 						try {
 							JSONArray friends = new JSONObject(response).getJSONArray(Sdata);
-							for (int i = 0, i2 = friends.length(); i < i2; i++) {
+							for (int i = 0, l = friends.length(); i < l; i++) {
 								JSONObject f = friends.getJSONObject(i);
-								HashMap<String, String> friend = new HashMap<String, String>();
-								friend.put(Entities.ESID, f.getString(Sid));
-								friend.put(Entities.PROFILE, String.format(FACEBOOK_PICTURE, f.getString(Sid)));
-								friend.put(Entities.FRIEND, f.getString(Sname));
-								mFriends.add(friend);
+								HashMap<String, String> newFriend = new HashMap<String, String>();
+								newFriend.put(Entities.ESID, f.getString(Sid));
+								newFriend.put(Entities.PROFILE, String.format(FACEBOOK_PICTURE, f.getString(Sid)));
+								newFriend.put(Entities.FRIEND, f.getString(Sname));
+								// need to alphabetize
+								if (mFriends.isEmpty())
+									mFriends.add(newFriend);
+								else {
+									String fullName = f.getString(Sname);
+									int spaceIdx = fullName.lastIndexOf(" ");
+									String newFirstName = null;
+									String newLastName = null;
+									if (spaceIdx == -1)
+										newLastName = fullName;
+									else {
+										newFirstName = fullName.substring(0, spaceIdx++);
+										newLastName = fullName.substring(spaceIdx);
+									}
+									List<HashMap<String, String>> newFriends = new ArrayList<HashMap<String, String>>();
+									for (int i2 = 0, l2 = mFriends.size(); i2 < l2; i2++) {
+										HashMap<String, String> oldFriend = mFriends.get(i2);
+										if (newFriend == null) {
+											newFriends.add(oldFriend);
+										} else {
+											fullName = oldFriend.get(Entities.FRIEND);
+											spaceIdx = fullName.lastIndexOf(" ");
+											String oldFirstName = null;
+											String oldLastName = null;
+											if (spaceIdx == -1)
+												oldLastName = fullName;
+											else {
+												oldFirstName = fullName.substring(0, spaceIdx++);
+												oldLastName = fullName.substring(spaceIdx);
+											}
+											if (newLastName == null) {
+												newFriends.add(newFriend);
+												newFriend = null;
+											} else {
+												int comparison = oldLastName.compareToIgnoreCase(newLastName);
+												if (comparison == 0) {
+													// compare firstnames
+													if (newFirstName == null) {
+														newFriends.add(newFriend);
+														newFriend = null;
+													} else if (oldFirstName != null) {
+														comparison = oldFirstName.compareToIgnoreCase(newFirstName);
+														if (comparison == 0) {
+															newFriends.add(newFriend);
+															newFriend = null;
+														} else if (comparison > 0) {
+															newFriends.add(newFriend);
+															newFriend = null;
+														}
+													}
+												} else if (comparison > 0) {
+													newFriends.add(newFriend);
+													newFriend = null;
+												}
+											}
+											newFriends.add(oldFriend);
+										}
+									}
+									if (newFriend != null)
+										newFriends.add(newFriend);
+									mFriends = newFriends;
+								}
 							}
 							loadList = true;
 						} catch (JSONException e) {
@@ -196,7 +267,8 @@ public class SelectFriends extends ListActivity {
 			@Override
 			protected void onPostExecute(Boolean loadList) {
 				if (loadList) {
-					SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend, new String[]{Entities.PROFILE, Entities.FRIEND}, new int[]{R.id.profile, R.id.name});
+//					SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend, new String[]{Entities.PROFILE, Entities.FRIEND}, new int[]{R.id.profile, R.id.name});
+					SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend, new String[]{Entities.FRIEND}, new int[]{R.id.name});
 					sa.setViewBinder(mViewBinder);
 					setListAdapter(sa);
 				}
@@ -208,7 +280,8 @@ public class SelectFriends extends ListActivity {
 		loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
 			@Override
 			public void onCancel(DialogInterface dialog) {
-				if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+				if (!asyncTask.isCancelled())
+					asyncTask.cancel(true);
 			}
 		});
 		loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
@@ -218,6 +291,6 @@ public class SelectFriends extends ListActivity {
 			}
 		});
 		loadingDialog.show();
-		asyncTask.execute();
+		asyncTask.execute(mAccountId);
 	}
 }

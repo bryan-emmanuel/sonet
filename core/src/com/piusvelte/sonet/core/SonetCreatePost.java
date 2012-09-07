@@ -81,16 +81,19 @@ import android.widget.Toast;
 public class SonetCreatePost extends Activity implements OnKeyListener, OnClickListener, TextWatcher {
 	private static final String TAG = "SonetCreatePost";
 	private HashMap<Long, String> mAccountsToPost = new HashMap<Long, String>();
+	private HashMap<Long, String[]> mFriendsToTag = new HashMap<Long, String[]>();
 	private EditText mMessage;
 	private Button mSend;
 	private Button mLocation;
 	private Button mAccounts;
 	private TextView mCount;
 	private ImageButton mPhoto;
-	private String mLat = null,
-			mLong = null;
+	private ImageButton mFriends;
+	private String mLat = null;
+	private String mLong = null;
 	private SonetCrypto mSonetCrypto;
 	private static final int PHOTO = 1;
+	private static final int FRIENDS = 2;
 	private String mPhotoPath;
 	private HttpClient mHttpClient;
 	private AlertDialog mDialog;
@@ -114,6 +117,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		mAccounts = (Button) findViewById(R.id.accounts);
 		mCount = (TextView) findViewById(R.id.count);
 		mPhoto = (ImageButton) findViewById(R.id.photo);
+		mFriends = (ImageButton) findViewById(R.id.friends);
 
 		// load secretkey
 		mSonetCrypto = SonetCrypto.getInstance(getApplicationContext());
@@ -141,6 +145,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 						switch (account.getInt(2)) {
 						case FACEBOOK:
 							mPhoto.setEnabled(true);
+							mFriends.setEnabled(true);
 						case TWITTER:
 						case FOURSQUARE:
 							mLocation.setEnabled(true);
@@ -160,10 +165,11 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		mMessage.setOnKeyListener(this);
 		mSend.setOnClickListener(this);
 		mPhoto.setOnClickListener(this);
+		mFriends.setOnClickListener(this);
 
 		setResult(RESULT_OK);
 	}
-	
+
 	@Override
 	protected void onPause() {
 		super.onPause();
@@ -216,20 +222,20 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 								placesIds[i] = place.getString(Sid);
 							}
 							mDialog = (new AlertDialog.Builder(SonetCreatePost.this))
-							.setSingleChoiceItems(placesNames, -1, new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									mAccountsToPost.put(accountId, placesIds[which]);
-									dialog.dismiss();
-								}
-							})
-							.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									dialog.cancel();
-								}
-							})
-							.create();
+									.setSingleChoiceItems(placesNames, -1, new DialogInterface.OnClickListener() {
+										@Override
+										public void onClick(DialogInterface dialog, int which) {
+											mAccountsToPost.put(accountId, placesIds[which]);
+											dialog.dismiss();
+										}
+									})
+									.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+										@Override
+										public void onClick(DialogInterface dialog, int which) {
+											dialog.cancel();
+										}
+									})
+									.create();
 							mDialog.show();
 						} catch (JSONException e) {
 							Log.e(TAG, e.toString());
@@ -246,20 +252,20 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 								placesIds[i] = place.getString(Sid);
 							}
 							mDialog = (new AlertDialog.Builder(SonetCreatePost.this))
-							.setSingleChoiceItems(placesNames, -1, new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									mAccountsToPost.put(accountId, placesIds[which]);
-									dialog.dismiss();
-								}
-							})
-							.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									dialog.cancel();
-								}
-							})
-							.create();
+									.setSingleChoiceItems(placesNames, -1, new DialogInterface.OnClickListener() {
+										@Override
+										public void onClick(DialogInterface dialog, int which) {
+											mAccountsToPost.put(accountId, placesIds[which]);
+											dialog.dismiss();
+										}
+									})
+									.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+										@Override
+										public void onClick(DialogInterface dialog, int which) {
+											dialog.cancel();
+										}
+									})
+									.create();
 							mDialog.show();
 						} catch (JSONException e) {
 							Log.e(TAG, e.toString());
@@ -280,20 +286,20 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 										placesIds[i] = place.getString(Sid);
 									}
 									mDialog = (new AlertDialog.Builder(SonetCreatePost.this))
-									.setSingleChoiceItems(placesNames, -1, new DialogInterface.OnClickListener() {
-										@Override
-										public void onClick(DialogInterface dialog, int which) {
-											mAccountsToPost.put(accountId, placesIds[which]);
-											dialog.dismiss();
-										}
-									})
-									.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-										@Override
-										public void onClick(DialogInterface dialog, int which) {
-											dialog.cancel();
-										}
-									})
-									.create();
+											.setSingleChoiceItems(placesNames, -1, new DialogInterface.OnClickListener() {
+												@Override
+												public void onClick(DialogInterface dialog, int which) {
+													mAccountsToPost.put(accountId, placesIds[which]);
+													dialog.dismiss();
+												}
+											})
+											.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+												@Override
+												public void onClick(DialogInterface dialog, int which) {
+													dialog.cancel();
+												}
+											})
+											.create();
 									mDialog.show();
 									break;
 								}
@@ -365,21 +371,21 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 								accounts[i++] = entry.getValue();
 							}
 							mDialog = (new AlertDialog.Builder(this))
-							.setTitle(R.string.accounts)
-							.setSingleChoiceItems(accounts, -1, new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									setLocation(accountIndexes[which]);
-									dialog.dismiss();
-								}
-							})
-							.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									dialog.dismiss();
-								}
-							})
-							.create();
+									.setTitle(R.string.accounts)
+									.setSingleChoiceItems(accounts, -1, new DialogInterface.OnClickListener() {
+										@Override
+										public void onClick(DialogInterface dialog, int which) {
+											setLocation(accountIndexes[which]);
+											dialog.dismiss();
+										}
+									})
+									.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+										@Override
+										public void onClick(DialogInterface dialog, int which) {
+											dialog.dismiss();
+										}
+									})
+									.create();
 							mDialog.show();
 						}
 					}
@@ -393,6 +399,8 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				mSend.setEnabled(false);
 				mAccounts.setEnabled(false);
 				mLocation.setEnabled(false);
+				mPhoto.setEnabled(false);
+				mFriends.setEnabled(false);
 				final ProgressDialog loadingDialog = new ProgressDialog(this);
 				final AsyncTask<Void, String, Void> asyncTask = new AsyncTask<Void, String, Void>() {
 					@Override
@@ -468,21 +476,8 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 												.putExtra(Accounts.TOKEN, account.getString(account.getColumnIndex(Accounts.TOKEN)))
 												.putExtra(Widgets.INSTANT_UPLOAD, mPhotoPath)
 												.putExtra(Statuses.MESSAGE, mMessage.getText().toString())
-										);
+												);
 										publishProgress(serviceName + " photo");
-//										httpPost = new HttpPost(String.format(FACEBOOK_PHOTOS, FACEBOOK_BASE_URL, Saccess_token, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN)))));
-//										MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
-//										File file = new File(mPhotoPath);
-//										ContentBody fileBody = new FileBody(file);
-//										entity.addPart("source", fileBody);
-//										try {
-//											entity.addPart("message", new StringBody(mMessage.getText().toString()));
-//											httpPost.setEntity(entity);
-//											response = SonetHttpClient.httpResponse(mHttpClient, httpPost);
-//										} catch (UnsupportedEncodingException e) {
-//											Log.e(TAG,e.toString());
-//										}
-//										publishProgress(serviceName + " photo", getString(response != null ? R.string.success : R.string.failure));
 										// send checkins separately
 										if (placeId != null) {
 											//checkin
@@ -682,13 +677,61 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				mAccounts.setEnabled(true);
 				mLocation.setEnabled(true);
 			}
-		} else if (v == mAccounts) {
+		} else if (v == mAccounts)
 			chooseAccounts();
-		} else if (v == mPhoto) {
+		else if (v == mPhoto) {
 			Intent intent = new Intent();
 			intent.setType("image/*");
 			intent.setAction(Intent.ACTION_GET_CONTENT);
 			startActivityForResult(Intent.createChooser(intent, "Select Picture"), PHOTO);
+		} else if (v == mFriends) {
+			if (mAccountsToPost.size() > 0) {
+				if (mAccountsToPost.size() == 1)
+					selectFriends(mAccountsToPost.keySet().iterator().next());
+				else {
+					// dialog to select an account
+					Iterator<Long> accountIds = mAccountsToPost.keySet().iterator();
+					HashMap<Long, String> accountEntries = new HashMap<Long, String>();
+					while (accountIds.hasNext()) {
+						Cursor account = this.getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(accountIds.next())}, null);
+						if (account.moveToFirst()) {
+							int service = account.getInt(account.getColumnIndex(Accounts.SERVICE));
+							// only get accounts which have been selected and are supported for friends
+							if (service == FACEBOOK)
+								accountEntries.put(account.getLong(account.getColumnIndex(Accounts._ID)), account.getString(account.getColumnIndex(Accounts.USERNAME)));
+						}
+					}
+					int size = accountEntries.size();
+					if (size != 0) {
+						final long[] accountIndexes = new long[size];
+						final String[] accounts = new String[size];
+						int i = 0;
+						Iterator<Map.Entry<Long, String>> entries = accountEntries.entrySet().iterator();
+						while (entries.hasNext()) {
+							Map.Entry<Long, String> entry = entries.next();
+							accountIndexes[i] = entry.getKey();
+							accounts[i++] = entry.getValue();
+						}
+						mDialog = (new AlertDialog.Builder(this))
+								.setTitle(R.string.accounts)
+								.setSingleChoiceItems(accounts, -1, new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										selectFriends(accountIndexes[which]);
+										dialog.dismiss();
+									}
+								})
+								.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										dialog.dismiss();
+									}
+								})
+								.create();
+						mDialog.show();
+					}
+				}
+			}
 		}
 	}
 
@@ -757,12 +800,16 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		}
 	}
 
+	protected void selectFriends(long accountId) {
+		startActivityForResult(Sonet.getPackageIntent(this, SelectFriends.class).putExtra(Accounts.SID, accountId), FRIENDS);
+	}
+
 	protected void chooseAccounts() {
 		// don't limit accounts to the widget...
 		Cursor c = this.getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, null, null, null);
 		if (c.moveToFirst()) {
-			int i = 0,
-					count = c.getCount();
+			int i = 0;;
+			int count = c.getCount();
 			final long[] accountIndexes = new long[count];
 			final String[] accounts = new String[count];
 			final boolean[] defaults = new boolean[count];
@@ -776,93 +823,99 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				c.moveToNext();
 			}
 			mDialog = (new AlertDialog.Builder(this))
-			.setTitle(R.string.accounts)
-			.setMultiChoiceItems(accounts, defaults, new DialogInterface.OnMultiChoiceClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-					if (isChecked) {
-						final long accountId = accountIndexes[which];
-						mAccountsToPost.put(accountId, null);
-						// set location, only for supported services, TWITTER, FACEBOOK, FOURSQUARE
-						switch (accountServices[which]) {
-						case FACEBOOK:
-							if (!mPhoto.isEnabled()) {
-								mPhoto.setEnabled(true);
-							}
-						case TWITTER:
-						case CHATTER:
-						case FOURSQUARE:
-							if (!mLocation.isEnabled()) {
-								mLocation.setEnabled(true);
-							}
-							if (mLat == null) {
-								LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
-								Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-								if (location != null) {
-									mLat = Double.toString(location.getLatitude());
-									mLong = Double.toString(location.getLongitude());
-								}										
-							}
-							if ((mLat != null) && (mLong != null)) {
-								dialog.cancel();
-								mDialog = (new AlertDialog.Builder(SonetCreatePost.this))
-								.setTitle(R.string.set_location)
-								.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-									@Override
-									public void onClick(DialogInterface dialog, int which) {
-										setLocation(accountId);
-										dialog.dismiss();
-									}
-								})
-								.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-									@Override
-									public void onClick(DialogInterface dialog, int which) {
-										dialog.dismiss();
-									}
-								})
-								.create();
-								mDialog.show();
-							}
-						}
-					} else {
-						mAccountsToPost.remove(accountIndexes[which]);
-						boolean photoEnabled = false;
-						boolean locationEnabled = false;
-						// check selected accounts for options
-						for (int i = 0, i2 = accountServices.length; i < i2; i++) {
-							// skip the account which was removed
-							if (i != which) {
-								switch (accountServices[i]) {
+					.setTitle(R.string.accounts)
+					.setMultiChoiceItems(accounts, defaults, new DialogInterface.OnMultiChoiceClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+							if (isChecked) {
+								final long accountId = accountIndexes[which];
+								mAccountsToPost.put(accountId, null);
+								// set location, only for supported services, TWITTER, FACEBOOK, FOURSQUARE
+								switch (accountServices[which]) {
 								case FACEBOOK:
-									if (!photoEnabled) {
-										photoEnabled = defaults[i];
+									if (!mPhoto.isEnabled()) {
+										mPhoto.setEnabled(true);
+									}
+									if (!mFriends.isEnabled()) {
+										mFriends.setEnabled(true);
 									}
 								case TWITTER:
 								case FOURSQUARE:
-									if (!locationEnabled) {
-										locationEnabled = defaults[i];
+									if (!mLocation.isEnabled()) {
+										mLocation.setEnabled(true);
+									}
+									if (mLat == null) {
+										LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
+										Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+										if (location != null) {
+											mLat = Double.toString(location.getLatitude());
+											mLong = Double.toString(location.getLongitude());
+										}										
+									}
+									if ((mLat != null) && (mLong != null)) {
+										dialog.cancel();
+										mDialog = (new AlertDialog.Builder(SonetCreatePost.this))
+												.setTitle(R.string.set_location)
+												.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+													@Override
+													public void onClick(DialogInterface dialog, int which) {
+														setLocation(accountId);
+														dialog.dismiss();
+													}
+												})
+												.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+													@Override
+													public void onClick(DialogInterface dialog, int which) {
+														dialog.dismiss();
+													}
+												})
+												.create();
+										mDialog.show();
 									}
 								}
-								if (photoEnabled && locationEnabled) {
-									break;
+							} else {
+								mAccountsToPost.remove(accountIndexes[which]);
+								if (mFriendsToTag.containsKey(accountIndexes[which]))
+									mFriendsToTag.remove(accountIndexes[which]);
+								boolean photoEnabled = false;
+								boolean locationEnabled = false;
+								boolean friendsEnabled = false;
+								// check selected accounts for options
+								for (int i = 0, i2 = accountServices.length; i < i2; i++) {
+									// skip the account which was removed
+									if (i != which) {
+										switch (accountServices[i]) {
+										case FACEBOOK:
+											if (!photoEnabled)
+												photoEnabled = defaults[i];
+											if (!friendsEnabled)
+												friendsEnabled = defaults[i];
+										case TWITTER:
+										case FOURSQUARE:
+											if (!locationEnabled)
+												locationEnabled = defaults[i];
+										}
+										if (photoEnabled && locationEnabled) {
+											break;
+										}
+									}
+								}
+								mLocation.setEnabled(locationEnabled);
+								mPhoto.setEnabled(photoEnabled);
+								mFriends.setEnabled(friendsEnabled);
+								if (!photoEnabled) {
+									setPhoto(null);
 								}
 							}
 						}
-						mLocation.setEnabled(locationEnabled);
-						mPhoto.setEnabled(photoEnabled);
-						if (!photoEnabled) {
-							setPhoto(null);
+					})
+					.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.dismiss();
 						}
-					}
-				}
-			})
-			.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					dialog.dismiss();
-				}
-			})
-			.create();
+					})
+					.create();
 			mDialog.show();
 		}
 		c.close();
@@ -875,6 +928,10 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 			if (resultCode == RESULT_OK) {
 				getPhoto(data.getData());
 			}
+			break;
+		case FRIENDS:
+			if ((resultCode == RESULT_OK) && data.hasExtra(Entities.FRIEND) && data.hasExtra(Accounts.SID))
+				mFriendsToTag.put(data.getLongExtra(Accounts.SID, Sonet.INVALID_ACCOUNT_ID), data.getStringArrayExtra(Entities.FRIEND));
 			break;
 		}
 	}
