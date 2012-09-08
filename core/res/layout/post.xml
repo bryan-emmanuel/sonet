@@ -22,10 +22,6 @@
 	android:layout_width="fill_parent" android:layout_height="fill_parent">
 	<LinearLayout android:id="@+id/ad" android:layout_width="fill_parent"
 		android:layout_height="wrap_content" />
-	<Button android:id="@+id/accounts" android:layout_width="fill_parent"
-		android:layout_below="@id/ad" android:layout_height="wrap_content"
-		android:text="@string/accounts"
-		android:layout_alignParentLeft="true" />
 	<RelativeLayout android:id="@+id/buttons"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
 		android:layout_alignParentBottom="true">
@@ -48,6 +44,6 @@
 			android:layout_toLeftOf="@id/count" android:layout_toRightOf="@id/tags" />
 	</RelativeLayout>
 	<EditText android:id="@+id/message" android:layout_width="fill_parent"
-		android:layout_height="fill_parent" android:layout_below="@id/accounts"
+		android:layout_height="fill_parent" android:layout_below="@id/ad"
 		android:layout_above="@id/buttons" android:gravity="top" android:hint="message" />
 </RelativeLayout>

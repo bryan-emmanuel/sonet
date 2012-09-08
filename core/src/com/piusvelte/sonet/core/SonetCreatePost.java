@@ -68,6 +68,9 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnKeyListener;
@@ -86,7 +89,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 	private EditText mMessage;
 	private Button mSend;
 	private Button mLocation;
-	private Button mAccounts;
 	private TextView mCount;
 	private ImageButton mPhoto;
 	private ImageButton mTags;
@@ -94,7 +96,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 	private String mLong = null;
 	private SonetCrypto mSonetCrypto;
 	private static final int PHOTO = 1;
-	private static final int FRIENDS = 2;
+	private static final int TAGS = 2;
 	private String mPhotoPath;
 	private HttpClient mHttpClient;
 	private AlertDialog mDialog;
@@ -128,7 +130,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		mMessage = (EditText) findViewById(R.id.message);
 		mSend = (Button) findViewById(R.id.send);
 		mLocation = (Button) findViewById(R.id.location);
-		mAccounts = (Button) findViewById(R.id.accounts);
 		mCount = (TextView) findViewById(R.id.count);
 		mPhoto = (ImageButton) findViewById(R.id.photo);
 		mTags = (ImageButton) findViewById(R.id.tags);
@@ -164,7 +165,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				}
 			}
 		}
-		mAccounts.setOnClickListener(this);
 		mLocation.setOnClickListener(this);
 		mMessage.addTextChangedListener(this);
 		mMessage.setOnKeyListener(this);
@@ -180,6 +180,21 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		super.onPause();
 		if ((mDialog != null) && mDialog.isShowing())
 			mDialog.dismiss();
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.menu_post, menu);
+		return super.onCreateOptionsMenu(menu);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		int itemId = item.getItemId();
+		if (itemId == R.id.menu_post_accounts)
+			chooseAccounts();
+		return super.onOptionsItemSelected(item);
 	}
 
 	private void setLocation(final long accountId) {
@@ -416,12 +431,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				unsupportedToast(sLocationSupported);
 		} else if (v == mSend) {
 			if (!mAccountsService.isEmpty()) {
-				mMessage.setEnabled(false);
-				mSend.setEnabled(false);
-				mAccounts.setEnabled(false);
-				mLocation.setEnabled(false);
-				mPhoto.setEnabled(false);
-				mTags.setEnabled(false);
 				final ProgressDialog loadingDialog = new ProgressDialog(this);
 				final AsyncTask<Void, String, Void> asyncTask = new AsyncTask<Void, String, Void>() {
 					@Override
@@ -676,16 +685,9 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				});
 				loadingDialog.show();
 				asyncTask.execute();
-			} else {
+			} else
 				(Toast.makeText(SonetCreatePost.this, "no accounts selected", Toast.LENGTH_LONG)).show();
-				mMessage.setEnabled(true);
-				mSend.setEnabled(true);
-				mAccounts.setEnabled(true);
-				mLocation.setEnabled(true);
-			}
-		} else if (v == mAccounts)
-			chooseAccounts();
-		else if (v == mPhoto) {
+		} else if (v == mPhoto) {
 			if (isSupported(sPhotoSupported)) {
 				Intent intent = new Intent();
 				intent.setType("image/*");
@@ -807,7 +809,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 	}
 
 	protected void selectFriends(long accountId) {
-		startActivityForResult(Sonet.getPackageIntent(this, SelectFriends.class).putExtra(Accounts.SID, accountId), FRIENDS);
+		startActivityForResult(Sonet.getPackageIntent(this, SelectFriends.class).putExtra(Accounts.SID, accountId).putExtra(Stags, mAccountsTags.get(accountId)), TAGS);
 	}
 
 	protected void chooseAccounts() {
@@ -893,9 +895,9 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				getPhoto(data.getData());
 			}
 			break;
-		case FRIENDS:
+		case TAGS:
 			if ((resultCode == RESULT_OK) && data.hasExtra(Entities.FRIEND) && data.hasExtra(Accounts.SID))
-				mAccountsTags.put(data.getLongExtra(Accounts.SID, Sonet.INVALID_ACCOUNT_ID), data.getStringArrayExtra(Entities.FRIEND));
+				mAccountsTags.put(data.getLongExtra(Accounts.SID, Sonet.INVALID_ACCOUNT_ID), data.getStringArrayExtra(Stags));
 			break;
 		}
 	}

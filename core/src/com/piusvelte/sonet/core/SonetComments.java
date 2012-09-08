@@ -132,9 +132,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 		mSend = (Button) findViewById(R.id.send);
 		mCount = (TextView) findViewById(R.id.count);
 		Intent intent = getIntent();
-		if (intent != null) {
+		if (intent != null)
 			mData = intent.getData();
-		}
 		mMessage.addTextChangedListener(this);
 		mMessage.setOnKeyListener(this);
 		mSend.setOnClickListener(this);

@@ -89,8 +89,13 @@ public class SelectFriends extends ListActivity {
 			adView.loadAd(new AdRequest());
 		}
 		Intent intent = getIntent();
-		if ((intent != null) && intent.hasExtra(Accounts.SID))
+		if ((intent != null) && intent.hasExtra(Accounts.SID) && intent.hasExtra(Stags)) {
 			mAccountId = intent.getLongExtra(Accounts.SID, Sonet.INVALID_ACCOUNT_ID);
+			String[] tags = intent.getStringArrayExtra(Stags);
+			for (String tag : tags)
+				mSelectedFriends.add(tag);
+		} else
+			finish();
 
 		mHttpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
 		registerForContextMenu(getListView());
@@ -141,7 +146,7 @@ public class SelectFriends extends ListActivity {
 				friends[i] = mSelectedFriends.get(i);
 			Intent i = new Intent();
 			i.putExtra(Accounts.SID, mAccountId);
-			i.putExtra(Entities.FRIEND, friends);
+			i.putExtra(Stags, friends);
 			setResult(RESULT_OK, i);
 		}
 	}
