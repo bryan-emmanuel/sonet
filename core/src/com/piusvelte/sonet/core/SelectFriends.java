@@ -89,11 +89,13 @@ public class SelectFriends extends ListActivity {
 			adView.loadAd(new AdRequest());
 		}
 		Intent intent = getIntent();
-		if ((intent != null) && intent.hasExtra(Accounts.SID) && intent.hasExtra(Stags)) {
+		if ((intent != null) && intent.hasExtra(Accounts.SID)) {
 			mAccountId = intent.getLongExtra(Accounts.SID, Sonet.INVALID_ACCOUNT_ID);
 			String[] tags = intent.getStringArrayExtra(Stags);
-			for (String tag : tags)
-				mSelectedFriends.add(tag);
+			if (tags != null) {
+				for (String tag : tags)
+					mSelectedFriends.add(tag);
+			}
 		} else
 			finish();
 
