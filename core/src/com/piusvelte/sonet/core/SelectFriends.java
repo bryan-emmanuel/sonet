@@ -275,7 +275,7 @@ public class SelectFriends extends ListActivity {
 			protected void onPostExecute(Boolean loadList) {
 				if (loadList) {
 //					SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend, new String[]{Entities.PROFILE, Entities.FRIEND}, new int[]{R.id.profile, R.id.name});
-					SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend, new String[]{Entities.FRIEND}, new int[]{R.id.name});
+					SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend, new String[]{Entities.FRIEND, Entities.ESID}, new int[]{R.id.name, R.id.selected});
 					sa.setViewBinder(mViewBinder);
 					setListAdapter(sa);
 				}
