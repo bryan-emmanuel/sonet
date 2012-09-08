@@ -185,7 +185,6 @@ containing a value of this type.
         public static final int friend_bg_color=0x7f080029;
         public static final int friend_color=0x7f080027;
         public static final int friend_textsize=0x7f080028;
-        public static final int friends=0x7f08001a;
         public static final int hasbuttons=0x7f080020;
         public static final int icon=0x7f08000d;
         public static final int icon0=0x7f080049;
@@ -242,6 +241,7 @@ containing a value of this type.
         public static final int status_bg=0x7f080050;
         public static final int status_bg0=0x7f080044;
         public static final int statuses_per_account=0x7f080006;
+        public static final int tags=0x7f08001a;
         public static final int time24hr=0x7f080031;
         public static final int vibrate=0x7f08002b;
         public static final int widget=0x7f080034;

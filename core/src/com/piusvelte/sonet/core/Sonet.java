@@ -82,11 +82,11 @@ public class Sonet {
 	protected static final String FACEBOOK_URL_ME = "%sme?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_HOME = "%sme/home?date_format=U&format=json&sdk=android&%s=%s&fields=actions,link,type,from,message,created_time,to,comments,story,source,picture";
 	protected static final String FACEBOOK_POST = "%sme/feed?format=json&sdk=android&%s=%s";
-	protected static final String FACEBOOK_CHECKIN = "%sme/checkins?format=json&sdk=android&%s=%s";
+//	protected static final String FACEBOOK_CHECKIN = "%sme/checkins?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_LIKES = "%s%s/likes?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_COMMENTS = "%s%s/comments?date_format=U&format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_SEARCH = "%ssearch?type=place&center=%s,%s&distance=1000&format=json&sdk=android&%s=%s";
-	protected static final String FACEBOOK_COORDINATES = "{\"latitude\":\"%s\",\"longitude\":\"%s\"}";
+//	protected static final String FACEBOOK_COORDINATES = "{\"latitude\":\"%s\",\"longitude\":\"%s\"}";
 	protected static final String FACEBOOK_USER = "%s%s?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_PHOTOS = "%sme/photos?format=json&sdk=android&%s=%s";
 	protected static final String FACEBOOK_FRIENDS = "%sme/friends?format=json&sdk=android&%s=%s";
@@ -302,6 +302,8 @@ public class Sonet {
 	protected static final String Spicture = "picture";
 	protected static final String Sboard = "board";
 	protected static final String Simgur = "i.imgur.com";
+	protected static final String Splace = "place";
+	protected static final String Stags = "tags";
 
 	private static final String POWER_SERVICE = Context.POWER_SERVICE;
 	private static WakeLock sWakeLock;

@@ -80,15 +80,16 @@ import android.widget.Toast;
 
 public class SonetCreatePost extends Activity implements OnKeyListener, OnClickListener, TextWatcher {
 	private static final String TAG = "SonetCreatePost";
-	private HashMap<Long, String> mAccountsToPost = new HashMap<Long, String>();
-	private HashMap<Long, String[]> mFriendsToTag = new HashMap<Long, String[]>();
+	private HashMap<Long, String> mAccountsLocation = new HashMap<Long, String>();
+	private HashMap<Long, String[]> mAccountsTags = new HashMap<Long, String[]>();
+	private HashMap<Long, Integer> mAccountsService = new HashMap<Long, Integer>();
 	private EditText mMessage;
 	private Button mSend;
 	private Button mLocation;
 	private Button mAccounts;
 	private TextView mCount;
 	private ImageButton mPhoto;
-	private ImageButton mFriends;
+	private ImageButton mTags;
 	private String mLat = null;
 	private String mLong = null;
 	private SonetCrypto mSonetCrypto;
@@ -97,6 +98,19 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 	private String mPhotoPath;
 	private HttpClient mHttpClient;
 	private AlertDialog mDialog;
+	private static final List<Integer> sLocationSupported = new ArrayList<Integer>();
+	private static final List<Integer> sPhotoSupported = new ArrayList<Integer>();
+	private static final List<Integer> sTaggingSupported = new ArrayList<Integer>();
+
+	static {
+		sLocationSupported.add(TWITTER);
+		sLocationSupported.add(FACEBOOK);
+		sLocationSupported.add(FOURSQUARE);
+
+		sPhotoSupported.add(FACEBOOK);
+
+		sTaggingSupported.add(FACEBOOK);
+	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -117,7 +131,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		mAccounts = (Button) findViewById(R.id.accounts);
 		mCount = (TextView) findViewById(R.id.count);
 		mPhoto = (ImageButton) findViewById(R.id.photo);
-		mFriends = (ImageButton) findViewById(R.id.friends);
+		mTags = (ImageButton) findViewById(R.id.tags);
 
 		// load secretkey
 		mSonetCrypto = SonetCrypto.getInstance(getApplicationContext());
@@ -139,18 +153,9 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				Uri data = i.getData();
 				if ((data != null) && data.toString().contains(Accounts.getContentUri(this).toString())) {
 					// default to the account passed in, but allow selecting additional accounts
-					Cursor account = this.getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{data.getLastPathSegment()}, null);
-					if (account.moveToFirst()) {
-						mAccountsToPost.put(account.getLong(0), null);
-						switch (account.getInt(2)) {
-						case FACEBOOK:
-							mPhoto.setEnabled(true);
-							mFriends.setEnabled(true);
-						case TWITTER:
-						case FOURSQUARE:
-							mLocation.setEnabled(true);
-						}
-					}
+					Cursor account = this.getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{data.getLastPathSegment()}, null);
+					if (account.moveToFirst())
+						mAccountsService.put(account.getLong(0), account.getInt(1));
 					account.close();
 				} else if (i.hasExtra(Widgets.INSTANT_UPLOAD)) {
 					// check if a photo path was passed and prompt user to select the account
@@ -165,7 +170,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		mMessage.setOnKeyListener(this);
 		mSend.setOnClickListener(this);
 		mPhoto.setOnClickListener(this);
-		mFriends.setOnClickListener(this);
+		mTags.setOnClickListener(this);
 
 		setResult(RESULT_OK);
 	}
@@ -173,9 +178,8 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 	@Override
 	protected void onPause() {
 		super.onPause();
-		if ((mDialog != null) && mDialog.isShowing()) {
+		if ((mDialog != null) && mDialog.isShowing())
 			mDialog.dismiss();
-		}
 	}
 
 	private void setLocation(final long accountId) {
@@ -225,7 +229,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									.setSingleChoiceItems(placesNames, -1, new DialogInterface.OnClickListener() {
 										@Override
 										public void onClick(DialogInterface dialog, int which) {
-											mAccountsToPost.put(accountId, placesIds[which]);
+											mAccountsLocation.put(accountId, placesIds[which]);
 											dialog.dismiss();
 										}
 									})
@@ -255,7 +259,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									.setSingleChoiceItems(placesNames, -1, new DialogInterface.OnClickListener() {
 										@Override
 										public void onClick(DialogInterface dialog, int which) {
-											mAccountsToPost.put(accountId, placesIds[which]);
+											mAccountsLocation.put(accountId, placesIds[which]);
 											dialog.dismiss();
 										}
 									})
@@ -289,7 +293,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 											.setSingleChoiceItems(placesNames, -1, new DialogInterface.OnClickListener() {
 												@Override
 												public void onClick(DialogInterface dialog, int which) {
-													mAccountsToPost.put(accountId, placesIds[which]);
+													mAccountsLocation.put(accountId, placesIds[which]);
 													dialog.dismiss();
 												}
 											})
@@ -333,31 +337,48 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		asyncTask.execute();
 	}
 
+	private boolean isSupported(List<Integer> supportedServices) {
+		boolean supported = false;
+		Iterator<Integer> services = mAccountsService.values().iterator();
+		while (services.hasNext() && ((supported = supportedServices.contains(services.next())) == false));
+		return supported;
+	}
+
+	private void unsupportedToast(List<Integer> supportedServices) {
+		StringBuilder message = new StringBuilder();
+		message.append("This feature is currently supported only for ");
+		for (int i = 0, l = supportedServices.size(); i < l; i++) {
+			message.append(Sonet.getServiceName(getResources(), supportedServices.get(i)));
+			if (i == (l - 1))
+				message.append(".");
+			else if (i == (l - 2))
+				message.append(", and ");
+			else
+				message.append(", ");
+		}
+		Toast.makeText(getApplicationContext(), message.toString(), Toast.LENGTH_LONG).show();
+	}
+
 	@Override
 	public void onClick(View v) {
 		if (v == mLocation) {
-			// set the location
-			if (mAccountsToPost.size() > 0) {
+			if (isSupported(sLocationSupported)) {
 				LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
 				Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 				if (location != null) {
 					mLat = Double.toString(location.getLatitude());
 					mLong = Double.toString(location.getLongitude());
-					if (mAccountsToPost.size() == 1) {
-						setLocation(mAccountsToPost.keySet().iterator().next());
+					if (mAccountsService.size() == 1) {
+						setLocation(mAccountsService.keySet().iterator().next());
 					} else {
 						// dialog to select an account
-						Iterator<Long> accountIds = mAccountsToPost.keySet().iterator();
+						Iterator<Long> accountIds = mAccountsService.keySet().iterator();
 						HashMap<Long, String> accountEntries = new HashMap<Long, String>();
 						while (accountIds.hasNext()) {
-							Cursor account = this.getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(accountIds.next())}, null);
-							if (account.moveToFirst()) {
-								int service = account.getInt(account.getColumnIndex(Accounts.SERVICE));
-								// only get accounts which have been selected and are supported for location
-								if ((service == TWITTER) || (service == FACEBOOK) || (service == FOURSQUARE)) {
-									accountEntries.put(account.getLong(account.getColumnIndex(Accounts._ID)), account.getString(account.getColumnIndex(Accounts.USERNAME)));
-								}
-							}
+							Long accountId = accountIds.next();
+							Cursor account = this.getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID, ACCOUNTS_QUERY}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
+							if (account.moveToFirst() && sLocationSupported.contains(mAccountsService.get(accountId)))
+								accountEntries.put(account.getLong(account.getColumnIndex(Accounts._ID)), account.getString(account.getColumnIndex(Accounts.USERNAME)));
 						}
 						int size = accountEntries.size();
 						if (size != 0) {
@@ -389,33 +410,42 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 							mDialog.show();
 						}
 					}
-				} else {
+				} else
 					(Toast.makeText(this, getString(R.string.location_unavailable), Toast.LENGTH_LONG)).show();
-				}
-			}
+			} else
+				unsupportedToast(sLocationSupported);
 		} else if (v == mSend) {
-			if (!mAccountsToPost.isEmpty()) {
+			if (!mAccountsService.isEmpty()) {
 				mMessage.setEnabled(false);
 				mSend.setEnabled(false);
 				mAccounts.setEnabled(false);
 				mLocation.setEnabled(false);
 				mPhoto.setEnabled(false);
-				mFriends.setEnabled(false);
+				mTags.setEnabled(false);
 				final ProgressDialog loadingDialog = new ProgressDialog(this);
 				final AsyncTask<Void, String, Void> asyncTask = new AsyncTask<Void, String, Void>() {
 					@Override
 					protected Void doInBackground(Void... arg0) {
-						Iterator<Map.Entry<Long, String>> entrySet = mAccountsToPost.entrySet().iterator();
+						Iterator<Map.Entry<Long, Integer>> entrySet = mAccountsService.entrySet().iterator();
 						while (entrySet.hasNext()) {
-							Map.Entry<Long, String> entry = entrySet.next();
+							Map.Entry<Long, Integer> entry = entrySet.next();
 							final long accountId = entry.getKey();
-							final String placeId = entry.getValue();
+							final int service = entry.getValue();
+							final String placeId = mAccountsLocation.get(accountId);
 							// post or comment!
-							Cursor account = getContentResolver().query(Accounts.getContentUri(SonetCreatePost.this), new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
+							Cursor account = getContentResolver().query(Accounts.getContentUri(SonetCreatePost.this), new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
 							if (account.moveToFirst()) {
-								int service = account.getInt(account.getColumnIndex(Accounts.SERVICE));
 								final String serviceName = Sonet.getServiceName(getResources(), service);
 								publishProgress(serviceName);
+								StringBuilder tags = new StringBuilder();
+								if (mAccountsTags.containsKey(accountId)) {
+									String[] accountTags = mAccountsTags.get(accountId);
+									for (int i = 0, l = accountTags.length; i < l; i++) {
+										if (i > 0)
+											tags.append(",");
+										tags.append(accountTags[i]);
+									}
+								}
 								String message;
 								SonetOAuth sonetOAuth;
 								HttpPost httpPost;
@@ -476,43 +506,19 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 												.putExtra(Accounts.TOKEN, account.getString(account.getColumnIndex(Accounts.TOKEN)))
 												.putExtra(Widgets.INSTANT_UPLOAD, mPhotoPath)
 												.putExtra(Statuses.MESSAGE, mMessage.getText().toString())
+												.putExtra(Splace, placeId)
+												.putExtra(Stags, tags.toString())
 												);
 										publishProgress(serviceName + " photo");
-										// send checkins separately
-										if (placeId != null) {
-											//checkin
-											httpPost = new HttpPost(String.format(FACEBOOK_CHECKIN, FACEBOOK_BASE_URL, Saccess_token, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN)))));
-											List<NameValuePair> params = new ArrayList<NameValuePair>();
-											params.add(new BasicNameValuePair("place", placeId));
-											params.add(new BasicNameValuePair("coordinates", String.format(FACEBOOK_COORDINATES, mLat, mLong)));
-											params.add(new BasicNameValuePair("message", mMessage.getText().toString()));
-											try {
-												httpPost.setEntity(new UrlEncodedFormEntity(params));
-												response = SonetHttpClient.httpResponse(mHttpClient, httpPost);
-											} catch (UnsupportedEncodingException e) {
-												Log.e(TAG,e.toString());
-											}
-											publishProgress(serviceName + " checkin", getString(response != null ? R.string.success : R.string.failure));
-										}
-									} else if (placeId != null) {
-										//checkin
-										httpPost = new HttpPost(String.format(FACEBOOK_CHECKIN, FACEBOOK_BASE_URL, Saccess_token, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN)))));
-										List<NameValuePair> params = new ArrayList<NameValuePair>();
-										params.add(new BasicNameValuePair("place", placeId));
-										params.add(new BasicNameValuePair("coordinates", String.format(FACEBOOK_COORDINATES, mLat, mLong)));
-										params.add(new BasicNameValuePair("message", mMessage.getText().toString()));
-										try {
-											httpPost.setEntity(new UrlEncodedFormEntity(params));
-											response = SonetHttpClient.httpResponse(mHttpClient, httpPost);
-										} catch (UnsupportedEncodingException e) {
-											Log.e(TAG,e.toString());
-										}
-										publishProgress(serviceName + " checkin", getString(response != null ? R.string.success : R.string.failure));
 									} else {
 										// regular post
 										httpPost = new HttpPost(String.format(FACEBOOK_POST, FACEBOOK_BASE_URL, Saccess_token, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN)))));
 										List<NameValuePair> params = new ArrayList<NameValuePair>();
-										params.add(new BasicNameValuePair("message", mMessage.getText().toString()));
+										params.add(new BasicNameValuePair(Smessage, mMessage.getText().toString()));
+										if (placeId != null)
+											params.add(new BasicNameValuePair(Splace, placeId));
+										if (tags.length() > 0)
+											params.add(new BasicNameValuePair(Stags, tags.toString()));
 										try {
 											httpPost.setEntity(new UrlEncodedFormEntity(params));
 											response = SonetHttpClient.httpResponse(mHttpClient, httpPost);
@@ -680,26 +686,26 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		} else if (v == mAccounts)
 			chooseAccounts();
 		else if (v == mPhoto) {
-			Intent intent = new Intent();
-			intent.setType("image/*");
-			intent.setAction(Intent.ACTION_GET_CONTENT);
-			startActivityForResult(Intent.createChooser(intent, "Select Picture"), PHOTO);
-		} else if (v == mFriends) {
-			if (mAccountsToPost.size() > 0) {
-				if (mAccountsToPost.size() == 1)
-					selectFriends(mAccountsToPost.keySet().iterator().next());
+			if (isSupported(sPhotoSupported)) {
+				Intent intent = new Intent();
+				intent.setType("image/*");
+				intent.setAction(Intent.ACTION_GET_CONTENT);
+				startActivityForResult(Intent.createChooser(intent, "Select Picture"), PHOTO);
+			} else
+				unsupportedToast(sPhotoSupported);
+		} else if (v == mTags) {
+			if (isSupported(sTaggingSupported)) {
+				if (mAccountsService.size() == 1)
+					selectFriends(mAccountsService.keySet().iterator().next());
 				else {
 					// dialog to select an account
-					Iterator<Long> accountIds = mAccountsToPost.keySet().iterator();
+					Iterator<Long> accountIds = mAccountsService.keySet().iterator();
 					HashMap<Long, String> accountEntries = new HashMap<Long, String>();
 					while (accountIds.hasNext()) {
-						Cursor account = this.getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(accountIds.next())}, null);
-						if (account.moveToFirst()) {
-							int service = account.getInt(account.getColumnIndex(Accounts.SERVICE));
-							// only get accounts which have been selected and are supported for friends
-							if (service == FACEBOOK)
-								accountEntries.put(account.getLong(account.getColumnIndex(Accounts._ID)), account.getString(account.getColumnIndex(Accounts.USERNAME)));
-						}
+						Long accountId = accountIds.next();
+						Cursor account = this.getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID, ACCOUNTS_QUERY}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
+						if (account.moveToFirst() && sTaggingSupported.contains(mAccountsService.get(accountId)))
+							accountEntries.put(account.getLong(0), account.getString(1));
 					}
 					int size = accountEntries.size();
 					if (size != 0) {
@@ -731,7 +737,8 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 						mDialog.show();
 					}
 				}
-			}
+			} else
+				unsupportedToast(sTaggingSupported);
 		}
 	}
 
@@ -757,11 +764,10 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 			@Override
 			protected void onPostExecute(String path) {
 				if (loadingDialog.isShowing()) loadingDialog.dismiss();
-				if (path != null) {
+				if (path != null)
 					setPhoto(path);
-				} else {
+				else
 					(Toast.makeText(SonetCreatePost.this, "error retrieving the photo path", Toast.LENGTH_LONG)).show();
-				}
 				mPhoto.setEnabled(true);
 			}
 		};
@@ -819,7 +825,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				accountIndexes[i] = id;
 				accounts[i] = c.getString(1);
 				accountServices[i] = c.getInt(2);
-				defaults[i++] = mAccountsToPost.containsKey(id);
+				defaults[i++] = mAccountsService.containsKey(id);
 				c.moveToNext();
 			}
 			mDialog = (new AlertDialog.Builder(this))
@@ -829,21 +835,8 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 						public void onClick(DialogInterface dialog, int which, boolean isChecked) {
 							if (isChecked) {
 								final long accountId = accountIndexes[which];
-								mAccountsToPost.put(accountId, null);
-								// set location, only for supported services, TWITTER, FACEBOOK, FOURSQUARE
-								switch (accountServices[which]) {
-								case FACEBOOK:
-									if (!mPhoto.isEnabled()) {
-										mPhoto.setEnabled(true);
-									}
-									if (!mFriends.isEnabled()) {
-										mFriends.setEnabled(true);
-									}
-								case TWITTER:
-								case FOURSQUARE:
-									if (!mLocation.isEnabled()) {
-										mLocation.setEnabled(true);
-									}
+								mAccountsService.put(accountId, accountServices[which]);
+								if (sLocationSupported.contains(accountServices[which])) {
 									if (mLat == null) {
 										LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
 										Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
@@ -874,38 +867,9 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									}
 								}
 							} else {
-								mAccountsToPost.remove(accountIndexes[which]);
-								if (mFriendsToTag.containsKey(accountIndexes[which]))
-									mFriendsToTag.remove(accountIndexes[which]);
-								boolean photoEnabled = false;
-								boolean locationEnabled = false;
-								boolean friendsEnabled = false;
-								// check selected accounts for options
-								for (int i = 0, i2 = accountServices.length; i < i2; i++) {
-									// skip the account which was removed
-									if (i != which) {
-										switch (accountServices[i]) {
-										case FACEBOOK:
-											if (!photoEnabled)
-												photoEnabled = defaults[i];
-											if (!friendsEnabled)
-												friendsEnabled = defaults[i];
-										case TWITTER:
-										case FOURSQUARE:
-											if (!locationEnabled)
-												locationEnabled = defaults[i];
-										}
-										if (photoEnabled && locationEnabled) {
-											break;
-										}
-									}
-								}
-								mLocation.setEnabled(locationEnabled);
-								mPhoto.setEnabled(photoEnabled);
-								mFriends.setEnabled(friendsEnabled);
-								if (!photoEnabled) {
-									setPhoto(null);
-								}
+								mAccountsService.remove(accountIndexes[which]);
+								mAccountsLocation.remove(accountIndexes[which]);
+								mAccountsTags.remove(accountIndexes[which]);
 							}
 						}
 					})
@@ -931,7 +895,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 			break;
 		case FRIENDS:
 			if ((resultCode == RESULT_OK) && data.hasExtra(Entities.FRIEND) && data.hasExtra(Accounts.SID))
-				mFriendsToTag.put(data.getLongExtra(Accounts.SID, Sonet.INVALID_ACCOUNT_ID), data.getStringArrayExtra(Entities.FRIEND));
+				mAccountsTags.put(data.getLongExtra(Accounts.SID, Sonet.INVALID_ACCOUNT_ID), data.getStringArrayExtra(Entities.FRIEND));
 			break;
 		}
 	}

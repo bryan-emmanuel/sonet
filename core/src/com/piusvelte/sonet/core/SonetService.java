@@ -156,16 +156,14 @@ public class SonetService extends Service {
 			if (action != null) {
 				Log.d(TAG,"action:" + action);
 				if (action.equals(ACTION_REFRESH)) {
-					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) {
+					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS))
 						putValidatedUpdates(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS), 1);
-					} else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
+					else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID))
 						putValidatedUpdates(new int[]{intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)}, 1);
-					} else if (intent.getData() != null) {
+					else if (intent.getData() != null)
 						putValidatedUpdates(new int[]{Integer.parseInt(intent.getData().getLastPathSegment())}, 1);
-					} else {
-						// rebuild all widgets
+					else
 						putValidatedUpdates(null, 0);
-					}
 				} else if (action.equals(LauncherIntent.Action.ACTION_READY)) {
 					if (intent.hasExtra(EXTRA_SCROLLABLE_VERSION) && intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
 						int scrollableVersion = intent.getIntExtra(EXTRA_SCROLLABLE_VERSION, 1);
@@ -179,9 +177,8 @@ public class SonetService extends Service {
 								// set the scrollable version
 								this.getContentResolver().update(Widgets.getContentUri(SonetService.this), values, Widgets.WIDGET + "=?", new String[] {Integer.toString(appWidgetId)});
 								putValidatedUpdates(new int[]{appWidgetId}, 1);
-							} else {
+							} else
 								putValidatedUpdates(new int[]{appWidgetId}, 1);
-							}
 						} else {
 							ContentValues values = new ContentValues();
 							values.put(Widgets.SCROLLABLE, scrollableVersion);
@@ -216,22 +213,20 @@ public class SonetService extends Service {
 									Uri content_uri = null;
 									// unknown numbers crash here in the emulator
 									Cursor phones = getContentResolver().query(Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(phone)), new String[]{ContactsContract.PhoneLookup._ID}, null, null, null);
-									if (phones.moveToFirst()) {
+									if (phones.moveToFirst())
 										content_uri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, phones.getLong(0));
-									} else {
+									else {
 										Cursor emails = getContentResolver().query(Uri.withAppendedPath(ContactsContract.CommonDataKinds.Email.CONTENT_FILTER_URI, Uri.encode(phone)), new String[]{ContactsContract.CommonDataKinds.Email._ID}, null, null, null);
-										if (emails.moveToFirst()) {
+										if (emails.moveToFirst())
 											content_uri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, emails.getLong(0));
-										}
 										emails.close();
 									}
 									phones.close();
 									if (content_uri != null) {
 										// load contact
 										Cursor contacts = getContentResolver().query(content_uri, new String[]{ContactsContract.Contacts.DISPLAY_NAME}, null, null, null);
-										if (contacts.moveToFirst()) {
+										if (contacts.moveToFirst())
 											friend = contacts.getString(0);
-										}
 										contacts.close();
 										profile = getBlob(ContactsContract.Contacts.openContactPhotoInputStream(getContentResolver(), content_uri));
 									}
@@ -305,15 +300,12 @@ public class SonetService extends Service {
 											status_bg_color = c.getInt(1);
 											icon = c.getInt(2) == 1;
 											status_count = c.getInt(3);
-											if (c.getInt(4) == 1) {
+											if (c.getInt(4) == 1)
 												notifications |= Notification.DEFAULT_SOUND;
-											}
-											if (c.getInt(5) == 1) {
+											if (c.getInt(5) == 1)
 												notifications |= Notification.DEFAULT_VIBRATE;
-											}
-											if (c.getInt(6) == 1) {
+											if (c.getInt(6) == 1)
 												notifications |= Notification.DEFAULT_LIGHTS;
-											}
 											profile_bg_color = c.getInt(7);
 											friend_bg_color = c.getInt(8);
 										}
@@ -373,9 +365,8 @@ public class SonetService extends Service {
 											}
 										}
 										statuses.close();
-										if (notifications != 0) {
+										if (notifications != 0)
 											publishProgress(Integer.toString(notifications), friend + " sent a message");
-										}
 										widgets.moveToNext();
 									}
 								}
@@ -397,9 +388,8 @@ public class SonetService extends Service {
 							@Override
 							protected void onPostExecute(int[] appWidgetIds) {
 								// remove self from thread list
-								if (!mSMSLoaders.isEmpty()) {
+								if (!mSMSLoaders.isEmpty())
 									mSMSLoaders.remove(this);
-								}
 								putValidatedUpdates(appWidgetIds, 0);
 							}
 
@@ -465,6 +455,12 @@ public class SonetService extends Service {
 					}).execute(Integer.parseInt(intent.getData().getLastPathSegment()), intent.getIntExtra(ACTION_PAGE_UP, 0));
 				} else if (action.equals(Sonet.ACTION_UPLOAD)) {
 					if (intent.hasExtra(Accounts.TOKEN) && intent.hasExtra(Statuses.MESSAGE) && intent.hasExtra(Widgets.INSTANT_UPLOAD)) {
+						String place = null;
+						if (intent.hasExtra(Splace))
+							place = intent.getStringExtra(Splace);
+						String tags = null;
+						if (intent.hasExtra(Stags))
+							tags = intent.getStringExtra(Stags);
 						// upload a photo
 						(new AsyncTask<String, Void, String>() {
 
@@ -477,10 +473,14 @@ public class SonetService extends Service {
 									MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
 									File file = new File(params[2]);
 									ContentBody fileBody = new FileBody(file);
-									entity.addPart("source", fileBody);
+									entity.addPart(Ssource, fileBody);
 									HttpClient httpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
 									try {
-										entity.addPart("message", new StringBody(params[1]));
+										entity.addPart(Smessage, new StringBody(params[1]));
+										if (params[3] != null)
+											entity.addPart(Splace, new StringBody(params[3]));
+										if (params[4] != null)
+											entity.addPart(Stags, new StringBody(params[4]));
 										httpPost.setEntity(entity);
 										response = SonetHttpClient.httpResponse(httpClient, httpPost);
 									} catch (UnsupportedEncodingException e) {
@@ -500,7 +500,7 @@ public class SonetService extends Service {
 								((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
 							}
 
-						}).execute(intent.getStringExtra(Accounts.TOKEN), intent.getStringExtra(Statuses.MESSAGE), intent.getStringExtra(Widgets.INSTANT_UPLOAD));
+						}).execute(intent.getStringExtra(Accounts.TOKEN), intent.getStringExtra(Statuses.MESSAGE), intent.getStringExtra(Widgets.INSTANT_UPLOAD), place, tags);
 					}
 				} else {
 					// this might be a widget update from the widget refresh button

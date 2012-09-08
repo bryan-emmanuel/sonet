@@ -135,7 +135,7 @@ public class SelectFriends extends ListActivity {
 				mSelectedFriends.add(esid);
 				checked = true;
 			}
-			((CheckBox) ((RelativeLayout) view).getChildAt(1)).setChecked(checked);
+			((CheckBox) ((RelativeLayout) view).getChildAt(0)).setChecked(checked);
 			String[] friends = new String[mSelectedFriends.size()];
 			for (int i = 0, l = friends.length; i < l; i++)
 				friends[i] = mSelectedFriends.get(i);
@@ -188,7 +188,7 @@ public class SelectFriends extends ListActivity {
 									String newFirstName = null;
 									String newLastName = null;
 									if (spaceIdx == -1)
-										newLastName = fullName;
+										newFirstName = fullName;
 									else {
 										newFirstName = fullName.substring(0, spaceIdx++);
 										newLastName = fullName.substring(spaceIdx);
@@ -204,23 +204,23 @@ public class SelectFriends extends ListActivity {
 											String oldFirstName = null;
 											String oldLastName = null;
 											if (spaceIdx == -1)
-												oldLastName = fullName;
+												oldFirstName = fullName;
 											else {
 												oldFirstName = fullName.substring(0, spaceIdx++);
 												oldLastName = fullName.substring(spaceIdx);
 											}
-											if (newLastName == null) {
+											if (newFirstName == null) {
 												newFriends.add(newFriend);
 												newFriend = null;
 											} else {
-												int comparison = oldLastName.compareToIgnoreCase(newLastName);
+												int comparison = oldFirstName.compareToIgnoreCase(newFirstName);
 												if (comparison == 0) {
 													// compare firstnames
-													if (newFirstName == null) {
+													if (newLastName == null) {
 														newFriends.add(newFriend);
 														newFriend = null;
-													} else if (oldFirstName != null) {
-														comparison = oldFirstName.compareToIgnoreCase(newFirstName);
+													} else if (oldLastName != null) {
+														comparison = oldLastName.compareToIgnoreCase(newLastName);
 														if (comparison == 0) {
 															newFriends.add(newFriend);
 															newFriend = null;
