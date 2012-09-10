@@ -449,10 +449,12 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 								StringBuilder tags = new StringBuilder();
 								if (mAccountsTags.containsKey(accountId)) {
 									String[] accountTags = mAccountsTags.get(accountId);
-									for (int i = 0, l = accountTags.length; i < l; i++) {
-										if (i > 0)
-											tags.append(",");
-										tags.append(accountTags[i]);
+									if (accountTags != null) {
+										for (int i = 0, l = accountTags.length; i < l; i++) {
+											if (i > 0)
+												tags.append(",");
+											tags.append(accountTags[i]);
+										}
 									}
 								}
 								String message;
@@ -896,7 +898,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 			}
 			break;
 		case TAGS:
-			if ((resultCode == RESULT_OK) && data.hasExtra(Entities.FRIEND) && data.hasExtra(Accounts.SID))
+			if ((resultCode == RESULT_OK) && data.hasExtra(Stags) && data.hasExtra(Accounts.SID))
 				mAccountsTags.put(data.getLongExtra(Accounts.SID, Sonet.INVALID_ACCOUNT_ID), data.getStringArrayExtra(Stags));
 			break;
 		}
