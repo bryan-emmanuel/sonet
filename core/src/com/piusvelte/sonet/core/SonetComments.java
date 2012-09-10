@@ -83,8 +83,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnKeyListener;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
@@ -98,7 +98,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 	private String mSid = null;
 	private String mEsid = null;
 	private EditText mMessage;
-	private Button mSend;
+	private ImageButton mSend;
 	private TextView mCount;
 	private List<HashMap<String, String>> mComments = new ArrayList<HashMap<String, String>>();
 	private boolean mTime24hr = false;
@@ -129,7 +129,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 		}
 
 		mMessage = (EditText) findViewById(R.id.message);
-		mSend = (Button) findViewById(R.id.send);
+		mSend = (ImageButton) findViewById(R.id.send);
 		mCount = (TextView) findViewById(R.id.count);
 		Intent intent = getIntent();
 		if (intent != null)

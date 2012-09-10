@@ -60,7 +60,7 @@
 		        <data android:mimeType="text/*" />
 		    </intent-filter>
 		</activity>
-		<activity android:name=".SonetComments" />
+		<activity android:name=".SonetComments"  android:windowSoftInputMode="stateVisible|adjustResize"/>
 		<activity android:name=".SelectFriends" />
 		<activity android:name=".StatusDialog"
 			android:theme="@style/SonetDialog" android:clearTaskOnLaunch="true" android:taskAffinity="" />"

@@ -25,23 +25,13 @@
 	<RelativeLayout android:id="@+id/buttons"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
 		android:layout_alignParentBottom="true">
-		<ImageButton android:id="@+id/photo" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:scaleType="fitXY"
-			android:layout_alignParentLeft="true"
-			android:src="@android:drawable/ic_menu_camera" />
-		<ImageButton android:id="@+id/tags" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:scaleType="fitXY"
-			android:layout_toRightOf="@id/photo"
-			android:src="@drawable/ic_menu_allfriends" />
-		<Button android:id="@+id/send" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:text="@string/send"
-			android:layout_alignParentRight="true" />
-		<Button android:id="@+id/count" android:layout_width="wrap_content"
+		<ImageButton android:id="@+id/send" android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:src="@drawable/ic_menu_send"
+			 android:scaleType="fitXY" android:layout_alignParentRight="true" />
+		<Button android:id="@+id/count" android:layout_width="fill_parent"
 			android:layout_height="wrap_content" android:text="0"
-			android:layout_toLeftOf="@id/send" android:enabled="false" />
-		<Button android:id="@+id/location" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:text="@string/location"
-			android:layout_toLeftOf="@id/count" android:layout_toRightOf="@id/tags" />
+			android:layout_toLeftOf="@id/send" android:enabled="false"
+			android:gravity="right|center_vertical" />
 	</RelativeLayout>
 	<EditText android:id="@+id/message" android:layout_width="fill_parent"
 		android:layout_height="fill_parent" android:layout_below="@id/ad"

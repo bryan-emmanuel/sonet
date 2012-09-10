@@ -105,7 +105,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 					Log.d(TAG,"data:"+mData.toString());
 					// need to use a thread here to avoid anr
 					mLoadingDialog = new ProgressDialog(this);
-					mLoadingDialog.setMessage(getString(R.string.loading));
+					mLoadingDialog.setMessage(getString(R.string.status_loading));
 					mLoadingDialog.setCancelable(true);
 					mLoadingDialog.setOnCancelListener(new OnCancelListener() {
 
@@ -227,7 +227,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 				startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 				finish();
 			} else {
-				(Toast.makeText(StatusDialog.this, "This widget is reloading. Please try again after it has completed or use the app to update the widget.", Toast.LENGTH_LONG)).show();
+				(Toast.makeText(StatusDialog.this, R.string.widget_loading, Toast.LENGTH_LONG)).show();
 				// force widgets rebuild
 				startService(Sonet.getPackageIntent(this, SonetService.class).setAction(ACTION_REFRESH));
 				finish();

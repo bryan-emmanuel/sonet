@@ -27,6 +27,8 @@
     <string name="sonet_4x3">Sonet 4x3</string>
     <string name="sonet_4x4">Sonet 4x4</string>
     <string name="loading">Loading&#8230;</string>
+    <string name="widget_loading">This widget is reloading. Please try again after it has completed or use the app to update the widget.</string>
+    <string name="status_loading">Loading&#8230; If loading does not finish soon, the widget is probably reloading. Please try again after it has completed or use the app to update the widget.</string>
     <string name="updating">Updating content&#8230;</string>
     <string name="refreshing">Updating Sonet content&#8230;</string>
     <string name="no_connection">No connection</string>
@@ -150,4 +152,7 @@
 	<string name="settings_notification">Notification</string>
 	<string name="settings_update">Update</string>
 	<string name="settings_profile">Profile</string>
+	<string name="add_photo">Add Photo</string>
+	<string name="add_tags">Tag Friends</string>
+	<string name="add_location">Add Location</string>
 </resources>
