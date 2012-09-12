@@ -216,9 +216,8 @@ containing a value of this type.
         public static int menu_notifications_clear_all=0x7f07005b;
         public static int menu_notifications_refresh=0x7f07005a;
         public static int menu_post_accounts=0x7f07005c;
-        public static int menu_post_location=0x7f07005f;
+        public static int menu_post_location=0x7f07005e;
         public static int menu_post_photo=0x7f07005d;
-        public static int menu_post_tags=0x7f07005e;
         public static int menu_refresh=0x7f070004;
         public static int message=0x7f070010;
         public static int message0=0x7f070044;

@@ -193,53 +193,53 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				startActivityForResult(Intent.createChooser(intent, "Select Picture"), PHOTO);
 			} else
 				unsupportedToast(sPhotoSupported);
-		} else if (itemId == R.id.menu_post_tags) {
-			if (mAccountsService.size() == 1) {
-				if (sTaggingSupported.contains(mAccountsService.values().iterator().next()))
-					selectFriends(mAccountsService.keySet().iterator().next());
-				else
-					unsupportedToast(sTaggingSupported);
-			} else {
-				// dialog to select an account
-				Iterator<Long> accountIds = mAccountsService.keySet().iterator();
-				HashMap<Long, String> accountEntries = new HashMap<Long, String>();
-				while (accountIds.hasNext()) {
-					Long accountId = accountIds.next();
-					Cursor account = this.getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID, ACCOUNTS_QUERY}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
-					if (account.moveToFirst() && sTaggingSupported.contains(mAccountsService.get(accountId)))
-						accountEntries.put(account.getLong(0), account.getString(1));
-				}
-				int size = accountEntries.size();
-				if (size != 0) {
-					final long[] accountIndexes = new long[size];
-					final String[] accounts = new String[size];
-					int i = 0;
-					Iterator<Map.Entry<Long, String>> entries = accountEntries.entrySet().iterator();
-					while (entries.hasNext()) {
-						Map.Entry<Long, String> entry = entries.next();
-						accountIndexes[i] = entry.getKey();
-						accounts[i++] = entry.getValue();
-					}
-					mDialog = (new AlertDialog.Builder(this))
-							.setTitle(R.string.accounts)
-							.setSingleChoiceItems(accounts, -1, new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									selectFriends(accountIndexes[which]);
-									dialog.dismiss();
-								}
-							})
-							.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									dialog.dismiss();
-								}
-							})
-							.create();
-					mDialog.show();
-				} else
-					unsupportedToast(sTaggingSupported);
-			}
+//		} else if (itemId == R.id.menu_post_tags) {
+//			if (mAccountsService.size() == 1) {
+//				if (sTaggingSupported.contains(mAccountsService.values().iterator().next()))
+//					selectFriends(mAccountsService.keySet().iterator().next());
+//				else
+//					unsupportedToast(sTaggingSupported);
+//			} else {
+//				// dialog to select an account
+//				Iterator<Long> accountIds = mAccountsService.keySet().iterator();
+//				HashMap<Long, String> accountEntries = new HashMap<Long, String>();
+//				while (accountIds.hasNext()) {
+//					Long accountId = accountIds.next();
+//					Cursor account = this.getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID, ACCOUNTS_QUERY}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
+//					if (account.moveToFirst() && sTaggingSupported.contains(mAccountsService.get(accountId)))
+//						accountEntries.put(account.getLong(0), account.getString(1));
+//				}
+//				int size = accountEntries.size();
+//				if (size != 0) {
+//					final long[] accountIndexes = new long[size];
+//					final String[] accounts = new String[size];
+//					int i = 0;
+//					Iterator<Map.Entry<Long, String>> entries = accountEntries.entrySet().iterator();
+//					while (entries.hasNext()) {
+//						Map.Entry<Long, String> entry = entries.next();
+//						accountIndexes[i] = entry.getKey();
+//						accounts[i++] = entry.getValue();
+//					}
+//					mDialog = (new AlertDialog.Builder(this))
+//							.setTitle(R.string.accounts)
+//							.setSingleChoiceItems(accounts, -1, new DialogInterface.OnClickListener() {
+//								@Override
+//								public void onClick(DialogInterface dialog, int which) {
+//									selectFriends(accountIndexes[which]);
+//									dialog.dismiss();
+//								}
+//							})
+//							.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+//								@Override
+//								public void onClick(DialogInterface dialog, int which) {
+//									dialog.dismiss();
+//								}
+//							})
+//							.create();
+//					mDialog.show();
+//				} else
+//					unsupportedToast(sTaggingSupported);
+//			}
 		} else if (itemId == R.id.menu_post_location) {
 			LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
 			Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
@@ -539,11 +539,12 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									break;
 								case FACEBOOK:
 									// handle tags
-									StringBuilder tags = new StringBuilder();
-									tags.append("[");
+									StringBuilder tags = null;
 									if (mAccountsTags.containsKey(accountId)) {
 										String[] accountTags = mAccountsTags.get(accountId);
-										if (accountTags != null) {
+										if ((accountTags != null) && (accountTags.length > 0)) {
+											tags = new StringBuilder();
+											tags.append("[");
 											String tag_format;
 											if (mPhotoPath != null)
 												tag_format = "{\"tag_uid\":\"%s\",\"x\":0,\"y\":0}";
@@ -554,21 +555,21 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 													tags.append(",");
 												tags.append(String.format(tag_format, accountTags[i]));
 											}
+											tags.append("]");
 										}
 									}
-									tags.append("]");
 									if (mPhotoPath != null) {
 										// upload photo
 										// uploading a photo takes a long time, have the service handle it
-										startService(
-												Sonet.getPackageIntent(SonetCreatePost.this.getApplicationContext(), SonetService.class)
-												.setAction(Sonet.ACTION_UPLOAD)
-												.putExtra(Accounts.TOKEN, account.getString(account.getColumnIndex(Accounts.TOKEN)))
-												.putExtra(Widgets.INSTANT_UPLOAD, mPhotoPath)
-												.putExtra(Statuses.MESSAGE, mMessage.getText().toString())
-												.putExtra(Splace, placeId)
-												.putExtra(Stags, tags.toString())
-												);
+										Intent i = Sonet.getPackageIntent(SonetCreatePost.this.getApplicationContext(), PhotoUploadService.class);
+										i.setAction(Sonet.ACTION_UPLOAD);
+										i.putExtra(Accounts.TOKEN, account.getString(account.getColumnIndex(Accounts.TOKEN)));
+										i.putExtra(Widgets.INSTANT_UPLOAD, mPhotoPath);
+										i.putExtra(Statuses.MESSAGE, mMessage.getText().toString());
+										i.putExtra(Splace, placeId);
+										if (tags != null)
+											i.putExtra(Stags, tags.toString());
+										startService(i);
 										publishProgress(serviceName + " photo");
 									} else {
 										// regular post
@@ -577,7 +578,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 										params.add(new BasicNameValuePair(Smessage, mMessage.getText().toString()));
 										if (placeId != null)
 											params.add(new BasicNameValuePair(Splace, placeId));
-										if (tags.length() > 0)
+										if (tags != null)
 											params.add(new BasicNameValuePair(Stags, tags.toString()));
 										try {
 											httpPost.setEntity(new UrlEncodedFormEntity(params));

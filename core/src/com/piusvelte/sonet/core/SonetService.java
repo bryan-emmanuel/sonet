@@ -23,7 +23,6 @@ import static com.piusvelte.sonet.core.Sonet.*;
 import static com.piusvelte.sonet.core.SonetTokens.*;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
@@ -52,11 +51,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.mime.HttpMultipartMode;
-import org.apache.http.entity.mime.MultipartEntity;
-import org.apache.http.entity.mime.content.ContentBody;
-import org.apache.http.entity.mime.content.FileBody;
-import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.message.BasicNameValuePair;
 
 import org.json.JSONArray;
@@ -68,7 +62,6 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import com.piusvelte.sonet.core.Sonet.Accounts;
 import com.piusvelte.sonet.core.Sonet.Entities;
 import com.piusvelte.sonet.core.Sonet.Notifications;
 import com.piusvelte.sonet.core.Sonet.Statuses;
@@ -153,364 +146,282 @@ public class SonetService extends Service {
 		super.onStart(intent, startId);
 		if (intent != null) {
 			String action = intent.getAction();
-			if (action != null) {
-				Log.d(TAG,"action:" + action);
-				if (action.equals(ACTION_REFRESH)) {
-					if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS))
-						putValidatedUpdates(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS), 1);
-					else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID))
-						putValidatedUpdates(new int[]{intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)}, 1);
-					else if (intent.getData() != null)
-						putValidatedUpdates(new int[]{Integer.parseInt(intent.getData().getLastPathSegment())}, 1);
-					else
-						putValidatedUpdates(null, 0);
-				} else if (action.equals(LauncherIntent.Action.ACTION_READY)) {
-					if (intent.hasExtra(EXTRA_SCROLLABLE_VERSION) && intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
-						int scrollableVersion = intent.getIntExtra(EXTRA_SCROLLABLE_VERSION, 1);
-						int appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
-						// check if the scrollable needs to be built
-						Cursor widget = this.getContentResolver().query(Widgets.getContentUri(SonetService.this), new String[]{Widgets._ID, Widgets.SCROLLABLE}, Widgets.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
-						if (widget.moveToFirst()) {
-							if (widget.getInt(widget.getColumnIndex(Widgets.SCROLLABLE)) < scrollableVersion) {
-								ContentValues values = new ContentValues();
-								values.put(Widgets.SCROLLABLE, scrollableVersion);
-								// set the scrollable version
-								this.getContentResolver().update(Widgets.getContentUri(SonetService.this), values, Widgets.WIDGET + "=?", new String[] {Integer.toString(appWidgetId)});
-								putValidatedUpdates(new int[]{appWidgetId}, 1);
-							} else
-								putValidatedUpdates(new int[]{appWidgetId}, 1);
-						} else {
+			Log.d(TAG,"action:" + action);
+			if (ACTION_REFRESH.equals(action)) {
+				if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS))
+					putValidatedUpdates(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS), 1);
+				else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID))
+					putValidatedUpdates(new int[]{intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)}, 1);
+				else if (intent.getData() != null)
+					putValidatedUpdates(new int[]{Integer.parseInt(intent.getData().getLastPathSegment())}, 1);
+				else
+					putValidatedUpdates(null, 0);
+			} else if (LauncherIntent.Action.ACTION_READY.equals(action)) {
+				if (intent.hasExtra(EXTRA_SCROLLABLE_VERSION) && intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
+					int scrollableVersion = intent.getIntExtra(EXTRA_SCROLLABLE_VERSION, 1);
+					int appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+					// check if the scrollable needs to be built
+					Cursor widget = this.getContentResolver().query(Widgets.getContentUri(SonetService.this), new String[]{Widgets._ID, Widgets.SCROLLABLE}, Widgets.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
+					if (widget.moveToFirst()) {
+						if (widget.getInt(widget.getColumnIndex(Widgets.SCROLLABLE)) < scrollableVersion) {
 							ContentValues values = new ContentValues();
 							values.put(Widgets.SCROLLABLE, scrollableVersion);
 							// set the scrollable version
 							this.getContentResolver().update(Widgets.getContentUri(SonetService.this), values, Widgets.WIDGET + "=?", new String[] {Integer.toString(appWidgetId)});
 							putValidatedUpdates(new int[]{appWidgetId}, 1);
-						}
-						widget.close();
-					} else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
-						// requery
-						putValidatedUpdates(new int[]{intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)}, 0);
+						} else
+							putValidatedUpdates(new int[]{appWidgetId}, 1);
+					} else {
+						ContentValues values = new ContentValues();
+						values.put(Widgets.SCROLLABLE, scrollableVersion);
+						// set the scrollable version
+						this.getContentResolver().update(Widgets.getContentUri(SonetService.this), values, Widgets.WIDGET + "=?", new String[] {Integer.toString(appWidgetId)});
+						putValidatedUpdates(new int[]{appWidgetId}, 1);
 					}
-				} else if (action.equals(SMS_RECEIVED)) {
-					// parse the sms, and notify any widgets which have sms enabled
-					Bundle bundle = intent.getExtras();
-					Object[] pdus = (Object[]) bundle.get("pdus");
-					for (int i = 0; i < pdus.length; i++) {
-						SmsMessage msg = SmsMessage.createFromPdu((byte[]) pdus[i]);
-						AsyncTask<SmsMessage, String, int[]> smsLoader = new AsyncTask<SmsMessage, String, int[]>() {
+					widget.close();
+				} else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
+					// requery
+					putValidatedUpdates(new int[]{intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)}, 0);
+				}
+			} else if (SMS_RECEIVED.equals(action)) {
+				// parse the sms, and notify any widgets which have sms enabled
+				Bundle bundle = intent.getExtras();
+				Object[] pdus = (Object[]) bundle.get("pdus");
+				for (int i = 0; i < pdus.length; i++) {
+					SmsMessage msg = SmsMessage.createFromPdu((byte[]) pdus[i]);
+					AsyncTask<SmsMessage, String, int[]> smsLoader = new AsyncTask<SmsMessage, String, int[]>() {
 
-							@Override
-							protected int[] doInBackground(SmsMessage... msg) {
-								// check if SMS is enabled anywhere
-								Cursor widgets = getContentResolver().query(Widget_accounts_view.getContentUri(SonetService.this), new String[]{Widget_accounts_view._ID, Widget_accounts_view.WIDGET, Widget_accounts_view.ACCOUNT}, Widget_accounts_view.SERVICE + "=?", new String[]{Integer.toString(SMS)}, null);
-								int[] appWidgetIds = new int[widgets.getCount()];
-								if (widgets.moveToFirst()) {
-									// insert this message to the statuses db and requery scrollable/rebuild widget
-									// check if this is a contact
-									String phone = msg[0].getOriginatingAddress();
-									String friend = phone;
-									byte[] profile = null;
-									Uri content_uri = null;
-									// unknown numbers crash here in the emulator
-									Cursor phones = getContentResolver().query(Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(phone)), new String[]{ContactsContract.PhoneLookup._ID}, null, null, null);
-									if (phones.moveToFirst())
-										content_uri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, phones.getLong(0));
-									else {
-										Cursor emails = getContentResolver().query(Uri.withAppendedPath(ContactsContract.CommonDataKinds.Email.CONTENT_FILTER_URI, Uri.encode(phone)), new String[]{ContactsContract.CommonDataKinds.Email._ID}, null, null, null);
-										if (emails.moveToFirst())
-											content_uri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, emails.getLong(0));
-										emails.close();
-									}
-									phones.close();
-									if (content_uri != null) {
-										// load contact
-										Cursor contacts = getContentResolver().query(content_uri, new String[]{ContactsContract.Contacts.DISPLAY_NAME}, null, null, null);
-										if (contacts.moveToFirst())
-											friend = contacts.getString(0);
-										contacts.close();
-										profile = getBlob(ContactsContract.Contacts.openContactPhotoInputStream(getContentResolver(), content_uri));
-									}
-									long accountId = widgets.getLong(2);
-									long id;
-									Cursor entity = getContentResolver().query(Entities.getContentUri(SonetService.this), new String[]{Entities._ID}, Entities.ACCOUNT + "=? and " + Entities.ESID + "=?", new String[]{Long.toString(accountId), mSonetCrypto.Encrypt(phone)}, null);
-									if (entity.moveToFirst()) {
-										id = entity.getLong(0);
-										ContentValues values = new ContentValues();
-										values.put(Entities.ESID, phone);
-										values.put(Entities.FRIEND, friend);
-										values.put(Entities.PROFILE, profile);
-										values.put(Entities.ACCOUNT, accountId);
-										getContentResolver().update(Entities.getContentUri(SonetService.this), values, Entities._ID + "=?", new String[]{Long.toString(id)});
-									} else {
-										ContentValues values = new ContentValues();
-										values.put(Entities.ESID, phone);
-										values.put(Entities.FRIEND, friend);
-										values.put(Entities.PROFILE, profile);
-										values.put(Entities.ACCOUNT, accountId);
-										id = Long.parseLong(getContentResolver().insert(Entities.getContentUri(SonetService.this), values).getLastPathSegment());
-									}
-									entity.close();
+						@Override
+						protected int[] doInBackground(SmsMessage... msg) {
+							// check if SMS is enabled anywhere
+							Cursor widgets = getContentResolver().query(Widget_accounts_view.getContentUri(SonetService.this), new String[]{Widget_accounts_view._ID, Widget_accounts_view.WIDGET, Widget_accounts_view.ACCOUNT}, Widget_accounts_view.SERVICE + "=?", new String[]{Integer.toString(SMS)}, null);
+							int[] appWidgetIds = new int[widgets.getCount()];
+							if (widgets.moveToFirst()) {
+								// insert this message to the statuses db and requery scrollable/rebuild widget
+								// check if this is a contact
+								String phone = msg[0].getOriginatingAddress();
+								String friend = phone;
+								byte[] profile = null;
+								Uri content_uri = null;
+								// unknown numbers crash here in the emulator
+								Cursor phones = getContentResolver().query(Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(phone)), new String[]{ContactsContract.PhoneLookup._ID}, null, null, null);
+								if (phones.moveToFirst())
+									content_uri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, phones.getLong(0));
+								else {
+									Cursor emails = getContentResolver().query(Uri.withAppendedPath(ContactsContract.CommonDataKinds.Email.CONTENT_FILTER_URI, Uri.encode(phone)), new String[]{ContactsContract.CommonDataKinds.Email._ID}, null, null, null);
+									if (emails.moveToFirst())
+										content_uri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, emails.getLong(0));
+									emails.close();
+								}
+								phones.close();
+								if (content_uri != null) {
+									// load contact
+									Cursor contacts = getContentResolver().query(content_uri, new String[]{ContactsContract.Contacts.DISPLAY_NAME}, null, null, null);
+									if (contacts.moveToFirst())
+										friend = contacts.getString(0);
+									contacts.close();
+									profile = getBlob(ContactsContract.Contacts.openContactPhotoInputStream(getContentResolver(), content_uri));
+								}
+								long accountId = widgets.getLong(2);
+								long id;
+								Cursor entity = getContentResolver().query(Entities.getContentUri(SonetService.this), new String[]{Entities._ID}, Entities.ACCOUNT + "=? and " + Entities.ESID + "=?", new String[]{Long.toString(accountId), mSonetCrypto.Encrypt(phone)}, null);
+								if (entity.moveToFirst()) {
+									id = entity.getLong(0);
 									ContentValues values = new ContentValues();
-									Long created = msg[0].getTimestampMillis();
-									values.put(Statuses.CREATED, created);
-									values.put(Statuses.ENTITY, id);
-									values.put(Statuses.MESSAGE, msg[0].getMessageBody());
-									values.put(Statuses.SERVICE, SMS);
-									while (!widgets.isAfterLast()) {
-										int widget = widgets.getInt(1);
-										appWidgetIds[widgets.getPosition()] = widget;
-										// get settings
-										boolean time24hr = true;
-										int status_bg_color = Sonet.default_message_bg_color;
-										int profile_bg_color = Sonet.default_message_bg_color;
-										int friend_bg_color = Sonet.default_friend_bg_color;
-										boolean icon = true;
-										int status_count = Sonet.default_statuses_per_account;
-										int notifications = 0;
-										Cursor c = getContentResolver().query(Widgets_settings.getContentUri(SonetService.this), new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(widget), Long.toString(accountId)}, null);
+									values.put(Entities.ESID, phone);
+									values.put(Entities.FRIEND, friend);
+									values.put(Entities.PROFILE, profile);
+									values.put(Entities.ACCOUNT, accountId);
+									getContentResolver().update(Entities.getContentUri(SonetService.this), values, Entities._ID + "=?", new String[]{Long.toString(id)});
+								} else {
+									ContentValues values = new ContentValues();
+									values.put(Entities.ESID, phone);
+									values.put(Entities.FRIEND, friend);
+									values.put(Entities.PROFILE, profile);
+									values.put(Entities.ACCOUNT, accountId);
+									id = Long.parseLong(getContentResolver().insert(Entities.getContentUri(SonetService.this), values).getLastPathSegment());
+								}
+								entity.close();
+								ContentValues values = new ContentValues();
+								Long created = msg[0].getTimestampMillis();
+								values.put(Statuses.CREATED, created);
+								values.put(Statuses.ENTITY, id);
+								values.put(Statuses.MESSAGE, msg[0].getMessageBody());
+								values.put(Statuses.SERVICE, SMS);
+								while (!widgets.isAfterLast()) {
+									int widget = widgets.getInt(1);
+									appWidgetIds[widgets.getPosition()] = widget;
+									// get settings
+									boolean time24hr = true;
+									int status_bg_color = Sonet.default_message_bg_color;
+									int profile_bg_color = Sonet.default_message_bg_color;
+									int friend_bg_color = Sonet.default_friend_bg_color;
+									boolean icon = true;
+									int status_count = Sonet.default_statuses_per_account;
+									int notifications = 0;
+									Cursor c = getContentResolver().query(Widgets_settings.getContentUri(SonetService.this), new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(widget), Long.toString(accountId)}, null);
+									if (!c.moveToFirst()) {
+										c.close();
+										c = getContentResolver().query(Widgets_settings.getContentUri(SonetService.this), new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(widget), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 										if (!c.moveToFirst()) {
 											c.close();
-											c = getContentResolver().query(Widgets_settings.getContentUri(SonetService.this), new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(widget), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+											c = getContentResolver().query(Widgets_settings.getContentUri(SonetService.this), new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 											if (!c.moveToFirst()) {
-												c.close();
-												c = getContentResolver().query(Widgets_settings.getContentUri(SonetService.this), new String[]{Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
-												if (!c.moveToFirst()) {
-													// initialize account settings
-													ContentValues v = new ContentValues();
-													v.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
-													v.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-													getContentResolver().insert(Widgets.getContentUri(SonetService.this), v).getLastPathSegment();													
-												}
-												if (widget != AppWidgetManager.INVALID_APPWIDGET_ID) {
-													// initialize account settings
-													ContentValues v = new ContentValues();
-													v.put(Widgets.WIDGET, widget);
-													v.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-													getContentResolver().insert(Widgets.getContentUri(SonetService.this), v).getLastPathSegment();
-												}
+												// initialize account settings
+												ContentValues v = new ContentValues();
+												v.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
+												v.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
+												getContentResolver().insert(Widgets.getContentUri(SonetService.this), v).getLastPathSegment();													
 											}
-											// initialize account/widget settings
-											ContentValues v = new ContentValues();
-											v.put(Widgets.WIDGET, widget);
-											v.put(Widgets.ACCOUNT, Long.toString(accountId));
-											getContentResolver().insert(Widgets.getContentUri(SonetService.this), v).getLastPathSegment();
-										}
-										if (c.moveToFirst()) {
-											time24hr = c.getInt(0) == 1;
-											status_bg_color = c.getInt(1);
-											icon = c.getInt(2) == 1;
-											status_count = c.getInt(3);
-											if (c.getInt(4) == 1)
-												notifications |= Notification.DEFAULT_SOUND;
-											if (c.getInt(5) == 1)
-												notifications |= Notification.DEFAULT_VIBRATE;
-											if (c.getInt(6) == 1)
-												notifications |= Notification.DEFAULT_LIGHTS;
-											profile_bg_color = c.getInt(7);
-											friend_bg_color = c.getInt(8);
-										}
-										c.close();
-										values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(created, time24hr));
-										// update the bg and icon
-										byte[] bg;
-										// create the status_bg
-										Bitmap bg_bmp = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-										Canvas bg_canvas = new Canvas(bg_bmp);
-										bg_canvas.drawColor(status_bg_color);
-										ByteArrayOutputStream bg_blob = new ByteArrayOutputStream();
-										bg_bmp.compress(Bitmap.CompressFormat.PNG, 100, bg_blob);
-										bg = bg_blob.toByteArray();
-										values.put(Statuses.STATUS_BG, bg);
-										if (bg_bmp != null) {
-											bg_bmp.recycle();
-											bg_bmp = null;
-										}
-										// friend_bg
-										bg_bmp = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-										bg_canvas = new Canvas(bg_bmp);
-										bg_canvas.drawColor(friend_bg_color);
-										bg_blob = new ByteArrayOutputStream();
-										bg_bmp.compress(Bitmap.CompressFormat.PNG, 100, bg_blob);
-										bg = bg_blob.toByteArray();
-										values.put(Statuses.FRIEND_BG, bg);
-										if (bg_bmp != null) {
-											bg_bmp.recycle();
-											bg_bmp = null;
-										}
-										// profile_bg
-										bg_bmp = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-										bg_canvas = new Canvas(bg_bmp);
-										bg_canvas.drawColor(profile_bg_color);
-										bg_blob = new ByteArrayOutputStream();
-										bg_bmp.compress(Bitmap.CompressFormat.PNG, 100, bg_blob);
-										bg = bg_blob.toByteArray();
-										values.put(Statuses.PROFILE_BG, bg);
-										if (bg_bmp != null) {
-											bg_bmp.recycle();
-											bg_bmp = null;
-										}
-										values.put(Statuses.ICON, icon ? getBlob(getResources(), map_icons[SMS]) : null);
-										// insert the message
-										values.put(Statuses.WIDGET, widget);
-										values.put(Statuses.ACCOUNT, accountId);
-										getContentResolver().insert(Statuses.getContentUri(SonetService.this), values);
-										// check the status count, removing old sms
-										Cursor statuses = getContentResolver().query(Statuses.getContentUri(SonetService.this), new String[]{Statuses._ID}, Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(widget), Long.toString(accountId)}, Statuses.CREATED + " desc");
-										if (statuses.moveToFirst()) {
-											while (!statuses.isAfterLast()) {
-												if (statuses.getPosition() >= status_count) {
-													getContentResolver().delete(Statuses.getContentUri(SonetService.this), Statuses._ID + "=?", new String[]{Long.toString(statuses.getLong(statuses.getColumnIndex(Statuses._ID)))});
-												}
-												statuses.moveToNext();
+											if (widget != AppWidgetManager.INVALID_APPWIDGET_ID) {
+												// initialize account settings
+												ContentValues v = new ContentValues();
+												v.put(Widgets.WIDGET, widget);
+												v.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
+												getContentResolver().insert(Widgets.getContentUri(SonetService.this), v).getLastPathSegment();
 											}
 										}
-										statuses.close();
-										if (notifications != 0)
-											publishProgress(Integer.toString(notifications), friend + " sent a message");
-										widgets.moveToNext();
+										// initialize account/widget settings
+										ContentValues v = new ContentValues();
+										v.put(Widgets.WIDGET, widget);
+										v.put(Widgets.ACCOUNT, Long.toString(accountId));
+										getContentResolver().insert(Widgets.getContentUri(SonetService.this), v).getLastPathSegment();
 									}
-								}
-								widgets.close();
-								return appWidgetIds;
-							}
-
-							@Override
-							protected void onProgressUpdate(String... updates) {
-								int notifications = Integer.parseInt(updates[0]);
-								if (notifications != 0) {
-									Notification notification = new Notification(R.drawable.notification, updates[1], System.currentTimeMillis());
-									notification.setLatestEventInfo(getBaseContext(), "New messages", updates[1], PendingIntent.getActivity(SonetService.this, 0, (Sonet.getPackageIntent(SonetService.this, SonetNotifications.class)), 0));
-									notification.defaults |= notifications;
-									((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
-								}
-							}
-
-							@Override
-							protected void onPostExecute(int[] appWidgetIds) {
-								// remove self from thread list
-								if (!mSMSLoaders.isEmpty())
-									mSMSLoaders.remove(this);
-								putValidatedUpdates(appWidgetIds, 0);
-							}
-
-						};
-						mSMSLoaders.add(smsLoader);
-						smsLoader.execute(msg);
-					}
-				} else if (action.equals(ACTION_PAGE_DOWN)) {
-					(new AsyncTask<Integer, Void, Void>() {
-						@Override
-						protected Void doInBackground(Integer... arg0) {
-							int appWidgetId = arg0[0];
-							boolean display_profile = true;			
-							boolean hasbuttons = false;
-							int scrollable = 0;
-							int buttons_bg_color = Sonet.default_buttons_bg_color;
-							int buttons_color = Sonet.default_buttons_color;
-							int buttons_textsize = Sonet.default_buttons_textsize;			
-							int margin = Sonet.default_margin;
-							Cursor settings = getSettingsCursor(appWidgetId);
-							if (settings.moveToFirst()) {
-								hasbuttons = settings.getInt(0) == 1;
-								buttons_color = settings.getInt(1);
-								buttons_bg_color = settings.getInt(2);
-								buttons_textsize = settings.getInt(3);
-								scrollable = settings.getInt(4);
-								display_profile = settings.getInt(5) == 1;
-								margin = settings.getInt(6);
-							}
-							settings.close();
-							// rebuild the widget, using the paging criteria passed in
-							buildWidgetButtons(appWidgetId, true, arg0[1], hasbuttons, scrollable, buttons_bg_color, buttons_color, buttons_textsize, display_profile, margin);
-							return null;
-						}
-					}).execute(Integer.parseInt(intent.getData().getLastPathSegment()), intent.getIntExtra(ACTION_PAGE_DOWN, 0));
-				} else if (action.equals(ACTION_PAGE_UP)) {
-					(new AsyncTask<Integer, Void, Void>() {
-						@Override
-						protected Void doInBackground(Integer... arg0) {
-							int appWidgetId = arg0[0];
-							boolean display_profile = true;			
-							boolean hasbuttons = false;
-							int scrollable = 0;
-							int buttons_bg_color = Sonet.default_buttons_bg_color;
-							int buttons_color = Sonet.default_buttons_color;
-							int buttons_textsize = Sonet.default_buttons_textsize;			
-							int margin = Sonet.default_margin;
-							Cursor settings = getSettingsCursor(appWidgetId);
-							if (settings.moveToFirst()) {
-								hasbuttons = settings.getInt(0) == 1;
-								buttons_color = settings.getInt(1);
-								buttons_bg_color = settings.getInt(2);
-								buttons_textsize = settings.getInt(3);
-								scrollable = settings.getInt(4);
-								display_profile = settings.getInt(5) == 1;
-								margin = settings.getInt(6);
-							}
-							settings.close();
-							// rebuild the widget, using the paging criteria passed in
-							buildWidgetButtons(arg0[0], true, arg0[1], hasbuttons, scrollable, buttons_bg_color, buttons_color, buttons_textsize, display_profile, margin);
-							return null;
-						}
-					}).execute(Integer.parseInt(intent.getData().getLastPathSegment()), intent.getIntExtra(ACTION_PAGE_UP, 0));
-				} else if (action.equals(Sonet.ACTION_UPLOAD)) {
-					if (intent.hasExtra(Accounts.TOKEN) && intent.hasExtra(Statuses.MESSAGE) && intent.hasExtra(Widgets.INSTANT_UPLOAD)) {
-						String place = null;
-						if (intent.hasExtra(Splace))
-							place = intent.getStringExtra(Splace);
-						String tags = null;
-						if (intent.hasExtra(Stags))
-							tags = intent.getStringExtra(Stags);
-						// upload a photo
-						(new AsyncTask<String, Void, String>() {
-
-							@Override
-							protected String doInBackground(String... params) {
-								String response = null;
-								if (params.length > 2) {
-									Log.d(TAG, "upload file: " + params[2]);
-									HttpPost httpPost = new HttpPost(String.format(FACEBOOK_PHOTOS, FACEBOOK_BASE_URL, Saccess_token, mSonetCrypto.Decrypt(params[0])));
-									MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
-									File file = new File(params[2]);
-									ContentBody fileBody = new FileBody(file);
-									entity.addPart(Ssource, fileBody);
-									HttpClient httpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
-									try {
-										entity.addPart(Smessage, new StringBody(params[1]));
-										if (params[3] != null)
-											entity.addPart(Splace, new StringBody(params[3]));
-										if (params[4] != null)
-											entity.addPart(Stags, new StringBody(params[4]));
-										httpPost.setEntity(entity);
-										response = SonetHttpClient.httpResponse(httpClient, httpPost);
-									} catch (UnsupportedEncodingException e) {
-										Log.e(TAG,e.toString());
+									if (c.moveToFirst()) {
+										time24hr = c.getInt(0) == 1;
+										status_bg_color = c.getInt(1);
+										icon = c.getInt(2) == 1;
+										status_count = c.getInt(3);
+										if (c.getInt(4) == 1)
+											notifications |= Notification.DEFAULT_SOUND;
+										if (c.getInt(5) == 1)
+											notifications |= Notification.DEFAULT_VIBRATE;
+										if (c.getInt(6) == 1)
+											notifications |= Notification.DEFAULT_LIGHTS;
+										profile_bg_color = c.getInt(7);
+										friend_bg_color = c.getInt(8);
 									}
+									c.close();
+									values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(created, time24hr));
+									// update the bg and icon
+									// create the status_bg
+									values.put(Statuses.STATUS_BG, createBackground(status_bg_color));
+									// friend_bg
+									values.put(Statuses.FRIEND_BG, createBackground(friend_bg_color));
+									// profile_bg
+									values.put(Statuses.PROFILE_BG, createBackground(profile_bg_color));
+									values.put(Statuses.ICON, icon ? getBlob(getResources(), map_icons[SMS]) : null);
+									// insert the message
+									values.put(Statuses.WIDGET, widget);
+									values.put(Statuses.ACCOUNT, accountId);
+									getContentResolver().insert(Statuses.getContentUri(SonetService.this), values);
+									// check the status count, removing old sms
+									Cursor statuses = getContentResolver().query(Statuses.getContentUri(SonetService.this), new String[]{Statuses._ID}, Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?", new String[]{Integer.toString(widget), Long.toString(accountId)}, Statuses.CREATED + " desc");
+									if (statuses.moveToFirst()) {
+										while (!statuses.isAfterLast()) {
+											if (statuses.getPosition() >= status_count) {
+												getContentResolver().delete(Statuses.getContentUri(SonetService.this), Statuses._ID + "=?", new String[]{Long.toString(statuses.getLong(statuses.getColumnIndex(Statuses._ID)))});
+											}
+											statuses.moveToNext();
+										}
+									}
+									statuses.close();
+									if (notifications != 0)
+										publishProgress(Integer.toString(notifications), friend + " sent a message");
+									widgets.moveToNext();
 								}
-								return response;
 							}
+							widgets.close();
+							return appWidgetIds;
+						}
 
-							@Override
-							protected void onPostExecute(String response) {
-								// notify photo success
-								String message = getString(response != null ? R.string.success : R.string.failure);
-								Log.d(TAG,"upload finished:" + message);
-								Notification notification = new Notification(R.drawable.notification, "photo upload " + message, System.currentTimeMillis());
-								notification.setLatestEventInfo(getBaseContext(), "photo upload", message, PendingIntent.getActivity(SonetService.this, 0, (Sonet.getPackageIntent(SonetService.this, About.class)), 0));
+						@Override
+						protected void onProgressUpdate(String... updates) {
+							int notifications = Integer.parseInt(updates[0]);
+							if (notifications != 0) {
+								Notification notification = new Notification(R.drawable.notification, updates[1], System.currentTimeMillis());
+								notification.setLatestEventInfo(getBaseContext(), "New messages", updates[1], PendingIntent.getActivity(SonetService.this, 0, (Sonet.getPackageIntent(SonetService.this, SonetNotifications.class)), 0));
+								notification.defaults |= notifications;
 								((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
 							}
+						}
 
-						}).execute(intent.getStringExtra(Accounts.TOKEN), intent.getStringExtra(Statuses.MESSAGE), intent.getStringExtra(Widgets.INSTANT_UPLOAD), place, tags);
+						@Override
+						protected void onPostExecute(int[] appWidgetIds) {
+							// remove self from thread list
+							if (!mSMSLoaders.isEmpty())
+								mSMSLoaders.remove(this);
+							putValidatedUpdates(appWidgetIds, 0);
+						}
+
+					};
+					mSMSLoaders.add(smsLoader);
+					smsLoader.execute(msg);
+				}
+			} else if (ACTION_PAGE_DOWN.equals(action)) {
+				(new AsyncTask<Integer, Void, Void>() {
+					@Override
+					protected Void doInBackground(Integer... arg0) {
+						int appWidgetId = arg0[0];
+						boolean display_profile = true;			
+						boolean hasbuttons = false;
+						int scrollable = 0;
+						int buttons_bg_color = Sonet.default_buttons_bg_color;
+						int buttons_color = Sonet.default_buttons_color;
+						int buttons_textsize = Sonet.default_buttons_textsize;			
+						int margin = Sonet.default_margin;
+						Cursor settings = getSettingsCursor(appWidgetId);
+						if (settings.moveToFirst()) {
+							hasbuttons = settings.getInt(0) == 1;
+							buttons_color = settings.getInt(1);
+							buttons_bg_color = settings.getInt(2);
+							buttons_textsize = settings.getInt(3);
+							scrollable = settings.getInt(4);
+							display_profile = settings.getInt(5) == 1;
+							margin = settings.getInt(6);
+						}
+						settings.close();
+						// rebuild the widget, using the paging criteria passed in
+						buildWidgetButtons(appWidgetId, true, arg0[1], hasbuttons, scrollable, buttons_bg_color, buttons_color, buttons_textsize, display_profile, margin);
+						return null;
 					}
-				} else {
-					// this might be a widget update from the widget refresh button
-					int appWidgetId;
-					try {
-						appWidgetId = Integer.parseInt(action);
-						putValidatedUpdates(new int[]{appWidgetId}, 1);
-					} catch (NumberFormatException e) {
-						Log.d(TAG,"unknown action:" + action);
+				}).execute(Integer.parseInt(intent.getData().getLastPathSegment()), intent.getIntExtra(ACTION_PAGE_DOWN, 0));
+			} else if (ACTION_PAGE_UP.equals(action)) {
+				(new AsyncTask<Integer, Void, Void>() {
+					@Override
+					protected Void doInBackground(Integer... arg0) {
+						int appWidgetId = arg0[0];
+						boolean display_profile = true;			
+						boolean hasbuttons = false;
+						int scrollable = 0;
+						int buttons_bg_color = Sonet.default_buttons_bg_color;
+						int buttons_color = Sonet.default_buttons_color;
+						int buttons_textsize = Sonet.default_buttons_textsize;			
+						int margin = Sonet.default_margin;
+						Cursor settings = getSettingsCursor(appWidgetId);
+						if (settings.moveToFirst()) {
+							hasbuttons = settings.getInt(0) == 1;
+							buttons_color = settings.getInt(1);
+							buttons_bg_color = settings.getInt(2);
+							buttons_textsize = settings.getInt(3);
+							scrollable = settings.getInt(4);
+							display_profile = settings.getInt(5) == 1;
+							margin = settings.getInt(6);
+						}
+						settings.close();
+						// rebuild the widget, using the paging criteria passed in
+						buildWidgetButtons(arg0[0], true, arg0[1], hasbuttons, scrollable, buttons_bg_color, buttons_color, buttons_textsize, display_profile, margin);
+						return null;
 					}
+				}).execute(Integer.parseInt(intent.getData().getLastPathSegment()), intent.getIntExtra(ACTION_PAGE_UP, 0));
+			} else {
+				// this might be a widget update from the widget refresh button
+				int appWidgetId;
+				try {
+					appWidgetId = Integer.parseInt(action);
+					putValidatedUpdates(new int[]{appWidgetId}, 1);
+				} catch (NumberFormatException e) {
+					Log.d(TAG,"unknown action:" + action);
 				}
 			}
 		}
@@ -598,6 +509,20 @@ public class SonetService extends Service {
 		return settings;
 	}
 
+	private byte[] createBackground(int color) {
+		Bitmap b = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+		Canvas c = new Canvas(b);
+		c.drawColor(color);
+		ByteArrayOutputStream s = new ByteArrayOutputStream();
+		b.compress(Bitmap.CompressFormat.PNG, 100, s);
+		byte[] bg = s.toByteArray();
+		if (b != null) {
+			b.recycle();
+			b = null;
+		}
+		return bg;
+	}
+	
 	class StatusesLoader extends AsyncTask<Integer, String, Integer> {
 
 		@Override
@@ -917,20 +842,7 @@ public class SonetService extends Service {
 				stopSelf();
 			}
 		}
-
-		private byte[] createBackground(int color) {
-			Bitmap b = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-			Canvas c = new Canvas(b);
-			c.drawColor(color);
-			ByteArrayOutputStream s = new ByteArrayOutputStream();
-			b.compress(Bitmap.CompressFormat.PNG, 100, s);
-			byte[] bg = s.toByteArray();
-			if (b != null) {
-				b.recycle();
-				b = null;
-			}
-			return bg;
-		}
+		
 		private void removeOldStatuses(String widgetId, String accountId) {
 			Cursor statuses = getContentResolver().query(Statuses.getContentUri(SonetService.this), new String[]{Statuses._ID}, Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widgetId, accountId}, null);
 			if (statuses.moveToFirst()) {
@@ -2897,9 +2809,9 @@ public class SonetService extends Service {
 				BoundRemoteViews itemViews = new BoundRemoteViews(R.layout.widget_item);
 
 				Intent i = Sonet.getPackageIntent(SonetService.this, SonetWidget.class)
-				.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
-				.setData(uri)
-				.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+						.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
+						.setData(uri)
+						.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
 				PendingIntent pi = PendingIntent.getBroadcast(SonetService.this, 0, i, 0);
 
 				itemViews.SetBoundOnClickIntent(R.id.item, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.StatusesStylesColumns._id.ordinal());
@@ -2942,9 +2854,9 @@ public class SonetService extends Service {
 				BoundRemoteViews itemViews = new BoundRemoteViews(R.layout.widget_item_noprofile);
 
 				Intent i = Sonet.getPackageIntent(SonetService.this, SonetWidget.class)
-				.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
-				.setData(uri)
-				.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+						.setAction(LauncherIntent.Action.ACTION_VIEW_CLICK)
+						.setData(uri)
+						.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
 				PendingIntent pi = PendingIntent.getBroadcast(SonetService.this, 0, i, 0);
 
 				itemViews.SetBoundOnClickIntent(R.id.item, pi, LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS, SonetProvider.StatusesStylesColumnsNoProfile._id.ordinal());

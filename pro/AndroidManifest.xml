@@ -141,6 +141,7 @@
 		</receiver>
 		<service android:name=".SonetService" />
 		<service android:name=".SonetUploader" />
+		<service android:name=".PhotoUploadService" />
 		<receiver android:name=".SonetSMSReceiver">
 			<intent-filter>
 				<action android:name="android.provider.Telephony.SMS_RECEIVED" />
