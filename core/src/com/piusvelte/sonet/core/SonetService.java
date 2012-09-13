@@ -110,6 +110,8 @@ public class SonetService extends Service {
 	private static Method sSetEmptyView;
 	private static Method sNotifyAppWidgetViewDataChanged;
 	private static boolean sNativeScrollingSupported = false;
+	
+	private int mStartId = Sonet.INVALID_SERVICE;
 
 	static {
 		if (Integer.valueOf(android.os.Build.VERSION.SDK) >= 11) {
@@ -137,13 +139,18 @@ public class SonetService extends Service {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		onStart(intent, startId);
+		mStartId = startId;
+		start(intent);
 		return START_REDELIVER_INTENT;
 	}
 
 	@Override
 	public void onStart(Intent intent, int startId) {
-		super.onStart(intent, startId);
+		mStartId = startId;
+		start(intent);
+	}
+		
+	private void start(Intent intent) {
 		if (intent != null) {
 			String action = intent.getAction();
 			Log.d(TAG,"action:" + action);
@@ -224,25 +231,19 @@ public class SonetService extends Service {
 								}
 								long accountId = widgets.getLong(2);
 								long id;
+								ContentValues values = new ContentValues();
+								values.put(Entities.ESID, phone);
+								values.put(Entities.FRIEND, friend);
+								values.put(Entities.PROFILE, profile);
+								values.put(Entities.ACCOUNT, accountId);
 								Cursor entity = getContentResolver().query(Entities.getContentUri(SonetService.this), new String[]{Entities._ID}, Entities.ACCOUNT + "=? and " + Entities.ESID + "=?", new String[]{Long.toString(accountId), mSonetCrypto.Encrypt(phone)}, null);
 								if (entity.moveToFirst()) {
 									id = entity.getLong(0);
-									ContentValues values = new ContentValues();
-									values.put(Entities.ESID, phone);
-									values.put(Entities.FRIEND, friend);
-									values.put(Entities.PROFILE, profile);
-									values.put(Entities.ACCOUNT, accountId);
 									getContentResolver().update(Entities.getContentUri(SonetService.this), values, Entities._ID + "=?", new String[]{Long.toString(id)});
-								} else {
-									ContentValues values = new ContentValues();
-									values.put(Entities.ESID, phone);
-									values.put(Entities.FRIEND, friend);
-									values.put(Entities.PROFILE, profile);
-									values.put(Entities.ACCOUNT, accountId);
+								} else
 									id = Long.parseLong(getContentResolver().insert(Entities.getContentUri(SonetService.this), values).getLastPathSegment());
-								}
 								entity.close();
-								ContentValues values = new ContentValues();
+								values.clear();
 								Long created = msg[0].getTimestampMillis();
 								values.put(Statuses.CREATED, created);
 								values.put(Statuses.ENTITY, id);
@@ -465,7 +466,6 @@ public class SonetService extends Service {
 
 	@Override
 	public void onDestroy() {
-		Log.d(TAG,"onDestroy");
 		if (!mStatusesLoaders.isEmpty()) {
 			Iterator<AsyncTask<Integer, String, Integer>> itr = mStatusesLoaders.values().iterator();
 			while (itr.hasNext()) {
@@ -839,7 +839,7 @@ public class SonetService extends Service {
 			if (mStatusesLoaders.isEmpty()) {
 				//				Log.d(TAG,"stop service");
 				Sonet.release();
-				stopSelf();
+				stopSelfResult(mStartId);
 			}
 		}
 		
@@ -2425,43 +2425,37 @@ public class SonetService extends Service {
 		int layout;
 		if (hasbuttons) {
 			if (sNativeScrollingSupported) {
-				if (margin > 0) {
+				if (margin > 0)
 					layout = R.layout.widget_margin_scrollable;
-				} else {
+				else
 					layout = R.layout.widget_scrollable;
-				}
 			} else if (display_profile) {
-				if (margin > 0) {
+				if (margin > 0)
 					layout = R.layout.widget_margin;
-				} else {
+				else
 					layout = R.layout.widget;
-				}
 			} else {
-				if (margin > 0) {
+				if (margin > 0)
 					layout = R.layout.widget_noprofile_margin;
-				} else {
+				else
 					layout = R.layout.widget_noprofile;
-				}
 			}
 		} else {
 			if (sNativeScrollingSupported) {
-				if (margin > 0) {
+				if (margin > 0)
 					layout = R.layout.widget_nobuttons_margin_scrollable;
-				} else {
+				else
 					layout = R.layout.widget_nobuttons_scrollable;
-				}
 			} else if (display_profile) {
-				if (margin > 0) {
+				if (margin > 0)
 					layout = R.layout.widget_nobuttons_margin;
-				} else {
+				else
 					layout = R.layout.widget_nobuttons;
-				}
 			} else {
-				if (margin > 0) {
+				if (margin > 0)
 					layout = R.layout.widget_nobuttons_noprofile_margin;
-				} else {
+				else
 					layout = R.layout.widget_nobuttons_noprofile;
-				}
 			}
 		}
 		// wrap RemoteViews for backward compatibility
@@ -2619,9 +2613,8 @@ public class SonetService extends Service {
 					}
 				}
 				statuses_styles.close();
-				if (hasbuttons && (page > 0)) {
+				if (hasbuttons && (page > 0))
 					views.setOnClickPendingIntent(R.id.page_up, PendingIntent.getService(SonetService.this, 0, Sonet.getPackageIntent(SonetService.this, SonetService.class).setAction(ACTION_PAGE_UP).setData(Uri.withAppendedPath(Widgets.getContentUri(SonetService.this), widget)).putExtra(ACTION_PAGE_UP, page - 1), PendingIntent.FLAG_UPDATE_CURRENT));
-				}
 			}
 			Log.d(TAG, "update native widget: " + appWidgetId);
 			mgr.updateAppWidget(appWidgetId, views);
@@ -2662,11 +2655,10 @@ public class SonetService extends Service {
 		Uri uri = Uri.withAppendedPath(Statuses_styles.getContentUri(SonetService.this), Integer.toString(appWidgetId));
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_URI, uri.toString());
 		String[] projection;
-		if (display_profile) {
+		if (display_profile)
 			projection = new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.PROFILE_BG, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE};
-		} else {
+		else
 			projection = new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE};
-		}
 		String sortOrder = Statuses_styles.CREATED + " DESC";
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_PROJECTION, projection);
 		replaceDummy.putExtra(LauncherIntent.Extra.Scroll.EXTRA_SORT_ORDER, sortOrder);

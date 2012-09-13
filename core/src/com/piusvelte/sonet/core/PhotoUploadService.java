@@ -56,6 +56,7 @@ import android.util.Log;
 public class PhotoUploadService extends Service {
 	private static final String TAG = "PhotoUploadService";
 	private SonetCrypto mSonetCrypto;
+	private int mStartId = Sonet.INVALID_SERVICE;
 
 	@Override
 	public void onCreate() {
@@ -65,13 +66,18 @@ public class PhotoUploadService extends Service {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		onStart(intent, startId);
+		mStartId = startId;
+		start(intent);
 		return START_REDELIVER_INTENT;
 	}
 
 	@Override
 	public void onStart(Intent intent, int startId) {
-		super.onStart(intent, startId);
+		mStartId = startId;
+		start(intent);
+	}
+		
+	private void start(Intent intent) {
 		if (intent != null) {
 			String action = intent.getAction();
 			if (Sonet.ACTION_UPLOAD.equals(action)) {
@@ -118,10 +124,10 @@ public class PhotoUploadService extends Service {
 						protected void onPostExecute(String response) {
 							// notify photo success
 							String message = getString(response != null ? R.string.success : R.string.failure);
-							Log.d(TAG,"upload finished:" + message);
 							Notification notification = new Notification(R.drawable.notification, "photo upload " + message, System.currentTimeMillis());
 							notification.setLatestEventInfo(getBaseContext(), "photo upload", message, PendingIntent.getActivity(PhotoUploadService.this, 0, (Sonet.getPackageIntent(PhotoUploadService.this, About.class)), 0));
 							((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
+							stopSelfResult(mStartId);
 						}
 
 					}).execute(intent.getStringExtra(Accounts.TOKEN), intent.getStringExtra(Statuses.MESSAGE), intent.getStringExtra(Widgets.INSTANT_UPLOAD), place, tags);
