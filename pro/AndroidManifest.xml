@@ -19,8 +19,8 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.piusvelte.sonetpro" android:versionCode="320"
-	android:versionName="3.2.0">
+	package="com.piusvelte.sonetpro" android:versionCode="323"
+	android:versionName="3.2.3">
 	
 	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 	<uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -37,7 +37,7 @@
     
 	<supports-screens android:largeScreens="true" android:xlargeScreens="true" />
 	
-	<application android:icon="@drawable/icon" android:label="@string/app_name">
+	<application android:icon="@drawable/icon" android:label="@string/app_name" android:backupAgent=".SonetBackupAgentHelper">
 		<activity android:name=".About" android:label="@string/app_name">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
@@ -152,6 +152,8 @@
             android:exported="false" />
 		<provider android:name=".SonetProvider" android:authorities="com.piusvelte.sonetpro.SonetProvider"
 			android:multiprocess="true" android:grantUriPermissions="true" />
+		<meta-data android:name="com.google.android.backup.api_key"
+    	android:value="AEdPqrEAAAAIsOmdkEfwMbYa6A6g34kghppCmR4pVA7umoAcjw" />
 	</application>
 
 </manifest>

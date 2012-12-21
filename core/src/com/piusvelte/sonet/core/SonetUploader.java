@@ -63,7 +63,6 @@ public class SonetUploader extends Service {
 						@Override
 						public void onChange(boolean selfChange) {
 							super.onChange(selfChange);
-							Log.d(TAG,"media changed");
 							(new AsyncTask<Void, Void, String>() {
 
 								@Override
@@ -71,10 +70,8 @@ public class SonetUploader extends Service {
 									String filepath = null;
 									// limit to those from the past 10 seconds
 									Cursor c = getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, new String[]{MediaColumns.DATA}, MediaColumns.DATE_ADDED + ">?", new String[]{Long.toString(System.currentTimeMillis() / 1000 - 10)}, MediaColumns.DATE_ADDED + " DESC");
-									if (c.moveToFirst()) {
+									if (c.moveToFirst())
 										filepath = c.getString(0);
-										Log.d(TAG,"filepath:"+filepath);
-									}
 									c.close();
 									return filepath;
 								}
@@ -82,9 +79,8 @@ public class SonetUploader extends Service {
 								@Override
 								protected void onPostExecute(String filepath) {
 									// launch post activity with filepath
-									if (filepath != null) {
-										startActivity(Sonet.getPackageIntent(getApplicationContext(), SonetService.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP).putExtra(Widgets.INSTANT_UPLOAD, filepath));
-									}
+									if (filepath != null)
+										startActivity(Sonet.getPackageIntent(getApplicationContext(), StatusDialog.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP).putExtra(Widgets.INSTANT_UPLOAD, filepath));
 								}
 
 							}).execute();
@@ -110,9 +106,8 @@ public class SonetUploader extends Service {
 
 	@Override
 	public void onDestroy() {
-		if (mInstantUpload != null) {
+		if (mInstantUpload != null)
 			getContentResolver().unregisterContentObserver(mInstantUpload);
-		}
 	}
 
 }

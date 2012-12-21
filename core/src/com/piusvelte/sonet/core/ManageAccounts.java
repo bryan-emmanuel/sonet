@@ -300,6 +300,7 @@ public class ManageAccounts extends ActionBarListActivity implements DialogInter
 	protected void onPause() {
 		super.onPause();
 		if (!mAddingAccount && mUpdateWidget) {
+			BackupManager.dataChanged(getApplicationContext());
 			(Toast.makeText(getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
 			startService(Sonet.getPackageIntent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
 		}
