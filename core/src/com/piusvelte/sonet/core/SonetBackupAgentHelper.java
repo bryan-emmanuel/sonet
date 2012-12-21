@@ -22,12 +22,15 @@ package com.piusvelte.sonet.core;
 import android.annotation.TargetApi;
 import android.app.backup.BackupAgentHelper;
 import android.app.backup.FileBackupHelper;
+import android.util.Log;
 
 @TargetApi(8)
 public class SonetBackupAgentHelper extends BackupAgentHelper {
+	private static final String TAG = "SonetBackupAgentHelper";
 
 	@Override
 	public void onCreate() {
+		Log.d(TAG, "onCreate");
 		FileBackupHelper fbh = new FileBackupHelper(this, "../databases/" + SonetProvider.DATABASE_NAME);
 		addHelper(SonetProvider.DATABASE_NAME, fbh);
 	}
