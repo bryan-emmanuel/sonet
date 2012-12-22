@@ -21,11 +21,9 @@ package com.piusvelte.sonet.core;
 
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.util.Log;
 
 @TargetApi(8)
 public class BackupManager {
-	private static final String TAG = "BackupManager";
 	
 	static {
 		try {
@@ -36,7 +34,6 @@ public class BackupManager {
 	}
 	
 	public static void dataChanged(Context context) {
-		Log.d(TAG, "dataChanged");
 		android.app.backup.BackupManager bm = new android.app.backup.BackupManager(context);
 		bm.dataChanged();
 	}

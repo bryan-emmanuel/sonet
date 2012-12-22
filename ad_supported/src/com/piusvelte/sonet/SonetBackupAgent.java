@@ -17,7 +17,7 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
  */
-package com.piusvelte.sonetpro;
+package com.piusvelte.sonet;
 
-public class SonetBackupAgentHelper extends com.piusvelte.sonet.core.SonetBackupAgentHelper {
+public class SonetBackupAgent extends com.piusvelte.sonet.core.SonetBackupAgent {
 }

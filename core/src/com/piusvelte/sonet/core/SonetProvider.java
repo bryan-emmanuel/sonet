@@ -19,16 +19,6 @@
  */
 package com.piusvelte.sonet.core;
 
-import static com.piusvelte.sonet.core.Sonet.sDatabaseLock;
-
-//import java.io.File;
-//import java.io.FileInputStream;
-//import java.io.FileNotFoundException;
-//import java.io.FileOutputStream;
-//import java.io.IOException;
-//import java.io.InputStream;
-//import java.io.OutputStream;
-//import java.nio.channels.FileChannel;
 import java.util.HashMap;
 
 import com.piusvelte.sonet.core.Sonet.Accounts;
@@ -345,346 +335,290 @@ public class SonetProvider extends ContentProvider {
 
 	@Override
 	public int delete(Uri uri, String whereClause, String[] whereArgs) {
-		synchronized (sDatabaseLock) {
-			SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
-			int count;
-			switch (sUriMatcher.match(uri)) {
-			case ACCOUNTS:
-				count = db.delete(TABLE_ACCOUNTS, whereClause, whereArgs);
-				break;
-			case WIDGET_ACCOUNTS:
-				count = db.delete(TABLE_WIDGET_ACCOUNTS, whereClause, whereArgs);
-				break;
-			case WIDGETS:
-				count = db.delete(TABLE_WIDGETS, whereClause, whereArgs);
-				break;
-			case STATUSES:
-				count = db.delete(TABLE_STATUSES, whereClause, whereArgs);
-				break;
-			case ENTITIES:
-				count = db.delete(TABLE_ENTITIES, whereClause, whereArgs);
-				break;
-			case NOTIFICATIONS:
-				count = db.delete(TABLE_NOTIFICATIONS, whereClause, whereArgs);
-				break;
-			case WIDGETS_SETTINGS:
-				count = db.delete(VIEW_WIDGETS_SETTINGS, whereClause, whereArgs);
-				break;
-			case STATUS_LINKS:
-				count = db.delete(TABLE_STATUS_LINKS, whereClause, whereArgs);
-				break;
-			case STATUS_IMAGES:
-				count = db.delete(TABLE_STATUS_IMAGES, whereClause, whereArgs);
-				break;
-			default:
-				throw new IllegalArgumentException("Unknown URI " + uri);
-			}
-			getContext().getContentResolver().notifyChange(uri, null);
-			return count;
+		SQLiteDatabase db;
+		synchronized (Sonet.sDatabaseLock) {
+			db = mDatabaseHelper.getWritableDatabase();
 		}
+		int count;
+		switch (sUriMatcher.match(uri)) {
+		case ACCOUNTS:
+			count = db.delete(TABLE_ACCOUNTS, whereClause, whereArgs);
+			break;
+		case WIDGET_ACCOUNTS:
+			count = db.delete(TABLE_WIDGET_ACCOUNTS, whereClause, whereArgs);
+			break;
+		case WIDGETS:
+			count = db.delete(TABLE_WIDGETS, whereClause, whereArgs);
+			break;
+		case STATUSES:
+			count = db.delete(TABLE_STATUSES, whereClause, whereArgs);
+			break;
+		case ENTITIES:
+			count = db.delete(TABLE_ENTITIES, whereClause, whereArgs);
+			break;
+		case NOTIFICATIONS:
+			count = db.delete(TABLE_NOTIFICATIONS, whereClause, whereArgs);
+			break;
+		case WIDGETS_SETTINGS:
+			count = db.delete(VIEW_WIDGETS_SETTINGS, whereClause, whereArgs);
+			break;
+		case STATUS_LINKS:
+			count = db.delete(TABLE_STATUS_LINKS, whereClause, whereArgs);
+			break;
+		case STATUS_IMAGES:
+			count = db.delete(TABLE_STATUS_IMAGES, whereClause, whereArgs);
+			break;
+		default:
+			throw new IllegalArgumentException("Unknown URI " + uri);
+		}
+		getContext().getContentResolver().notifyChange(uri, null);
+		return count;
 	}
 
 	@Override
 	public Uri insert(Uri uri, ContentValues values) {
-		synchronized (sDatabaseLock) {
-			SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
-			long rowId;
-			Uri returnUri = null;
-			SonetCrypto sonetCrypto;
-			switch (sUriMatcher.match(uri)) {
-			case ACCOUNTS:
-				// encrypt the data
-				sonetCrypto = SonetCrypto.getInstance(getContext());
-				if (values.containsKey(Accounts.TOKEN)) {
-					values.put(Accounts.TOKEN, sonetCrypto.Encrypt(values.getAsString(Accounts.TOKEN)));
-				}
-				if (values.containsKey(Accounts.SECRET)) {
-					values.put(Accounts.SECRET, sonetCrypto.Encrypt(values.getAsString(Accounts.SECRET)));
-				}
-				if (values.containsKey(Accounts.SID)) {
-					values.put(Accounts.SID, sonetCrypto.Encrypt(values.getAsString(Accounts.SID)));
-				}
-				rowId = db.insert(TABLE_ACCOUNTS, Accounts._ID, values);
-				returnUri = ContentUris.withAppendedId(Accounts.getContentUri(getContext()), rowId);
-				getContext().getContentResolver().notifyChange(returnUri, null);
-				break;
-			case WIDGET_ACCOUNTS:
-				rowId = db.insert(TABLE_WIDGET_ACCOUNTS, Widget_accounts._ID, values);
-				returnUri = ContentUris.withAppendedId(Widget_accounts.getContentUri(getContext()), rowId);
-				getContext().getContentResolver().notifyChange(returnUri, null);
-				break;
-			case WIDGETS:
-				rowId = db.insert(TABLE_WIDGETS, Widgets._ID, values);
-				returnUri = ContentUris.withAppendedId(Widgets.getContentUri(getContext()), rowId);
-				getContext().getContentResolver().notifyChange(returnUri, null);
-				break;
-			case STATUSES:
-				// encrypt the data
-				sonetCrypto = SonetCrypto.getInstance(getContext());
-				if (values.containsKey(Statuses.SID)) {
-					values.put(Statuses.SID, sonetCrypto.Encrypt(values.getAsString(Statuses.SID)));
-				}
-				rowId = db.insert(TABLE_STATUSES, Accounts._ID, values);
-				returnUri = ContentUris.withAppendedId(Accounts.getContentUri(getContext()), rowId);
-				// many statuses will be inserted at once, so don't trigger a refresh for each one
-				//			getContext().getContentResolver().notifyChange(returnUri, null);
-				break;
-			case ENTITIES:
-				// encrypt the data
-				sonetCrypto = SonetCrypto.getInstance(getContext());
-				if (values.containsKey(Entities.ESID)) {
-					values.put(Entities.ESID, sonetCrypto.Encrypt(values.getAsString(Entities.ESID)));
-				}
-				rowId = db.insert(TABLE_ENTITIES, Entities._ID, values);
-				returnUri = ContentUris.withAppendedId(Entities.getContentUri(getContext()), rowId);
-				break;
-			case NOTIFICATIONS:
-				// encrypt the data
-				sonetCrypto = SonetCrypto.getInstance(getContext());
-				if (values.containsKey(Notifications.SID)) {
-					values.put(Notifications.SID, sonetCrypto.Encrypt(values.getAsString(Notifications.SID)));
-				}
-				if (values.containsKey(Notifications.ESID)) {
-					values.put(Notifications.ESID, sonetCrypto.Encrypt(values.getAsString(Notifications.ESID)));
-				}
-				rowId = db.insert(TABLE_NOTIFICATIONS, Notifications._ID, values);
-				returnUri = ContentUris.withAppendedId(Notifications.getContentUri(getContext()), rowId);
-				getContext().getContentResolver().notifyChange(returnUri, null);
-				break;
-			case WIDGETS_SETTINGS:
-				rowId = db.insert(VIEW_WIDGETS_SETTINGS, Widgets_settings._ID, values);
-				returnUri = ContentUris.withAppendedId(Widgets_settings.getContentUri(getContext()), rowId);
-				getContext().getContentResolver().notifyChange(returnUri, null);
-				break;
-			case STATUS_LINKS:
-				rowId = db.insert(TABLE_STATUS_LINKS, Status_links._ID, values);
-				returnUri = ContentUris.withAppendedId(Status_links.getContentUri(getContext()), rowId);
-				getContext().getContentResolver().notifyChange(returnUri, null);
-				break;
-			case STATUS_IMAGES:
-				rowId = db.insert(TABLE_STATUS_IMAGES, Status_images._ID, values);
-				returnUri = ContentUris.withAppendedId(Status_images.getContentUri(getContext()), rowId);
-				getContext().getContentResolver().notifyChange(returnUri, null);
-				break;
-			default:
-				throw new IllegalArgumentException("Unknown URI " + uri);
-			}
-			return returnUri;
+		SQLiteDatabase db;
+		synchronized (Sonet.sDatabaseLock) {
+			db = mDatabaseHelper.getWritableDatabase();
 		}
+		long rowId;
+		Uri returnUri = null;
+		SonetCrypto sonetCrypto;
+		switch (sUriMatcher.match(uri)) {
+		case ACCOUNTS:
+			// encrypt the data
+			sonetCrypto = SonetCrypto.getInstance(getContext());
+			if (values.containsKey(Accounts.TOKEN)) {
+				values.put(Accounts.TOKEN, sonetCrypto.Encrypt(values.getAsString(Accounts.TOKEN)));
+			}
+			if (values.containsKey(Accounts.SECRET)) {
+				values.put(Accounts.SECRET, sonetCrypto.Encrypt(values.getAsString(Accounts.SECRET)));
+			}
+			if (values.containsKey(Accounts.SID)) {
+				values.put(Accounts.SID, sonetCrypto.Encrypt(values.getAsString(Accounts.SID)));
+			}
+			rowId = db.insert(TABLE_ACCOUNTS, Accounts._ID, values);
+			returnUri = ContentUris.withAppendedId(Accounts.getContentUri(getContext()), rowId);
+			getContext().getContentResolver().notifyChange(returnUri, null);
+			break;
+		case WIDGET_ACCOUNTS:
+			rowId = db.insert(TABLE_WIDGET_ACCOUNTS, Widget_accounts._ID, values);
+			returnUri = ContentUris.withAppendedId(Widget_accounts.getContentUri(getContext()), rowId);
+			getContext().getContentResolver().notifyChange(returnUri, null);
+			break;
+		case WIDGETS:
+			rowId = db.insert(TABLE_WIDGETS, Widgets._ID, values);
+			returnUri = ContentUris.withAppendedId(Widgets.getContentUri(getContext()), rowId);
+			getContext().getContentResolver().notifyChange(returnUri, null);
+			break;
+		case STATUSES:
+			// encrypt the data
+			sonetCrypto = SonetCrypto.getInstance(getContext());
+			if (values.containsKey(Statuses.SID)) {
+				values.put(Statuses.SID, sonetCrypto.Encrypt(values.getAsString(Statuses.SID)));
+			}
+			rowId = db.insert(TABLE_STATUSES, Accounts._ID, values);
+			returnUri = ContentUris.withAppendedId(Accounts.getContentUri(getContext()), rowId);
+			// many statuses will be inserted at once, so don't trigger a refresh for each one
+			//			getContext().getContentResolver().notifyChange(returnUri, null);
+			break;
+		case ENTITIES:
+			// encrypt the data
+			sonetCrypto = SonetCrypto.getInstance(getContext());
+			if (values.containsKey(Entities.ESID)) {
+				values.put(Entities.ESID, sonetCrypto.Encrypt(values.getAsString(Entities.ESID)));
+			}
+			rowId = db.insert(TABLE_ENTITIES, Entities._ID, values);
+			returnUri = ContentUris.withAppendedId(Entities.getContentUri(getContext()), rowId);
+			break;
+		case NOTIFICATIONS:
+			// encrypt the data
+			sonetCrypto = SonetCrypto.getInstance(getContext());
+			if (values.containsKey(Notifications.SID)) {
+				values.put(Notifications.SID, sonetCrypto.Encrypt(values.getAsString(Notifications.SID)));
+			}
+			if (values.containsKey(Notifications.ESID)) {
+				values.put(Notifications.ESID, sonetCrypto.Encrypt(values.getAsString(Notifications.ESID)));
+			}
+			rowId = db.insert(TABLE_NOTIFICATIONS, Notifications._ID, values);
+			returnUri = ContentUris.withAppendedId(Notifications.getContentUri(getContext()), rowId);
+			getContext().getContentResolver().notifyChange(returnUri, null);
+			break;
+		case WIDGETS_SETTINGS:
+			rowId = db.insert(VIEW_WIDGETS_SETTINGS, Widgets_settings._ID, values);
+			returnUri = ContentUris.withAppendedId(Widgets_settings.getContentUri(getContext()), rowId);
+			getContext().getContentResolver().notifyChange(returnUri, null);
+			break;
+		case STATUS_LINKS:
+			rowId = db.insert(TABLE_STATUS_LINKS, Status_links._ID, values);
+			returnUri = ContentUris.withAppendedId(Status_links.getContentUri(getContext()), rowId);
+			getContext().getContentResolver().notifyChange(returnUri, null);
+			break;
+		case STATUS_IMAGES:
+			rowId = db.insert(TABLE_STATUS_IMAGES, Status_images._ID, values);
+			returnUri = ContentUris.withAppendedId(Status_images.getContentUri(getContext()), rowId);
+			getContext().getContentResolver().notifyChange(returnUri, null);
+			break;
+		default:
+			throw new IllegalArgumentException("Unknown URI " + uri);
+		}
+		return returnUri;
 	}
 
 	@Override
 	public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String orderBy) {
-		synchronized (sDatabaseLock) {
-			SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
-			SQLiteDatabase db = mDatabaseHelper.getReadableDatabase();
-			Cursor c;
-			switch (sUriMatcher.match(uri)) {
-			case ACCOUNTS:
-				qb.setTables(TABLE_ACCOUNTS);
-				qb.setProjectionMap(accountsProjectionMap);
-				break;
-			case WIDGET_ACCOUNTS:
-				qb.setTables(TABLE_WIDGET_ACCOUNTS);
-				qb.setProjectionMap(widget_accountsProjectionMap);
-				break;
-			case WIDGET_ACCOUNTS_VIEW:
-				qb.setTables(VIEW_WIDGET_ACCOUNTS);
-				qb.setProjectionMap(widget_accounts_viewProjectionMap);
-				break;
-			case WIDGETS:
-				qb.setTables(TABLE_WIDGETS);
-				qb.setProjectionMap(widgetsProjectionMap);
-				break;
-			case STATUSES:
-				qb.setTables(TABLE_STATUSES);
-				qb.setProjectionMap(statusesProjectionMap);
-				break;
-			case STATUSES_STYLES:
-				qb.setTables(VIEW_STATUSES_STYLES);
-				qb.setProjectionMap(statuses_stylesProjectionMap);
-				break;
-			case STATUSES_STYLES_WIDGET:
-				qb.setTables(VIEW_STATUSES_STYLES);
-				qb.setProjectionMap(statuses_stylesProjectionMap);
-				if ((selection == null) || (selectionArgs == null)) {
-					selection = Statuses_styles.WIDGET + "=?";
-					selectionArgs = new String[]{uri.getLastPathSegment()};
-				}
-				break;
-			case ENTITIES:
-				qb.setTables(TABLE_ENTITIES);
-				qb.setProjectionMap(entitiesProjectionMap);
-				break;
-			case NOTIFICATIONS:
-				qb.setTables(TABLE_NOTIFICATIONS);
-				qb.setProjectionMap(notificationsProjectionMap);
-				break;
-			case WIDGETS_SETTINGS:
-				qb.setTables(VIEW_WIDGETS_SETTINGS);
-				qb.setProjectionMap(widgetsProjectionMap);
-				break;
-			case DISTINCT_WIDGETS_SETTINGS:
-				qb.setTables(VIEW_WIDGETS_SETTINGS);
-				qb.setProjectionMap(widgetsProjectionMap);
-				qb.setDistinct(true);
-				break;
-			case STATUS_LINKS:
-				qb.setTables(TABLE_STATUS_LINKS);
-				qb.setProjectionMap(status_linksProjectionMap);
-				break;
-			case ACCOUNTS_STYLES_VIEW:
-				qb.setTables(TABLE_ACCOUNTS);
-				qb.setProjectionMap(statuses_stylesProjectionMap);
-				break;
-			case STATUS_IMAGES:
-				qb.setTables(TABLE_STATUS_IMAGES);
-				qb.setProjectionMap(status_imagesProjectionMap);
-			default:
-				throw new IllegalArgumentException("Unknown URI " + uri);
-			}
-			c = qb.query(db, projection, selection, selectionArgs, null, null, orderBy);
-			c.setNotificationUri(getContext().getContentResolver(), uri);
-			return c;
+		SQLiteDatabase db;
+		synchronized (Sonet.sDatabaseLock) {
+			db = mDatabaseHelper.getWritableDatabase();
 		}
+		SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
+		Cursor c;
+		switch (sUriMatcher.match(uri)) {
+		case ACCOUNTS:
+			qb.setTables(TABLE_ACCOUNTS);
+			qb.setProjectionMap(accountsProjectionMap);
+			break;
+		case WIDGET_ACCOUNTS:
+			qb.setTables(TABLE_WIDGET_ACCOUNTS);
+			qb.setProjectionMap(widget_accountsProjectionMap);
+			break;
+		case WIDGET_ACCOUNTS_VIEW:
+			qb.setTables(VIEW_WIDGET_ACCOUNTS);
+			qb.setProjectionMap(widget_accounts_viewProjectionMap);
+			break;
+		case WIDGETS:
+			qb.setTables(TABLE_WIDGETS);
+			qb.setProjectionMap(widgetsProjectionMap);
+			break;
+		case STATUSES:
+			qb.setTables(TABLE_STATUSES);
+			qb.setProjectionMap(statusesProjectionMap);
+			break;
+		case STATUSES_STYLES:
+			qb.setTables(VIEW_STATUSES_STYLES);
+			qb.setProjectionMap(statuses_stylesProjectionMap);
+			break;
+		case STATUSES_STYLES_WIDGET:
+			qb.setTables(VIEW_STATUSES_STYLES);
+			qb.setProjectionMap(statuses_stylesProjectionMap);
+			if ((selection == null) || (selectionArgs == null)) {
+				selection = Statuses_styles.WIDGET + "=?";
+				selectionArgs = new String[]{uri.getLastPathSegment()};
+			}
+			break;
+		case ENTITIES:
+			qb.setTables(TABLE_ENTITIES);
+			qb.setProjectionMap(entitiesProjectionMap);
+			break;
+		case NOTIFICATIONS:
+			qb.setTables(TABLE_NOTIFICATIONS);
+			qb.setProjectionMap(notificationsProjectionMap);
+			break;
+		case WIDGETS_SETTINGS:
+			qb.setTables(VIEW_WIDGETS_SETTINGS);
+			qb.setProjectionMap(widgetsProjectionMap);
+			break;
+		case DISTINCT_WIDGETS_SETTINGS:
+			qb.setTables(VIEW_WIDGETS_SETTINGS);
+			qb.setProjectionMap(widgetsProjectionMap);
+			qb.setDistinct(true);
+			break;
+		case STATUS_LINKS:
+			qb.setTables(TABLE_STATUS_LINKS);
+			qb.setProjectionMap(status_linksProjectionMap);
+			break;
+		case ACCOUNTS_STYLES_VIEW:
+			qb.setTables(TABLE_ACCOUNTS);
+			qb.setProjectionMap(statuses_stylesProjectionMap);
+			break;
+		case STATUS_IMAGES:
+			qb.setTables(TABLE_STATUS_IMAGES);
+			qb.setProjectionMap(status_imagesProjectionMap);
+		default:
+			throw new IllegalArgumentException("Unknown URI " + uri);
+		}
+		c = qb.query(db, projection, selection, selectionArgs, null, null, orderBy);
+		c.setNotificationUri(getContext().getContentResolver(), uri);
+		return c;
 	}
 
 	@Override
 	public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
-		synchronized (sDatabaseLock) {
-			SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
-
-			int count;
-			SonetCrypto sonetCrypto;
-			switch (sUriMatcher.match(uri)) {
-			case ACCOUNTS:
-				// encrypt the data
-				sonetCrypto = SonetCrypto.getInstance(getContext());
-				if (values.containsKey(Accounts.TOKEN)) {
-					values.put(Accounts.TOKEN, sonetCrypto.Encrypt(values.getAsString(Accounts.TOKEN)));
-				}
-				if (values.containsKey(Accounts.SECRET)) {
-					values.put(Accounts.SECRET, sonetCrypto.Encrypt(values.getAsString(Accounts.SECRET)));
-				}
-				if (values.containsKey(Accounts.SID)) {
-					values.put(Accounts.SID, sonetCrypto.Encrypt(values.getAsString(Accounts.SID)));
-				}
-				count = db.update(TABLE_ACCOUNTS, values, selection, selectionArgs);
-				break;
-			case WIDGET_ACCOUNTS:
-				count = db.update(TABLE_WIDGET_ACCOUNTS, values, selection, selectionArgs);
-				break;
-			case WIDGETS:
-				count = db.update(TABLE_WIDGETS, values, selection, selectionArgs);
-				break;
-			case STATUSES:
-				// encrypt the data
-				sonetCrypto = SonetCrypto.getInstance(getContext());
-				if (values.containsKey(Statuses.SID)) {
-					values.put(Statuses.SID, sonetCrypto.Encrypt(values.getAsString(Statuses.SID)));
-				}
-				count = db.update(TABLE_STATUSES, values, selection, selectionArgs);
-				break;
-			case ENTITIES:
-				// encrypt the data
-				sonetCrypto = SonetCrypto.getInstance(getContext());
-				if (values.containsKey(Entities.ESID)) {
-					values.put(Entities.ESID, sonetCrypto.Encrypt(values.getAsString(Entities.ESID)));
-				}
-				count = db.update(TABLE_ENTITIES, values, selection, selectionArgs);
-				break;
-			case NOTIFICATIONS:
-				// encrypt the data
-				sonetCrypto = SonetCrypto.getInstance(getContext());
-				if (values.containsKey(Notifications.SID)) {
-					values.put(Notifications.SID, sonetCrypto.Encrypt(values.getAsString(Notifications.SID)));
-				}
-				if (values.containsKey(Notifications.ESID)) {
-					values.put(Notifications.ESID, sonetCrypto.Encrypt(values.getAsString(Notifications.ESID)));
-				}
-				count = db.update(TABLE_NOTIFICATIONS, values, selection, selectionArgs);
-				break;
-			case STATUS_LINKS:
-				count = db.update(TABLE_STATUS_LINKS, values, selection, selectionArgs);
-				break;
-			case STATUS_IMAGES:
-				count = db.update(TABLE_STATUS_IMAGES, values, selection, selectionArgs);
-				break;
-			default:
-				throw new IllegalArgumentException("Unknown URI " + uri);
-			}
-			getContext().getContentResolver().notifyChange(uri, null);
-			return count;
+		SQLiteDatabase db;
+		synchronized (Sonet.sDatabaseLock) {
+			db = mDatabaseHelper.getWritableDatabase();
 		}
+		int count;
+		SonetCrypto sonetCrypto;
+		switch (sUriMatcher.match(uri)) {
+		case ACCOUNTS:
+			// encrypt the data
+			sonetCrypto = SonetCrypto.getInstance(getContext());
+			if (values.containsKey(Accounts.TOKEN)) {
+				values.put(Accounts.TOKEN, sonetCrypto.Encrypt(values.getAsString(Accounts.TOKEN)));
+			}
+			if (values.containsKey(Accounts.SECRET)) {
+				values.put(Accounts.SECRET, sonetCrypto.Encrypt(values.getAsString(Accounts.SECRET)));
+			}
+			if (values.containsKey(Accounts.SID)) {
+				values.put(Accounts.SID, sonetCrypto.Encrypt(values.getAsString(Accounts.SID)));
+			}
+			count = db.update(TABLE_ACCOUNTS, values, selection, selectionArgs);
+			break;
+		case WIDGET_ACCOUNTS:
+			count = db.update(TABLE_WIDGET_ACCOUNTS, values, selection, selectionArgs);
+			break;
+		case WIDGETS:
+			count = db.update(TABLE_WIDGETS, values, selection, selectionArgs);
+			break;
+		case STATUSES:
+			// encrypt the data
+			sonetCrypto = SonetCrypto.getInstance(getContext());
+			if (values.containsKey(Statuses.SID)) {
+				values.put(Statuses.SID, sonetCrypto.Encrypt(values.getAsString(Statuses.SID)));
+			}
+			count = db.update(TABLE_STATUSES, values, selection, selectionArgs);
+			break;
+		case ENTITIES:
+			// encrypt the data
+			sonetCrypto = SonetCrypto.getInstance(getContext());
+			if (values.containsKey(Entities.ESID)) {
+				values.put(Entities.ESID, sonetCrypto.Encrypt(values.getAsString(Entities.ESID)));
+			}
+			count = db.update(TABLE_ENTITIES, values, selection, selectionArgs);
+			break;
+		case NOTIFICATIONS:
+			// encrypt the data
+			sonetCrypto = SonetCrypto.getInstance(getContext());
+			if (values.containsKey(Notifications.SID)) {
+				values.put(Notifications.SID, sonetCrypto.Encrypt(values.getAsString(Notifications.SID)));
+			}
+			if (values.containsKey(Notifications.ESID)) {
+				values.put(Notifications.ESID, sonetCrypto.Encrypt(values.getAsString(Notifications.ESID)));
+			}
+			count = db.update(TABLE_NOTIFICATIONS, values, selection, selectionArgs);
+			break;
+		case STATUS_LINKS:
+			count = db.update(TABLE_STATUS_LINKS, values, selection, selectionArgs);
+			break;
+		case STATUS_IMAGES:
+			count = db.update(TABLE_STATUS_IMAGES, values, selection, selectionArgs);
+			break;
+		default:
+			throw new IllegalArgumentException("Unknown URI " + uri);
+		}
+		getContext().getContentResolver().notifyChange(uri, null);
+		return count;
 	}
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
 		public DatabaseHelper(Context context) {
 			super(context, DATABASE_NAME, null, DATABASE_VERSION);
-			// need to move the db file
-//			File oldFile = new File("/data/data/com.piusvelte.sonetpro/databases/sonet.db");
-//			if (!oldFile.exists()) {
-//				Log.d(TAG, "pro db does not exist");
-//				oldFile = new File("/data/data/com.piusvelte.sonet/databases/sonet.db");
-//			}
-//			if (oldFile.exists()) {
-//				Log.d(TAG, "old db exists, move");
-//				File newFile = new File("/data/data/com.piusvelte.sonet.core/databases/sonet.db");
-//				FileInputStream oldFIS = null;
-//				try {
-//					oldFIS = new FileInputStream(oldFile);
-//				} catch (FileNotFoundException e) {
-//					Log.e(TAG, e.getMessage());
-//				}
-//				if (oldFIS != null) {
-//					Log.d(TAG, "got oldFIS");
-//					FileInputStream newFIS = null;
-//					try {
-//						newFIS = new FileInputStream(newFile);
-//					} catch (FileNotFoundException e) {
-//						Log.e(TAG, e.getMessage());
-//					}
-//					if (newFIS != null) {
-//						Log.d(TAG, "got newFIS");
-//						FileChannel fromChannel = null;
-//						FileChannel toChannel = null;
-//						try {
-//							fromChannel = oldFIS.getChannel();
-//							toChannel = newFIS.getChannel();
-//							fromChannel.transferTo(0, fromChannel.size(), toChannel);
-//							Log.d(TAG, "copied");
-//						} catch (IOException e) {
-//							Log.e(TAG, e.getMessage());
-//						} finally {
-//							try {
-//								if (fromChannel != null) {
-//									fromChannel.close();
-//								}
-//							} catch (IOException e) {
-//								Log.e(TAG, e.getMessage());
-//							} finally {
-//								if (toChannel != null) {
-//									try {
-//										toChannel.close();
-//									} catch (IOException e) {
-//										Log.e(TAG, e.getMessage());
-//									} finally {
-//										Log.d(TAG, "delete oldFile");
-//										oldFile.delete();
-//									}
-//								}
-//							}
-//						}
-//						getWritableDatabase().close();
-//					}
-//				}
-//			}
 		}
 
 		@Override
 		public void onCreate(SQLiteDatabase db) {
-			Log.d(TAG, "onCreate");
 			db.execSQL("create table if not exists " + TABLE_ACCOUNTS
 					+ " (" + Accounts._ID + " integer primary key autoincrement, "
 					+ Accounts.USERNAME + " text, "

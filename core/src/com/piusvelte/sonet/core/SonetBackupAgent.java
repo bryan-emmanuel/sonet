@@ -19,19 +19,37 @@
  */
 package com.piusvelte.sonet.core;
 
+import java.io.IOException;
+
 import android.annotation.TargetApi;
 import android.app.backup.BackupAgentHelper;
+import android.app.backup.BackupDataInput;
+import android.app.backup.BackupDataOutput;
 import android.app.backup.FileBackupHelper;
-import android.util.Log;
+import android.os.ParcelFileDescriptor;
 
 @TargetApi(8)
-public class SonetBackupAgentHelper extends BackupAgentHelper {
-	private static final String TAG = "SonetBackupAgentHelper";
+public class SonetBackupAgent extends BackupAgentHelper {
 
 	@Override
 	public void onCreate() {
-		Log.d(TAG, "onCreate");
 		FileBackupHelper fbh = new FileBackupHelper(this, "../databases/" + SonetProvider.DATABASE_NAME);
 		addHelper(SonetProvider.DATABASE_NAME, fbh);
+	}
+	
+	@Override
+	public void onBackup(ParcelFileDescriptor oldState, BackupDataOutput data,
+	          ParcelFileDescriptor newState) throws IOException {
+	    synchronized (Sonet.sDatabaseLock) {
+	        super.onBackup(oldState, data, newState);
+	    }
+	}
+
+	@Override
+	public void onRestore(BackupDataInput data, int appVersionCode,
+	        ParcelFileDescriptor newState) throws IOException {
+	    synchronized (Sonet.sDatabaseLock) {
+	        super.onRestore(data, appVersionCode, newState);
+	    }
 	}
 }

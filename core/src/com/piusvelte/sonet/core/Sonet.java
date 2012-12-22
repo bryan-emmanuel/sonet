@@ -57,7 +57,7 @@ public class Sonet {
 	protected static final long INVALID_ACCOUNT_ID = -1;
 	protected static final int RESULT_REFRESH = 1;
 	protected static int NOTIFY_ID = 1;
-	protected static final Object[] sDatabaseLock = new Object[0];
+	protected static final int[] sDatabaseLock = new int[0];
 
 	protected static final int[] map_icons = new int[]{R.drawable.twitter, R.drawable.facebook, R.drawable.myspace, R.drawable.buzz, R.drawable.foursquare, R.drawable.linkedin, R.drawable.sms, R.drawable.rss, R.drawable.identica, R.drawable.googleplus, R.drawable.salesforce};
 
