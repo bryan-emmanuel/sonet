@@ -26,6 +26,7 @@ import android.app.backup.BackupAgentHelper;
 import android.app.backup.BackupDataInput;
 import android.app.backup.BackupDataOutput;
 import android.app.backup.FileBackupHelper;
+import android.app.backup.SharedPreferencesBackupHelper;
 import android.os.ParcelFileDescriptor;
 
 @TargetApi(8)
@@ -35,6 +36,8 @@ public class SonetBackupAgent extends BackupAgentHelper {
 	public void onCreate() {
 		FileBackupHelper fbh = new FileBackupHelper(this, "../databases/" + SonetProvider.DATABASE_NAME);
 		addHelper(SonetProvider.DATABASE_NAME, fbh);
+		SharedPreferencesBackupHelper spbh = new SharedPreferencesBackupHelper(this, getString(R.string.key_preferences));
+		addHelper(getString(R.string.key_preferences), spbh);
 	}
 	
 	@Override

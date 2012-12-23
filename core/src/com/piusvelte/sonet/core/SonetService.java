@@ -80,6 +80,8 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -130,6 +132,22 @@ public class SonetService extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();
+		// handle version changes
+		int currVer = 0;
+		try {
+			currVer = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
+		} catch (NameNotFoundException e) {
+			e.printStackTrace();
+		}
+		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
+		if (!sp.contains(getString(R.string.key_version)) || (currVer > sp.getInt(getString(R.string.key_version), 0))) {
+			sp.edit().putInt(getString(R.string.key_version), currVer).commit();
+			try {
+				BackupManager.dataChanged(this);
+			} catch (Throwable t) {
+				Log.d(TAG, "backupagent not supported");
+			}
+		}
 		mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 		mConnectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 		mSonetCrypto = SonetCrypto.getInstance(getApplicationContext());

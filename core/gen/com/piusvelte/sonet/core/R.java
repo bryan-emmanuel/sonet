@@ -362,6 +362,7 @@ containing a value of this type.
         public static int key_requestsecret=0x7f08002d;
         public static int key_requesttoken=0x7f08002c;
         public static int key_time_12_24=0x7f080038;
+        public static int key_version=0x7f080088;
         public static int less_than=0x7f080075;
         public static int lights=0x7f08006b;
         public static int like=0x7f080048;
