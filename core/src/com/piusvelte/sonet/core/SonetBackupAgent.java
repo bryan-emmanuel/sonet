@@ -34,10 +34,8 @@ public class SonetBackupAgent extends BackupAgentHelper {
 
 	@Override
 	public void onCreate() {
-		FileBackupHelper fbh = new FileBackupHelper(this, "../databases/" + SonetProvider.DATABASE_NAME);
-		addHelper(SonetProvider.DATABASE_NAME, fbh);
-		SharedPreferencesBackupHelper spbh = new SharedPreferencesBackupHelper(this, getString(R.string.key_preferences));
-		addHelper(getString(R.string.key_preferences), spbh);
+		addHelper(SonetProvider.DATABASE_NAME, new FileBackupHelper(this, "../databases/" + SonetProvider.DATABASE_NAME));
+		addHelper(getString(R.string.key_preferences), new SharedPreferencesBackupHelper(this, getString(R.string.key_preferences)));
 	}
 	
 	@Override

@@ -34,7 +34,6 @@ public class BackupManager {
 	}
 	
 	public static void dataChanged(Context context) {
-		android.app.backup.BackupManager bm = new android.app.backup.BackupManager(context);
-		bm.dataChanged();
+		(new android.app.backup.BackupManager(context)).dataChanged();
 	}
 }
