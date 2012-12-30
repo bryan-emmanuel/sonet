@@ -102,9 +102,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		sLocationSupported.add(TWITTER);
 		sLocationSupported.add(FACEBOOK);
 		sLocationSupported.add(FOURSQUARE);
-
 		sPhotoSupported.add(FACEBOOK);
-
 		sTaggingSupported.add(FACEBOOK);
 	}
 
@@ -120,47 +118,53 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 			((LinearLayout) findViewById(R.id.ad)).addView(adView);
 			adView.loadAd(new AdRequest());
 		}
-
 		mMessage = (EditText) findViewById(R.id.message);
 		mSend = (ImageButton) findViewById(R.id.send);
 		mCount = (TextView) findViewById(R.id.count);
-
 		// load secretkey
 		mSonetCrypto = SonetCrypto.getInstance(getApplicationContext());
 		mHttpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
-		final Intent i = getIntent();
-		if (i != null) {
-			final String action = i.getAction();
+		mMessage.addTextChangedListener(this);
+		mMessage.setOnKeyListener(this);
+		mSend.setOnClickListener(this);
+		setResult(RESULT_OK);
+	}
+	
+	@Override
+	public void onNewIntent(Intent intent) {
+		setIntent(intent);
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		Intent intent = getIntent();
+		if (intent != null) {
+			String action = intent.getAction();
 			if ((action != null) && action.equals(Intent.ACTION_SEND)) {
-				if (i.hasExtra(Intent.EXTRA_STREAM)) {
-					getPhoto((Uri) i.getParcelableExtra(Intent.EXTRA_STREAM));
-				}
-				if (i.hasExtra(Intent.EXTRA_TEXT)) {
-					final String text = i.getStringExtra(Intent.EXTRA_TEXT);
+				if (intent.hasExtra(Intent.EXTRA_STREAM))
+					getPhoto((Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM));
+				if (intent.hasExtra(Intent.EXTRA_TEXT)) {
+					final String text = intent.getStringExtra(Intent.EXTRA_TEXT);
 					mMessage.setText(text);
 					mCount.setText(Integer.toString(text.length()));
 				}
 				chooseAccounts();
 			} else {
-				Uri data = i.getData();
+				Uri data = intent.getData();
 				if ((data != null) && data.toString().contains(Accounts.getContentUri(this).toString())) {
 					// default to the account passed in, but allow selecting additional accounts
 					Cursor account = this.getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{data.getLastPathSegment()}, null);
 					if (account.moveToFirst())
 						mAccountsService.put(account.getLong(0), account.getInt(1));
 					account.close();
-				} else if (i.hasExtra(Widgets.INSTANT_UPLOAD)) {
+				} else if (intent.hasExtra(Widgets.INSTANT_UPLOAD)) {
 					// check if a photo path was passed and prompt user to select the account
-					setPhoto(i.getStringExtra(Widgets.INSTANT_UPLOAD));
+					setPhoto(intent.getStringExtra(Widgets.INSTANT_UPLOAD));
 					chooseAccounts();
 				}
 			}
 		}
-		mMessage.addTextChangedListener(this);
-		mMessage.setOnKeyListener(this);
-		mSend.setOnClickListener(this);
-
-		setResult(RESULT_OK);
 	}
 
 	@Override

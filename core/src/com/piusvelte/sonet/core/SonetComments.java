@@ -127,25 +127,27 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 			((LinearLayout) findViewById(R.id.ad)).addView(adView);
 			adView.loadAd(new AdRequest());
 		}
-
 		mMessage = (EditText) findViewById(R.id.message);
 		mSend = (ImageButton) findViewById(R.id.send);
 		mCount = (TextView) findViewById(R.id.count);
-		Intent intent = getIntent();
-		if (intent != null)
-			mData = intent.getData();
 		mMessage.addTextChangedListener(this);
 		mMessage.setOnKeyListener(this);
 		mSend.setOnClickListener(this);
-
 		mHttpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
-
 		setResult(RESULT_OK);
+	}
+	
+	@Override
+	public void onNewIntent(Intent intent) {
+		setIntent(intent);
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
+		Intent intent = getIntent();
+		if (intent != null)
+			mData = intent.getData();
 		if (mData == null) {
 			(Toast.makeText(this, getString(R.string.failure), Toast.LENGTH_LONG)).show();
 			finish();

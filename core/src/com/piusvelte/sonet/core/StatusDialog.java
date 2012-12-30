@@ -22,8 +22,6 @@ package com.piusvelte.sonet.core;
 import static com.piusvelte.sonet.core.Sonet.*;
 import static com.piusvelte.sonet.core.SonetTokens.*;
 
-import java.util.regex.Matcher;
-
 import mobi.intuitit.android.content.LauncherIntent;
 
 import org.apache.http.client.methods.HttpGet;
@@ -33,7 +31,6 @@ import org.json.JSONObject;
 
 import com.piusvelte.sonet.core.R;
 import com.piusvelte.sonet.core.Sonet.Accounts;
-import com.piusvelte.sonet.core.Sonet.Statuses;
 import com.piusvelte.sonet.core.Sonet.Statuses_styles;
 import com.piusvelte.sonet.core.Sonet.Widget_accounts;
 import com.piusvelte.sonet.core.Sonet.Widgets;
@@ -88,6 +85,16 @@ public class StatusDialog extends Activity implements OnClickListener {
 		super.onCreate(savedInstanceState);
 		// load secretkey
 		mSonetCrypto = SonetCrypto.getInstance(getApplicationContext());
+	}
+	
+	@Override
+	public void onNewIntent(Intent intent) {
+		setIntent(intent);
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
 		Intent intent = getIntent();
 		if (intent != null) {
 			if (intent.hasExtra(Widgets.INSTANT_UPLOAD)) {
@@ -97,35 +104,29 @@ public class StatusDialog extends Activity implements OnClickListener {
 				mData = intent.getData();
 				if (mData != null) {
 					mData = intent.getData();
-					if (intent.hasExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS)) {
+					if (intent.hasExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS))
 						mRect = intent.getParcelableExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS);
-					} else {
+					else
 						mRect = intent.getSourceBounds();
-					}
 					Log.d(TAG,"data:"+mData.toString());
 					// need to use a thread here to avoid anr
 					mLoadingDialog = new ProgressDialog(this);
 					mLoadingDialog.setMessage(getString(R.string.status_loading));
 					mLoadingDialog.setCancelable(true);
 					mLoadingDialog.setOnCancelListener(new OnCancelListener() {
-
 						@Override
 						public void onCancel(DialogInterface arg0) {
-							if (mStatusLoader != null) {
+							if (mStatusLoader != null)
 								mStatusLoader.cancel(true);
-							}
 							finish();
 						}
-						
 					});
 					mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new OnClickListener() {
-
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
 							dialog.cancel();
-							StatusDialog.this.finish();
+							finish();
 						}
-						
 					});
 					mLoadingDialog.show();
 					mStatusLoader = new StatusLoader();
@@ -133,11 +134,6 @@ public class StatusDialog extends Activity implements OnClickListener {
 				}
 			}
 		}
-	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
 		if (mFilePath != null) {
 			mDialog = (new AlertDialog.Builder(this))
 			.setTitle(R.string.uploadprompt)
@@ -193,12 +189,12 @@ public class StatusDialog extends Activity implements OnClickListener {
 			if (mRect != null)
 				QuickContact.showQuickContact(this, mRect, Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, mEsid), QuickContact.MODE_LARGE, null);
 			else {
-				startActivity(new Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + mEsid)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				startActivity(new Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + mEsid)));
 				finish();
 			}
 		} else if (mService == RSS) {
 			if (mEsid != null) {
-				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(mEsid)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(mEsid)));
 				finish();
 			} else {
 				(Toast.makeText(StatusDialog.this, "RSS item has no link", Toast.LENGTH_LONG)).show();
@@ -224,7 +220,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 			if (mAppWidgetId != Sonet.INVALID_ACCOUNT_ID) {
 				// informational messages go to settings
 				mFinish = true;
-				startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 				finish();
 			} else {
 				(Toast.makeText(StatusDialog.this, R.string.widget_loading, Toast.LENGTH_LONG)).show();
@@ -249,11 +245,11 @@ public class StatusDialog extends Activity implements OnClickListener {
 					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://plus.google.com")));
 				else if (mService == PINTEREST) {
 					if (mSid != null)
-						startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(PINTEREST_PIN, mSid))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+						startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(PINTEREST_PIN, mSid))));
 					else
-						startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+						startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
 				} else
-					startActivity(Sonet.getPackageIntent(this, SonetComments.class).setData(mData).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+					startActivity(Sonet.getPackageIntent(this, SonetComments.class).setData(mData));
 			} else
 				(Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
 			dialog.cancel();
@@ -266,7 +262,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 				else if (mService == PINTEREST)
 					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
 				else
-					startActivity(Sonet.getPackageIntent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(mAccount))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+					startActivity(Sonet.getPackageIntent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(mAccount))));
 				dialog.cancel();
 				finish();
 			} else {
@@ -298,7 +294,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 								.setSingleChoiceItems(accounts, -1, new OnClickListener() {
 									@Override
 									public void onClick(DialogInterface arg0, int which) {
-										startActivity(Sonet.getPackageIntent(StatusDialog.this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(accountIndexes[which]))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+										startActivity(Sonet.getPackageIntent(StatusDialog.this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(accountIndexes[which]))));
 										arg0.cancel();
 									}
 								})
@@ -337,7 +333,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 			break;
 		case SETTINGS:
 			if (mAppWidgetId != -1) {
-				startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
 				dialog.cancel();
 				finish();
 			} else {
@@ -348,7 +344,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 					.setItems(widgets, new OnClickListener() {
 						@Override
 						public void onClick(DialogInterface arg0, int arg1) {
-							startActivity(Sonet.getPackageIntent(StatusDialog.this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[arg1]).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+							startActivity(Sonet.getPackageIntent(StatusDialog.this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[arg1]));
 							arg0.cancel();
 							finish();
 						}					
@@ -371,7 +367,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 			}
 			break;
 		case NOTIFICATIONS:
-			startActivity(Sonet.getPackageIntent(this, SonetNotifications.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+			startActivity(Sonet.getPackageIntent(this, SonetNotifications.class));
 			dialog.cancel();
 			finish();
 			break;
@@ -442,7 +438,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 							if (response != null) {
 								try {
 									JSONObject user = new JSONObject(response);
-									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(TWITTER_PROFILE, user.getString("screen_name")))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(TWITTER_PROFILE, user.getString("screen_name")))));
 								} catch (JSONException e) {
 									Log.e(TAG, e.toString());
 									onErrorExit(mServiceName);
@@ -489,7 +485,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 							if (loadingDialog.isShowing()) loadingDialog.dismiss();
 							if (response != null) {
 								try {
-									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getString("link"))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getString("link"))));
 								} catch (JSONException e) {
 									Log.e(TAG, e.toString());
 									onErrorExit(mServiceName);
@@ -536,7 +532,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 							if (loadingDialog.isShowing()) loadingDialog.dismiss();
 							if (response != null) {
 								try {
-									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getJSONObject("person").getString("profileUrl"))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getJSONObject("person").getString("profileUrl"))));
 								} catch (JSONException e) {
 									Log.e(TAG, e.toString());
 									onErrorExit(mServiceName);
@@ -568,7 +564,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 				account.close();
 				break;
 			case FOURSQUARE:
-				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(FOURSQUARE_URL_PROFILE, mEsid))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(FOURSQUARE_URL_PROFILE, mEsid))));
 				finish();
 				break;
 			case LINKEDIN:
@@ -589,7 +585,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 							if (loadingDialog.isShowing()) loadingDialog.dismiss();
 							if (response != null) {
 								try {
-									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getJSONObject("siteStandardProfileRequest").getString("url").replaceAll("\\\\", ""))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getJSONObject("siteStandardProfileRequest").getString("url").replaceAll("\\\\", ""))));
 								} catch (JSONException e) {
 									Log.e(TAG, e.toString());
 									onErrorExit(mServiceName);
@@ -637,7 +633,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 							if (response != null) {
 								try {
 									JSONObject user = new JSONObject(response);
-									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(IDENTICA_PROFILE, user.getString("screen_name")))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(IDENTICA_PROFILE, user.getString("screen_name")))));
 								} catch (JSONException e) {
 									Log.e(TAG, e.toString());
 									onErrorExit(mServiceName);
@@ -669,14 +665,14 @@ public class StatusDialog extends Activity implements OnClickListener {
 				account.close();
 				break;
 			case GOOGLEPLUS:
-				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(GOOGLEPLUS_PROFILE, mEsid))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(GOOGLEPLUS_PROFILE, mEsid))));
 				finish();
 				break;
 			case PINTEREST:
 				if (mEsid != null)
-					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(PINTEREST_PROFILE, mEsid))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(PINTEREST_PROFILE, mEsid))));
 				else
-					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
 				finish();
 				break;
 			case CHATTER:
@@ -697,7 +693,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 								try {
 									JSONObject jobj = new JSONObject(response);
 									if (jobj.has("instance_url")) {
-										startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(jobj.getString("instance_url") + "/" + mEsid)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+										startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(jobj.getString("instance_url") + "/" + mEsid)));
 									}
 								} catch (JSONException e) {
 									Log.e(TAG, e.toString());
@@ -734,7 +730,7 @@ public class StatusDialog extends Activity implements OnClickListener {
 		default:
 			if ((itemsData != null) && (which < itemsData.length) && (itemsData[which] != null))
 				// open link
-				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(itemsData[which])).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+				startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(itemsData[which])));
 			else
 				(Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
 			finish();

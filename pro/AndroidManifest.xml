@@ -52,7 +52,7 @@
 		<activity android:name=".Settings" />
 		<activity android:name=".AccountSettings" />
 		<activity android:name=".OAuthLogin" />
-		<activity android:name=".SonetCreatePost" android:windowSoftInputMode="stateVisible|adjustResize">
+		<activity android:name=".SonetCreatePost" android:windowSoftInputMode="stateVisible|adjustResize" android:launchMode="singleTop">"
 		    <intent-filter>
 		        <action android:name="android.intent.action.SEND" />
 		        <category android:name="android.intent.category.DEFAULT" />
@@ -60,11 +60,11 @@
 		        <data android:mimeType="text/*" />
 		    </intent-filter>
 		</activity>
-		<activity android:name=".SonetComments"  android:windowSoftInputMode="stateVisible|adjustResize"/>
+		<activity android:name=".SonetComments"  android:windowSoftInputMode="stateVisible|adjustResize" android:launchMode="singleTop" />
 		<activity android:name=".SelectFriends" />
 		<activity android:name=".StatusDialog"
 			android:theme="@style/SonetDialog" android:clearTaskOnLaunch="true" android:taskAffinity="" android:noHistory="true" />
-		<activity android:name=".SonetNotifications" android:clearTaskOnLaunch="true" android:taskAffinity="" />
+		<activity android:name=".SonetNotifications" android:clearTaskOnLaunch="true" android:taskAffinity="" android:noHistory="true" />
 		<activity android:name="com.google.ads.AdActivity"
 			android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
 		<!-- Broadcast Receiver that will process AppWidget updates -->
