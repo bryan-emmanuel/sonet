@@ -342,31 +342,47 @@ public class SonetProvider extends ContentProvider {
 		int count;
 		switch (sUriMatcher.match(uri)) {
 		case ACCOUNTS:
-			count = db.delete(TABLE_ACCOUNTS, whereClause, whereArgs);
+			synchronized (Sonet.sDatabaseLock) {
+				count = db.delete(TABLE_ACCOUNTS, whereClause, whereArgs);
+			}
 			break;
 		case WIDGET_ACCOUNTS:
-			count = db.delete(TABLE_WIDGET_ACCOUNTS, whereClause, whereArgs);
+			synchronized (Sonet.sDatabaseLock) {
+				count = db.delete(TABLE_WIDGET_ACCOUNTS, whereClause, whereArgs);
+			}
 			break;
 		case WIDGETS:
 			count = db.delete(TABLE_WIDGETS, whereClause, whereArgs);
 			break;
 		case STATUSES:
-			count = db.delete(TABLE_STATUSES, whereClause, whereArgs);
+			synchronized (Sonet.sDatabaseLock) {
+				count = db.delete(TABLE_STATUSES, whereClause, whereArgs);
+			}
 			break;
 		case ENTITIES:
-			count = db.delete(TABLE_ENTITIES, whereClause, whereArgs);
+			synchronized (Sonet.sDatabaseLock) {
+				count = db.delete(TABLE_ENTITIES, whereClause, whereArgs);
+			}
 			break;
 		case NOTIFICATIONS:
-			count = db.delete(TABLE_NOTIFICATIONS, whereClause, whereArgs);
+			synchronized (Sonet.sDatabaseLock) {
+				count = db.delete(TABLE_NOTIFICATIONS, whereClause, whereArgs);
+			}
 			break;
 		case WIDGETS_SETTINGS:
-			count = db.delete(VIEW_WIDGETS_SETTINGS, whereClause, whereArgs);
+			synchronized (Sonet.sDatabaseLock) {
+				count = db.delete(VIEW_WIDGETS_SETTINGS, whereClause, whereArgs);
+			}
 			break;
 		case STATUS_LINKS:
-			count = db.delete(TABLE_STATUS_LINKS, whereClause, whereArgs);
+			synchronized (Sonet.sDatabaseLock) {
+				count = db.delete(TABLE_STATUS_LINKS, whereClause, whereArgs);
+			}
 			break;
 		case STATUS_IMAGES:
-			count = db.delete(TABLE_STATUS_IMAGES, whereClause, whereArgs);
+			synchronized (Sonet.sDatabaseLock) {
+				count = db.delete(TABLE_STATUS_IMAGES, whereClause, whereArgs);
+			}
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
@@ -388,36 +404,40 @@ public class SonetProvider extends ContentProvider {
 		case ACCOUNTS:
 			// encrypt the data
 			sonetCrypto = SonetCrypto.getInstance(getContext());
-			if (values.containsKey(Accounts.TOKEN)) {
+			if (values.containsKey(Accounts.TOKEN))
 				values.put(Accounts.TOKEN, sonetCrypto.Encrypt(values.getAsString(Accounts.TOKEN)));
-			}
-			if (values.containsKey(Accounts.SECRET)) {
+			if (values.containsKey(Accounts.SECRET))
 				values.put(Accounts.SECRET, sonetCrypto.Encrypt(values.getAsString(Accounts.SECRET)));
-			}
-			if (values.containsKey(Accounts.SID)) {
+			if (values.containsKey(Accounts.SID))
 				values.put(Accounts.SID, sonetCrypto.Encrypt(values.getAsString(Accounts.SID)));
+			synchronized (Sonet.sDatabaseLock) {
+				rowId = db.insert(TABLE_ACCOUNTS, Accounts._ID, values);
 			}
-			rowId = db.insert(TABLE_ACCOUNTS, Accounts._ID, values);
 			returnUri = ContentUris.withAppendedId(Accounts.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case WIDGET_ACCOUNTS:
-			rowId = db.insert(TABLE_WIDGET_ACCOUNTS, Widget_accounts._ID, values);
+			synchronized (Sonet.sDatabaseLock) {
+				rowId = db.insert(TABLE_WIDGET_ACCOUNTS, Widget_accounts._ID, values);
+			}
 			returnUri = ContentUris.withAppendedId(Widget_accounts.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case WIDGETS:
-			rowId = db.insert(TABLE_WIDGETS, Widgets._ID, values);
+			synchronized (Sonet.sDatabaseLock) {
+				rowId = db.insert(TABLE_WIDGETS, Widgets._ID, values);
+			}
 			returnUri = ContentUris.withAppendedId(Widgets.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case STATUSES:
 			// encrypt the data
 			sonetCrypto = SonetCrypto.getInstance(getContext());
-			if (values.containsKey(Statuses.SID)) {
+			if (values.containsKey(Statuses.SID))
 				values.put(Statuses.SID, sonetCrypto.Encrypt(values.getAsString(Statuses.SID)));
+			synchronized (Sonet.sDatabaseLock) {
+				rowId = db.insert(TABLE_STATUSES, Accounts._ID, values);
 			}
-			rowId = db.insert(TABLE_STATUSES, Accounts._ID, values);
 			returnUri = ContentUris.withAppendedId(Accounts.getContentUri(getContext()), rowId);
 			// many statuses will be inserted at once, so don't trigger a refresh for each one
 			//			getContext().getContentResolver().notifyChange(returnUri, null);
@@ -425,37 +445,44 @@ public class SonetProvider extends ContentProvider {
 		case ENTITIES:
 			// encrypt the data
 			sonetCrypto = SonetCrypto.getInstance(getContext());
-			if (values.containsKey(Entities.ESID)) {
+			if (values.containsKey(Entities.ESID))
 				values.put(Entities.ESID, sonetCrypto.Encrypt(values.getAsString(Entities.ESID)));
+			synchronized (Sonet.sDatabaseLock) {
+				rowId = db.insert(TABLE_ENTITIES, Entities._ID, values);
 			}
-			rowId = db.insert(TABLE_ENTITIES, Entities._ID, values);
 			returnUri = ContentUris.withAppendedId(Entities.getContentUri(getContext()), rowId);
 			break;
 		case NOTIFICATIONS:
 			// encrypt the data
 			sonetCrypto = SonetCrypto.getInstance(getContext());
-			if (values.containsKey(Notifications.SID)) {
+			if (values.containsKey(Notifications.SID))
 				values.put(Notifications.SID, sonetCrypto.Encrypt(values.getAsString(Notifications.SID)));
-			}
-			if (values.containsKey(Notifications.ESID)) {
+			if (values.containsKey(Notifications.ESID))
 				values.put(Notifications.ESID, sonetCrypto.Encrypt(values.getAsString(Notifications.ESID)));
+			synchronized (Sonet.sDatabaseLock) {
+				rowId = db.insert(TABLE_NOTIFICATIONS, Notifications._ID, values);
 			}
-			rowId = db.insert(TABLE_NOTIFICATIONS, Notifications._ID, values);
 			returnUri = ContentUris.withAppendedId(Notifications.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case WIDGETS_SETTINGS:
-			rowId = db.insert(VIEW_WIDGETS_SETTINGS, Widgets_settings._ID, values);
+			synchronized (Sonet.sDatabaseLock) {
+				rowId = db.insert(VIEW_WIDGETS_SETTINGS, Widgets_settings._ID, values);
+			}
 			returnUri = ContentUris.withAppendedId(Widgets_settings.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case STATUS_LINKS:
-			rowId = db.insert(TABLE_STATUS_LINKS, Status_links._ID, values);
+			synchronized (Sonet.sDatabaseLock) {
+				rowId = db.insert(TABLE_STATUS_LINKS, Status_links._ID, values);
+			}
 			returnUri = ContentUris.withAppendedId(Status_links.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case STATUS_IMAGES:
-			rowId = db.insert(TABLE_STATUS_IMAGES, Status_images._ID, values);
+			synchronized (Sonet.sDatabaseLock) {
+				rowId = db.insert(TABLE_STATUS_IMAGES, Status_images._ID, values);
+			}
 			returnUri = ContentUris.withAppendedId(Status_images.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
@@ -467,12 +494,7 @@ public class SonetProvider extends ContentProvider {
 
 	@Override
 	public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String orderBy) {
-		SQLiteDatabase db;
-		synchronized (Sonet.sDatabaseLock) {
-			db = mDatabaseHelper.getWritableDatabase();
-		}
 		SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
-		Cursor c;
 		switch (sUriMatcher.match(uri)) {
 		case ACCOUNTS:
 			qb.setTables(TABLE_ACCOUNTS);
@@ -537,7 +559,8 @@ public class SonetProvider extends ContentProvider {
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
 		}
-		c = qb.query(db, projection, selection, selectionArgs, null, null, orderBy);
+		SQLiteDatabase db = mDatabaseHelper.getReadableDatabase();
+		Cursor c = qb.query(db, projection, selection, selectionArgs, null, null, orderBy);
 		c.setNotificationUri(getContext().getContentResolver(), uri);
 		return c;
 	}
@@ -554,55 +577,64 @@ public class SonetProvider extends ContentProvider {
 		case ACCOUNTS:
 			// encrypt the data
 			sonetCrypto = SonetCrypto.getInstance(getContext());
-			if (values.containsKey(Accounts.TOKEN)) {
+			if (values.containsKey(Accounts.TOKEN))
 				values.put(Accounts.TOKEN, sonetCrypto.Encrypt(values.getAsString(Accounts.TOKEN)));
-			}
-			if (values.containsKey(Accounts.SECRET)) {
+			if (values.containsKey(Accounts.SECRET))
 				values.put(Accounts.SECRET, sonetCrypto.Encrypt(values.getAsString(Accounts.SECRET)));
-			}
-			if (values.containsKey(Accounts.SID)) {
+			if (values.containsKey(Accounts.SID))
 				values.put(Accounts.SID, sonetCrypto.Encrypt(values.getAsString(Accounts.SID)));
+			synchronized (Sonet.sDatabaseLock) {
+				count = db.update(TABLE_ACCOUNTS, values, selection, selectionArgs);
 			}
-			count = db.update(TABLE_ACCOUNTS, values, selection, selectionArgs);
 			break;
 		case WIDGET_ACCOUNTS:
-			count = db.update(TABLE_WIDGET_ACCOUNTS, values, selection, selectionArgs);
+			synchronized (Sonet.sDatabaseLock) {
+				count = db.update(TABLE_WIDGET_ACCOUNTS, values, selection, selectionArgs);
+			}
 			break;
 		case WIDGETS:
-			count = db.update(TABLE_WIDGETS, values, selection, selectionArgs);
+			synchronized (Sonet.sDatabaseLock) {
+				count = db.update(TABLE_WIDGETS, values, selection, selectionArgs);
+			}
 			break;
 		case STATUSES:
 			// encrypt the data
 			sonetCrypto = SonetCrypto.getInstance(getContext());
-			if (values.containsKey(Statuses.SID)) {
+			if (values.containsKey(Statuses.SID))
 				values.put(Statuses.SID, sonetCrypto.Encrypt(values.getAsString(Statuses.SID)));
+			synchronized (Sonet.sDatabaseLock) {
+				count = db.update(TABLE_STATUSES, values, selection, selectionArgs);
 			}
-			count = db.update(TABLE_STATUSES, values, selection, selectionArgs);
 			break;
 		case ENTITIES:
 			// encrypt the data
 			sonetCrypto = SonetCrypto.getInstance(getContext());
-			if (values.containsKey(Entities.ESID)) {
+			if (values.containsKey(Entities.ESID))
 				values.put(Entities.ESID, sonetCrypto.Encrypt(values.getAsString(Entities.ESID)));
+			synchronized (Sonet.sDatabaseLock) {
+				count = db.update(TABLE_ENTITIES, values, selection, selectionArgs);
 			}
-			count = db.update(TABLE_ENTITIES, values, selection, selectionArgs);
 			break;
 		case NOTIFICATIONS:
 			// encrypt the data
 			sonetCrypto = SonetCrypto.getInstance(getContext());
-			if (values.containsKey(Notifications.SID)) {
+			if (values.containsKey(Notifications.SID))
 				values.put(Notifications.SID, sonetCrypto.Encrypt(values.getAsString(Notifications.SID)));
-			}
-			if (values.containsKey(Notifications.ESID)) {
+			if (values.containsKey(Notifications.ESID))
 				values.put(Notifications.ESID, sonetCrypto.Encrypt(values.getAsString(Notifications.ESID)));
+			synchronized (Sonet.sDatabaseLock) {
+				count = db.update(TABLE_NOTIFICATIONS, values, selection, selectionArgs);
 			}
-			count = db.update(TABLE_NOTIFICATIONS, values, selection, selectionArgs);
 			break;
 		case STATUS_LINKS:
-			count = db.update(TABLE_STATUS_LINKS, values, selection, selectionArgs);
+			synchronized (Sonet.sDatabaseLock) {
+				count = db.update(TABLE_STATUS_LINKS, values, selection, selectionArgs);
+			}
 			break;
 		case STATUS_IMAGES:
-			count = db.update(TABLE_STATUS_IMAGES, values, selection, selectionArgs);
+			synchronized (Sonet.sDatabaseLock) {
+				count = db.update(TABLE_STATUS_IMAGES, values, selection, selectionArgs);
+			}
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
