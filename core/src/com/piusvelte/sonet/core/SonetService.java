@@ -112,7 +112,7 @@ public class SonetService extends Service {
 	private static Method sSetEmptyView;
 	private static Method sNotifyAppWidgetViewDataChanged;
 	private static boolean sNativeScrollingSupported = false;
-	
+
 	private int mStartId = Sonet.INVALID_SERVICE;
 
 	static {
@@ -167,7 +167,7 @@ public class SonetService extends Service {
 		mStartId = startId;
 		start(intent);
 	}
-		
+
 	private void start(Intent intent) {
 		if (intent != null) {
 			String action = intent.getAction();
@@ -377,63 +377,11 @@ public class SonetService extends Service {
 					mSMSLoaders.add(smsLoader);
 					smsLoader.execute(msg);
 				}
-			} else if (ACTION_PAGE_DOWN.equals(action)) {
-				(new AsyncTask<Integer, Void, Void>() {
-					@Override
-					protected Void doInBackground(Integer... arg0) {
-						int appWidgetId = arg0[0];
-						boolean display_profile = true;			
-						boolean hasbuttons = false;
-						int scrollable = 0;
-						int buttons_bg_color = Sonet.default_buttons_bg_color;
-						int buttons_color = Sonet.default_buttons_color;
-						int buttons_textsize = Sonet.default_buttons_textsize;			
-						int margin = Sonet.default_margin;
-						Cursor settings = getSettingsCursor(appWidgetId);
-						if (settings.moveToFirst()) {
-							hasbuttons = settings.getInt(0) == 1;
-							buttons_color = settings.getInt(1);
-							buttons_bg_color = settings.getInt(2);
-							buttons_textsize = settings.getInt(3);
-							scrollable = settings.getInt(4);
-							display_profile = settings.getInt(5) == 1;
-							margin = settings.getInt(6);
-						}
-						settings.close();
-						// rebuild the widget, using the paging criteria passed in
-						buildWidgetButtons(appWidgetId, true, arg0[1], hasbuttons, scrollable, buttons_bg_color, buttons_color, buttons_textsize, display_profile, margin);
-						return null;
-					}
-				}).execute(Integer.parseInt(intent.getData().getLastPathSegment()), intent.getIntExtra(ACTION_PAGE_DOWN, 0));
-			} else if (ACTION_PAGE_UP.equals(action)) {
-				(new AsyncTask<Integer, Void, Void>() {
-					@Override
-					protected Void doInBackground(Integer... arg0) {
-						int appWidgetId = arg0[0];
-						boolean display_profile = true;			
-						boolean hasbuttons = false;
-						int scrollable = 0;
-						int buttons_bg_color = Sonet.default_buttons_bg_color;
-						int buttons_color = Sonet.default_buttons_color;
-						int buttons_textsize = Sonet.default_buttons_textsize;			
-						int margin = Sonet.default_margin;
-						Cursor settings = getSettingsCursor(appWidgetId);
-						if (settings.moveToFirst()) {
-							hasbuttons = settings.getInt(0) == 1;
-							buttons_color = settings.getInt(1);
-							buttons_bg_color = settings.getInt(2);
-							buttons_textsize = settings.getInt(3);
-							scrollable = settings.getInt(4);
-							display_profile = settings.getInt(5) == 1;
-							margin = settings.getInt(6);
-						}
-						settings.close();
-						// rebuild the widget, using the paging criteria passed in
-						buildWidgetButtons(arg0[0], true, arg0[1], hasbuttons, scrollable, buttons_bg_color, buttons_color, buttons_textsize, display_profile, margin);
-						return null;
-					}
-				}).execute(Integer.parseInt(intent.getData().getLastPathSegment()), intent.getIntExtra(ACTION_PAGE_UP, 0));
-			} else {
+			} else if (ACTION_PAGE_DOWN.equals(action))
+				(new PagingTask()).execute(Integer.parseInt(intent.getData().getLastPathSegment()), intent.getIntExtra(ACTION_PAGE_DOWN, 0));
+			else if (ACTION_PAGE_UP.equals(action))
+				(new PagingTask()).execute(Integer.parseInt(intent.getData().getLastPathSegment()), intent.getIntExtra(ACTION_PAGE_UP, 0));
+			else {
 				// this might be a widget update from the widget refresh button
 				int appWidgetId;
 				try {
@@ -444,6 +392,35 @@ public class SonetService extends Service {
 				}
 			}
 		}
+	}
+
+	class PagingTask extends AsyncTask<Integer, Void, Void> {
+
+		@Override
+		protected Void doInBackground(Integer... arg0) {
+			boolean display_profile = true;			
+			boolean hasbuttons = false;
+			int scrollable = 0;
+			int buttons_bg_color = Sonet.default_buttons_bg_color;
+			int buttons_color = Sonet.default_buttons_color;
+			int buttons_textsize = Sonet.default_buttons_textsize;			
+			int margin = Sonet.default_margin;
+			Cursor settings = getSettingsCursor(arg0[0]);
+			if (settings.moveToFirst()) {
+				hasbuttons = settings.getInt(0) == 1;
+				buttons_color = settings.getInt(1);
+				buttons_bg_color = settings.getInt(2);
+				buttons_textsize = settings.getInt(3);
+				scrollable = settings.getInt(4);
+				display_profile = settings.getInt(5) == 1;
+				margin = settings.getInt(6);
+			}
+			settings.close();
+			// rebuild the widget, using the paging criteria passed in
+			buildWidgetButtons(arg0[0], true, arg0[1], hasbuttons, scrollable, buttons_bg_color, buttons_color, buttons_textsize, display_profile, margin);
+			return null;
+		}
+
 	}
 
 	protected void putValidatedUpdates(int[] appWidgetIds, int reload) {
@@ -540,7 +517,7 @@ public class SonetService extends Service {
 		}
 		return bg;
 	}
-	
+
 	class StatusesLoader extends AsyncTask<Integer, String, Integer> {
 
 		@Override
@@ -721,15 +698,12 @@ public class SonetService extends Service {
 							status_bg_color = c.getInt(1);
 							icon = c.getInt(2) == 1;
 							status_count = c.getInt(3);
-							if (c.getInt(4) == 1) {
+							if (c.getInt(4) == 1)
 								notifications |= Notification.DEFAULT_SOUND;
-							}
-							if (c.getInt(5) == 1) {
+							if (c.getInt(5) == 1)
 								notifications |= Notification.DEFAULT_VIBRATE;
-							}
-							if (c.getInt(6) == 1) {
+							if (c.getInt(6) == 1)
 								notifications |= Notification.DEFAULT_LIGHTS;
-							}
 							profile_bg_color = c.getInt(7);
 							friend_bg_color = c.getInt(8);
 						}
@@ -860,7 +834,7 @@ public class SonetService extends Service {
 				stopSelfResult(mStartId);
 			}
 		}
-		
+
 		private void removeOldStatuses(String widgetId, String accountId) {
 			Cursor statuses = getContentResolver().query(Statuses.getContentUri(SonetService.this), new String[]{Statuses._ID}, Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widgetId, accountId}, null);
 			if (statuses.moveToFirst()) {
@@ -1090,9 +1064,8 @@ public class SonetService extends Service {
 							scaledImageBmp = Bitmap.createScaledBitmap(croppedBmp, scaledWidth, scaledHeight, true);
 							croppedBmp.recycle();
 							croppedBmp = null;
-						} else {
+						} else
 							scaledImageBmp = Bitmap.createScaledBitmap(imageBmp, scaledWidth, scaledHeight, true);
-						}
 						imageBmp.recycle();
 						imageBmp = null;
 						if (scaledImageBmp != null) {
@@ -1173,11 +1146,10 @@ public class SonetService extends Service {
 		}
 
 		private void updateNotify(String notification) {
-			if (mNotify == null) {
+			if (mNotify == null)
 				mNotify = notification;
-			} else {
+			else
 				mNotify = "multiple updates";
-			}
 		}
 
 		private boolean updateCreatedText(String widget, String account, boolean time24hr) {
@@ -1199,9 +1171,8 @@ public class SonetService extends Service {
 		private long parseDate(String date, String format) {
 			if (date != null) {
 				// hack for the literal 'Z'
-				if (date.substring(date.length() - 1).equals("Z")) {
+				if (date.substring(date.length() - 1).equals("Z"))
 					date = date.substring(0, date.length() - 2) + "+0000";
-				}
 				Date created = null;
 				if (format != null) {
 					if (mSimpleDateFormat == null) {
@@ -1229,9 +1200,8 @@ public class SonetService extends Service {
 						mSimpleDateFormat = new SimpleDateFormat(rfc822, Locale.ENGLISH);
 						mSimpleDateFormat.setTimeZone(sTimeZone);
 						try {
-							if ((created = mSimpleDateFormat.parse(date)) != null) {
+							if ((created = mSimpleDateFormat.parse(date)) != null)
 								return created.getTime();
-							}
 						} catch (ParseException e) {
 							Log.e(TAG, e.toString());
 						}
@@ -1291,17 +1261,15 @@ public class SonetService extends Service {
 				if (currentNotifications.moveToFirst()) {
 					// store sids, to avoid duplicates when requesting the latest feed
 					sid = mSonetCrypto.Decrypt(currentNotifications.getString(0));
-					if (!notificationSids.contains(sid)) {
+					if (!notificationSids.contains(sid))
 						notificationSids.add(sid);
-					}
 				}
 				currentNotifications.close();
 				// limit to oldest status
 				String last_sid = null;
 				Cursor last_status = getContentResolver().query(Statuses.getContentUri(SonetService.this), new String[]{Statuses.SID}, Statuses.ACCOUNT + "=?", new String[]{Long.toString(account)}, Statuses.CREATED + " ASC LIMIT 1");
-				if (last_status.moveToFirst()) {
+				if (last_status.moveToFirst())
 					last_sid = mSonetCrypto.Decrypt(last_status.getString(0));
-				}
 				last_status.close();
 				// get all mentions since the oldest status for this account
 				if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_MENTIONS, TWITTER_BASE_URL, last_sid != null ? String.format(TWITTER_SINCE_ID, last_sid) : ""))))) != null) {
@@ -1350,9 +1318,8 @@ public class SonetService extends Service {
 						updated = currentNotifications.getLong(2);
 						cleared = currentNotifications.getInt(3) == 1;
 						// store sids, to avoid duplicates when requesting the latest feed
-						if (!notificationSids.contains(sid)) {
+						if (!notificationSids.contains(sid))
 							notificationSids.add(sid);
-						}
 						// get comments for current notifications
 						if ((response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, sid, Saccess_token, token)))) != null) {
 							// check for a newer post, if it's the user's own, then set CLEARED=0
@@ -1432,9 +1399,8 @@ public class SonetService extends Service {
 											JSONObject n = t.getJSONArray(Sdata).getJSONObject(0);
 											if (n.has(Sname)) {
 												friend += " > " + n.getString(Sname);
-												if (!notificationSids.contains(sid) && n.has(Sid) && (n.getString(Sid).equals(accountEsid))) {
+												if (!notificationSids.contains(sid) && n.has(Sid) && (n.getString(Sid).equals(accountEsid)))
 													notification = String.format(getString(R.string.friendcommented), friend);
-												}
 											}
 										}												
 									}
@@ -1458,9 +1424,8 @@ public class SonetService extends Service {
 																hasCommented = true;
 															}
 															// clear any notifications, as the user is already aware
-															if (notification != null) {
+															if (notification != null)
 																notification = null;
-															}
 														} else if (hasCommented) {
 															// don't notify about user's own comments
 															// send the parent comment sid
@@ -1529,9 +1494,8 @@ public class SonetService extends Service {
 						cleared = currentNotifications.getInt(3) == 1;
 						esid = mSonetCrypto.Decrypt(currentNotifications.getString(4));
 						// store sids, to avoid duplicates when requesting the latest feed
-						if (!notificationSids.contains(sid)) {
+						if (!notificationSids.contains(sid))
 							notificationSids.add(sid);
-						}
 						// get comments for current notifications
 						if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, esid, sid))))) != null) {
 							// check for a newer post, if it's the user's own, then set CLEARED=0
@@ -1593,9 +1557,8 @@ public class SonetService extends Service {
 													hasCommented = true;
 												}
 												// clear any notifications, as the user is already aware
-												if (notification != null) {
+												if (notification != null)
 													notification = null;
-												}
 											} else if (hasCommented) {
 												// don't notify about user's own comments
 												// send the parent comment sid
@@ -1687,9 +1650,8 @@ public class SonetService extends Service {
 						updated = currentNotifications.getLong(2);
 						cleared = currentNotifications.getInt(3) == 1;
 						// store sids, to avoid duplicates when requesting the latest feed
-						if (!notificationSids.contains(sid)) {
+						if (!notificationSids.contains(sid))
 							notificationSids.add(sid);
-						}
 						// get comments for current notifications
 						if ((response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, sid, token)))) != null) {
 							// check for a newer post, if it's the user's own, then set CLEARED=0
@@ -1728,14 +1690,12 @@ public class SonetService extends Service {
 							statusObj = statusesArray.getJSONObject(e);
 							friendObj = statusObj.getJSONObject(Suser);
 							String shout = "";
-							if (statusObj.has(Sshout)) {
+							if (statusObj.has(Sshout))
 								shout = statusObj.getString(Sshout) + "\n";
-							}
 							if (statusObj.has(Svenue)) {
 								JSONObject venue = statusObj.getJSONObject(Svenue);
-								if (venue.has(Sname)) {
-									shout += "@" + venue.getString(Sname);																
-								}
+								if (venue.has(Sname))
+									shout += "@" + venue.getString(Sname);
 							}
 							long date = statusObj.getLong(ScreatedAt) * 1000;
 							// notifications
@@ -1760,9 +1720,8 @@ public class SonetService extends Service {
 													hasCommented = true;
 												}
 												// clear any notifications, as the user is already aware
-												if (notification != null) {
+												if (notification != null)
 													notification = null;
-												}
 											} else if (hasCommented) {
 												// don't notify about user's own comments
 												// send the parent comment sid
@@ -1829,9 +1788,8 @@ public class SonetService extends Service {
 						updated = currentNotifications.getLong(2);
 						cleared = currentNotifications.getInt(3) == 1;
 						// store sids, to avoid duplicates when requesting the latest feed
-						if (!notificationSids.contains(sid)) {
+						if (!notificationSids.contains(sid))
 							notificationSids.add(sid);
-						}
 						// get comments for current notifications
 						httpGet = new HttpGet(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, sid));
 						for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
@@ -1863,9 +1821,8 @@ public class SonetService extends Service {
 				currentNotifications.close();
 			}
 			httpGet = new HttpGet(String.format(LINKEDIN_UPDATES, LINKEDIN_BASE_URL));
-			for (String[] header : LINKEDIN_HEADERS) {
+			for (String[] header : LINKEDIN_HEADERS)
 				httpGet.setHeader(header[0], header[1]);
-			}
 			// parse the response
 			if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(httpGet))) != null) {
 				try {
@@ -1874,64 +1831,54 @@ public class SonetService extends Service {
 					int e2 = statusesArray.length();
 					if (e2 > 0) {
 						removeOldStatuses(widget, Long.toString(account));
-						HashMap<String, String> LINKEDIN_UPDATETYPES = new HashMap<String, String>();
-						LINKEDIN_UPDATETYPES.put(SANSW, "updated an answer");
-						LINKEDIN_UPDATETYPES.put(SAPPS, "updated the application ");
-						LINKEDIN_UPDATETYPES.put(SCMPY, "company update");
-						LINKEDIN_UPDATETYPES.put(SCONN, "is now connected to ");
-						LINKEDIN_UPDATETYPES.put(SJOBP, "posted the job ");
-						LINKEDIN_UPDATETYPES.put(SJGRP, "joined the group ");
-						LINKEDIN_UPDATETYPES.put(SPRFX, "updated their extended profile");
-						LINKEDIN_UPDATETYPES.put(SPREC, "recommends ");
-						LINKEDIN_UPDATETYPES.put(SPROF, "changed their profile");
-						LINKEDIN_UPDATETYPES.put(SQSTN, "updated a question");
-						LINKEDIN_UPDATETYPES.put(SSHAR, "shared something");
-						LINKEDIN_UPDATETYPES.put(SVIRL, "updated the viral ");
-						LINKEDIN_UPDATETYPES.put(SPICU, "updated their profile picture");
 						for (int e = 0; e < e2; e++) {
 							links.clear();
 							statusObj = statusesArray.getJSONObject(e);
 							String updateType = statusObj.getString(SupdateType);
 							JSONObject updateContent = statusObj.getJSONObject(SupdateContent);
-							if (LINKEDIN_UPDATETYPES.containsKey(updateType) && updateContent.has(Sperson)) {
+							String update = null;
+							if (((update = LinkedIn_UpdateTypes.getMessage(updateType)) != null) && updateContent.has(Sperson)) {
 								friendObj = updateContent.getJSONObject(Sperson);
-								String update = LINKEDIN_UPDATETYPES.get(updateType);
-								if (updateType.equals(SAPPS)) {
+								if (LinkedIn_UpdateTypes.APPS.name().equals(updateType)) {
 									if (friendObj.has(SpersonActivities)) {
 										JSONObject personActivities = friendObj.getJSONObject(SpersonActivities);
 										if (personActivities.has(Svalues)) {
 											JSONArray updates = personActivities.getJSONArray(Svalues);
 											for (int u = 0, u2 = updates.length(); u < u2; u++) {
 												update += updates.getJSONObject(u).getString(Sbody);
-												if (u < (updates.length() - 1)) update += ", ";
+												if (u < (updates.length() - 1))
+													update += ", ";
 											}
 										}
 									}
-								} else if (updateType.equals(SCONN)) {
+								} else if (LinkedIn_UpdateTypes.CONN.name().equals(updateType)) {
 									if (friendObj.has(Sconnections)) {
 										JSONObject connections = friendObj.getJSONObject(Sconnections);
 										if (connections.has(Svalues)) {
 											JSONArray updates = connections.getJSONArray(Svalues);
 											for (int u = 0, u2 = updates.length(); u < u2; u++) {
 												update += updates.getJSONObject(u).getString(SfirstName) + " " + updates.getJSONObject(u).getString(SlastName);
-												if (u < (updates.length() - 1)) update += ", ";
+												if (u < (updates.length() - 1))
+													update += ", ";
 											}
 										}
 									}
-								} else if (updateType.equals(SJOBP)) {
-									if (updateContent.has(Sjob) && updateContent.getJSONObject(Sjob).has(Sposition) && updateContent.getJSONObject(Sjob).getJSONObject(Sposition).has(Stitle)) update += updateContent.getJSONObject(Sjob).getJSONObject(Sposition).getString(Stitle);
-								} else if (updateType.equals(SJGRP)) {
+								} else if (LinkedIn_UpdateTypes.JOBP.name().equals(updateType)) {
+									if (updateContent.has(Sjob) && updateContent.getJSONObject(Sjob).has(Sposition) && updateContent.getJSONObject(Sjob).getJSONObject(Sposition).has(Stitle))
+										update += updateContent.getJSONObject(Sjob).getJSONObject(Sposition).getString(Stitle);
+								} else if (LinkedIn_UpdateTypes.JGRP.name().equals(updateType)) {
 									if (friendObj.has(SmemberGroups)) {
 										JSONObject memberGroups = friendObj.getJSONObject(SmemberGroups);
 										if (memberGroups.has(Svalues)) {
 											JSONArray updates = memberGroups.getJSONArray(Svalues);
 											for (int u = 0, u2 = updates.length(); u < u2; u++) {
 												update += updates.getJSONObject(u).getString(Sname);
-												if (u < (updates.length() - 1)) update += ", ";
+												if (u < (updates.length() - 1))
+													update += ", ";
 											}
 										}
 									}
-								} else if (updateType.equals(SPREC)) {
+								} else if (LinkedIn_UpdateTypes.PREC.name().equals(updateType)) {
 									if (friendObj.has(SrecommendationsGiven)) {
 										JSONObject recommendationsGiven = friendObj.getJSONObject(SrecommendationsGiven);
 										if (recommendationsGiven.has(Svalues)) {
@@ -1942,15 +1889,15 @@ public class SonetService extends Service {
 												if (recommendee.has(SfirstName)) update += recommendee.getString(SfirstName);
 												if (recommendee.has(SlastName)) update += recommendee.getString(SlastName);
 												if (recommendation.has(SrecommendationSnippet)) update += ":" + recommendation.getString(SrecommendationSnippet);
-												if (u < (updates.length() - 1)) update += ", ";
+												if (u < (updates.length() - 1))
+													update += ", ";
 											}
 										}
 									}
-								} else if (updateType.equals(SSHAR) && friendObj.has(ScurrentShare)) {
+								} else if (LinkedIn_UpdateTypes.SHAR.name().equals(updateType) && friendObj.has(ScurrentShare)) {
 									JSONObject currentShare = friendObj.getJSONObject(ScurrentShare);
-									if (currentShare.has(Scomment)) {
+									if (currentShare.has(Scomment))
 										update = currentShare.getString(Scomment);
-									}
 								}
 								long date = statusObj.getLong(Stimestamp);
 								sid = statusObj.has(SupdateKey) ? statusObj.getString(SupdateKey) : null;
@@ -1976,9 +1923,8 @@ public class SonetService extends Service {
 															hasCommented = true;
 														}
 														// clear any notifications, as the user is already aware
-														if (notification != null) {
+														if (notification != null)
 															notification = null;
-														}
 													} else if (hasCommented) {
 														// don't notify about user's own comments
 														// send the parent comment sid
@@ -2038,9 +1984,8 @@ public class SonetService extends Service {
 							for (int i = 0; (i < i3) && (image_url == null); i++) {
 								Node n = imageChildren.item(i);
 								if (n.getNodeName().toLowerCase().equals(Surl)) {
-									if (n.hasChildNodes()) {
+									if (n.hasChildNodes())
 										image_url = n.getChildNodes().item(0).getNodeValue();
-									}
 								}
 							}
 						}
@@ -2059,14 +2004,12 @@ public class SonetService extends Service {
 								final String nodeName = n.getNodeName().toLowerCase();
 								if (nodeName.equals(Spubdate)) {
 									values_count++;
-									if (n.hasChildNodes()) {
+									if (n.hasChildNodes())
 										date = n.getChildNodes().item(0).getNodeValue();
-									}
 								} else if (nodeName.equals(Stitle)) {
 									values_count++;
-									if (n.hasChildNodes()) {
+									if (n.hasChildNodes())
 										title = n.getChildNodes().item(0).getNodeValue();
-									}
 								} else if (nodeName.equals(Sdescription)) {
 									values_count++;
 									if (n.hasChildNodes()) {
@@ -2074,18 +2017,16 @@ public class SonetService extends Service {
 										NodeList descNodes = n.getChildNodes();
 										for (int dn = 0, dn2 = descNodes.getLength(); dn < dn2; dn++) {
 											Node descNode = descNodes.item(dn);
-											if (descNode.getNodeType() == Node.TEXT_NODE) {
+											if (descNode.getNodeType() == Node.TEXT_NODE)
 												sb.append(descNode.getNodeValue());
-											}
 										}
 										// strip out the html tags
 										description = sb.toString().replaceAll("\\<(.|\n)*?>", "");
 									}
-								} else if (nodeName.equals("link")) {
+								} else if (nodeName.equals(Slink)) {
 									values_count++;
-									if (n.hasChildNodes()) {
+									if (n.hasChildNodes())
 										link = n.getChildNodes().item(0).getNodeValue();
-									}
 								}
 							}
 							if (Sonet.HasValues(new String[]{title, description, link, date})) {
@@ -2155,17 +2096,15 @@ public class SonetService extends Service {
 				if (currentNotifications.moveToFirst()) {
 					// store sids, to avoid duplicates when requesting the latest feed
 					sid = mSonetCrypto.Decrypt(currentNotifications.getString(0));
-					if (!notificationSids.contains(sid)) {
+					if (!notificationSids.contains(sid))
 						notificationSids.add(sid);
-					}
 				}
 				currentNotifications.close();
 				// limit to oldest status
 				String last_sid = null;
 				Cursor last_status = getContentResolver().query(Statuses.getContentUri(SonetService.this), new String[]{Statuses.SID}, Statuses.ACCOUNT + "=?", new String[]{Long.toString(account)}, Statuses.CREATED + " ASC LIMIT 1");
-				if (last_status.moveToFirst()) {
+				if (last_status.moveToFirst())
 					last_sid = mSonetCrypto.Decrypt(last_status.getString(0));
-				}
 				last_status.close();
 				// get all mentions since the oldest status for this account
 				if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(IDENTICA_MENTIONS, IDENTICA_BASE_URL, last_sid != null ? String.format(IDENTICA_SINCE_ID, last_sid) : ""))))) != null) {
@@ -2343,17 +2282,15 @@ public class SonetService extends Service {
 								int commentCount = 0;
 								if (statusObj.has(Scounts)) {
 									JSONObject counts = statusObj.getJSONObject(Scounts);
-									if (counts.has(Scomments)) {
+									if (counts.has(Scomments))
 										commentCount = counts.getInt(Scomments);
-									}
 								}
 								if (statusObj.has(Simages)) {
 									JSONObject images = statusObj.getJSONObject(Simages);
-									if (images.has(Smobile)) {
+									if (images.has(Smobile))
 										links.add(new String[]{Simage, images.getString(Smobile)});
-									} else if (images.has(Sboard)) {
+									else if (images.has(Sboard))
 										links.add(new String[]{Simage, images.getString(Sboard)});
-									}
 								}
 								addStatusItem(date,
 										friendObj.getString(Susername),
@@ -2505,7 +2442,6 @@ public class SonetService extends Service {
 			// check if native scrolling is supported
 			if (sNativeScrollingSupported) {
 				// native scrolling
-
 				try {
 					final Intent intent = SonetRemoteViewsServiceWrapper.getRemoteAdapterIntent(SonetService.this);
 					if (intent != null) {
@@ -2558,20 +2494,17 @@ public class SonetService extends Service {
 							byte[] profile_bg = statuses_styles.getBlob(13);
 							if (profile_bg != null) {
 								Bitmap profile_bgbmp = BitmapFactory.decodeByteArray(profile_bg, 0, profile_bg.length, sBFOptions);
-								if (profile_bgbmp != null) {
+								if (profile_bgbmp != null)
 									itemView.setImageViewBitmap(R.id.profile_bg, profile_bgbmp);
-								}
 							}
 							byte[] profile = statuses_styles.getBlob(2);
 							if (profile != null) {
 								Bitmap profilebmp = BitmapFactory.decodeByteArray(profile, 0, profile.length, sBFOptions);
-								if (profilebmp != null) {
+								if (profilebmp != null)
 									itemView.setImageViewBitmap(R.id.profile, profilebmp);
-								}
 							}
-						} else {
+						} else
 							itemView = new RemoteViews(getPackageName(), R.layout.widget_item_noprofile);
-						}
 						itemView.setTextViewText(R.id.friend_bg_clear, statuses_styles.getString(1));
 						itemView.setFloat(R.id.friend_bg_clear, "setTextSize", friend_textsize);
 						itemView.setTextViewText(R.id.message_bg_clear, statuses_styles.getString(3));
@@ -2580,17 +2513,15 @@ public class SonetService extends Service {
 						byte[] friend_bg = statuses_styles.getBlob(14);
 						if (friend_bg != null) {
 							Bitmap friend_bgbmp = BitmapFactory.decodeByteArray(friend_bg, 0, friend_bg.length, sBFOptions);
-							if (friend_bgbmp != null) {
+							if (friend_bgbmp != null)
 								itemView.setImageViewBitmap(R.id.friend_bg, friend_bgbmp);
-							}
 						}
 						// set messages background
 						byte[] status_bg = statuses_styles.getBlob(11);
 						if (status_bg != null) {
 							Bitmap status_bgbmp = BitmapFactory.decodeByteArray(status_bg, 0, status_bg.length, sBFOptions);
-							if (status_bgbmp != null) {
+							if (status_bgbmp != null)
 								itemView.setImageViewBitmap(R.id.status_bg, status_bgbmp);
-							}
 						}
 						// set an image
 						byte[] image_bg = statuses_styles.getBlob(15);
@@ -2617,9 +2548,8 @@ public class SonetService extends Service {
 						byte[] icon = statuses_styles.getBlob(12);
 						if (icon != null) {
 							Bitmap iconbmp = BitmapFactory.decodeByteArray(icon, 0, icon.length, sBFOptions);
-							if (iconbmp != null) {
+							if (iconbmp != null)
 								itemView.setImageViewBitmap(R.id.icon, iconbmp);
-							}
 						}
 						views.addView(R.id.messages, itemView);
 						count_status++;

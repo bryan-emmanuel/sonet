@@ -674,20 +674,6 @@ public class SonetNotifications extends ListActivity {
 													// if there are updates, clear the cache
 													int d2 = jarr.length();
 													if (d2 > 0) {
-														HashMap<String, String> LINKEDIN_UPDATETYPES = new HashMap<String, String>();
-														LINKEDIN_UPDATETYPES.put(SANSW, "updated an answer");
-														LINKEDIN_UPDATETYPES.put(SAPPS, "updated the application ");
-														LINKEDIN_UPDATETYPES.put(SCMPY, "company update");
-														LINKEDIN_UPDATETYPES.put(SCONN, "is now connected to ");
-														LINKEDIN_UPDATETYPES.put(SJOBP, "posted the job ");
-														LINKEDIN_UPDATETYPES.put(SJGRP, "joined the group ");
-														LINKEDIN_UPDATETYPES.put(SPRFX, "updated their extended profile");
-														LINKEDIN_UPDATETYPES.put(SPREC, "recommends ");
-														LINKEDIN_UPDATETYPES.put(SPROF, "changed their profile");
-														LINKEDIN_UPDATETYPES.put(SQSTN, "updated a question");
-														LINKEDIN_UPDATETYPES.put(SSHAR, "shared something");
-														LINKEDIN_UPDATETYPES.put(SVIRL, "updated the viral ");
-														LINKEDIN_UPDATETYPES.put(SPICU, "updated their profile picture");
 														for (int d = 0; d < d2; d++) {
 															JSONObject o = jarr.getJSONObject(d);
 															String sid = o.getString(SupdateKey);
@@ -695,7 +681,7 @@ public class SonetNotifications extends ListActivity {
 															if (!notificationSids.contains(sid)) {
 																String updateType = o.getString(SupdateType);
 																JSONObject updateContent = o.getJSONObject(SupdateContent);
-																if (LINKEDIN_UPDATETYPES.containsKey(updateType) && updateContent.has(Sperson)) {
+																if (LinkedIn_UpdateTypes.contains(updateType) && updateContent.has(Sperson)) {
 																	JSONObject f = updateContent.getJSONObject(Sperson);
 																	if (f.has(SfirstName) && f.has(SlastName) && f.has(Sid) && o.has(SupdateComments)) {
 																		JSONObject updateComments = o.getJSONObject(SupdateComments);
@@ -730,43 +716,47 @@ public class SonetNotifications extends ListActivity {
 																				}
 																			}
 																			if (notification != null) {
-																				String update = LINKEDIN_UPDATETYPES.get(updateType);
-																				if (updateType.equals(SAPPS)) {
+																				String update = LinkedIn_UpdateTypes.getMessage(updateType);
+																				if (LinkedIn_UpdateTypes.APPS.name().equals(updateType)) {
 																					if (f.has(SpersonActivities)) {
 																						JSONObject personActivities = f.getJSONObject(SpersonActivities);
 																						if (personActivities.has(Svalues)) {
 																							JSONArray updates = personActivities.getJSONArray(Svalues);
 																							for (int u = 0, u2 = updates.length(); u < u2; u++) {
 																								update += updates.getJSONObject(u).getString(Sbody);
-																								if (u < (updates.length() - 1)) update += ", ";
+																								if (u < (updates.length() - 1))
+																									update += ", ";
 																							}
 																						}
 																					}
-																				} else if (updateType.equals(SCONN)) {
+																				} else if (LinkedIn_UpdateTypes.CONN.name().equals(updateType)) {
 																					if (f.has(Sconnections)) {
 																						JSONObject connections = f.getJSONObject(Sconnections);
 																						if (connections.has(Svalues)) {
 																							JSONArray updates = connections.getJSONArray(Svalues);
 																							for (int u = 0, u2 = updates.length(); u < u2; u++) {
 																								update += updates.getJSONObject(u).getString(SfirstName) + " " + updates.getJSONObject(u).getString(SlastName);
-																								if (u < (updates.length() - 1)) update += ", ";
+																								if (u < (updates.length() - 1))
+																									update += ", ";
 																							}
 																						}
 																					}
-																				} else if (updateType.equals(SJOBP)) {
-																					if (updateContent.has(Sjob) && updateContent.getJSONObject(Sjob).has(Sposition) && updateContent.getJSONObject(Sjob).getJSONObject(Sposition).has(Stitle)) update += updateContent.getJSONObject(Sjob).getJSONObject(Sposition).getString(Stitle);
-																				} else if (updateType.equals(SJGRP)) {
+																				} else if (LinkedIn_UpdateTypes.JOBP.name().equals(updateType)) {
+																					if (updateContent.has(Sjob) && updateContent.getJSONObject(Sjob).has(Sposition) && updateContent.getJSONObject(Sjob).getJSONObject(Sposition).has(Stitle))
+																						update += updateContent.getJSONObject(Sjob).getJSONObject(Sposition).getString(Stitle);
+																				} else if (LinkedIn_UpdateTypes.JGRP.name().equals(updateType)) {
 																					if (f.has(SmemberGroups)) {
 																						JSONObject memberGroups = f.getJSONObject(SmemberGroups);
 																						if (memberGroups.has(Svalues)) {
 																							JSONArray updates = memberGroups.getJSONArray(Svalues);
 																							for (int u = 0, u2 = updates.length(); u < u2; u++) {
 																								update += updates.getJSONObject(u).getString(Sname);
-																								if (u < (updates.length() - 1)) update += ", ";
+																								if (u < (updates.length() - 1))
+																									update += ", ";
 																							}
 																						}
 																					}
-																				} else if (updateType.equals(SPREC)) {
+																				} else if (LinkedIn_UpdateTypes.PREC.name().equals(updateType)) {
 																					if (f.has(SrecommendationsGiven)) {
 																						JSONObject recommendationsGiven = f.getJSONObject(SrecommendationsGiven);
 																						if (recommendationsGiven.has(Svalues)) {
@@ -774,18 +764,21 @@ public class SonetNotifications extends ListActivity {
 																							for (int u = 0, u2 = updates.length(); u < u2; u++) {
 																								JSONObject recommendation = updates.getJSONObject(u);
 																								JSONObject recommendee = recommendation.getJSONObject(Srecommendee);
-																								if (recommendee.has(SfirstName)) update += recommendee.getString(SfirstName);
-																								if (recommendee.has(SlastName)) update += recommendee.getString(SlastName);
-																								if (recommendation.has(SrecommendationSnippet)) update += ":" + recommendation.getString(SrecommendationSnippet);
-																								if (u < (updates.length() - 1)) update += ", ";
+																								if (recommendee.has(SfirstName))
+																									update += recommendee.getString(SfirstName);
+																								if (recommendee.has(SlastName))
+																									update += recommendee.getString(SlastName);
+																								if (recommendation.has(SrecommendationSnippet))
+																									update += ":" + recommendation.getString(SrecommendationSnippet);
+																								if (u < (updates.length() - 1))
+																									update += ", ";
 																							}
 																						}
 																					}
-																				} else if (updateType.equals(SSHAR) && f.has(ScurrentShare)) {
+																				} else if (LinkedIn_UpdateTypes.SHAR.name().equals(updateType) && f.has(ScurrentShare)) {
 																					JSONObject currentShare = f.getJSONObject(ScurrentShare);
-																					if (currentShare.has(Scomment)) {
+																					if (currentShare.has(Scomment))
 																						update = currentShare.getString(Scomment);
-																					}
 																				}
 																				// new notification
 																				addNotification(sid, esid, f.getString(SfirstName) + " " + f.getString(SlastName), update, o.getLong(Stimestamp), accountId, notification);

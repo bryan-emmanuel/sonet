@@ -231,19 +231,44 @@ public class Sonet {
 	protected static final String Sjob = "job";
 	protected static final String Sposition = "position";
 	protected static final String SmemberGroups = "memberGroups";
-	protected static final String SANSW = "ANSW";
-	protected static final String SAPPS = "APPS";
-	protected static final String SCMPY = "CMPY";
-	protected static final String SCONN = "CONN";
-	protected static final String SJOBP = "JOBP";
-	protected static final String SJGRP = "JGRP";
-	protected static final String SPRFX = "PRFX";
-	protected static final String SPREC = "PREC";
-	protected static final String SPROF = "PROF";
-	protected static final String SQSTN = "QSTN";
-	protected static final String SSHAR = "SHAR";
-	protected static final String SVIRL = "VIRL";
-	protected static final String SPICU = "PICU";
+	
+	protected enum LinkedIn_UpdateTypes {
+		ANSW("updated an answer"),
+		APPS("updated the application "),
+		CMPY("company update"),
+		CONN("is now connected to "),
+		JOBP("posted the job "),
+		JGRP("joined the group "),
+		PRFX("updated their extended profile"),
+		PREC("recommends "),
+		PROF("changed their profile"),
+		QSTN("updated a question"),
+		SHAR("shared something"),
+		VIRL("updated the viral "),
+		PICU("updated their profile picture");
+		
+		public String message = null;
+		
+		private LinkedIn_UpdateTypes(String message) {
+			this.message = message;
+		}
+		
+		public static boolean contains(String type) {
+			for (LinkedIn_UpdateTypes t : LinkedIn_UpdateTypes.values()) {
+				if (t.name().equals(type))
+					return true;
+			}
+			return false;
+		}
+		
+		public static String getMessage(String type) {
+			for (LinkedIn_UpdateTypes t : LinkedIn_UpdateTypes.values()) {
+				if (t.name().equals(type))
+					return t.message;
+			}
+			return null;
+		}
+	}
 	protected static final String Sauthor = "author";
 	protected static final String Sentry = "entry";
 	protected static final String SpostedDate = "postedDate";
