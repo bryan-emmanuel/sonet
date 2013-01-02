@@ -92,6 +92,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.telephony.SmsMessage;
 import android.util.Log;
@@ -139,7 +140,7 @@ public class SonetService extends Service {
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
 		}
-		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		if (!sp.contains(getString(R.string.key_version)) || (currVer > sp.getInt(getString(R.string.key_version), 0))) {
 			sp.edit().putInt(getString(R.string.key_version), currVer).commit();
 			try {

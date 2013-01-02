@@ -41,7 +41,6 @@
     <string name="button_refresh">Update</string>
     <string name="button_add_account">Add Account</string>
     <string name="delete_account">Delete Account</string>
-    <string name="key_preferences">sonet</string>
     <string name="category_update">Update</string>
     <string name="interval">Update Interval</string>
     <string name="key_interval">interval</string>
