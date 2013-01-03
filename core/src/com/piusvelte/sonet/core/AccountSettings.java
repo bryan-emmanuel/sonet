@@ -20,6 +20,7 @@
 package com.piusvelte.sonet.core;
 
 import static com.piusvelte.sonet.core.Sonet.PRO;
+import static com.piusvelte.sonet.core.Sonet.initAccountSettings;
 
 import com.google.ads.*;
 import com.piusvelte.sonet.core.R;
@@ -87,12 +88,10 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 			adView.loadAd(new AdRequest());
 		}
 		Intent i = getIntent();
-		if (i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
+		if (i.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID))
 			mAppWidgetId = i.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
-		}
-		if (i.hasExtra(Sonet.EXTRA_ACCOUNT_ID)) {
+		if (i.hasExtra(Sonet.EXTRA_ACCOUNT_ID))
 			mAccountId = i.getLongExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID);
-		}
 
 		mStatuses_per_account = (Button) findViewById(R.id.statuses_per_account);
 		mBtn_notification = (Button) findViewById(R.id.settings_notification);
@@ -113,32 +112,17 @@ public class AccountSettings extends Activity implements View.OnClickListener {
 			if (!c.moveToFirst()) {
 				c.close();
 				c = this.getContentResolver().query(Widgets_settings.getContentUri(this), new String[]{Widgets._ID, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SCROLLABLE, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
-				if (!c.moveToFirst()) {
-					// initialize account settings
-					ContentValues values = new ContentValues();
-					values.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
-					values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-					mWidgetAccountSettingsId = getContentResolver().insert(Widgets.getContentUri(this), values).getLastPathSegment();
-				}
-				if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-					// initialize account settings
-					ContentValues values = new ContentValues();
-					values.put(Widgets.WIDGET, mAppWidgetId);
-					values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-					mWidgetAccountSettingsId = getContentResolver().insert(Widgets.getContentUri(this), values).getLastPathSegment();
-				}
+				if (!c.moveToFirst())
+					mWidgetAccountSettingsId = initAccountSettings(this, AppWidgetManager.INVALID_APPWIDGET_ID, Sonet.INVALID_ACCOUNT_ID);
+				if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID)
+					mWidgetAccountSettingsId = initAccountSettings(this, mAppWidgetId, Sonet.INVALID_ACCOUNT_ID);
 			}
-			// initialize account settings
-			ContentValues values = new ContentValues();
-			values.put(Widgets.WIDGET, mAppWidgetId);
-			values.put(Widgets.ACCOUNT, mAccountId);
-			mWidgetAccountSettingsId = getContentResolver().insert(Widgets.getContentUri(this), values).getLastPathSegment();
+			mWidgetAccountSettingsId = initAccountSettings(this, mAppWidgetId, mAccountId);
 		}
 		if (c.moveToFirst()) {
 			// if settings were initialized, then use that mWidgetAccountSettingsId
-			if (mWidgetAccountSettingsId == null) {
+			if (mWidgetAccountSettingsId == null)
 				mWidgetAccountSettingsId = Integer.toString(c.getInt(0));
-			}
 			mMessages_color_value = c.getInt(1);
 			mMessages_textsize_value = c.getInt(2);
 			mFriend_color_value = c.getInt(3);

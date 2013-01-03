@@ -20,6 +20,7 @@
 package com.piusvelte.sonet.core;
 
 import static com.piusvelte.sonet.core.Sonet.PRO;
+import static com.piusvelte.sonet.core.Sonet.initAccountSettings;
 
 import com.google.ads.*;
 import com.piusvelte.sonet.core.Sonet.Widgets;
@@ -116,26 +117,15 @@ public class Settings extends Activity implements View.OnClickListener {
 		if (!c.moveToFirst()) {
 			c.close();
 			c = this.getContentResolver().query(Widgets_settings.getContentUri(this), new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.BACKGROUND_UPDATE, Widgets.SCROLLABLE, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.DISPLAY_PROFILE, Widgets.INSTANT_UPLOAD, Widgets.MARGIN, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
-			if (!c.moveToFirst()) {
-				// initialize widget settings
-				ContentValues values = new ContentValues();
-				values.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
-				values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-				mWidgetSettingsId = getContentResolver().insert(Widgets.getContentUri(this), values).getLastPathSegment();
-			}
-			if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-				// initialize widget settings
-				ContentValues values = new ContentValues();
-				values.put(Widgets.WIDGET, mAppWidgetId);
-				values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-				mWidgetSettingsId = getContentResolver().insert(Widgets.getContentUri(this), values).getLastPathSegment();
-			}
+			if (!c.moveToFirst())
+				mWidgetSettingsId = initAccountSettings(this, AppWidgetManager.INVALID_APPWIDGET_ID, Sonet.INVALID_ACCOUNT_ID);
+			if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID)
+				mWidgetSettingsId = initAccountSettings(this, mAppWidgetId, Sonet.INVALID_ACCOUNT_ID);
 		}
 		if (c.moveToFirst()) {
 			// if settings were initialized, then use that mWidgetSettingsId
-			if (mWidgetSettingsId == null) {
+			if (mWidgetSettingsId == null)
 				mWidgetSettingsId = Integer.toString(c.getInt(0));
-			}
 			mInterval_value = c.getInt(1);
 			mButtons_bg_color_value = c.getInt(2);
 			mButtons_color_value = c.getInt(3);

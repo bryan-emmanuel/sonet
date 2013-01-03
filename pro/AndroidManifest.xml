@@ -19,8 +19,8 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.piusvelte.sonetpro" android:versionCode="323"
-	android:versionName="3.2.3">
+	package="com.piusvelte.sonetpro" android:versionCode="324"
+	android:versionName="3.2.4">
 	
 	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 	<uses-permission android:name="android.permission.WAKE_LOCK" />

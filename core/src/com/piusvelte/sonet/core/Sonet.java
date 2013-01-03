@@ -28,11 +28,14 @@ import java.util.regex.Pattern;
 
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Bitmap.Config;
 import android.net.Uri;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
@@ -716,11 +719,9 @@ public class Sonet {
 		String name = null;
 		String[] entries = r.getStringArray(R.array.service_entries);
 		String[] values = r.getStringArray(R.array.service_values);
-		for (int i = 0, l = values.length; i < l; i++) {
-			if (Integer.toString(service).equals(values[i])) {
+		for (int i = 0, l = values.length; (i < l) && (name == null); i++) {
+			if (Integer.toString(service).equals(values[i]))
 				name = entries[i];
-				break;
-			}
 		}
 		return name;
 	}
@@ -730,13 +731,11 @@ public class Sonet {
 		for (int i = 0, i2 = b.length; i < i2; i++) {
 			int cLen = a.length;
 			c = new int[cLen];
-			for (int n = 0; n < cLen; n++) {
+			for (int n = 0; n < cLen; n++)
 				c[n] = a[n];
-			}
 			a = new int[cLen + 1];
-			for (int n = 0; n < cLen; n++) {
+			for (int n = 0; n < cLen; n++)
 				a[n] = c[n];
-			}
 			a[cLen] = b[i];
 		}
 		return a;
@@ -746,27 +745,22 @@ public class Sonet {
 		if (!Sonet.arrayContains(a, b)) {
 			int cLen = a.length;
 			int[] c = new int[cLen];
-			for (int i = 0; i < cLen; i++) {
+			for (int i = 0; i < cLen; i++)
 				c[i] = a[i];
-			}
 			a = new int[cLen + 1];
-			for (int i = 0; i < cLen; i++) {
+			for (int i = 0; i < cLen; i++)
 				a[i] = c[i];
-			}
 			a[cLen] = b;
 		}
 		return a;
 	}
 
 	protected static boolean arrayContains(int[] a, int b) {
-		boolean contains = false;
 		for (int c : a) {
-			if (c == b) {
-				contains = true;
-				break;
-			}
+			if (c == b)
+				return true;
 		}
-		return contains;
+		return false;
 	}
 
 	protected static int[] arrayRemove(int[] a, int b) {
@@ -774,34 +768,28 @@ public class Sonet {
 			int[] c = new int[a.length - 1];
 			int i = 0;
 			for (int d : a) {
-				if (d != b) {
+				if (d != b)
 					c[i++] = d;
-				}
 			}
 			return c;			
-		} else {
+		} else
 			return a;
-		}
 	}
 
 	protected static int arrayIndex(int[] a, int b) {
 		int c = -1;
-		for (int i = 0, i2 = a.length; i < i2; i++) {
-			if (a[i] == b) {
+		for (int i = 0, i2 = a.length; (i < i2) && (c == -1); i++) {
+			if (a[i] == b)
 				c = i;
-				break;
-			}
 		}
 		return c;
 	}
 
 	protected static int arrayIndex(long[] a, long b) {
 		int c = -1;
-		for (int i = 0, i2 = a.length; i < i2; i++) {
-			if (a[i] == b) {
+		for (int i = 0, i2 = a.length; (i < i2) && (c == -1); i++) {
+			if (a[i] == b)
 				c = i;
-				break;
-			}
 		}
 		return c;
 	}
@@ -852,6 +840,49 @@ public class Sonet {
 
 	protected static Matcher getLinksMatcher(String raw) {
 		return Pattern.compile("\\bhttp(s)?://\\S+\\b", Pattern.CASE_INSENSITIVE).matcher(raw);
+	}
+
+	protected static byte[] createBackground(int color) {
+		Bitmap b = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+		Canvas c = new Canvas(b);
+		c.drawColor(color);
+		ByteArrayOutputStream s = new ByteArrayOutputStream();
+		b.compress(Bitmap.CompressFormat.PNG, 100, s);
+		byte[] bg = s.toByteArray();
+		if (b != null) {
+			b.recycle();
+			b = null;
+		}
+		return bg;
+	}
+	
+	protected static String initAccountSettings(Context context, int widget, long account) {
+		ContentValues values = new ContentValues();
+		values.put(Widgets.WIDGET, widget);
+		values.put(Widgets.ACCOUNT, account);
+		return context.getContentResolver().insert(Widgets.getContentUri(context), values).getLastPathSegment();
+	}
+	
+	protected static int getCropSize(int src, int dst) {
+		return (int) Math.round((src - dst) / 2.0);
+	}
+	
+	protected static boolean insertStatusImageBg(Context context, long statusId, byte[] bImg, int height) {
+		Bitmap bmpBg = Bitmap.createBitmap(1, height, Config.ARGB_8888);
+		ByteArrayOutputStream baosBg = new ByteArrayOutputStream();
+		bmpBg.compress(Bitmap.CompressFormat.PNG, 100, baosBg);
+		byte[] bBg = baosBg.toByteArray();
+		bmpBg.recycle();
+		bmpBg = null;
+		if (bBg != null) {
+			ContentValues imageValues = new ContentValues();
+			imageValues.put(Status_images.STATUS_ID, statusId);
+			imageValues.put(Status_images.IMAGE, (bImg != null ? bImg : bBg));
+			imageValues.put(Status_images.IMAGE_BG, bBg);
+			context.getContentResolver().insert(Status_images.getContentUri(context), imageValues);
+			return true;
+		}
+		return false;
 	}
 
 }
