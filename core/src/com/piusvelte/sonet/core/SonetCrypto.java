@@ -150,14 +150,14 @@ public class SonetCrypto {
 		}		
 	}
 
-	protected static synchronized SonetCrypto getInstance(Context context) {
+	public static synchronized SonetCrypto getInstance(Context context) {
 		if (instance == null) {
 			instance = new SonetCrypto(context);
 		}
 		return instance;
 	}
 
-	protected String Decrypt(String data) {
+	public String Decrypt(String data) {
 		if ((mSecretKey != null) && (data != null)) {
 			try {
 				Cipher cipher = Cipher.getInstance("AES");

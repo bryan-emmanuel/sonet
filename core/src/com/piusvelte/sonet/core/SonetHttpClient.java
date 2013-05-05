@@ -61,7 +61,7 @@ public class SonetHttpClient {
 	private SonetHttpClient(Context context) {
 	}
 
-	protected static DefaultHttpClient getThreadSafeClient(Context context) {
+	public static DefaultHttpClient getThreadSafeClient(Context context) {
 		if (sHttpClient == null) {
 			Log.d(TAG,"create http client");
 			SocketFactory sf;
@@ -153,7 +153,7 @@ public class SonetHttpClient {
 		return null;
 	}
 
-	protected static String httpResponse(HttpClient httpClient, HttpUriRequest httpRequest) {
+	public static String httpResponse(HttpClient httpClient, HttpUriRequest httpRequest) {
 		String response = null;
 		if (httpClient != null) {
 			HttpResponse httpResponse;

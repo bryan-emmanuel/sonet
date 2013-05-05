@@ -31,13 +31,11 @@ import java.util.Map;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -45,6 +43,10 @@ import com.google.ads.*;
 import com.piusvelte.sonet.core.R;
 import com.piusvelte.sonet.core.Sonet.Accounts;
 import com.piusvelte.sonet.core.Sonet.Widgets;
+import com.piusvelte.sonet.core.tasks.FacebookLocationTask;
+import com.piusvelte.sonet.core.tasks.FoursquareLocationTask;
+import com.piusvelte.sonet.core.tasks.LocationTask;
+import com.piusvelte.sonet.core.tasks.TwitterLocationTask;
 
 import static com.piusvelte.sonet.core.Sonet.*;
 import static com.piusvelte.sonet.core.SonetTokens.*;
@@ -97,6 +99,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 	private static final List<Integer> sLocationSupported = new ArrayList<Integer>();
 	private static final List<Integer> sPhotoSupported = new ArrayList<Integer>();
 	private static final List<Integer> sTaggingSupported = new ArrayList<Integer>();
+	private ProgressDialog loadingDialog = new ProgressDialog(this);
 
 	static {
 		sLocationSupported.add(TWITTER);
@@ -129,7 +132,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		mSend.setOnClickListener(this);
 		setResult(RESULT_OK);
 	}
-	
+
 	@Override
 	public void onNewIntent(Intent intent) {
 		setIntent(intent);
@@ -197,53 +200,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 				startActivityForResult(Intent.createChooser(intent, "Select Picture"), PHOTO);
 			} else
 				unsupportedToast(sPhotoSupported);
-//		} else if (itemId == R.id.menu_post_tags) {
-//			if (mAccountsService.size() == 1) {
-//				if (sTaggingSupported.contains(mAccountsService.values().iterator().next()))
-//					selectFriends(mAccountsService.keySet().iterator().next());
-//				else
-//					unsupportedToast(sTaggingSupported);
-//			} else {
-//				// dialog to select an account
-//				Iterator<Long> accountIds = mAccountsService.keySet().iterator();
-//				HashMap<Long, String> accountEntries = new HashMap<Long, String>();
-//				while (accountIds.hasNext()) {
-//					Long accountId = accountIds.next();
-//					Cursor account = this.getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID, ACCOUNTS_QUERY}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
-//					if (account.moveToFirst() && sTaggingSupported.contains(mAccountsService.get(accountId)))
-//						accountEntries.put(account.getLong(0), account.getString(1));
-//				}
-//				int size = accountEntries.size();
-//				if (size != 0) {
-//					final long[] accountIndexes = new long[size];
-//					final String[] accounts = new String[size];
-//					int i = 0;
-//					Iterator<Map.Entry<Long, String>> entries = accountEntries.entrySet().iterator();
-//					while (entries.hasNext()) {
-//						Map.Entry<Long, String> entry = entries.next();
-//						accountIndexes[i] = entry.getKey();
-//						accounts[i++] = entry.getValue();
-//					}
-//					mDialog = (new AlertDialog.Builder(this))
-//							.setTitle(R.string.accounts)
-//							.setSingleChoiceItems(accounts, -1, new DialogInterface.OnClickListener() {
-//								@Override
-//								public void onClick(DialogInterface dialog, int which) {
-//									selectFriends(accountIndexes[which]);
-//									dialog.dismiss();
-//								}
-//							})
-//							.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-//								@Override
-//								public void onClick(DialogInterface dialog, int which) {
-//									dialog.dismiss();
-//								}
-//							})
-//							.create();
-//					mDialog.show();
-//				} else
-//					unsupportedToast(sTaggingSupported);
-//			}
 		} else if (itemId == R.id.menu_post_location) {
 			LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
 			Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
@@ -303,148 +259,23 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 	}
 
 	private void setLocation(final long accountId) {
-		final ProgressDialog loadingDialog = new ProgressDialog(this);
-		final AsyncTask<Void, Void, String> asyncTask = new AsyncTask<Void, Void, String>() {
-
-			int serviceId;
-
-			@Override
-			protected String doInBackground(Void... none) {
-				Cursor account = getContentResolver().query(Accounts.getContentUri(SonetCreatePost.this), new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SERVICE, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
-				if (account.moveToFirst()) {
-					SonetOAuth sonetOAuth;
-					serviceId = account.getInt(account.getColumnIndex(Accounts.SERVICE));
-					switch (serviceId) {
-					case TWITTER:
-						// anonymous requests are rate limited to 150 per hour
-						// authenticated requests are rate limited to 350 per hour, so authenticate this!
-						sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))), mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET))));
-						return SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_SEARCH, TWITTER_BASE_URL, mLat, mLong))));
-					case FACEBOOK:
-						return SonetHttpClient.httpResponse(mHttpClient, new HttpGet(String.format(FACEBOOK_SEARCH, FACEBOOK_BASE_URL, mLat, mLong, Saccess_token, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))))));
-					case FOURSQUARE:
-						return SonetHttpClient.httpResponse(mHttpClient, new HttpGet(String.format(FOURSQUARE_SEARCH, FOURSQUARE_BASE_URL, mLat, mLong, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))))));
-					}
-				}
-				account.close();
-				return null;
-			}
-
-			@Override
-			protected void onPostExecute(String response) {
-				if (loadingDialog.isShowing()) loadingDialog.dismiss();
-				if (response != null) {
-					switch (serviceId) {
-					case TWITTER:
-						try {
-							JSONArray places = new JSONObject(response).getJSONObject(Sresult).getJSONArray(Splaces);
-							final String placesNames[] = new String[places.length()];
-							final String placesIds[] = new String[places.length()];
-							for (int i = 0, i2 = places.length(); i < i2; i++) {
-								JSONObject place = places.getJSONObject(i);
-								placesNames[i] = place.getString(Sfull_name);
-								placesIds[i] = place.getString(Sid);
-							}
-							mDialog = (new AlertDialog.Builder(SonetCreatePost.this))
-									.setSingleChoiceItems(placesNames, -1, new DialogInterface.OnClickListener() {
-										@Override
-										public void onClick(DialogInterface dialog, int which) {
-											mAccountsLocation.put(accountId, placesIds[which]);
-											dialog.dismiss();
-										}
-									})
-									.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-										@Override
-										public void onClick(DialogInterface dialog, int which) {
-											dialog.cancel();
-										}
-									})
-									.create();
-							mDialog.show();
-						} catch (JSONException e) {
-							Log.e(TAG, e.toString());
-						}
-						break;
-					case FACEBOOK:
-						try {
-							JSONArray places = new JSONObject(response).getJSONArray(Sdata);
-							final String placesNames[] = new String[places.length()];
-							final String placesIds[] = new String[places.length()];
-							for (int i = 0, i2 = places.length(); i < i2; i++) {
-								JSONObject place = places.getJSONObject(i);
-								placesNames[i] = place.getString(Sname);
-								placesIds[i] = place.getString(Sid);
-							}
-							mDialog = (new AlertDialog.Builder(SonetCreatePost.this))
-									.setSingleChoiceItems(placesNames, -1, new DialogInterface.OnClickListener() {
-										@Override
-										public void onClick(DialogInterface dialog, int which) {
-											mAccountsLocation.put(accountId, placesIds[which]);
-											dialog.dismiss();
-										}
-									})
-									.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-										@Override
-										public void onClick(DialogInterface dialog, int which) {
-											dialog.cancel();
-										}
-									})
-									.create();
-							mDialog.show();
-						} catch (JSONException e) {
-							Log.e(TAG, e.toString());
-						}
-						break;
-					case FOURSQUARE:
-						try {
-							JSONArray groups = new JSONObject(response).getJSONObject(Sresponse).getJSONArray(Sgroups);
-							for (int g = 0, g2 = groups.length(); g < g2; g++) {
-								JSONObject group = groups.getJSONObject(g);
-								if (group.getString(Sname).equals(SNearby)) {
-									JSONArray places = group.getJSONArray(Sitems);
-									final String placesNames[] = new String[places.length()];
-									final String placesIds[] = new String[places.length()];
-									for (int i = 0, i2 = places.length(); i < i2; i++) {
-										JSONObject place = places.getJSONObject(i);
-										placesNames[i] = place.getString(Sname);
-										placesIds[i] = place.getString(Sid);
-									}
-									mDialog = (new AlertDialog.Builder(SonetCreatePost.this))
-											.setSingleChoiceItems(placesNames, -1, new DialogInterface.OnClickListener() {
-												@Override
-												public void onClick(DialogInterface dialog, int which) {
-													mAccountsLocation.put(accountId, placesIds[which]);
-													dialog.dismiss();
-												}
-											})
-											.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-												@Override
-												public void onClick(DialogInterface dialog, int which) {
-													dialog.cancel();
-												}
-											})
-											.create();
-									mDialog.show();
-									break;
-								}
-							}
-						} catch (JSONException e) {
-							Log.e(TAG, e.toString());
-						}
-						break;
-					}
-				} else {
-					(Toast.makeText(SonetCreatePost.this, getString(R.string.failure), Toast.LENGTH_LONG)).show();
-				}
-			}
-
-		};
+		final LocationTask locationTask;
+		int service = mAccountsService.get(accountId);
+		if (service == TWITTER)
+			locationTask = new TwitterLocationTask(this, accountId);
+		else if (service == FACEBOOK)
+			locationTask = new FacebookLocationTask(this, accountId);
+		else if (service == FOURSQUARE)
+			locationTask = new FoursquareLocationTask(this, accountId);
+		else
+			return;
 		loadingDialog.setMessage(getString(R.string.loading));
 		loadingDialog.setCancelable(true);
 		loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
 			@Override
 			public void onCancel(DialogInterface dialog) {
-				if (!asyncTask.isCancelled()) asyncTask.cancel(true);
+				if (!locationTask.isCancelled())
+					locationTask.cancel(true);
 			}
 		});
 		loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
@@ -454,7 +285,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 			}
 		});
 		loadingDialog.show();
-		asyncTask.execute();
+		locationTask.getLocations(mLat, mLong);
 	}
 
 	private void unsupportedToast(List<Integer> supportedServices) {
@@ -878,13 +709,35 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		c.close();
 	}
 
+	public void onLocationsFound(final long accountId, final String[] ids, String[] names) {
+		if (loadingDialog.isShowing())
+			loadingDialog.cancel();
+		if (ids.length > 0) {
+			mDialog = (new AlertDialog.Builder(SonetCreatePost.this))
+					.setSingleChoiceItems(names, -1, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							mAccountsLocation.put(accountId, ids[which]);
+							dialog.dismiss();
+						}
+					})
+					.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.cancel();
+						}
+					})
+					.create();
+			mDialog.show();
+		}
+	}
+
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		switch (requestCode) {
 		case PHOTO:
-			if (resultCode == RESULT_OK) {
+			if (resultCode == RESULT_OK)
 				getPhoto(data.getData());
-			}
 			break;
 		case TAGS:
 			if ((resultCode == RESULT_OK) && data.hasExtra(Stags) && data.hasExtra(Accounts.SID))
