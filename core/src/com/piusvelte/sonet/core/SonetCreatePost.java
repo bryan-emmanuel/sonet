@@ -328,101 +328,10 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 								String response = null;
 								switch (service) {
 								case TWITTER:
-									sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))), mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET))));
-									// limit tweets to 140, breaking up the message if necessary
-									message = mMessage.getText().toString();
-									while (message.length() > 0) {
-										final String send;
-										if (message.length() > 140) {
-											// need to break on a word
-											int end = 0;
-											int nextSpace = 0;
-											for (int i = 0, i2 = message.length(); i < i2; i++) {
-												end = nextSpace;
-												if (message.substring(i, i + 1).equals(" ")) {
-													nextSpace = i;
-												}
-											}
-											// in case there are no spaces, just break on 140
-											if (end == 0) {
-												end = 140;
-											}
-											send = message.substring(0, end);
-											message = message.substring(end + 1);
-										} else {
-											send = message;
-											message = "";
-										}
-										httpPost = new HttpPost(String.format(TWITTER_UPDATE, TWITTER_BASE_URL));
-										// resolve Error 417 Expectation by Twitter
-										httpPost.getParams().setBooleanParameter("http.protocol.expect-continue", false);
-										List<NameValuePair> params = new ArrayList<NameValuePair>();
-										params.add(new BasicNameValuePair(Sstatus, send));
-										if (placeId != null) {
-											params.add(new BasicNameValuePair("place_id", placeId));
-											params.add(new BasicNameValuePair("lat", mLat));
-											params.add(new BasicNameValuePair("long", mLong));
-										}
-										try {
-											httpPost.setEntity(new UrlEncodedFormEntity(params));
-											response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
-										} catch (UnsupportedEncodingException e) {
-											Log.e(TAG, e.toString());
-										}
-										publishProgress(serviceName, getString(response != null ? R.string.success : R.string.failure));
-									}
+									//TODO moved to TwitterPostTask
 									break;
 								case FACEBOOK:
-									// handle tags
-									StringBuilder tags = null;
-									if (mAccountsTags.containsKey(accountId)) {
-										String[] accountTags = mAccountsTags.get(accountId);
-										if ((accountTags != null) && (accountTags.length > 0)) {
-											tags = new StringBuilder();
-											tags.append("[");
-											String tag_format;
-											if (mPhotoPath != null)
-												tag_format = "{\"tag_uid\":\"%s\",\"x\":0,\"y\":0}";
-											else
-												tag_format = "%s";
-											for (int i = 0, l = accountTags.length; i < l; i++) {
-												if (i > 0)
-													tags.append(",");
-												tags.append(String.format(tag_format, accountTags[i]));
-											}
-											tags.append("]");
-										}
-									}
-									if (mPhotoPath != null) {
-										// upload photo
-										// uploading a photo takes a long time, have the service handle it
-										Intent i = Sonet.getPackageIntent(SonetCreatePost.this.getApplicationContext(), PhotoUploadService.class);
-										i.setAction(Sonet.ACTION_UPLOAD);
-										i.putExtra(Accounts.TOKEN, account.getString(account.getColumnIndex(Accounts.TOKEN)));
-										i.putExtra(Widgets.INSTANT_UPLOAD, mPhotoPath);
-										i.putExtra(Statuses.MESSAGE, mMessage.getText().toString());
-										i.putExtra(Splace, placeId);
-										if (tags != null)
-											i.putExtra(Stags, tags.toString());
-										startService(i);
-										publishProgress(serviceName + " photo");
-									} else {
-										// regular post
-										httpPost = new HttpPost(String.format(FACEBOOK_POST, FACEBOOK_BASE_URL, Saccess_token, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN)))));
-										List<NameValuePair> params = new ArrayList<NameValuePair>();
-										params.add(new BasicNameValuePair(Smessage, mMessage.getText().toString()));
-										if (placeId != null)
-											params.add(new BasicNameValuePair(Splace, placeId));
-										if (tags != null)
-											params.add(new BasicNameValuePair(Stags, tags.toString()));
-										try {
-											httpPost.setEntity(new UrlEncodedFormEntity(params));
-											response = SonetHttpClient.httpResponse(mHttpClient, httpPost);
-										} catch (UnsupportedEncodingException e) {
-											Log.e(TAG,e.toString());
-										}
-										publishProgress(serviceName, getString(response != null ? R.string.success : R.string.failure));
-									}
+									//TODO moved to FacebookPostTask
 									break;
 								case MYSPACE:
 									sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))), mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET))));
@@ -707,6 +616,19 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 			mDialog.show();
 		}
 		c.close();
+	}
+	
+	public void onPostProgress(String[] params) {
+		if (params.length == 1)
+			loadingDialog.setMessage(String.format(getString(R.string.sending), params[0]));
+		else
+			(Toast.makeText(SonetCreatePost.this, params[0] + " " + params[1], Toast.LENGTH_LONG)).show();
+	}
+	
+	public void onPostFinished() {
+		if (loadingDialog.isShowing())
+			loadingDialog.cancel();
+		finish();
 	}
 
 	public void onLocationsFound(final long accountId, final String[] ids, String[] names) {

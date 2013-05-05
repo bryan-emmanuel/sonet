@@ -27,27 +27,52 @@ import com.piusvelte.sonet.core.SonetHttpClient;
 
 import android.os.AsyncTask;
 
-public class LocationTask extends AsyncTask<String, String, String> {
+public class PostTask extends AsyncTask<String, String, Void> {
+	
+	public static final int MESSAGE = 0;
+	public static final int PHOTO = 1;
+	public static final int LATITUDE = 2;
+	public static final int LONGITUDE = 3;
+	public static final int LOCATION = 4;
+	public static final int TAGS = 5;
 	
 	SonetCreatePost activity;
 	long accountId;
 	HttpClient httpClient;
 	SonetCrypto sonetCrypto;
 	
-	public LocationTask(SonetCreatePost activity, long accountId) {
+	public PostTask(SonetCreatePost activity, long accountId) {
 		this.activity = activity;
 		this.accountId = accountId;
 		httpClient = SonetHttpClient.getThreadSafeClient(activity.getApplicationContext());
 		sonetCrypto = SonetCrypto.getInstance(activity.getApplicationContext());
 	}
 	
-	public void getLocations(String latitude, String longitude) {
-		super.execute(latitude, longitude);
+	public void post(String message, String photo, String latitude, String longitude, String location, String[] tags) {
+		String[] params = new String[TAGS + tags.length];
+		params[MESSAGE] = message;
+		params[PHOTO] = photo;
+		params[LATITUDE] = latitude;
+		params[LONGITUDE] = longitude;
+		params[LOCATION] = location;
+		for (int t = 0; t < tags.length; t++)
+			params[TAGS + t] = tags[t];
+		super.execute(params);
 	}
 
 	@Override
-	protected String doInBackground(String... params) {
+	protected Void doInBackground(String... params) {
 		return null;
+	}
+
+	@Override
+	protected void onProgressUpdate(String... params) {
+		activity.onPostProgress(params);
+	}
+
+	@Override
+	protected void onPostExecute(Void result) {
+		activity.onPostFinished();
 	}
 
 }

@@ -26,14 +26,12 @@ import static com.piusvelte.sonet.core.Sonet.Sdata;
 import static com.piusvelte.sonet.core.Sonet.Sid;
 import static com.piusvelte.sonet.core.Sonet.Sname;
 
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.piusvelte.sonet.core.SonetCreatePost;
-import com.piusvelte.sonet.core.SonetCrypto;
 import com.piusvelte.sonet.core.SonetHttpClient;
 import com.piusvelte.sonet.core.Sonet.Accounts;
 
@@ -49,11 +47,8 @@ public class FacebookLocationTask extends LocationTask {
 	protected String doInBackground(String... params) {
 		String response = null;
 		Cursor account = activity.getContentResolver().query(Accounts.getContentUri(activity), new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
-		if (account.moveToFirst()) {
-			HttpClient httpClient = SonetHttpClient.getThreadSafeClient(activity.getApplicationContext());
-			SonetCrypto sonetCrypto = SonetCrypto.getInstance(activity.getApplicationContext());
+		if (account.moveToFirst())
 			response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(FACEBOOK_SEARCH, FACEBOOK_BASE_URL, params[0], params[1], Saccess_token, sonetCrypto.Decrypt(account.getString(1)))));
-		}
 		account.close();
 		return response;
 	}

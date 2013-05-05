@@ -28,7 +28,6 @@ import static com.piusvelte.sonet.core.Sonet.TWITTER_SEARCH;
 import static com.piusvelte.sonet.core.SonetTokens.TWITTER_KEY;
 import static com.piusvelte.sonet.core.SonetTokens.TWITTER_SECRET;
 
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -37,7 +36,6 @@ import org.json.JSONObject;
 import android.database.Cursor;
 
 import com.piusvelte.sonet.core.SonetCreatePost;
-import com.piusvelte.sonet.core.SonetCrypto;
 import com.piusvelte.sonet.core.SonetHttpClient;
 import com.piusvelte.sonet.core.SonetOAuth;
 import com.piusvelte.sonet.core.Sonet.Accounts;
@@ -53,8 +51,6 @@ public class TwitterLocationTask extends LocationTask {
 		String response = null;
 		Cursor account = activity.getContentResolver().query(Accounts.getContentUri(activity), new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
 		if (account.moveToFirst()) {
-			HttpClient httpClient = SonetHttpClient.getThreadSafeClient(activity.getApplicationContext());
-			SonetCrypto sonetCrypto = SonetCrypto.getInstance(activity.getApplicationContext());
 			SonetOAuth sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, sonetCrypto.Decrypt(account.getString(1)), sonetCrypto.Decrypt(account.getString(2)));
 			response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_SEARCH, TWITTER_BASE_URL, params[0], params[1]))));
 		}

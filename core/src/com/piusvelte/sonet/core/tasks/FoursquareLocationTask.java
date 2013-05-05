@@ -28,7 +28,6 @@ import static com.piusvelte.sonet.core.Sonet.Sitems;
 import static com.piusvelte.sonet.core.Sonet.Sname;
 import static com.piusvelte.sonet.core.Sonet.Sresponse;
 
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -37,7 +36,6 @@ import org.json.JSONObject;
 import android.database.Cursor;
 
 import com.piusvelte.sonet.core.SonetCreatePost;
-import com.piusvelte.sonet.core.SonetCrypto;
 import com.piusvelte.sonet.core.SonetHttpClient;
 import com.piusvelte.sonet.core.Sonet.Accounts;
 
@@ -51,11 +49,8 @@ public class FoursquareLocationTask extends LocationTask {
 	protected String doInBackground(String... params) {
 		String response = null;
 		Cursor account = activity.getContentResolver().query(Accounts.getContentUri(activity), new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
-		if (account.moveToFirst()) {
-			HttpClient httpClient = SonetHttpClient.getThreadSafeClient(activity.getApplicationContext());
-			SonetCrypto sonetCrypto = SonetCrypto.getInstance(activity.getApplicationContext());
+		if (account.moveToFirst())
 			response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(FOURSQUARE_SEARCH, FOURSQUARE_BASE_URL, params[0], params[1], sonetCrypto.Decrypt(account.getString(1)))));
-		}
 		account.close();
 		return response;
 	}
