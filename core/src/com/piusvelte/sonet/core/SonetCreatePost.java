@@ -90,11 +90,11 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 	private TextView mCount;
 	private String mLat = null;
 	private String mLong = null;
-	private SonetCrypto mSonetCrypto;
+//	private SonetCrypto mSonetCrypto;
 	private static final int PHOTO = 1;
 	private static final int TAGS = 2;
 	private String mPhotoPath;
-	private HttpClient mHttpClient;
+//	private HttpClient mHttpClient;
 	private AlertDialog mDialog;
 	private static final List<Integer> sLocationSupported = new ArrayList<Integer>();
 	private static final List<Integer> sPhotoSupported = new ArrayList<Integer>();
@@ -334,38 +334,10 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 									//TODO moved to FacebookPostTask
 									break;
 								case MYSPACE:
-									sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))), mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET))));
-									try {
-										HttpPut httpPut = new HttpPut(String.format(MYSPACE_URL_STATUSMOOD, MYSPACE_BASE_URL));
-										httpPut.setEntity(new StringEntity(String.format(MYSPACE_STATUSMOOD_BODY, mMessage.getText().toString())));
-										response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPut));
-									} catch (IOException e) {
-										Log.e(TAG, e.toString());
-									}
-									// warn users about myspace permissions
-									if (response != null) {
-										publishProgress(serviceName, getString(R.string.success));
-									} else {
-										publishProgress(serviceName, getString(R.string.failure) + " " + getString(R.string.myspace_permissions_message));
-									}
+									//TODO moved to MySpacePostTask
 									break;
 								case FOURSQUARE:
-									try {
-										message = URLEncoder.encode(mMessage.getText().toString(), "UTF-8");
-										if (placeId != null) {
-											if (message != null) {
-												httpPost = new HttpPost(String.format(FOURSQUARE_CHECKIN, FOURSQUARE_BASE_URL, placeId, message, mLat, mLong, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN)))));
-											} else {
-												httpPost = new HttpPost(String.format(FOURSQUARE_CHECKIN_NO_SHOUT, FOURSQUARE_BASE_URL, placeId, mLat, mLong, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN)))));												
-											}
-										} else {
-											httpPost = new HttpPost(String.format(FOURSQUARE_CHECKIN_NO_VENUE, FOURSQUARE_BASE_URL, message, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN)))));
-										}
-										response = SonetHttpClient.httpResponse(mHttpClient, httpPost);
-									} catch (UnsupportedEncodingException e) {
-										Log.e(TAG, e.toString());
-									}
-									publishProgress(serviceName, getString(response != null ? R.string.success : R.string.failure));
+									//TODO moved to FoursquarePostTask
 									break;
 								case LINKEDIN:
 									sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))), mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET))));
