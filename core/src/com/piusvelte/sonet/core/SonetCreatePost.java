@@ -19,37 +19,30 @@
  */
 package com.piusvelte.sonet.core;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicNameValuePair;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.google.ads.*;
 import com.piusvelte.sonet.core.R;
 import com.piusvelte.sonet.core.Sonet.Accounts;
 import com.piusvelte.sonet.core.Sonet.Widgets;
+import com.piusvelte.sonet.core.tasks.ChatterPostTask;
 import com.piusvelte.sonet.core.tasks.FacebookLocationTask;
+import com.piusvelte.sonet.core.tasks.FacebookPostTask;
 import com.piusvelte.sonet.core.tasks.FoursquareLocationTask;
+import com.piusvelte.sonet.core.tasks.FoursquarePostTask;
+import com.piusvelte.sonet.core.tasks.IdenticaPostTask;
+import com.piusvelte.sonet.core.tasks.LinkedInPostTask;
 import com.piusvelte.sonet.core.tasks.LocationTask;
+import com.piusvelte.sonet.core.tasks.MySpacePostTask;
+import com.piusvelte.sonet.core.tasks.PostTask;
 import com.piusvelte.sonet.core.tasks.TwitterLocationTask;
+import com.piusvelte.sonet.core.tasks.TwitterPostTask;
 
 import static com.piusvelte.sonet.core.Sonet.*;
-import static com.piusvelte.sonet.core.SonetTokens.*;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -66,7 +59,6 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -90,11 +82,9 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 	private TextView mCount;
 	private String mLat = null;
 	private String mLong = null;
-//	private SonetCrypto mSonetCrypto;
 	private static final int PHOTO = 1;
 	private static final int TAGS = 2;
 	private String mPhotoPath;
-//	private HttpClient mHttpClient;
 	private AlertDialog mDialog;
 	private static final List<Integer> sLocationSupported = new ArrayList<Integer>();
 	private static final List<Integer> sPhotoSupported = new ArrayList<Integer>();
@@ -124,12 +114,17 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		mMessage = (EditText) findViewById(R.id.message);
 		mSend = (ImageButton) findViewById(R.id.send);
 		mCount = (TextView) findViewById(R.id.count);
-		// load secretkey
-		mSonetCrypto = SonetCrypto.getInstance(getApplicationContext());
-		mHttpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
 		mMessage.addTextChangedListener(this);
 		mMessage.setOnKeyListener(this);
 		mSend.setOnClickListener(this);
+		loadingDialog.setMessage(getString(R.string.loading));
+		loadingDialog.setCancelable(true);
+		loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				dialog.cancel();
+			}
+		});
 		setResult(RESULT_OK);
 	}
 
@@ -269,19 +264,11 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 			locationTask = new FoursquareLocationTask(this, accountId);
 		else
 			return;
-		loadingDialog.setMessage(getString(R.string.loading));
-		loadingDialog.setCancelable(true);
 		loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
 			@Override
 			public void onCancel(DialogInterface dialog) {
 				if (!locationTask.isCancelled())
 					locationTask.cancel(true);
-			}
-		});
-		loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.cancel();
 			}
 		});
 		loadingDialog.show();
@@ -306,160 +293,14 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 	@Override
 	public void onClick(View v) {
 		if (v == mSend) {
-			if (!mAccountsService.isEmpty()) {
-				final ProgressDialog loadingDialog = new ProgressDialog(this);
-				final AsyncTask<Void, String, Void> asyncTask = new AsyncTask<Void, String, Void>() {
-					@Override
-					protected Void doInBackground(Void... arg0) {
-						Iterator<Map.Entry<Long, Integer>> entrySet = mAccountsService.entrySet().iterator();
-						while (entrySet.hasNext()) {
-							Map.Entry<Long, Integer> entry = entrySet.next();
-							final long accountId = entry.getKey();
-							final int service = entry.getValue();
-							final String placeId = mAccountsLocation.get(accountId);
-							// post or comment!
-							Cursor account = getContentResolver().query(Accounts.getContentUri(SonetCreatePost.this), new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
-							if (account.moveToFirst()) {
-								final String serviceName = Sonet.getServiceName(getResources(), service);
-								publishProgress(serviceName);
-								String message;
-								SonetOAuth sonetOAuth;
-								HttpPost httpPost;
-								String response = null;
-								switch (service) {
-								case TWITTER:
-									//TODO moved to TwitterPostTask
-									break;
-								case FACEBOOK:
-									//TODO moved to FacebookPostTask
-									break;
-								case MYSPACE:
-									//TODO moved to MySpacePostTask
-									break;
-								case FOURSQUARE:
-									//TODO moved to FoursquarePostTask
-									break;
-								case LINKEDIN:
-									sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))), mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET))));
-									try {
-										httpPost = new HttpPost(String.format(LINKEDIN_POST, LINKEDIN_BASE_URL));
-										httpPost.setEntity(new StringEntity(String.format(LINKEDIN_POST_BODY, "", mMessage.getText().toString())));
-										httpPost.addHeader(new BasicHeader("Content-Type", "application/xml"));
-										response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
-									} catch (IOException e) {
-										Log.e(TAG, e.toString());
-									}
-									publishProgress(serviceName, getString(response != null ? R.string.success : R.string.failure));
-									break;
-								case IDENTICA:
-									sonetOAuth = new SonetOAuth(IDENTICA_KEY, IDENTICA_SECRET, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))), mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET))));
-									// limit tweets to 140, breaking up the message if necessary
-									message = mMessage.getText().toString();
-									while (message.length() > 0) {
-										final String send;
-										if (message.length() > 140) {
-											// need to break on a word
-											int end = 0;
-											int nextSpace = 0;
-											for (int i = 0, i2 = message.length(); i < i2; i++) {
-												end = nextSpace;
-												if (message.substring(i, i + 1).equals(" ")) {
-													nextSpace = i;
-												}
-											}
-											// in case there are no spaces, just break on 140
-											if (end == 0) {
-												end = 140;
-											}
-											send = message.substring(0, end);
-											message = message.substring(end + 1);
-										} else {
-											send = message;
-											message = "";
-										}
-										httpPost = new HttpPost(String.format(IDENTICA_UPDATE, IDENTICA_BASE_URL));
-										// resolve Error 417 Expectation by Twitter
-										httpPost.getParams().setBooleanParameter("http.protocol.expect-continue", false);
-										List<NameValuePair> params = new ArrayList<NameValuePair>();
-										params.add(new BasicNameValuePair(Sstatus, send));
-										if (placeId != null) {
-											params.add(new BasicNameValuePair("place_id", placeId));
-											params.add(new BasicNameValuePair("lat", mLat));
-											params.add(new BasicNameValuePair("long", mLong));
-										}
-										try {
-											httpPost.setEntity(new UrlEncodedFormEntity(params));
-											response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
-										} catch (UnsupportedEncodingException e) {
-											Log.e(TAG, e.toString());
-										}
-										publishProgress(serviceName, getString(response != null ? R.string.success : R.string.failure));
-									}
-									break;
-								case CHATTER:
-									// need to get an updated access_token
-									response = SonetHttpClient.httpResponse(mHttpClient, new HttpPost(String.format(CHATTER_URL_ACCESS, CHATTER_KEY, mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))))));
-									if (response != null) {
-										try {
-											JSONObject jobj = new JSONObject(response);
-											if (jobj.has("instance_url") && jobj.has(Saccess_token)) {
-												httpPost = new HttpPost(String.format(CHATTER_URL_POST, jobj.getString("instance_url"), Uri.encode(mMessage.getText().toString())));
-												httpPost.setHeader("Authorization", "OAuth " + jobj.getString(Saccess_token));
-												response = SonetHttpClient.httpResponse(mHttpClient, httpPost);
-											}
-										} catch (JSONException e) {
-											Log.e(TAG, serviceName + ":" + e.toString());
-											Log.e(TAG, response);
-										}
-									}
-									publishProgress(serviceName, getString(response != null ? R.string.success : R.string.failure));
-									break;
-								}
-							}
-							account.close();
-						}
-						return null;
-					}
-
-					@Override
-					protected void onProgressUpdate(String... params) {
-						if (params.length == 1) {
-							loadingDialog.setMessage(String.format(getString(R.string.sending), params[0]));
-						} else {
-							(Toast.makeText(SonetCreatePost.this, params[0] + " " + params[1], Toast.LENGTH_LONG)).show();
-						}
-					}
-
-					@Override
-					protected void onPostExecute(Void result) {
-						if (loadingDialog.isShowing()) loadingDialog.dismiss();
-						finish();
-					}
-
-				};
-				loadingDialog.setMessage(getString(R.string.loading));
-				loadingDialog.setCancelable(true);
-				loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
-					@Override
-					public void onCancel(DialogInterface dialog) {
-						if (!asyncTask.isCancelled()) asyncTask.cancel(true);
-					}
-				});
-				loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.cancel();
-					}
-				});
-				loadingDialog.show();
-				asyncTask.execute();
-			} else
+			if (!mAccountsService.isEmpty())
+				postNextAccount();
+			else
 				(Toast.makeText(SonetCreatePost.this, "no accounts selected", Toast.LENGTH_LONG)).show();
 		}
 	}
 
 	protected void getPhoto(Uri uri) {
-		final ProgressDialog loadingDialog = new ProgressDialog(this);
 		final AsyncTask<Uri, Void, String> asyncTask = new AsyncTask<Uri, Void, String>() {
 			@Override
 			protected String doInBackground(Uri... imgUri) {
@@ -478,25 +319,19 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 
 			@Override
 			protected void onPostExecute(String path) {
-				if (loadingDialog.isShowing()) loadingDialog.dismiss();
+				if (loadingDialog.isShowing())
+					loadingDialog.dismiss();
 				if (path != null)
 					setPhoto(path);
 				else
 					(Toast.makeText(SonetCreatePost.this, "error retrieving the photo path", Toast.LENGTH_LONG)).show();
 			}
 		};
-		loadingDialog.setMessage(getString(R.string.loading));
-		loadingDialog.setCancelable(true);
 		loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
 			@Override
 			public void onCancel(DialogInterface dialog) {
-				if (!asyncTask.isCancelled()) asyncTask.cancel(true);
-			}
-		});
-		loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.cancel();
+				if (!asyncTask.isCancelled())
+					asyncTask.cancel(true);
 			}
 		});
 		loadingDialog.show();
@@ -589,18 +424,52 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 		}
 		c.close();
 	}
-	
+
 	public void onPostProgress(String[] params) {
 		if (params.length == 1)
 			loadingDialog.setMessage(String.format(getString(R.string.sending), params[0]));
 		else
 			(Toast.makeText(SonetCreatePost.this, params[0] + " " + params[1], Toast.LENGTH_LONG)).show();
 	}
-	
-	public void onPostFinished() {
-		if (loadingDialog.isShowing())
-			loadingDialog.cancel();
-		finish();
+
+	public void postNextAccount() {
+		if (!mAccountsService.isEmpty()) {
+			final PostTask postTask;
+			long accountId = mAccountsService.keySet().iterator().next();
+			int service = mAccountsService.remove(accountId);
+			if (service == TWITTER)
+				postTask = new TwitterPostTask(this, accountId);
+			else if (service == FACEBOOK)
+				postTask = new FacebookPostTask(this, accountId);
+			else if (service == MYSPACE)
+				postTask = new MySpacePostTask(this, accountId);
+			else if (service == FOURSQUARE)
+				postTask = new FoursquarePostTask(this, accountId);
+			else if (service == LINKEDIN)
+				postTask = new LinkedInPostTask(this, accountId);
+			else if (service == IDENTICA)
+				postTask = new IdenticaPostTask(this, accountId);
+			else if (service == CHATTER)
+				postTask = new ChatterPostTask(this, accountId);
+			else {
+				postNextAccount();
+				return;
+			}
+			loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
+				@Override
+				public void onCancel(DialogInterface dialog) {
+					if (!postTask.isCancelled())
+						postTask.cancel(true);
+				}
+			});
+			if (!loadingDialog.isShowing())
+				loadingDialog.show();
+			postTask.post(mMessage.getText().toString(), mPhotoPath, mLat, mLong, mAccountsLocation.get(accountId), mAccountsTags.get(accountId));
+		} else {
+			if (loadingDialog.isShowing())
+				loadingDialog.cancel();
+			finish();
+		}
 	}
 
 	public void onLocationsFound(final long accountId, final String[] ids, String[] names) {

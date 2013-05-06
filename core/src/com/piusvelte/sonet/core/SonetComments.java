@@ -741,6 +741,14 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 	@Override
 	public void onTextChanged(CharSequence s, int start, int before, int count) {
 	}
+	
+	public void onCommentProgress(String[] params) {
+		//TODO
+	}
+	
+	public void onCommentFinished() {
+		//TODO
+	}
 
 	private void setCommentStatus(int position, String status) {
 		if (mComments.size() > position) {
