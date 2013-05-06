@@ -26,6 +26,13 @@ import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.piusvelte.sonet.core.widget.SonetWidget_2x2;
+import com.piusvelte.sonet.core.widget.SonetWidget_2x3;
+import com.piusvelte.sonet.core.widget.SonetWidget_2x4;
+import com.piusvelte.sonet.core.widget.SonetWidget_4x2;
+import com.piusvelte.sonet.core.widget.SonetWidget_4x3;
+import com.piusvelte.sonet.core.widget.SonetWidget_4x4;
+
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.ContentValues;
@@ -347,7 +354,7 @@ public class Sonet {
 		sWakeLock.acquire();
 	}
 
-	static void release() {
+	public static void release() {
 		if (hasLock()) {
 			sWakeLock.release();
 			sWakeLock = null;

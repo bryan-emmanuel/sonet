@@ -108,7 +108,7 @@ public class SonetHttpClient {
 		return sHttpClient;
 	}
 
-	protected static byte[] httpBlobResponse(HttpClient httpClient, HttpUriRequest httpRequest) {
+	public static byte[] httpBlobResponse(HttpClient httpClient, HttpUriRequest httpRequest) {
 		if (httpClient != null) {
 			HttpResponse httpResponse;
 			HttpEntity entity = null;

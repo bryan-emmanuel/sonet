@@ -180,7 +180,7 @@ public class SonetCrypto {
 		return null;
 	}
 
-	protected String Encrypt(String data) {
+	public String Encrypt(String data) {
 		if ((mSecretKey != null) && (data != null)) {
 			try {
 				Cipher cipher = Cipher.getInstance("AES");

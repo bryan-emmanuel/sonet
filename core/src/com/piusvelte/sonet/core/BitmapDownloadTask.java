@@ -52,7 +52,7 @@ public class BitmapDownloadTask extends AsyncTask<String, Void, Bitmap> {
         return null;
     }
 	
-	static class DownloadedDrawable extends ColorDrawable {
+	public static class DownloadedDrawable extends ColorDrawable {
         private final WeakReference<BitmapDownloadTask> bitmapDownloadTaskReference;
 
         public DownloadedDrawable(BitmapDownloadTask bitmapDownloadTask) {

@@ -73,10 +73,10 @@ public class SonetProvider extends ContentProvider {
 	protected static final String DATABASE_NAME = "sonet.db";
 	private static final int DATABASE_VERSION = 26;
 
-	protected static final String TABLE_ACCOUNTS = "accounts";
+	public static final String TABLE_ACCOUNTS = "accounts";
 	private static HashMap<String, String> accountsProjectionMap;
 
-	protected static final String TABLE_WIDGETS = "widgets";
+	public static final String TABLE_WIDGETS = "widgets";
 	private static HashMap<String, String> widgetsProjectionMap;
 
 	private static final String TABLE_STATUSES = "statuses";
@@ -88,7 +88,7 @@ public class SonetProvider extends ContentProvider {
 	private static final String TABLE_ENTITIES = "entities";
 	private static HashMap<String, String> entitiesProjectionMap;
 
-	protected static final String TABLE_WIDGET_ACCOUNTS = "widget_accounts";
+	public static final String TABLE_WIDGET_ACCOUNTS = "widget_accounts";
 	private static HashMap<String, String> widget_accountsProjectionMap;
 
 	private static final String VIEW_WIDGET_ACCOUNTS = "widget_accounts_view";

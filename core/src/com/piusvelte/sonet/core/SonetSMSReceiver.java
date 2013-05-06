@@ -21,6 +21,8 @@ package com.piusvelte.sonet.core;
 
 import static com.piusvelte.sonet.core.Sonet.SMS_RECEIVED;
 
+import com.piusvelte.sonet.core.service.SonetService;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
