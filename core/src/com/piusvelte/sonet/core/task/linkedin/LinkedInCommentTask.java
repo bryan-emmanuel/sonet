@@ -68,7 +68,8 @@ public class LinkedInCommentTask extends CommentTask {
 				Log.e(TAG, e.toString());
 				result = Sonet.getServiceName(activity.getResources(), Sonet.LINKEDIN) + activity.getString(R.string.failure);
 			}
-		}
+		} else
+			result = Sonet.getServiceName(activity.getResources(), Sonet.LINKEDIN) + activity.getString(R.string.failure);
 		account.close();
 		return result;
 	}

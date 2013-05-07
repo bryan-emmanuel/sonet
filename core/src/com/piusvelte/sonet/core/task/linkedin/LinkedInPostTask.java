@@ -67,7 +67,8 @@ public class LinkedInPostTask extends PostTask {
 				Log.e(TAG, e.toString());
 				publishProgress(Sonet.getServiceName(activity.getResources(), Sonet.LINKEDIN), activity.getString(R.string.failure));
 			}
-		}
+		} else
+			publishProgress(Sonet.getServiceName(activity.getResources(), Sonet.LINKEDIN), activity.getString(R.string.failure));
 		account.close();
 		return null;
 	}

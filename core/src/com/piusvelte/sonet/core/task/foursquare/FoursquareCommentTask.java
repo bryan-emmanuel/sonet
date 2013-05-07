@@ -58,11 +58,11 @@ public class FoursquareCommentTask extends CommentTask {
 				else
 					publishProgress(Sonet.getServiceName(activity.getResources(), Sonet.FOURSQUARE), activity.getString(R.string.failure));
 			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
 				Log.e(TAG, e.getMessage());
 				publishProgress(Sonet.getServiceName(activity.getResources(), Sonet.FOURSQUARE), activity.getString(R.string.failure));
 			}
-		}
+		} else
+			publishProgress(Sonet.getServiceName(activity.getResources(), Sonet.FOURSQUARE), activity.getString(R.string.failure));
 		account.close();
 		return result;
 	}

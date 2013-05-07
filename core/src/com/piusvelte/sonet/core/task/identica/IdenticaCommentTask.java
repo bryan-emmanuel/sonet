@@ -100,7 +100,8 @@ public class IdenticaCommentTask extends CommentTask {
 					result = Sonet.getServiceName(activity.getResources(), Sonet.IDENTICA) + activity.getString(R.string.failure);
 				}
 			}
-		}
+		} else
+			result = Sonet.getServiceName(activity.getResources(), Sonet.IDENTICA) + activity.getString(R.string.failure);
 		account.close();
 		return result;
 	}

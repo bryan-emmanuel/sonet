@@ -70,7 +70,8 @@ public class ChatterCommentTask extends CommentTask {
 				}
 			} else
 				result = Sonet.getServiceName(activity.getResources(), Sonet.CHATTER) + activity.getString(R.string.failure);
-		}
+		} else
+			result = Sonet.getServiceName(activity.getResources(), Sonet.CHATTER) + activity.getString(R.string.failure);
 		account.close();
 		return result;
 	}

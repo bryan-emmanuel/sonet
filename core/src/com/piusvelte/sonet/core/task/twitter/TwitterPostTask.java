@@ -102,7 +102,8 @@ public class TwitterPostTask extends PostTask {
 					publishProgress(Sonet.getServiceName(activity.getResources(), Sonet.TWITTER), activity.getString(R.string.failure));
 				}
 			}
-		}
+		} else
+			publishProgress(Sonet.getServiceName(activity.getResources(), Sonet.TWITTER), activity.getString(R.string.failure));
 		account.close();
 		return null;
 	}

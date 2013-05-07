@@ -100,7 +100,8 @@ public class TwitterCommentTask extends CommentTask {
 					result = Sonet.getServiceName(activity.getResources(), Sonet.TWITTER) + activity.getString(R.string.failure);
 				}
 			}
-		}
+		} else
+			result = Sonet.getServiceName(activity.getResources(), Sonet.TWITTER) + activity.getString(R.string.failure);
 		account.close();
 		return result;
 	}

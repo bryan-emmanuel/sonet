@@ -68,7 +68,8 @@ public class ChatterPostTask extends PostTask {
 				}
 			} else
 				publishProgress(Sonet.getServiceName(activity.getResources(), Sonet.CHATTER), activity.getString(R.string.failure));
-		}
+		} else
+			publishProgress(Sonet.getServiceName(activity.getResources(), Sonet.CHATTER), activity.getString(R.string.failure));
 		account.close();
 		return null;
 	}

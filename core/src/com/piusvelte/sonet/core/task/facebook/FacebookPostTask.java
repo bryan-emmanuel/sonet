@@ -110,7 +110,8 @@ public class FacebookPostTask extends PostTask {
 					publishProgress(Sonet.getServiceName(activity.getResources(), Sonet.FACEBOOK), activity.getString(R.string.failure));
 				}
 			}
-		}
+		} else
+			publishProgress(Sonet.getServiceName(activity.getResources(), Sonet.FACEBOOK), activity.getString(R.string.failure));
 		account.close();
 		return null;
 	}

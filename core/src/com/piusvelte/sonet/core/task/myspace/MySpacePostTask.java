@@ -65,7 +65,8 @@ public class MySpacePostTask extends PostTask {
 				Log.e(TAG, e.toString());
 				publishProgress(Sonet.getServiceName(activity.getResources(), Sonet.MYSPACE), activity.getString(R.string.failure));
 			}
-		}
+		} else
+			publishProgress(Sonet.getServiceName(activity.getResources(), Sonet.MYSPACE), activity.getString(R.string.failure));
 		account.close();
 		return null;
 	}

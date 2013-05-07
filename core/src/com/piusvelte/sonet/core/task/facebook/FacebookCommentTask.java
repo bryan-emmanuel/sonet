@@ -44,7 +44,7 @@ import android.database.Cursor;
 import android.util.Log;
 
 public class FacebookCommentTask extends CommentTask {
-	
+
 	private static final String TAG = "FacebookCommentTask";
 
 	public FacebookCommentTask(SonetComments activity, long accountId) {
@@ -56,20 +56,21 @@ public class FacebookCommentTask extends CommentTask {
 		String message = null;
 		Cursor account = activity.getContentResolver().query(Accounts.getContentUri(activity), new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
 		if (account.moveToFirst()) {
-				HttpPost httpPost = new HttpPost(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, params[ID], Saccess_token, sonetCrypto.Decrypt(account.getString(1))));
-				List<NameValuePair> postParams = new ArrayList<NameValuePair>();
-				postParams.add(new BasicNameValuePair(Smessage, params[MESSAGE]));
-				try {
-					httpPost.setEntity(new UrlEncodedFormEntity(postParams));
-					if (SonetHttpClient.httpResponse(httpClient, httpPost) != null)
-						message = Sonet.getServiceName(activity.getResources(), Sonet.FACEBOOK) + activity.getString(R.string.success);
-					else
-						message = Sonet.getServiceName(activity.getResources(), Sonet.FACEBOOK) + activity.getString(R.string.failure);
-				} catch (UnsupportedEncodingException e) {
-					Log.e(TAG, e.toString());
+			HttpPost httpPost = new HttpPost(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, params[ID], Saccess_token, sonetCrypto.Decrypt(account.getString(1))));
+			List<NameValuePair> postParams = new ArrayList<NameValuePair>();
+			postParams.add(new BasicNameValuePair(Smessage, params[MESSAGE]));
+			try {
+				httpPost.setEntity(new UrlEncodedFormEntity(postParams));
+				if (SonetHttpClient.httpResponse(httpClient, httpPost) != null)
+					message = Sonet.getServiceName(activity.getResources(), Sonet.FACEBOOK) + activity.getString(R.string.success);
+				else
 					message = Sonet.getServiceName(activity.getResources(), Sonet.FACEBOOK) + activity.getString(R.string.failure);
-				}
-		}
+			} catch (UnsupportedEncodingException e) {
+				Log.e(TAG, e.toString());
+				message = Sonet.getServiceName(activity.getResources(), Sonet.FACEBOOK) + activity.getString(R.string.failure);
+			}
+		} else
+			message = Sonet.getServiceName(activity.getResources(), Sonet.FACEBOOK) + activity.getString(R.string.failure);
 		account.close();
 		return message;
 	}

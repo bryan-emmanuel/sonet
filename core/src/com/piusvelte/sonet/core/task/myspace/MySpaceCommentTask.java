@@ -66,7 +66,8 @@ public class MySpaceCommentTask extends CommentTask {
 				Log.e(TAG, e.toString());
 				message = Sonet.getServiceName(activity.getResources(), Sonet.MYSPACE) + activity.getString(R.string.failure);
 			}
-		}
+		} else
+			message = Sonet.getServiceName(activity.getResources(), Sonet.MYSPACE) + activity.getString(R.string.failure);
 		account.close();
 		return message;
 	}

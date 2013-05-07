@@ -102,7 +102,8 @@ public class IdenticaPostTask extends PostTask {
 					publishProgress(Sonet.getServiceName(activity.getResources(), Sonet.IDENTICA), activity.getString(R.string.failure));
 				}
 			}
-		}
+		} else
+			publishProgress(Sonet.getServiceName(activity.getResources(), Sonet.IDENTICA), activity.getString(R.string.failure));
 		account.close();
 		return null;
 	}
