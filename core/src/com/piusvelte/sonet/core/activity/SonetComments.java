@@ -72,11 +72,14 @@ import com.piusvelte.sonet.core.Sonet.Widgets;
 import com.piusvelte.sonet.core.Sonet.Widgets_settings;
 import com.piusvelte.sonet.core.task.CommentTask;
 import com.piusvelte.sonet.core.task.chatter.ChatterCommentTask;
+import com.piusvelte.sonet.core.task.chatter.ChatterLikeTask;
 import com.piusvelte.sonet.core.task.facebook.FacebookCommentTask;
 import com.piusvelte.sonet.core.task.facebook.FacebookLikeTask;
 import com.piusvelte.sonet.core.task.foursquare.FoursquareCommentTask;
 import com.piusvelte.sonet.core.task.identica.IdenticaCommentTask;
+import com.piusvelte.sonet.core.task.identica.IdenticaRepeatTask;
 import com.piusvelte.sonet.core.task.linkedin.LinkedInCommentTask;
+import com.piusvelte.sonet.core.task.linkedin.LinkedInLikeTask;
 import com.piusvelte.sonet.core.task.myspace.MySpaceCommentTask;
 import com.piusvelte.sonet.core.task.twitter.TwitterCommentTask;
 import com.piusvelte.sonet.core.task.twitter.TwitterRetweetTask;
@@ -256,9 +259,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 			// parse comment body, as in StatusDialog.java
 			Matcher m = Sonet.getLinksMatcher(mComments.get(position).get(Statuses.MESSAGE));
 			int count = 0;
-			while (m.find()) {
+			while (m.find())
 				count++;
-			}
 			// like comments, the first comment is the post itself
 			switch (mService) {
 			case TWITTER:
@@ -267,9 +269,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 				items[0] = getString(R.string.retweet);
 				count = 1;
 				m.reset();
-				while (m.find()) {
+				while (m.find())
 					items[count++] = m.group();
-				}
 				mDialog = (new AlertDialog.Builder(this))
 				.setItems(items, new DialogInterface.OnClickListener() {
 					@Override
@@ -296,9 +297,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 				items[0] = getString(mComments.get(position).get(getString(R.string.like)) == getString(R.string.like) ? R.string.like : R.string.unlike);
 				count = 1;
 				m.reset();
-				while (m.find()) {
+				while (m.find())
 					items[count++] = m.group();
-				}
 				mDialog = (new AlertDialog.Builder(this))
 				.setItems(items, new DialogInterface.OnClickListener() {
 					@Override
@@ -326,42 +326,15 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					items[0] = getString(mComments.get(position).get(getString(R.string.like)) == getString(R.string.like) ? R.string.like : R.string.unlike);
 					count = 1;
 					m.reset();
-					while (m.find()) {
+					while (m.find())
 						items[count++] = m.group();
-					}
 					mDialog = (new AlertDialog.Builder(this))
 					.setItems(items, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
 							if (which == 0) {
-								AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
-									@Override
-									protected String doInBackground(String... arg0) {
-										SonetOAuth sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, mToken, mSecret);
-										HttpPut httpPut = new HttpPut(String.format(LINKEDIN_IS_LIKED, LINKEDIN_BASE_URL, mSid));
-										httpPut.addHeader(new BasicHeader("Content-Type", "application/xml"));
-										try {
-											httpPut.setEntity(new StringEntity(String.format(LINKEDIN_LIKE_BODY, Boolean.toString(liked.equals(getString(R.string.like))))));
-											return SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPut));
-										} catch (UnsupportedEncodingException e) {
-											Log.e(TAG, e.toString());
-										}
-										return null;
-									}
-
-									@Override
-									protected void onPostExecute(String response) {
-										if (response != null) {
-											setCommentStatus(position, getString(liked.equals(getString(R.string.like)) ? R.string.unlike : R.string.like));
-											(Toast.makeText(SonetComments.this, mServiceName + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-										} else {
-											setCommentStatus(position, getString(liked.equals(getString(R.string.like)) ? R.string.like : R.string.unlike));
-											(Toast.makeText(SonetComments.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
-										}
-									}
-								};
 								setCommentStatus(position, getString(R.string.loading));
-								asyncTask.execute();
+								new LinkedInLikeTask(SonetComments.this, mAccount).like(sid, position, liked.equals(getString(R.string.like)));
 							} else {
 								if ((which < items.length) && (items[which] != null))
 									// open link
@@ -380,9 +353,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					items = new String[count];
 					count = 1;
 					m.reset();
-					while (m.find()) {
+					while (m.find())
 						items[count++] = m.group();
-					}
 					mDialog = (new AlertDialog.Builder(this))
 					.setItems(items, new DialogInterface.OnClickListener() {
 						@Override
@@ -406,32 +378,15 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 				items[0] = getString(R.string.repeat);
 				count = 1;
 				m.reset();
-				while (m.find()) {
+				while (m.find())
 					items[count++] = m.group();
-				}
 				mDialog = (new AlertDialog.Builder(this))
 				.setItems(items, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						if (which == 0) {
-							AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
-								@Override
-								protected String doInBackground(String... arg0) {
-									SonetOAuth sonetOAuth = new SonetOAuth(IDENTICA_KEY, IDENTICA_SECRET, mToken, mSecret);
-									HttpPost httpPost = new HttpPost(String.format(IDENTICA_RETWEET, IDENTICA_BASE_URL, sid));
-									// resolve Error 417 Expectation by Twitter
-									httpPost.getParams().setBooleanParameter("http.protocol.expect-continue", false);
-									return SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
-								}
-
-								@Override
-								protected void onPostExecute(String response) {
-									setCommentStatus(0, getString(R.string.repeat));
-									(Toast.makeText(SonetComments.this, mServiceName + " " + getString(response != null ? R.string.success : R.string.failure), Toast.LENGTH_LONG)).show();
-								}
-							};
 							setCommentStatus(0, getString(R.string.loading));
-							asyncTask.execute();
+							new IdenticaRepeatTask(SonetComments.this, mAccount).like(sid, position, liked.equals(getString(R.string.like)));
 						} else {
 							if ((which < items.length) && (items[which] != null))
 								// open link
@@ -452,9 +407,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 				items = new String[count];
 				count = 1;
 				m.reset();
-				while (m.find()) {
+				while (m.find())
 					items[count++] = m.group();
-				}
 				mDialog = (new AlertDialog.Builder(this))
 				.setItems(items, new DialogInterface.OnClickListener() {
 					@Override
@@ -477,40 +431,15 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					items[0] = getString(mComments.get(position).get(getString(R.string.like)) == getString(R.string.like) ? R.string.like : R.string.unlike);
 					count = 1;
 					m.reset();
-					while (m.find()) {
+					while (m.find())
 						items[count++] = m.group();
-					}
 					mDialog = (new AlertDialog.Builder(this))
 					.setItems(items, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
 							if (which == 0) {
-								AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
-									@Override
-									protected String doInBackground(String... arg0) {
-										HttpUriRequest httpRequest;
-										if (liked.equals(getString(R.string.like))) {
-											httpRequest = new HttpPost(String.format(CHATTER_URL_LIKES, mChatterInstance, mSid));
-										} else {
-											httpRequest = new HttpDelete(String.format(CHATTER_URL_LIKE, mChatterInstance, mChatterLikeId));
-										}
-										httpRequest.setHeader("Authorization", "OAuth " + mChatterToken);
-										return SonetHttpClient.httpResponse(mHttpClient, httpRequest);
-									}
-
-									@Override
-									protected void onPostExecute(String response) {
-										if (response != null) {
-											setCommentStatus(position, getString(liked.equals(getString(R.string.like)) ? R.string.unlike : R.string.like));
-											(Toast.makeText(SonetComments.this, mServiceName + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-										} else {
-											setCommentStatus(position, getString(liked.equals(getString(R.string.like)) ? R.string.like : R.string.unlike));
-											(Toast.makeText(SonetComments.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
-										}
-									}
-								};
 								setCommentStatus(position, getString(R.string.loading));
-								asyncTask.execute();
+								new ChatterLikeTask(SonetComments.this, mAccount).like(sid, position, liked.equals(getString(R.string.like)));
 							} else {
 								if ((which < items.length) && (items[which] != null))
 									// open link
@@ -529,9 +458,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					items = new String[count];
 					count = 1;
 					m.reset();
-					while (m.find()) {
+					while (m.find())
 						items[count++] = m.group();
-					}
 					mDialog = (new AlertDialog.Builder(this))
 					.setItems(items, new DialogInterface.OnClickListener() {
 						@Override
