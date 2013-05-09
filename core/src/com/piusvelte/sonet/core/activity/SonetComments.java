@@ -533,6 +533,22 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 			setListAdapter(new SimpleAdapter(SonetComments.this, mComments, R.layout.comment, new String[]{Entities.FRIEND, Statuses.MESSAGE, Statuses.CREATEDTEXT, getString(R.string.like)}, new int[]{R.id.friend, R.id.message, R.id.created, R.id.like}));
 		}
 	}
+	
+	public void setDefaultMessage(String message) {
+		mMessage.setText("");
+		mMessage.append(message);
+	}
+	
+	public void setLikeable(String like) {
+		if (like != null) {
+			mSend.setEnabled(false);
+			mMessage.setEnabled(false);
+			mMessage.setText(R.string.uncommentable);
+		} else {
+			setCommentStatus(0, like);
+			mMessage.setEnabled(true);
+		}
+	}
 
 	private void loadComments() {
 		mComments.clear();
@@ -561,19 +577,18 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							mSid = sonetCrypto.Decrypt(status.getString(1));
 							mEsid = sonetCrypto.Decrypt(status.getString(2));
 							Cursor widget = getContentResolver().query(Widgets_settings.getContentUri(SonetComments.this), new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(status.getInt(3)), Long.toString(mAccount)}, null);
-							if (widget.moveToFirst()) {
+							if (widget.moveToFirst())
 								mTime24hr = widget.getInt(0) == 1;
-							} else {
+							else {
 								Cursor b = getContentResolver().query(Widgets_settings.getContentUri(SonetComments.this), new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(status.getInt(3)), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
-								if (b.moveToFirst()) {
+								if (b.moveToFirst())
 									mTime24hr = b.getInt(0) == 1;
-								} else {
+								else {
 									Cursor c = getContentResolver().query(Widgets_settings.getContentUri(SonetComments.this), new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
-									if (c.moveToFirst()) {
+									if (c.moveToFirst())
 										mTime24hr = c.getInt(0) == 1;
-									} else {
+									else
 										mTime24hr = false;
-									}
 									c.close();
 								}
 								b.close();
@@ -686,14 +701,12 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 						if ((response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpGet))) != null) {
 							try {
 								JSONObject data = new JSONObject(response);
-								if (data.has("isCommentable") && !data.getBoolean("isCommentable")) {
+								if (data.has("isCommentable") && !data.getBoolean("isCommentable"))
 									publishProgress(getString(R.string.uncommentable));
-								}
-								if (data.has("isLikable")) {
+								if (data.has("isLikable"))
 									publishProgress(getString(data.has("isLiked") && data.getBoolean("isLiked") ? R.string.unlike : R.string.like));
-								} else {
+								else
 									publishProgress(getString(R.string.unlikable));
-								}
 							} catch (JSONException e) {
 								Log.e(TAG,e.toString());
 							}
@@ -764,9 +777,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 							httpGet = new HttpGet(String.format(CHATTER_URL_COMMENTS, mChatterInstance, mSid));
 							httpGet.setHeader("Authorization", "OAuth " + mChatterToken);
 							response = SonetHttpClient.httpResponse(mHttpClient, httpGet);
-						} else {
+						} else
 							response = null;
-						}
 						break;
 					}
 					return response;
@@ -786,9 +798,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 								mSend.setEnabled(false);
 								mMessage.setEnabled(false);
 								mMessage.setText(R.string.uncommentable);
-							} else {
+							} else
 								setCommentStatus(0, params[0]);
-							}
 						} else {
 							setCommentStatus(0, params[0]);
 						}
