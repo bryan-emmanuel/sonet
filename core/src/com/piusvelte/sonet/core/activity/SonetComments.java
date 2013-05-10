@@ -549,6 +549,12 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 			mMessage.setEnabled(true);
 		}
 	}
+	
+	public void onCommentsLoaded() {
+		setListAdapter(new SimpleAdapter(SonetComments.this, mComments, R.layout.comment, new String[]{Entities.FRIEND, Statuses.MESSAGE, Statuses.CREATEDTEXT, getString(R.string.like)}, new int[]{R.id.friend, R.id.message, R.id.created, R.id.like}));
+		if (loadingDialog.isShowing())
+			loadingDialog.dismiss();
+	}
 
 	private void loadComments() {
 		mComments.clear();
