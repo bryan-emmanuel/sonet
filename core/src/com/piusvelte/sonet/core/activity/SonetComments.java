@@ -71,16 +71,16 @@ import com.piusvelte.sonet.core.Sonet.Statuses_styles;
 import com.piusvelte.sonet.core.Sonet.Widgets;
 import com.piusvelte.sonet.core.Sonet.Widgets_settings;
 import com.piusvelte.sonet.core.task.CommentTask;
-import com.piusvelte.sonet.core.task.chatter.ChatterCommentTask;
+import com.piusvelte.sonet.core.task.chatter.Chatter;
 import com.piusvelte.sonet.core.task.chatter.ChatterLikeTask;
-import com.piusvelte.sonet.core.task.facebook.FacebookCommentTask;
+import com.piusvelte.sonet.core.task.facebook.Facebook;
 import com.piusvelte.sonet.core.task.facebook.FacebookLikeTask;
-import com.piusvelte.sonet.core.task.foursquare.FoursquareCommentTask;
+import com.piusvelte.sonet.core.task.foursquare.Foursquare;
 import com.piusvelte.sonet.core.task.identica.IdenticaCommentTask;
 import com.piusvelte.sonet.core.task.identica.IdenticaRepeatTask;
-import com.piusvelte.sonet.core.task.linkedin.LinkedInCommentTask;
+import com.piusvelte.sonet.core.task.linkedin.LinkedIn;
 import com.piusvelte.sonet.core.task.linkedin.LinkedInLikeTask;
-import com.piusvelte.sonet.core.task.myspace.MySpaceCommentTask;
+import com.piusvelte.sonet.core.task.myspace.MySpace;
 import com.piusvelte.sonet.core.task.twitter.TwitterCommentTask;
 import com.piusvelte.sonet.core.task.twitter.TwitterRetweetTask;
 
@@ -116,25 +116,28 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class SonetComments extends ListActivity implements OnKeyListener, OnClickListener, TextWatcher, DialogInterface.OnClickListener, OnCancelListener {
+	
+	public static final String ACTION = "action";
+	
 	private static final String TAG = "SonetComments";
-	private int mService;
-	private long mAccount;
-	private String mSid = null;
-	private String mEsid = null;
+//	private int mService;
+//	private long mAccount;
+//	private String mSid = null;
+//	private String mEsid = null;
 	private EditText mMessage;
 	private ImageButton mSend;
 	private TextView mCount;
 	private List<HashMap<String, String>> mComments = new ArrayList<HashMap<String, String>>();
-	private boolean mTime24hr = false;
-	private String mChatterInstance = null;
-	private String mChatterToken = null;
-	private String mChatterLikeId = null;
-	private String mToken = null;
-	private String mSecret = null;
-	private String mAccountSid = null;
-	private String mServiceName = null;
+//	private boolean mTime24hr = false;
+//	private String mChatterInstance = null;
+//	private String mChatterToken = null;
+//	private String mChatterLikeId = null;
+//	private String mToken = null;
+//	private String mSecret = null;
+//	private String mAccountSid = null;
+//	private String mServiceName = null;
 	private Uri mData = null;
-	private SimpleDateFormat mSimpleDateFormat = null;
+//	private SimpleDateFormat mSimpleDateFormat = null;
 //	private HttpClient mHttpClient;
 	private String[] items = null;
 	private AlertDialog mDialog;
@@ -204,17 +207,17 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 				if (mService == TWITTER)
 					commentTask = new TwitterCommentTask(this, mAccount);
 				else if (mService == FACEBOOK)
-					commentTask = new FacebookCommentTask(this, mAccount);
+					commentTask = new Facebook(this, mAccount);
 				else if (mService == MYSPACE)
-					commentTask = new MySpaceCommentTask(this, mAccount);
+					commentTask = new MySpace(this, mAccount);
 				else if (mService == FOURSQUARE)
-					commentTask = new FoursquareCommentTask(this, mAccount);
+					commentTask = new Foursquare(this, mAccount);
 				else if (mService == LINKEDIN)
-					commentTask = new LinkedInCommentTask(this, mAccount);
+					commentTask = new LinkedIn(this, mAccount);
 				else if (mService == IDENTICA)
 					commentTask = new IdenticaCommentTask(this, mAccount);
 				else if (mService == CHATTER)
-					commentTask = new ChatterCommentTask(this, mAccount);
+					commentTask = new Chatter(this, mAccount);
 				else
 					return;
 				loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
@@ -536,7 +539,8 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 	
 	public void setDefaultMessage(String message) {
 		mMessage.setText("");
-		mMessage.append(message);
+		if (message != null)
+			mMessage.append(message);
 	}
 	
 	public void setLikeable(String like) {
@@ -550,10 +554,19 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 		}
 	}
 	
-	public void onCommentsLoaded() {
+	public void onCommentsLoaded(String message) {
+		setDefaultMessage(message);
+		mMessage.setEnabled(true);
 		setListAdapter(new SimpleAdapter(SonetComments.this, mComments, R.layout.comment, new String[]{Entities.FRIEND, Statuses.MESSAGE, Statuses.CREATEDTEXT, getString(R.string.like)}, new int[]{R.id.friend, R.id.message, R.id.created, R.id.like}));
 		if (loadingDialog.isShowing())
 			loadingDialog.dismiss();
+	}
+	
+	public void addComment(HashMap<String, String> commentMap) {
+		if (commentMap == null)
+			mComments.clear();
+		else
+			mComments.add(commentMap);
 	}
 
 	private void loadComments() {
@@ -659,6 +672,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 						commentMap.put(getString(R.string.like), "");
 						mComments.add(commentMap);
 					}
+					//TODO next
 					String response = null;
 					HttpGet httpGet;
 					SonetOAuth sonetOAuth;

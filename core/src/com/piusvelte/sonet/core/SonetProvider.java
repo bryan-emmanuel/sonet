@@ -58,12 +58,12 @@ public class SonetProvider extends ContentProvider {
 	private static final int ACCOUNTS = 0;
 	private static final int WIDGETS = 1;
 	private static final int STATUSES = 2;
-	protected static final int STATUSES_STYLES = 3;
+	public static final int STATUSES_STYLES = 3;
 	private static final int STATUSES_STYLES_WIDGET = 4;
 	private static final int ENTITIES = 5;
 	private static final int WIDGET_ACCOUNTS = 6;
 	private static final int WIDGET_ACCOUNTS_VIEW = 7;
-	protected static final int NOTIFICATIONS = 8;
+	public static final int NOTIFICATIONS = 8;
 	protected static final int WIDGETS_SETTINGS = 9;
 	protected static final int DISTINCT_WIDGETS_SETTINGS = 10;
 	protected static final int STATUS_LINKS = 11;
@@ -82,7 +82,7 @@ public class SonetProvider extends ContentProvider {
 	private static final String TABLE_STATUSES = "statuses";
 	private static HashMap<String, String> statusesProjectionMap;
 
-	protected static final String VIEW_STATUSES_STYLES = "statuses_styles";
+	public static final String VIEW_STATUSES_STYLES = "statuses_styles";
 	private static HashMap<String, String> statuses_stylesProjectionMap;
 
 	private static final String TABLE_ENTITIES = "entities";
@@ -94,7 +94,7 @@ public class SonetProvider extends ContentProvider {
 	private static final String VIEW_WIDGET_ACCOUNTS = "widget_accounts_view";
 	private static HashMap<String, String> widget_accounts_viewProjectionMap;
 
-	protected static final String TABLE_NOTIFICATIONS = "notifications";
+	public static final String TABLE_NOTIFICATIONS = "notifications";
 	private static HashMap<String, String> notificationsProjectionMap;
 
 	private static final String VIEW_WIDGETS_SETTINGS = "widgets_settings";

@@ -19,40 +19,61 @@
  */
 package com.piusvelte.sonet.core.task;
 
-import org.apache.http.client.HttpClient;
-
-import com.piusvelte.sonet.core.SonetCrypto;
-import com.piusvelte.sonet.core.SonetHttpClient;
+import com.piusvelte.sonet.core.R;
+import com.piusvelte.sonet.core.Sonet;
 import com.piusvelte.sonet.core.activity.SonetComments;
+import com.piusvelte.sonet.core.task.chatter.Chatter;
+import com.piusvelte.sonet.core.task.facebook.Facebook;
+import com.piusvelte.sonet.core.task.identica.Identica;
+import com.piusvelte.sonet.core.task.linkedin.LinkedIn;
+import com.piusvelte.sonet.core.task.twitter.Twitter;
 
-import android.os.AsyncTask;
+import android.net.Uri;
 
-public class LikeTask extends AsyncTask<String, String, String> {
+public class LikeTask extends CommentsCommonTask {
 
 	public static final int ID = 0;
 	public static final int LIKE = 1;
+	
+	int position;
 
-	protected SonetComments activity;
-	protected long accountId;
-	protected HttpClient httpClient;
-	protected SonetCrypto sonetCrypto;
-	protected int position;
-
-	public LikeTask(SonetComments activity, long accountId) {
-		this.activity = activity;
-		this.accountId = accountId;
-		httpClient = SonetHttpClient.getThreadSafeClient(activity.getApplicationContext());
-		sonetCrypto = SonetCrypto.getInstance(activity.getApplicationContext());
+	public LikeTask(SonetComments activity, Uri data) {
+		super(activity, data);
 	}
 
 	public void like(String id, int position, boolean like) {
 		this.position = position;
-		super.execute(id, Boolean.toString(like));
+		execute(id, Boolean.toString(like));
 	}
 
 	@Override
 	protected String doInBackground(String... params) {
-		return null;
+		loadCommon();
+		if (service == Sonet.TWITTER) {
+			publishProgress(serviceName,
+					activity.getString((new Twitter(token, secret, httpClient).retweet(params[ID])) ? R.string.success : R.string.failure));
+			return activity.getString(R.string.retweet);
+		} else if (service == Sonet.FACEBOOK) {
+			boolean like = Boolean.parseBoolean(params[LIKE]);
+			boolean success = new Facebook(token, httpClient).like(params[ID], like);
+			publishProgress(serviceName, activity.getString(success ? R.string.success : R.string.failure));
+			return activity.getString((like == success) ? R.string.unlike : R.string.like);
+		} else if (service == Sonet.LINKEDIN) {
+			boolean like = Boolean.parseBoolean(params[LIKE]);
+			boolean success = new LinkedIn(token, secret, httpClient).like(params[ID], like);
+			publishProgress(serviceName, activity.getString(success ? R.string.success : R.string.failure));
+			return activity.getString((like == success) ? R.string.unlike : R.string.like);
+		} else if (service == Sonet.IDENTICA) {
+			publishProgress(serviceName,
+					activity.getString((new Identica(token, secret, httpClient).repeat(params[ID])) ? R.string.success : R.string.failure));
+			return activity.getString(R.string.repeat);
+		} else if (service == Sonet.CHATTER) {
+			boolean like = Boolean.parseBoolean(params[LIKE]);
+			boolean success = new Chatter(token, httpClient).like(accountServiceId, params[ID], like);
+			publishProgress(serviceName, activity.getString(success ? R.string.success : R.string.failure));
+			return activity.getString((like == success) ? R.string.unlike : R.string.like);
+		}
+		return "";
 	}
 
 	@Override

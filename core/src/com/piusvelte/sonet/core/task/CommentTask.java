@@ -19,39 +19,51 @@
  */
 package com.piusvelte.sonet.core.task;
 
-import org.apache.http.client.HttpClient;
-
-import com.piusvelte.sonet.core.SonetCrypto;
-import com.piusvelte.sonet.core.SonetHttpClient;
+import com.piusvelte.sonet.core.R;
+import com.piusvelte.sonet.core.Sonet;
 import com.piusvelte.sonet.core.activity.SonetComments;
+import com.piusvelte.sonet.core.task.chatter.Chatter;
+import com.piusvelte.sonet.core.task.facebook.Facebook;
+import com.piusvelte.sonet.core.task.foursquare.Foursquare;
+import com.piusvelte.sonet.core.task.identica.Identica;
+import com.piusvelte.sonet.core.task.linkedin.LinkedIn;
+import com.piusvelte.sonet.core.task.myspace.MySpace;
+import com.piusvelte.sonet.core.task.twitter.Twitter;
 
-import android.os.AsyncTask;
+import android.net.Uri;
 
-public class CommentTask extends AsyncTask<String, String, String> {
+public class CommentTask extends CommentsCommonTask {
 
-	public static final int ENTITY = 0;
-	public static final int ID = 1;
-	public static final int MESSAGE = 2;
+	public static final int MESSAGE = 0;
 
-	protected SonetComments activity;
-	protected long accountId;
-	protected HttpClient httpClient;
-	protected SonetCrypto sonetCrypto;
-
-	public CommentTask(SonetComments activity, long accountId) {
-		this.activity = activity;
-		this.accountId = accountId;
-		httpClient = SonetHttpClient.getThreadSafeClient(activity.getApplicationContext());
-		sonetCrypto = SonetCrypto.getInstance(activity.getApplicationContext());
+	public CommentTask(SonetComments activity, Uri data) {
+		super(activity, data);
 	}
 
-	public void comment(String entity, String id, String message) {
-		super.execute(entity, id, message);
+	public void comment(String message) {
+		execute(message);
 	}
 
 	@Override
 	protected String doInBackground(String... params) {
-		return null;
+		loadCommon();
+		publishProgress(serviceName);
+		boolean commented = false;
+		if (service == Sonet.TWITTER)
+			commented = new Twitter(token, secret, httpClient).comment(statusId, params[MESSAGE]);
+		else if (service == Sonet.FACEBOOK)
+			commented = new Facebook(token, httpClient).comment(statusId, params[MESSAGE]);
+		else if (service == Sonet.MYSPACE)
+			commented = new MySpace(token, secret, httpClient).comment(entityId, statusId, params[MESSAGE]);
+		else if (service == Sonet.FOURSQUARE)
+			commented = new Foursquare(token, httpClient).comment(statusId, params[MESSAGE]);
+		else if (service == Sonet.LINKEDIN)
+			commented = new LinkedIn(token, secret, httpClient).comment(statusId, params[MESSAGE]);
+		else if (service == Sonet.IDENTICA)
+			commented = new Identica(token, secret, httpClient).comment(statusId, params[MESSAGE]);
+		else if (service == Sonet.CHATTER)
+			commented = new Chatter(token, httpClient).comment(statusId, params[MESSAGE]);
+		return serviceName + activity.getString(commented ? R.string.success : R.string.failure);
 	}
 
 	@Override
