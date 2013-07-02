@@ -71,6 +71,7 @@ import com.piusvelte.sonet.core.Sonet.Statuses_styles;
 import com.piusvelte.sonet.core.Sonet.Widgets;
 import com.piusvelte.sonet.core.Sonet.Widgets_settings;
 import com.piusvelte.sonet.core.task.CommentTask;
+import com.piusvelte.sonet.core.task.LikeTask;
 import com.piusvelte.sonet.core.task.chatter.Chatter;
 import com.piusvelte.sonet.core.task.chatter.ChatterLikeTask;
 import com.piusvelte.sonet.core.task.facebook.Facebook;
@@ -200,26 +201,10 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 	@Override
 	public void onClick(View v) {
 		if (v == mSend) {
-			if ((mMessage.getText().toString() != null) && (mMessage.getText().toString().length() > 0) && (mSid != null) && (mEsid != null)) {
+			if ((mMessage.getText().toString() != null) && (mMessage.getText().toString().length() > 0)) {
 				mMessage.setEnabled(false);
 				mSend.setEnabled(false);
-				final CommentTask commentTask;
-				if (mService == TWITTER)
-					commentTask = new TwitterCommentTask(this, mAccount);
-				else if (mService == FACEBOOK)
-					commentTask = new Facebook(this, mAccount);
-				else if (mService == MYSPACE)
-					commentTask = new MySpace(this, mAccount);
-				else if (mService == FOURSQUARE)
-					commentTask = new Foursquare(this, mAccount);
-				else if (mService == LINKEDIN)
-					commentTask = new LinkedIn(this, mAccount);
-				else if (mService == IDENTICA)
-					commentTask = new IdenticaCommentTask(this, mAccount);
-				else if (mService == CHATTER)
-					commentTask = new Chatter(this, mAccount);
-				else
-					return;
+				final CommentTask commentTask = new CommentTask(this, mData);
 				loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {				
 					@Override
 					public void onCancel(DialogInterface dialog) {
@@ -228,7 +213,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					}
 				});
 				loadingDialog.show();
-				commentTask.comment(mEsid, mSid, mMessage.getText().toString());
+				commentTask.comment(mMessage.getText().toString());
 			} else {
 				(Toast.makeText(SonetComments.this, "error parsing message body", Toast.LENGTH_LONG)).show();
 				mMessage.setEnabled(true);
@@ -265,222 +250,31 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 			while (m.find())
 				count++;
 			// like comments, the first comment is the post itself
-			switch (mService) {
-			case TWITTER:
-				// retweet
-				items = new String[count + 1];
-				items[0] = getString(R.string.retweet);
-				count = 1;
-				m.reset();
-				while (m.find())
-					items[count++] = m.group();
-				mDialog = (new AlertDialog.Builder(this))
-				.setItems(items, new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						if (which == 0) {
-							setCommentStatus(0, getString(R.string.loading));
-							new TwitterRetweetTask(SonetComments.this, mAccount).like(sid, 0, true);
-						} else {
-							if ((which < items.length) && (items[which] != null))
-								// open link
-								startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
-							else
-								(Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-						}
-					}
-				})
-				.setCancelable(true)
-				.setOnCancelListener(this)
-				.create();
-				mDialog.show();
-				break;
-			case FACEBOOK:
-				items = new String[count + 1];
-				items[0] = getString(mComments.get(position).get(getString(R.string.like)) == getString(R.string.like) ? R.string.like : R.string.unlike);
-				count = 1;
-				m.reset();
-				while (m.find())
-					items[count++] = m.group();
-				mDialog = (new AlertDialog.Builder(this))
-				.setItems(items, new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						if (which == 0) {
-							setCommentStatus(position, getString(R.string.loading));
-							new FacebookLikeTask(SonetComments.this, mAccount).like(sid, position, liked.equals(getString(R.string.like)));
-						} else {
-							if ((which < items.length) && (items[which] != null))
-								// open link
-								startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
-							else
-								(Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-						}
-					}
-				})
-				.setCancelable(true)
-				.setOnCancelListener(this)
-				.create();
-				mDialog.show();
-				break;
-			case LINKEDIN:
-				if (position == 0) {
-					items = new String[count + 1];
-					items[0] = getString(mComments.get(position).get(getString(R.string.like)) == getString(R.string.like) ? R.string.like : R.string.unlike);
-					count = 1;
-					m.reset();
-					while (m.find())
-						items[count++] = m.group();
-					mDialog = (new AlertDialog.Builder(this))
-					.setItems(items, new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							if (which == 0) {
-								setCommentStatus(position, getString(R.string.loading));
-								new LinkedInLikeTask(SonetComments.this, mAccount).like(sid, position, liked.equals(getString(R.string.like)));
-							} else {
-								if ((which < items.length) && (items[which] != null))
-									// open link
-									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
-								else
-									(Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-							}
-						}
-					})
-					.setCancelable(true)
-					.setOnCancelListener(this)
-					.create();
-					mDialog.show();
-				} else {
-					// no like option here
-					items = new String[count];
-					count = 1;
-					m.reset();
-					while (m.find())
-						items[count++] = m.group();
-					mDialog = (new AlertDialog.Builder(this))
-					.setItems(items, new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							if ((which < items.length) && (items[which] != null))
-								// open link
-								startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
-							else
-								(Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-						}
-					})
-					.setCancelable(true)
-					.setOnCancelListener(this)
-					.create();
-					mDialog.show();
-				}
-				break;
-			case IDENTICA:
-				// retweet
-				items = new String[count + 1];
-				items[0] = getString(R.string.repeat);
-				count = 1;
-				m.reset();
-				while (m.find())
-					items[count++] = m.group();
-				mDialog = (new AlertDialog.Builder(this))
-				.setItems(items, new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						if (which == 0) {
-							setCommentStatus(0, getString(R.string.loading));
-							new IdenticaRepeatTask(SonetComments.this, mAccount).like(sid, position, liked.equals(getString(R.string.like)));
-						} else {
-							if ((which < items.length) && (items[which] != null))
-								// open link
-								startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
-							else
-								(Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-						}
-					}
-				})
-				.setCancelable(true)
-				.setOnCancelListener(this)
-				.create();
-				mDialog.show();
-				break;
-			case GOOGLEPLUS:
-				//TODO:
-				// plus1
-				items = new String[count];
-				count = 1;
-				m.reset();
-				while (m.find())
-					items[count++] = m.group();
-				mDialog = (new AlertDialog.Builder(this))
-				.setItems(items, new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
+			items = new String[count + 1];
+			items[0] = mComments.get(position).get(getString(R.string.like));
+			count = 1;
+			m.reset();
+			while (m.find())
+				items[count++] = m.group();
+			mDialog = (new AlertDialog.Builder(this))
+			.setItems(items, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					if (which == 0) {
+						setCommentStatus(0, getString(R.string.loading));
+						new LikeTask(SonetComments.this, mData).like(sid, position, liked);
+					} else {
 						if ((which < items.length) && (items[which] != null))
-							// open link
 							startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
 						else
 							(Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
 					}
-				})
-				.setCancelable(true)
-				.setOnCancelListener(this)
-				.create();
-				mDialog.show();
-				break;
-			case CHATTER:
-				if (position == 0) {
-					items = new String[count + 1];
-					items[0] = getString(mComments.get(position).get(getString(R.string.like)) == getString(R.string.like) ? R.string.like : R.string.unlike);
-					count = 1;
-					m.reset();
-					while (m.find())
-						items[count++] = m.group();
-					mDialog = (new AlertDialog.Builder(this))
-					.setItems(items, new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							if (which == 0) {
-								setCommentStatus(position, getString(R.string.loading));
-								new ChatterLikeTask(SonetComments.this, mAccount).like(sid, position, liked.equals(getString(R.string.like)));
-							} else {
-								if ((which < items.length) && (items[which] != null))
-									// open link
-									startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
-								else
-									(Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-							}
-						}
-					})
-					.setCancelable(true)
-					.setOnCancelListener(this)
-					.create();
-					mDialog.show();
-				} else {
-					// no like option here
-					items = new String[count];
-					count = 1;
-					m.reset();
-					while (m.find())
-						items[count++] = m.group();
-					mDialog = (new AlertDialog.Builder(this))
-					.setItems(items, new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							if ((which < items.length) && (items[which] != null))
-								// open link
-								startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
-							else
-								(Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-						}
-					})
-					.setCancelable(true)
-					.setOnCancelListener(this)
-					.create();
-					mDialog.show();
 				}
-				break;
-			}
+			})
+			.setCancelable(true)
+			.setOnCancelListener(this)
+			.create();
+			mDialog.show();
 		}
 	}
 
@@ -528,7 +322,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 		setCommentStatus(position, like);
 	}
 
-	private void setCommentStatus(int position, String status) {
+	public void setCommentStatus(int position, String status) {
 		if (mComments.size() > position) {
 			HashMap<String, String> comment = mComments.get(position);
 			comment.put(getString(R.string.like), status);
@@ -554,8 +348,13 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 		}
 	}
 	
-	public void onCommentsLoaded(String message) {
-		setDefaultMessage(message);
+	public void uncommentable() {
+		mSend.setEnabled(false);
+		mMessage.setEnabled(false);
+		mMessage.setText(R.string.uncommentable);
+	}
+	
+	public void onCommentsLoaded() {
 		mMessage.setEnabled(true);
 		setListAdapter(new SimpleAdapter(SonetComments.this, mComments, R.layout.comment, new String[]{Entities.FRIEND, Statuses.MESSAGE, Statuses.CREATEDTEXT, getString(R.string.like)}, new int[]{R.id.friend, R.id.message, R.id.created, R.id.like}));
 		if (loadingDialog.isShowing())
@@ -580,98 +379,6 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 			protected String doInBackground(Void... none) {
 				// load the status itself
 				if (mData != null) {
-					SonetCrypto sonetCrypto = SonetCrypto.getInstance(getApplicationContext());
-					UriMatcher um = new UriMatcher(UriMatcher.NO_MATCH);
-					String authority = Sonet.getAuthority(SonetComments.this);
-					um.addURI(authority, SonetProvider.VIEW_STATUSES_STYLES + "/*", SonetProvider.STATUSES_STYLES);
-					um.addURI(authority, SonetProvider.TABLE_NOTIFICATIONS + "/*", SonetProvider.NOTIFICATIONS);
-					Cursor status;
-					switch (um.match(mData)) {
-					case SonetProvider.STATUSES_STYLES:
-						status = getContentResolver().query(Statuses_styles.getContentUri(SonetComments.this), new String[]{Statuses_styles.ACCOUNT, Statuses_styles.SID, Statuses_styles.ESID, Statuses_styles.WIDGET, Statuses_styles.SERVICE, Statuses_styles.FRIEND, Statuses_styles.MESSAGE, Statuses_styles.CREATED}, Statuses_styles._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
-						if (status.moveToFirst()) {
-							mService = status.getInt(4);
-							mServiceName = getResources().getStringArray(R.array.service_entries)[mService];
-							mAccount = status.getLong(0);
-							mSid = sonetCrypto.Decrypt(status.getString(1));
-							mEsid = sonetCrypto.Decrypt(status.getString(2));
-							Cursor widget = getContentResolver().query(Widgets_settings.getContentUri(SonetComments.this), new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(status.getInt(3)), Long.toString(mAccount)}, null);
-							if (widget.moveToFirst())
-								mTime24hr = widget.getInt(0) == 1;
-							else {
-								Cursor b = getContentResolver().query(Widgets_settings.getContentUri(SonetComments.this), new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(status.getInt(3)), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
-								if (b.moveToFirst())
-									mTime24hr = b.getInt(0) == 1;
-								else {
-									Cursor c = getContentResolver().query(Widgets_settings.getContentUri(SonetComments.this), new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
-									if (c.moveToFirst())
-										mTime24hr = c.getInt(0) == 1;
-									else
-										mTime24hr = false;
-									c.close();
-								}
-								b.close();
-							}
-							widget.close();
-							HashMap<String, String> commentMap = new HashMap<String, String>();
-							commentMap.put(Statuses.SID, mSid);
-							commentMap.put(Entities.FRIEND, status.getString(5));
-							commentMap.put(Statuses.MESSAGE, status.getString(6));
-							commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(status.getLong(7), mTime24hr));
-							commentMap.put(getString(R.string.like), mService == TWITTER ? getString(R.string.retweet) : mService == IDENTICA ? getString(R.string.repeat) : "");
-							mComments.add(commentMap);
-							// load the session
-							Cursor account = getContentResolver().query(Accounts.getContentUri(SonetComments.this), new String[]{Accounts.TOKEN, Accounts.SECRET, Accounts.SID}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-							if (account.moveToFirst()) {
-								mToken = sonetCrypto.Decrypt(account.getString(0));
-								mSecret = sonetCrypto.Decrypt(account.getString(1));
-								mAccountSid = sonetCrypto.Decrypt(account.getString(2));
-							}
-							account.close();
-						}
-						status.close();
-						break;
-					case SonetProvider.NOTIFICATIONS:
-						Cursor notification = getContentResolver().query(Notifications.getContentUri(SonetComments.this), new String[]{Notifications.ACCOUNT, Notifications.SID, Notifications.ESID, Notifications.FRIEND, Notifications.MESSAGE, Notifications.CREATED}, Notifications._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
-						if (notification.moveToFirst()) {
-							// clear notification
-							ContentValues values = new ContentValues();
-							values.put(Notifications.CLEARED, 1);
-							getContentResolver().update(Notifications.getContentUri(SonetComments.this), values, Notifications._ID + "=?", new String[]{mData.getLastPathSegment()});
-							mAccount = notification.getLong(0);
-							mSid = sonetCrypto.Decrypt(notification.getString(1));
-							mEsid = sonetCrypto.Decrypt(notification.getString(2));
-							mTime24hr = false;
-							// load the session
-							Cursor account = getContentResolver().query(Accounts.getContentUri(SonetComments.this), new String[]{Accounts.TOKEN, Accounts.SECRET, Accounts.SID, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-							if (account.moveToFirst()) {
-								mToken = sonetCrypto.Decrypt(account.getString(0));
-								mSecret = sonetCrypto.Decrypt(account.getString(1));
-								mAccountSid = sonetCrypto.Decrypt(account.getString(2));
-								mService = account.getInt(3);
-							}
-							account.close();
-							HashMap<String, String> commentMap = new HashMap<String, String>();
-							commentMap.put(Statuses.SID, mSid);
-							commentMap.put(Entities.FRIEND, notification.getString(3));
-							commentMap.put(Statuses.MESSAGE, notification.getString(4));
-							commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(notification.getLong(5), mTime24hr));
-							commentMap.put(getString(R.string.like), mService == TWITTER ? getString(R.string.retweet) : getString(R.string.repeat));
-							mComments.add(commentMap);
-							mServiceName = getResources().getStringArray(R.array.service_entries)[mService];
-						}
-						notification.close();
-						break;
-					default:
-						mComments.clear();
-						HashMap<String, String> commentMap = new HashMap<String, String>();
-						commentMap.put(Statuses.SID, "");
-						commentMap.put(Entities.FRIEND, "");
-						commentMap.put(Statuses.MESSAGE, "error, status not found");
-						commentMap.put(Statuses.CREATEDTEXT, "");
-						commentMap.put(getString(R.string.like), "");
-						mComments.add(commentMap);
-					}
 					//TODO next
 					String response = null;
 					HttpGet httpGet;
@@ -679,153 +386,14 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 					boolean liked = false;
 					String screen_name = "";
 					switch (mService) {
-					case TWITTER:
-						sonetOAuth = new SonetOAuth(TWITTER_KEY, TWITTER_SECRET, mToken, mSecret);
-						if ((response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_USER, TWITTER_BASE_URL, mEsid))))) != null) {
-							try {
-								JSONObject user = new JSONObject(response);
-								screen_name = "@" + user.getString(Sscreen_name) + " ";
-							} catch (JSONException e) {
-								Log.e(TAG,e.toString());
-							}
-						}
-						publishProgress(screen_name);
-						response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_MENTIONS, TWITTER_BASE_URL, String.format(TWITTER_SINCE_ID, mSid)))));
-						break;
-					case FACEBOOK:
-						if ((response = SonetHttpClient.httpResponse(mHttpClient, new HttpGet(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, mSid, Saccess_token, mToken)))) != null) {
-							try {
-								JSONArray likes = new JSONObject(response).getJSONArray(Sdata);
-								for (int i = 0, i2 = likes.length(); i < i2; i++) {
-									JSONObject like = likes.getJSONObject(i);
-									if (like.getString(Sid).equals(mAccountSid)) {
-										liked = true;
-										break;
-									}
-								}
-							} catch (JSONException e) {
-								Log.e(TAG,e.toString());
-							}
-						}
-						publishProgress(getString(liked ? R.string.unlike : R.string.like));
-						response = SonetHttpClient.httpResponse(mHttpClient, new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, mSid, Saccess_token, mToken)));
-						break;
-					case MYSPACE:
-						sonetOAuth = new SonetOAuth(MYSPACE_KEY, MYSPACE_SECRET, mToken, mSecret);
-						response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mEsid, mSid))));
-						break;
-					case LINKEDIN:
-						sonetOAuth = new SonetOAuth(LINKEDIN_KEY, LINKEDIN_SECRET, mToken, mSecret);
-						httpGet = new HttpGet(String.format(LINKEDIN_UPDATE, LINKEDIN_BASE_URL, mSid));
-						for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
-						if ((response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpGet))) != null) {
-							try {
-								JSONObject data = new JSONObject(response);
-								if (data.has("isCommentable") && !data.getBoolean("isCommentable"))
-									publishProgress(getString(R.string.uncommentable));
-								if (data.has("isLikable"))
-									publishProgress(getString(data.has("isLiked") && data.getBoolean("isLiked") ? R.string.unlike : R.string.like));
-								else
-									publishProgress(getString(R.string.unlikable));
-							} catch (JSONException e) {
-								Log.e(TAG,e.toString());
-							}
-						} else {
-							publishProgress(getString(R.string.unlikable));							
-						}
-						httpGet = new HttpGet(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, mSid));
-						for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
-						response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpGet));
-						break;
-					case FOURSQUARE:
-						response = SonetHttpClient.httpResponse(mHttpClient, new HttpGet(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, mSid, mToken)));
-						break;
-					case IDENTICA:
-						sonetOAuth = new SonetOAuth(IDENTICA_KEY, IDENTICA_SECRET, mToken, mSecret);
-						if ((response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(IDENTICA_USER, IDENTICA_BASE_URL, mEsid))))) != null) {
-							try {
-								JSONObject user = new JSONObject(response);
-								screen_name = "@" + user.getString(Sscreen_name) + " ";
-							} catch (JSONException e) {
-								Log.e(TAG,e.toString());
-							}
-						}
-						publishProgress(screen_name);
-						response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(IDENTICA_MENTIONS, IDENTICA_BASE_URL, String.format(IDENTICA_SINCE_ID, mSid)))));
-						break;
 					case GOOGLEPLUS:
 						//TODO:
 						// get plussed status
-						break;
-					case CHATTER:
-						// Chatter requires loading an instance
-						if ((mChatterInstance == null) || (mChatterToken == null)) {
-							if ((response = SonetHttpClient.httpResponse(mHttpClient, new HttpPost(String.format(CHATTER_URL_ACCESS, CHATTER_KEY, mToken)))) != null) {
-								try {
-									JSONObject jobj = new JSONObject(response);
-									if (jobj.has("instance_url") && jobj.has(Saccess_token)) {
-										mChatterInstance = jobj.getString("instance_url");
-										mChatterToken = jobj.getString(Saccess_token);
-									}
-								} catch (JSONException e) {
-									Log.e(TAG,e.toString());
-								}
-							}
-						}
-						if ((mChatterInstance != null) && (mChatterToken != null)) {
-							httpGet = new HttpGet(String.format(CHATTER_URL_LIKES, mChatterInstance, mSid));
-							httpGet.setHeader("Authorization", "OAuth " + mChatterToken);
-							if ((response = SonetHttpClient.httpResponse(mHttpClient, httpGet)) != null) {
-								try {
-									JSONObject jobj = new JSONObject(response);
-									if (jobj.getInt(Stotal) > 0) {
-										JSONArray likes = jobj.getJSONArray("likes");
-										for (int i = 0, i2 = likes.length(); i < i2; i++) {
-											JSONObject like = likes.getJSONObject(i);
-											if (like.getJSONObject(Suser).getString(Sid).equals(mAccountSid)) {
-												mChatterLikeId = like.getString(Sid);
-												liked = true;
-												break;
-											}
-										}
-									}
-								} catch (JSONException e) {
-									Log.e(TAG,e.toString());
-								}
-							}
-							publishProgress(getString(liked ? R.string.unlike : R.string.like));
-							httpGet = new HttpGet(String.format(CHATTER_URL_COMMENTS, mChatterInstance, mSid));
-							httpGet.setHeader("Authorization", "OAuth " + mChatterToken);
-							response = SonetHttpClient.httpResponse(mHttpClient, httpGet);
-						} else
-							response = null;
 						break;
 					}
 					return response;
 				}
 				return null;
-			}
-
-			@Override
-			protected void onProgressUpdate(String... params) {
-				mMessage.setText("");
-				if (params != null) {
-					if ((mService == TWITTER) || (mService == IDENTICA)) {
-						mMessage.append(params[0]);
-					} else {
-						if (mService == LINKEDIN) {
-							if (params[0].equals(getString(R.string.uncommentable))) {
-								mSend.setEnabled(false);
-								mMessage.setEnabled(false);
-								mMessage.setText(R.string.uncommentable);
-							} else
-								setCommentStatus(0, params[0]);
-						} else {
-							setCommentStatus(0, params[0]);
-						}
-					}
-				}
-				mMessage.setEnabled(true);
 			}
 
 			@Override
@@ -836,117 +404,6 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 						JSONArray comments;
 						mSimpleDateFormat = null;
 						switch (mService) {
-						case TWITTER:
-							comments = new JSONArray(response);
-							if ((i2 = comments.length()) > 0) {
-								for (int i = 0; i < i2; i++) {
-									JSONObject comment = comments.getJSONObject(i);
-									if (comment.getString(Sin_reply_to_status_id) == mSid) {
-										HashMap<String, String> commentMap = new HashMap<String, String>();
-										commentMap.put(Statuses.SID, comment.getString(Sid));
-										commentMap.put(Entities.FRIEND, comment.getJSONObject(Suser).getString(Sname));
-										commentMap.put(Statuses.MESSAGE, comment.getString(Stext));
-										commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(parseDate(comment.getString(Screated_at), TWITTER_DATE_FORMAT), mTime24hr));
-										commentMap.put(getString(R.string.like), getString(R.string.retweet));
-										mComments.add(commentMap);
-									}
-								}
-							} else {
-								noComments();
-							}
-							break;
-						case FACEBOOK:
-							comments = new JSONObject(response).getJSONArray(Sdata);
-							if ((i2 = comments.length()) > 0) {
-								for (int i = 0; i < i2; i++) {
-									JSONObject comment = comments.getJSONObject(i);
-									HashMap<String, String> commentMap = new HashMap<String, String>();
-									commentMap.put(Statuses.SID, comment.getString(Sid));
-									commentMap.put(Entities.FRIEND, comment.getJSONObject(Sfrom).getString(Sname));
-									commentMap.put(Statuses.MESSAGE, comment.getString(Smessage));
-									commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(comment.getLong(Screated_time) * 1000, mTime24hr));
-									commentMap.put(getString(R.string.like), getString(comment.has(Suser_likes) && comment.getBoolean(Suser_likes) ? R.string.unlike : R.string.like));
-									mComments.add(commentMap);
-								}
-							} else {
-								noComments();
-							}
-							break;
-						case MYSPACE:
-							comments = new JSONObject(response).getJSONArray(Sentry);
-							if ((i2 = comments.length()) > 0) {
-								for (int i = 0; i < i2; i++) {
-									JSONObject entry = comments.getJSONObject(i);
-									HashMap<String, String> commentMap = new HashMap<String, String>();
-									commentMap.put(Statuses.SID, entry.getString(ScommentId));
-									commentMap.put(Entities.FRIEND, entry.getJSONObject(Sauthor).getString(SdisplayName));
-									commentMap.put(Statuses.MESSAGE, entry.getString(Sbody));
-									commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(parseDate(entry.getString(SpostedDate), MYSPACE_DATE_FORMAT), mTime24hr));
-									commentMap.put(getString(R.string.like), "");
-									mComments.add(commentMap);
-								}
-							} else {
-								noComments();
-							}
-							break;
-						case LINKEDIN:
-							JSONObject jsonResponse = new JSONObject(response);
-							if (jsonResponse.has(S_total) && (jsonResponse.getInt(S_total) != 0)) {
-								comments = jsonResponse.getJSONArray(Svalues);
-								if ((i2 = comments.length()) > 0) {
-									for (int i = 0; i < i2; i++) {
-										JSONObject comment = comments.getJSONObject(i);
-										JSONObject person = comment.getJSONObject(Sperson);
-										HashMap<String, String> commentMap = new HashMap<String, String>();
-										commentMap.put(Statuses.SID, comment.getString(Sid));
-										commentMap.put(Entities.FRIEND, person.getString(SfirstName) + " " + person.getString(SlastName));
-										commentMap.put(Statuses.MESSAGE, comment.getString(Scomment));
-										commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(comment.getLong(Stimestamp), mTime24hr));
-										commentMap.put(getString(R.string.like), "");
-										mComments.add(commentMap);
-									}
-								} else {
-									noComments();
-								}
-							}
-							break;
-						case FOURSQUARE:
-							comments = new JSONObject(response).getJSONObject(Sresponse).getJSONObject(Scheckin).getJSONObject(Scomments).getJSONArray(Sitems);
-							if ((i2 = comments.length()) > 0) {
-								for (int i = 0; i < i2; i++) {
-									JSONObject comment = comments.getJSONObject(i);
-									JSONObject user = comment.getJSONObject(Suser);
-									HashMap<String, String> commentMap = new HashMap<String, String>();
-									commentMap.put(Statuses.SID, comment.getString(Sid));
-									commentMap.put(Entities.FRIEND, user.getString(SfirstName) + " " + user.getString(SlastName));
-									commentMap.put(Statuses.MESSAGE, comment.getString(Stext));
-									commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(comment.getLong(ScreatedAt) * 1000, mTime24hr));
-									commentMap.put(getString(R.string.like), "");
-									mComments.add(commentMap);
-								}
-							} else {
-								noComments();
-							}
-							break;
-						case IDENTICA:
-							comments = new JSONArray(response);
-							if ((i2 = comments.length()) > 0) {
-								for (int i = 0; i < i2; i++) {
-									JSONObject comment = comments.getJSONObject(i);
-									if (comment.getString(Sin_reply_to_status_id) == mSid) {
-										HashMap<String, String> commentMap = new HashMap<String, String>();
-										commentMap.put(Statuses.SID, comment.getString(Sid));
-										commentMap.put(Entities.FRIEND, comment.getJSONObject(Suser).getString(Sname));
-										commentMap.put(Statuses.MESSAGE, comment.getString(Stext));
-										commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(parseDate(comment.getString(Screated_at), TWITTER_DATE_FORMAT), mTime24hr));
-										commentMap.put(getString(R.string.like), getString(R.string.repeat));
-										mComments.add(commentMap);
-									}
-								}
-							} else {
-								noComments();
-							}
-							break;
 						case GOOGLEPLUS:
 							//TODO: load comments
 							HttpPost httpPost = new HttpPost(GOOGLE_ACCESS);
@@ -988,92 +445,14 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 								Log.e(TAG,e.toString());
 							}
 							break;
-						case CHATTER:
-							JSONObject chats = new JSONObject(response);
-							if (chats.getInt(Stotal) > 0) {
-								comments = chats.getJSONArray(Scomments);
-								if ((i2 = comments.length()) > 0) {
-									for (int i = 0; i < i2; i++) {
-										JSONObject comment = comments.getJSONObject(i);
-										HashMap<String, String> commentMap = new HashMap<String, String>();
-										commentMap.put(Statuses.SID, comment.getString(Sid));
-										commentMap.put(Entities.FRIEND, comment.getJSONObject(Suser).getString(Sname));
-										commentMap.put(Statuses.MESSAGE, comment.getJSONObject(Sbody).getString(Stext));
-										commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(parseDate(comment.getString(ScreatedDate), CHATTER_DATE_FORMAT), mTime24hr));
-										commentMap.put(getString(R.string.like), "");
-										mComments.add(commentMap);
-									}
-								} else {
-									noComments();
-								}
-							} else {
-								noComments();
-							}
-							break;
 						}
 					} catch (JSONException e) {
 						Log.e(TAG, e.toString());
 					}
-				} else {
-					noComments();
 				}
 				setListAdapter(new SimpleAdapter(SonetComments.this, mComments, R.layout.comment, new String[]{Entities.FRIEND, Statuses.MESSAGE, Statuses.CREATEDTEXT, getString(R.string.like)}, new int[]{R.id.friend, R.id.message, R.id.created, R.id.like}));
-				if (loadingDialog.isShowing()) loadingDialog.dismiss();
-			}
-
-			private void noComments() {
-				HashMap<String, String> commentMap = new HashMap<String, String>();
-				commentMap.put(Statuses.SID, "");
-				commentMap.put(Entities.FRIEND, "");
-				commentMap.put(Statuses.MESSAGE, getString(R.string.no_comments));
-				commentMap.put(Statuses.CREATEDTEXT, "");
-				commentMap.put(getString(R.string.like), "");
-				mComments.add(commentMap);
-			}
-
-			private long parseDate(String date, String format) {
-				if (date != null) {
-					// hack for the literal 'Z'
-					if (date.substring(date.length() - 1).equals("Z")) {
-						date = date.substring(0, date.length() - 2) + "+0000";
-					}
-					Date created = null;
-					if (format != null) {
-						if (mSimpleDateFormat == null) {
-							mSimpleDateFormat = new SimpleDateFormat(format, Locale.ENGLISH);
-							// all dates should be GMT/UTC
-							mSimpleDateFormat.setTimeZone(sTimeZone);
-						}
-						try {
-							created = mSimpleDateFormat.parse(date);
-							return created.getTime();
-						} catch (ParseException e) {
-							Log.e(TAG, e.toString());
-						}
-					} else {
-						// attempt to parse RSS date
-						if (mSimpleDateFormat != null) {
-							try {
-								created = mSimpleDateFormat.parse(date);
-								return created.getTime();
-							} catch (ParseException e) {
-								Log.e(TAG, e.toString());
-							}
-						}
-						for (String rfc822 : sRFC822) {
-							mSimpleDateFormat = new SimpleDateFormat(rfc822, Locale.ENGLISH);
-							mSimpleDateFormat.setTimeZone(sTimeZone);
-							try {
-								if ((created = mSimpleDateFormat.parse(date)) != null) {
-									return created.getTime();
-								}
-							} catch (ParseException e) {
-								Log.e(TAG, e.toString());
-							}
-						}
-					}
-				}
-				return System.currentTimeMillis();
+				if (loadingDialog.isShowing())
+					loadingDialog.dismiss();
 			}
 		};
 		loadingDialog.setMessage(getString(R.string.loading));

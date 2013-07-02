@@ -21,24 +21,40 @@ package com.piusvelte.sonet.core.task.linkedin;
 
 import static com.piusvelte.sonet.core.Sonet.LINKEDIN_BASE_URL;
 import static com.piusvelte.sonet.core.Sonet.LINKEDIN_COMMENT_BODY;
+import static com.piusvelte.sonet.core.Sonet.LINKEDIN_HEADERS;
 import static com.piusvelte.sonet.core.Sonet.LINKEDIN_IS_LIKED;
 import static com.piusvelte.sonet.core.Sonet.LINKEDIN_LIKE_BODY;
+import static com.piusvelte.sonet.core.Sonet.LINKEDIN_UPDATE;
 import static com.piusvelte.sonet.core.Sonet.LINKEDIN_UPDATE_COMMENTS;
+import static com.piusvelte.sonet.core.Sonet.S_total;
+import static com.piusvelte.sonet.core.Sonet.Scomment;
+import static com.piusvelte.sonet.core.Sonet.SfirstName;
+import static com.piusvelte.sonet.core.Sonet.Sid;
+import static com.piusvelte.sonet.core.Sonet.SlastName;
+import static com.piusvelte.sonet.core.Sonet.Sperson;
+import static com.piusvelte.sonet.core.Sonet.Stimestamp;
+import static com.piusvelte.sonet.core.Sonet.Svalues;
 import static com.piusvelte.sonet.core.SonetTokens.LINKEDIN_KEY;
 import static com.piusvelte.sonet.core.SonetTokens.LINKEDIN_SECRET;
 
 import java.io.IOException;
 
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.util.Log;
 
+import com.piusvelte.sonet.core.Sonet;
 import com.piusvelte.sonet.core.SonetHttpClient;
 import com.piusvelte.sonet.core.SonetOAuth;
+import com.piusvelte.sonet.core.task.LoadCommentsTask;
 
 public class LinkedIn {
 
@@ -74,6 +90,51 @@ public class LinkedIn {
 			Log.e(TAG, e.toString());
 		}
 		return false;
+	}
+
+
+	public String getLikeStatus(String statusId) {
+		HttpGet httpGet = new HttpGet(String.format(LINKEDIN_UPDATE, LINKEDIN_BASE_URL, statusId));
+		for (String[] header : LINKEDIN_HEADERS) httpGet.setHeader(header[0], header[1]);
+		String response = SonetHttpClient.httpResponse(httpClient, oauth.getSignedRequest(httpGet));
+		if (response != null) {
+			try {
+				JSONObject data = new JSONObject(response);
+				if (data.has("isCommentable") && !data.getBoolean("isCommentable"))
+					return "uncommentable";
+				if (data.has("isLikable"))
+					return data.has("isLiked") && data.getBoolean("isLiked") ? "unlike" : "like";
+				else
+					return "unlikable";
+			} catch (JSONException e) {
+				Log.e(TAG,e.toString());
+			}
+		}
+		return "like";
+	}
+
+	public int getComments(LoadCommentsTask task, String statusId, boolean time24hr) {
+		int count = 0;
+		HttpGet httpGet = new HttpGet(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, statusId));
+		for (String[] header : LINKEDIN_HEADERS)
+			httpGet.setHeader(header[0], header[1]);
+		String response = SonetHttpClient.httpResponse(httpClient, oauth.getSignedRequest(httpGet));
+		if (response != null) {
+			try {
+				JSONObject jsonResponse = new JSONObject(response);
+				if (jsonResponse.has(S_total) && (jsonResponse.getInt(S_total) != 0)) {
+					JSONArray comments = jsonResponse.getJSONArray(Svalues);
+					for (int s = comments.length(); count < s; count++) {
+						JSONObject comment = comments.getJSONObject(count);
+						JSONObject person = comment.getJSONObject(Sperson);
+						task.addComment(comment.getString(Sid), person.getString(SfirstName) + " " + person.getString(SlastName), comment.getString(Scomment), Sonet.getCreatedText(comment.getLong(Stimestamp), time24hr), "");
+					}
+				}
+			} catch (JSONException e) {
+				Log.e(TAG,e.toString());
+			}
+		}
+		return count;
 	}
 
 }

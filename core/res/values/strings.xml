@@ -108,7 +108,6 @@
 	<string name="save">Save</string>
 	<string name="location_unavailable">current location is unavailable</string>
 	<string name="error_status">Error getting status info</string>
-	<string name="messageWithCommentCount">%1$s\u000A%2$d comments</string>
 	<string name="userProfile">Open %s\'s profile</string>
 	<string name="about_title">About Sonet</string>
 	<string name="enable">Enable Account</string>

@@ -89,17 +89,17 @@ public class Sonet {
 	public static final int FACEBOOK = 1;
 	public static final String FACEBOOK_BASE_URL = "https://graph.facebook.com/";
 	public static final String FACEBOOK_URL_AUTHORIZE = "%soauth/authorize?client_id=%s&scope=offline_access,read_stream,publish_stream,publish_checkins&type=user_agent&redirect_uri=%s&display=touch&sdk=android";
-	public static final String FACEBOOK_URL_ME = "%sme?format=json&sdk=android&%s=%s";
-	public static final String FACEBOOK_HOME = "%sme/home?date_format=U&format=json&sdk=android&%s=%s&fields=actions,link,type,from,message,created_time,to,comments,story,source,picture";
-	public static final String FACEBOOK_POST = "%sme/feed?format=json&sdk=android&%s=%s";
+	public static final String FACEBOOK_URL_ME = "%sme?format=json&sdk=android";
+	public static final String FACEBOOK_HOME = "%sme/home?date_format=U&format=json&sdk=android&fields=actions,link,type,from,message,created_time,to,comments,story,source,picture";
+	public static final String FACEBOOK_POST = "%sme/feed?format=json&sdk=android";
 //	public static final String FACEBOOK_CHECKIN = "%sme/checkins?format=json&sdk=android&%s=%s";
-	public static final String FACEBOOK_LIKES = "%s%s/likes?format=json&sdk=android&%s=%s";
-	public static final String FACEBOOK_COMMENTS = "%s%s/comments?date_format=U&format=json&sdk=android&%s=%s";
-	public static final String FACEBOOK_SEARCH = "%ssearch?type=place&center=%s,%s&distance=1000&format=json&sdk=android&%s=%s";
+	public static final String FACEBOOK_LIKES = "%s%s/likes?format=json&sdk=android";
+	public static final String FACEBOOK_COMMENTS = "%s%s/comments?date_format=U&format=json&sdk=android";
+	public static final String FACEBOOK_SEARCH = "%ssearch?type=place&center=%s,%s&distance=1000&format=json&sdk=android";
 //	public static final String FACEBOOK_COORDINATES = "{\"latitude\":\"%s\",\"longitude\":\"%s\"}";
-	public static final String FACEBOOK_USER = "%s%s?format=json&sdk=android&%s=%s";
-	public static final String FACEBOOK_PHOTOS = "%sme/photos?format=json&sdk=android&%s=%s";
-	public static final String FACEBOOK_FRIENDS = "%sme/friends?format=json&sdk=android&%s=%s";
+	public static final String FACEBOOK_USER = "%s%s?format=json&sdk=android";
+	public static final String FACEBOOK_PHOTOS = "%sme/photos?format=json&sdk=android";
+	public static final String FACEBOOK_FRIENDS = "%sme/friends?format=json&sdk=android";
 	public static final String FACEBOOK_PICTURE = "http://graph.facebook.com/%s/picture";
 
 	public static final int MYSPACE = 2;
@@ -119,16 +119,16 @@ public class Sonet {
 	public static final int FOURSQUARE = 4;
 	public static final String FOURSQUARE_BASE_URL = "https://api.foursquare.com/v2/";
 	public static final String FOURSQUARE_URL_AUTHORIZE = "https://foursquare.com/oauth2/authorize?client_id=%s&response_type=token&redirect_uri=%s&display=touch";
-	public static final String FOURSQUARE_URL_ME = "%susers/self?oauth_token=%s";
-	public static final String FOURSQUARE_URL_USER = "%susers/%s?oauth_token=%s";
+	public static final String FOURSQUARE_URL_ME = "%susers/self";
+	public static final String FOURSQUARE_URL_USER = "%susers/%s";
 	public static final String FOURSQUARE_URL_PROFILE = "https://foursquare.com/user/%s";
 	public static final String FOURSQUARE_CHECKINS = "%scheckins/recent?oauth_token=%s";
-	public static final String FOURSQUARE_CHECKIN = "%scheckins/add?venueId=%s&shout=%s&ll=%s,%s&broadcast=public&oauth_token=%s";
-	public static final String FOURSQUARE_CHECKIN_NO_VENUE = "%scheckins/add?shout=%s&broadcast=public&oauth_token=%s";
-	public static final String FOURSQUARE_CHECKIN_NO_SHOUT = "%scheckins/add?venueId=%s&ll=%s,%s&broadcast=public&oauth_token=%s";
-	public static final String FOURSQUARE_ADDCOMMENT = "%scheckins/%s/addcomment?text=%s&oauth_token=%s";
-	public static final String FOURSQUARE_SEARCH = "%svenues/search?ll=%s,%s&intent=checkin&oauth_token=%s";
-	public static final String FOURSQUARE_GET_CHECKIN = "%scheckins/%s?oauth_token=%s";
+	public static final String FOURSQUARE_CHECKIN = "%scheckins/add?venueId=%s&shout=%s&ll=%s,%s&broadcast=public";
+	public static final String FOURSQUARE_CHECKIN_NO_VENUE = "%scheckins/add?shout=%s&broadcast=public";
+	public static final String FOURSQUARE_CHECKIN_NO_SHOUT = "%scheckins/add?venueId=%s&ll=%s,%s&broadcast=public";
+	public static final String FOURSQUARE_ADDCOMMENT = "%scheckins/%s/addcomment?text=%s";
+	public static final String FOURSQUARE_SEARCH = "%svenues/search?ll=%s,%s&intent=checkin";
+	public static final String FOURSQUARE_GET_CHECKIN = "%scheckins/%s";
 
 	public static final int LINKEDIN = 5;
 	public static final String LINKEDIN_BASE_URL = "https://api.linkedin.com/v1/people/~";
@@ -241,6 +241,7 @@ public class Sonet {
 	public static final String Sjob = "job";
 	public static final String Sposition = "position";
 	public static final String SmemberGroups = "memberGroups";
+	public static final String messageWithCommentCount = "%1$s\\u000A%2$d comments";
 	
 	public enum LinkedIn_UpdateTypes {
 		ANSW("updated an answer"),

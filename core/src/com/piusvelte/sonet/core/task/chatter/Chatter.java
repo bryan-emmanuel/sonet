@@ -19,12 +19,19 @@
  */
 package com.piusvelte.sonet.core.task.chatter;
 
+import static com.piusvelte.sonet.core.Sonet.CHATTER_DATE_FORMAT;
 import static com.piusvelte.sonet.core.Sonet.CHATTER_URL_ACCESS;
 import static com.piusvelte.sonet.core.Sonet.CHATTER_URL_COMMENT;
+import static com.piusvelte.sonet.core.Sonet.CHATTER_URL_COMMENTS;
 import static com.piusvelte.sonet.core.Sonet.CHATTER_URL_LIKE;
 import static com.piusvelte.sonet.core.Sonet.CHATTER_URL_LIKES;
 import static com.piusvelte.sonet.core.Sonet.Saccess_token;
+import static com.piusvelte.sonet.core.Sonet.Sbody;
+import static com.piusvelte.sonet.core.Sonet.Scomments;
+import static com.piusvelte.sonet.core.Sonet.ScreatedDate;
 import static com.piusvelte.sonet.core.Sonet.Sid;
+import static com.piusvelte.sonet.core.Sonet.Sname;
+import static com.piusvelte.sonet.core.Sonet.Stext;
 import static com.piusvelte.sonet.core.Sonet.Stotal;
 import static com.piusvelte.sonet.core.Sonet.Suser;
 import static com.piusvelte.sonet.core.SonetTokens.CHATTER_KEY;
@@ -37,7 +44,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.piusvelte.sonet.core.Sonet;
 import com.piusvelte.sonet.core.SonetHttpClient;
+import com.piusvelte.sonet.core.task.LoadCommentsTask;
 
 import android.net.Uri;
 import android.util.Log;
@@ -52,65 +61,120 @@ public class Chatter {
 	public Chatter(String token, HttpClient httpClient) {
 		this.token = token;
 		this.httpClient = httpClient;
+
+	}
+
+	private String instanceUrl;
+	private String instanceToken;
+
+	private boolean getInstance() {
+		if ((instanceUrl == null) || (instanceToken == null)) {
+			String response = SonetHttpClient.httpResponse(httpClient, new HttpPost(String.format(CHATTER_URL_ACCESS, CHATTER_KEY, token)));
+			if (response != null) {
+				try {
+					JSONObject jobj = new JSONObject(response);
+					if (jobj.has("instance_url") && jobj.has(Saccess_token)) {
+						instanceUrl = jobj.getString("instance_url");
+						instanceToken = jobj.getString(Saccess_token);
+						return true;
+					}
+				} catch (JSONException e) {
+					Log.e(TAG, e.getMessage());
+				}
+			}
+			return false;
+		} else
+			return true;
 	}
 
 	public boolean comment(String statusId, String message) {
-		String response = SonetHttpClient.httpResponse(httpClient, new HttpPost(String.format(CHATTER_URL_ACCESS, CHATTER_KEY, token)));
-		if (response != null) {
-			try {
-				JSONObject jobj = new JSONObject(response);
-				if (jobj.has("instance_url") && jobj.has(Saccess_token)) {
-					HttpPost httpPost = new HttpPost(String.format(CHATTER_URL_COMMENT, jobj.getString("instance_url"), statusId, Uri.encode(message)));
-					httpPost.setHeader("Authorization", "OAuth " + jobj.getString(Saccess_token));
-					return SonetHttpClient.httpResponse(httpClient, httpPost) != null;
-				}
-			} catch (JSONException e) {
-				Log.e(TAG, e.getMessage());
+		if (getInstance()) {
+			HttpPost httpPost = new HttpPost(String.format(CHATTER_URL_COMMENT, instanceUrl, statusId, Uri.encode(message)));
+			httpPost.setHeader("Authorization", "OAuth " + instanceToken);
+			return SonetHttpClient.httpResponse(httpClient, httpPost) != null;
+		}
+		return false;
+	}
+
+	public boolean like(String accountServiceId, String statusId, boolean like) {
+		if (getInstance()) {
+			if (like) {
+				HttpPost httpPost = new HttpPost(String.format(CHATTER_URL_LIKES, instanceUrl, statusId));
+				httpPost.setHeader("Authorization", "OAuth " + instanceToken);
+				return SonetHttpClient.httpResponse(httpClient, httpPost) != null;
+			} else {
+				HttpGet httpGet = new HttpGet(String.format(CHATTER_URL_LIKES, instanceUrl, statusId));
+				httpGet.setHeader("Authorization", "OAuth " + instanceToken);
+				String response = SonetHttpClient.httpResponse(httpClient, httpGet);
+				if (response != null) {
+					try {
+						JSONObject jobj = new JSONObject(response);
+						if (jobj.getInt(Stotal) > 0) {
+							JSONArray likes = jobj.getJSONArray("likes");
+							for (int i = 0, i2 = likes.length(); i < i2; i++) {
+								JSONObject l = likes.getJSONObject(i);
+								if (l.getJSONObject(Suser).getString(Sid).equals(accountServiceId)) {
+									HttpDelete httpDelete = new HttpDelete(String.format(CHATTER_URL_LIKE, instanceUrl, l.getString(Sid)));
+									httpDelete.setHeader("Authorization", "OAuth " + instanceToken);
+									return SonetHttpClient.httpResponse(httpClient, httpDelete) != null;
+								}
+							}
+						}
+					} catch (JSONException e) {
+						Log.e(TAG,e.toString());
+					}
+				}	
 			}
 		}
 		return false;
 	}
-	
-	public boolean like(String accountServiceId, String statusId, boolean like) {
-		String response = SonetHttpClient.httpResponse(httpClient, new HttpPost(String.format(CHATTER_URL_ACCESS, CHATTER_KEY, token)));
-		if (response != null) {
-			try {
-				JSONObject jobj = new JSONObject(response);
-				if (jobj.has("instance_url") && jobj.has(Saccess_token)) {
-					String instance = jobj.getString("instance_url");
-					String token = jobj.getString(Saccess_token);
-					if (like) {
-						HttpPost httpPost = new HttpPost(String.format(CHATTER_URL_LIKES, instance, statusId));
-						httpPost.setHeader("Authorization", "OAuth " + token);
-						return SonetHttpClient.httpResponse(httpClient, httpPost) != null;
-					} else {
-						HttpGet httpGet = new HttpGet(String.format(CHATTER_URL_LIKES, instance, statusId));
-						httpGet.setHeader("Authorization", "OAuth " + token);
-						if ((response = SonetHttpClient.httpResponse(httpClient, httpGet)) != null) {
-							try {
-								jobj = new JSONObject(response);
-								if (jobj.getInt(Stotal) > 0) {
-									JSONArray likes = jobj.getJSONArray("likes");
-									for (int i = 0, i2 = likes.length(); i < i2; i++) {
-										JSONObject l = likes.getJSONObject(i);
-										if (l.getJSONObject(Suser).getString(Sid).equals(accountServiceId)) {
-											HttpDelete httpDelete = new HttpDelete(String.format(CHATTER_URL_LIKE, jobj.getString("instance_url"), l.getString(Sid)));
-											httpDelete.setHeader("Authorization", "OAuth " + jobj.getString(Saccess_token));
-											return SonetHttpClient.httpResponse(httpClient, httpDelete) != null;
-										}
-									}
-								}
-							} catch (JSONException e) {
-								Log.e(TAG,e.toString());
-							}
-						}	
+
+	public String getLikeStatus(String statusId, String accountServiceId) {
+		if (getInstance()) {
+			HttpGet httpGet = new HttpGet(String.format(CHATTER_URL_LIKES, instanceUrl, statusId));
+			httpGet.setHeader("Authorization", "OAuth " + instanceToken);
+			String response = SonetHttpClient.httpResponse(httpClient, httpGet);
+			if (response != null) {
+				try {
+					JSONObject jobj = new JSONObject(response);
+					if (jobj.getInt(Stotal) > 0) {
+						JSONArray likes = jobj.getJSONArray("likes");
+						for (int i = 0, i2 = likes.length(); i < i2; i++) {
+							JSONObject like = likes.getJSONObject(i);
+							if (like.getJSONObject(Suser).getString(Sid).equals(accountServiceId))
+								return "unlike";
+						}
 					}
+				} catch (JSONException e) {
+					Log.e(TAG,e.toString());
 				}
-			} catch (JSONException e) {
-				Log.e(TAG, e.getMessage());
 			}
 		}
-		return false;
+		return "like";
+	}
+
+	public int getComments(LoadCommentsTask task, String statusId, boolean time24hr) {
+		int count = 0;
+		if (getInstance()) {
+			HttpGet httpGet = new HttpGet(String.format(CHATTER_URL_COMMENTS, instanceUrl, statusId));
+			httpGet.setHeader("Authorization", "OAuth " + instanceToken);
+			String response = SonetHttpClient.httpResponse(httpClient, httpGet);
+			if (response != null) {
+				try {
+					JSONObject chats = new JSONObject(response);
+					if (chats.getInt(Stotal) > 0) {
+						JSONArray comments = chats.getJSONArray(Scomments);
+						for (int s = comments.length(); count < s; count++) {
+							JSONObject comment = comments.getJSONObject(count);
+							task.addComment(comment.getString(Sid), comment.getJSONObject(Suser).getString(Sname), comment.getJSONObject(Sbody).getString(Stext), Sonet.getCreatedText(task.parseDate(comment.getString(ScreatedDate), CHATTER_DATE_FORMAT), time24hr), "");
+						}
+					}
+				} catch (JSONException e) {
+					Log.e(TAG,e.toString());
+				}
+			}
+		}
+		return count;
 	}
 
 }

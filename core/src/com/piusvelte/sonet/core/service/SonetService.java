@@ -903,6 +903,7 @@ public class SonetService extends Service {
 				friend_override = friend;
 				friend = friend.substring(0, friend.indexOf(">") - 1);
 			}
+			// insert or update the entity
 			Cursor entity = getContentResolver().query(Entities.getContentUri(SonetService.this), new String[]{Entities._ID}, Entities.ACCOUNT + "=? and " + Entities.ESID + "=?", new String[]{Long.toString(accountId), mSonetCrypto.Encrypt(esid)}, null);
 			if (entity.moveToFirst())
 				id = entity.getLong(0);
@@ -955,8 +956,10 @@ public class SonetService extends Service {
 			values.put(Statuses.ACCOUNT, accountId);
 			values.put(Statuses.SID, sid);
 			values.put(Statuses.FRIEND_OVERRIDE, friend_override);
+			// insert status to the database
 			long statusId = Long.parseLong(getContentResolver().insert(Statuses.getContentUri(SonetService.this), values).getLastPathSegment());
 			String imageUrl = null;
+			// insert links to the database
 			for (String[] s : links) {
 				// get the first photo
 				if (imageUrl == null) {
@@ -970,6 +973,7 @@ public class SonetService extends Service {
 				linkValues.put(Status_links.LINK_URI, s[1]);
 				getContentResolver().insert(Status_links.getContentUri(SonetService.this), linkValues);
 			}
+			// get photos for the status, and insert to the database
 			boolean insertEmptyImage = true;
 			if (imageUrl != null) {
 				byte[] image = null;

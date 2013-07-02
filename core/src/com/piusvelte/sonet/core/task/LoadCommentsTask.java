@@ -19,41 +19,46 @@
  */
 package com.piusvelte.sonet.core.task;
 
-import static com.piusvelte.sonet.core.Sonet.IDENTICA;
-import static com.piusvelte.sonet.core.Sonet.LINKEDIN;
-import static com.piusvelte.sonet.core.Sonet.TWITTER;
-
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
-
-import org.apache.http.client.HttpClient;
+import java.util.Locale;
 
 import com.piusvelte.sonet.core.R;
 import com.piusvelte.sonet.core.Sonet;
-import com.piusvelte.sonet.core.SonetCrypto;
-import com.piusvelte.sonet.core.SonetHttpClient;
 import com.piusvelte.sonet.core.SonetProvider;
-import com.piusvelte.sonet.core.Sonet.Accounts;
 import com.piusvelte.sonet.core.Sonet.Entities;
 import com.piusvelte.sonet.core.Sonet.Notifications;
 import com.piusvelte.sonet.core.Sonet.Statuses;
 import com.piusvelte.sonet.core.Sonet.Statuses_styles;
-import com.piusvelte.sonet.core.Sonet.Widgets;
-import com.piusvelte.sonet.core.Sonet.Widgets_settings;
 import com.piusvelte.sonet.core.activity.SonetComments;
+import com.piusvelte.sonet.core.task.chatter.Chatter;
+import com.piusvelte.sonet.core.task.facebook.Facebook;
+import com.piusvelte.sonet.core.task.foursquare.Foursquare;
+import com.piusvelte.sonet.core.task.identica.Identica;
+import com.piusvelte.sonet.core.task.linkedin.LinkedIn;
+import com.piusvelte.sonet.core.task.myspace.MySpace;
+import com.piusvelte.sonet.core.task.twitter.Twitter;
 
-import android.appwidget.AppWidgetManager;
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.net.Uri;
+import android.util.Log;
 
 public class LoadCommentsTask extends CommentsCommonTask {
 
+	private static final String TAG = "LoadCommentsTask";
+	
 	public static final int ID = 0;
 	public static final int NAME = 1;
 	public static final int MESSAGE = 2;
 	public static final int CREATED = 3;
 	public static final int ACTION = 4;
+	
+	public static final int RESULT_MESSAGE = 0;
+	public static final int RESULT_ACTION = 1;
 
 	public LoadCommentsTask(SonetComments activity, Uri data) {
 		super(activity, data);
@@ -79,7 +84,7 @@ public class LoadCommentsTask extends CommentsCommonTask {
 						status.getString(0),
 						status.getString(1),
 						Sonet.getCreatedText(status.getLong(2), time24hr),
-						service == TWITTER ? activity.getString(R.string.retweet) : service == IDENTICA ? activity.getString(R.string.repeat) : "");
+						service == Sonet.TWITTER ? activity.getString(R.string.retweet) : service == Sonet.IDENTICA ? activity.getString(R.string.repeat) : "");
 			}
 			status.close();
 			break;
@@ -94,7 +99,7 @@ public class LoadCommentsTask extends CommentsCommonTask {
 						notification.getString(0),
 						notification.getString(1),
 						Sonet.getCreatedText(notification.getLong(2), time24hr),
-						service == TWITTER ? activity.getString(R.string.retweet) : service == IDENTICA ? activity.getString(R.string.repeat) : "");
+						service == Sonet.TWITTER ? activity.getString(R.string.retweet) : service == Sonet.IDENTICA ? activity.getString(R.string.repeat) : "");
 				serviceName = activity.getResources().getStringArray(R.array.service_entries)[service];
 			}
 			notification.close();
@@ -104,11 +109,91 @@ public class LoadCommentsTask extends CommentsCommonTask {
 			addComment(statusId, "", "error, status not found", "", "");
 		}
 		//TODO: at this point the service specific task needs to take over
-		return null;
+		int count = 0;
+		String result = "";
+		if (service == Sonet.TWITTER) {
+			Twitter twitter = new Twitter(token, secret, httpClient);
+			count = twitter.getRetweets(this, statusId, time24hr);
+			result = twitter.getScreenname(entityId);
+		} else if (service == Sonet.FACEBOOK) {
+			Facebook facebook = new Facebook(token, httpClient);
+			count = facebook.getComments(this, statusId, time24hr);
+			result = facebook.getLikeStatus(statusId, accountServiceId);
+		} else if (service == Sonet.MYSPACE) {
+			MySpace myspace = new MySpace(token, secret, httpClient);
+			count = myspace.getComments(this, statusId, entityId, time24hr);
+		} else if (service == Sonet.LINKEDIN) {
+			LinkedIn linkedin = new LinkedIn(token, secret, httpClient);
+			count = linkedin.getComments(this, statusId, time24hr);
+			result = linkedin.getLikeStatus(statusId);
+		} else if (service == Sonet.FOURSQUARE) {
+			Foursquare foursquare = new Foursquare(token, httpClient);
+			count = foursquare.getComments(this, statusId, time24hr);
+		} else if (service == Sonet.IDENTICA) {
+			Identica identica = new Identica(token, secret, httpClient);
+			count = identica.getRetweets(this, statusId, time24hr);
+			result = identica.getScreenname(entityId);
+		} else if (service == Sonet.GOOGLEPLUS) {
+			//TODO
+		} else if (service == Sonet.CHATTER) {
+			Chatter chatter = new Chatter(token, httpClient);
+			count = chatter.getComments(this, statusId, time24hr);
+			result = chatter.getLikeStatus(statusId, accountServiceId);
+		}
+		if (count == 0)
+			addComment("", "", activity.getString(R.string.no_comments), "", "");
+		return result;
 	}
 
-	protected void addComment(String id, String name, String message, String created, String action) {
+	public void addComment(String id, String name, String message, String created, String action) {
 		publishProgress(new String[]{id, name, message, created, action});
+	}
+
+	private SimpleDateFormat mSimpleDateFormat;
+	
+	public long parseDate(String date, String format) {
+		if (date != null) {
+			// hack for the literal 'Z'
+			if (date.substring(date.length() - 1).equals("Z")) {
+				date = date.substring(0, date.length() - 2) + "+0000";
+			}
+			Date created = null;
+			if (format != null) {
+				if (mSimpleDateFormat == null) {
+					mSimpleDateFormat = new SimpleDateFormat(format, Locale.ENGLISH);
+					// all dates should be GMT/UTC
+					mSimpleDateFormat.setTimeZone(Sonet.sTimeZone);
+				}
+				try {
+					created = mSimpleDateFormat.parse(date);
+					return created.getTime();
+				} catch (ParseException e) {
+					Log.e(TAG, e.toString());
+				}
+			} else {
+				// attempt to parse RSS date
+				if (mSimpleDateFormat != null) {
+					try {
+						created = mSimpleDateFormat.parse(date);
+						return created.getTime();
+					} catch (ParseException e) {
+						Log.e(TAG, e.toString());
+					}
+				}
+				for (String rfc822 : Sonet.sRFC822) {
+					mSimpleDateFormat = new SimpleDateFormat(rfc822, Locale.ENGLISH);
+					mSimpleDateFormat.setTimeZone(Sonet.sTimeZone);
+					try {
+						if ((created = mSimpleDateFormat.parse(date)) != null) {
+							return created.getTime();
+						}
+					} catch (ParseException e) {
+						Log.e(TAG, e.toString());
+					}
+				}
+			}
+		}
+		return System.currentTimeMillis();
 	}
 
 	@Override
@@ -126,25 +211,21 @@ public class LoadCommentsTask extends CommentsCommonTask {
 	}
 
 	@Override
-	protected void onPostExecute(String message) {
-		//TODO set default message handle in sub classes
-		if (params != null) {
-			if ((mService == TWITTER) || (mService == IDENTICA)) {
-				mMessage.append(params[0]);
-			} else {
-				if (mService == LINKEDIN) {
-					if (params[0].equals(getString(R.string.uncommentable))) {
-						mSend.setEnabled(false);
-						mMessage.setEnabled(false);
-						mMessage.setText(R.string.uncommentable);
-					} else
-						setCommentStatus(0, params[0]);
-				} else {
-					setCommentStatus(0, params[0]);
-				}
+	protected void onPostExecute(String result) {
+		if (result != null) {
+			if ((service == Sonet.TWITTER) || (service == Sonet.IDENTICA))
+				activity.setDefaultMessage(result);
+			else {
+				if (service == Sonet.LINKEDIN) {
+					if (result.equals(activity.getString(R.string.uncommentable)))
+						activity.uncommentable();
+					else
+						activity.setCommentStatus(0, result);
+				} else
+					activity.setCommentStatus(0, result);
 			}
 		}
-		activity.onCommentsLoaded(message);
+		activity.onCommentsLoaded();
 	}
 
 }

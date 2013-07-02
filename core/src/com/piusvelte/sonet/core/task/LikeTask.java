@@ -33,17 +33,17 @@ import android.net.Uri;
 public class LikeTask extends CommentsCommonTask {
 
 	public static final int ID = 0;
-	public static final int LIKE = 1;
-	
+	public static final int ACTION = 1;
+
 	int position;
 
 	public LikeTask(SonetComments activity, Uri data) {
 		super(activity, data);
 	}
 
-	public void like(String id, int position, boolean like) {
+	public void like(String id, int position, String action) {
 		this.position = position;
-		execute(id, Boolean.toString(like));
+		execute(id, action);
 	}
 
 	@Override
@@ -54,24 +54,34 @@ public class LikeTask extends CommentsCommonTask {
 					activity.getString((new Twitter(token, secret, httpClient).retweet(params[ID])) ? R.string.success : R.string.failure));
 			return activity.getString(R.string.retweet);
 		} else if (service == Sonet.FACEBOOK) {
-			boolean like = Boolean.parseBoolean(params[LIKE]);
+			boolean like = activity.getString(R.string.like).equals(params[ACTION]);
 			boolean success = new Facebook(token, httpClient).like(params[ID], like);
 			publishProgress(serviceName, activity.getString(success ? R.string.success : R.string.failure));
 			return activity.getString((like == success) ? R.string.unlike : R.string.like);
 		} else if (service == Sonet.LINKEDIN) {
-			boolean like = Boolean.parseBoolean(params[LIKE]);
-			boolean success = new LinkedIn(token, secret, httpClient).like(params[ID], like);
-			publishProgress(serviceName, activity.getString(success ? R.string.success : R.string.failure));
-			return activity.getString((like == success) ? R.string.unlike : R.string.like);
+			if (position == 0) {
+				boolean like = activity.getString(R.string.like).equals(params[ACTION]);
+				boolean success = new LinkedIn(token, secret, httpClient).like(params[ID], like);
+				publishProgress(serviceName, activity.getString(success ? R.string.success : R.string.failure));
+				return activity.getString((like == success) ? R.string.unlike : R.string.like);
+			} else {
+				publishProgress(serviceName, activity.getString(R.string.failure) + ", only the first comment may be liked");
+				return "";
+			}
 		} else if (service == Sonet.IDENTICA) {
 			publishProgress(serviceName,
 					activity.getString((new Identica(token, secret, httpClient).repeat(params[ID])) ? R.string.success : R.string.failure));
 			return activity.getString(R.string.repeat);
 		} else if (service == Sonet.CHATTER) {
-			boolean like = Boolean.parseBoolean(params[LIKE]);
-			boolean success = new Chatter(token, httpClient).like(accountServiceId, params[ID], like);
-			publishProgress(serviceName, activity.getString(success ? R.string.success : R.string.failure));
-			return activity.getString((like == success) ? R.string.unlike : R.string.like);
+			if (position == 0) {
+				boolean like = activity.getString(R.string.like).equals(params[ACTION]);
+				boolean success = new Chatter(token, httpClient).like(accountServiceId, params[ID], like);
+				publishProgress(serviceName, activity.getString(success ? R.string.success : R.string.failure));
+				return activity.getString((like == success) ? R.string.unlike : R.string.like);
+			} else {
+				publishProgress(serviceName, activity.getString(R.string.failure) + ", only the first comment may be liked");
+				return "";
+			}
 		}
 		return "";
 	}
