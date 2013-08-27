@@ -1,12 +1,12 @@
 /*
  * Sonet - Android Social Networking Widget
  * Copyright (C) 2009 Bryan Emmanuel
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- *  
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *  
+ *
  *  Bryan Emmanuel piusvelte@gmail.com
  */
 package com.piusvelte.sonet.core;
@@ -65,19 +65,20 @@ public class Sonet {
 	protected static final int[] map_icons = new int[]{R.drawable.twitter, R.drawable.facebook, R.drawable.myspace, R.drawable.buzz, R.drawable.foursquare, R.drawable.linkedin, R.drawable.sms, R.drawable.rss, R.drawable.identica, R.drawable.googleplus, R.drawable.salesforce};
 
 	protected static final int TWITTER = 0;
-	protected static final String TWITTER_BASE_URL = "http://api.twitter.com/";
+	protected static final String TWITTER_BASE_URL = "https://api.twitter.com/";
 	protected static final String TWITTER_URL_REQUEST = "%soauth/request_token";
 	protected static final String TWITTER_URL_AUTHORIZE = "%soauth/authorize";
 	protected static final String TWITTER_URL_ACCESS = "%soauth/access_token";
-	protected static final String TWITTER_URL_FEED = "%s1/statuses/home_timeline.json?count=%s";
-	protected static final String TWITTER_RETWEET = "%s1/statuses/retweet/%s.json";
-	protected static final String TWITTER_USER = "%s1/users/show.json?user_id=%s";
-	protected static final String TWITTER_UPDATE = "%s1/statuses/update.json";
-	protected static final String TWITTER_SEARCH = "%s1/geo/search.json?lat=%s&long=%s";
+	protected static final String TWITTER_URL_FEED = "%s1.1/statuses/home_timeline.json?count=%s";
+	protected static final String TWITTER_RETWEET = "%s1.1/statuses/retweets/%s.json";
+	protected static final String TWITTER_USER = "%s1.1/users/show.json?user_id=%s";
+	protected static final String TWITTER_UPDATE = "%s1.1/statuses/update.json";
+	protected static final String TWITTER_SEARCH = "%s1.1/geo/search.json?lat=%s&long=%s";
 	protected static final String TWITTER_PROFILE = "http://twitter.com/%s";
 	protected static final String TWITTER_DATE_FORMAT = "EEE MMM dd HH:mm:ss Z yyyy";
-	protected static final String TWITTER_MENTIONS = "%s1/statuses/mentions.json%s";
+	protected static final String TWITTER_MENTIONS = "%s1.1/statuses/mentions_timeline.json%s";
 	protected static final String TWITTER_SINCE_ID = "?since_id=%s";
+	protected static final String TWITTER_VERIFY_CREDENTIALS = "%s1.1/account/verify_credentials.json";
 
 	protected static final int FACEBOOK = 1;
 	protected static final String FACEBOOK_BASE_URL = "https://graph.facebook.com/";
@@ -152,7 +153,7 @@ public class Sonet {
 	protected static final String IDENTICA_RETWEET = "%sstatuses/retweet/%s.json";
 	protected static final String IDENTICA_USER = "%susers/show.json?user_id=%s";
 	protected static final String IDENTICA_UPDATE = "%sstatuses/update.json";
-	protected static final String IDENTICA_PROFILE = "http://identi.ca/%s";	
+	protected static final String IDENTICA_PROFILE = "http://identi.ca/%s";
 	protected static final String IDENTICA_DATE_FORMAT = "EEE MMM dd HH:mm:ss Z yyyy";
 	protected static final String IDENTICA_MENTIONS = "%sstatuses/mentions.json%s";
 	protected static final String IDENTICA_SINCE_ID = "?since_id=%s";
@@ -234,7 +235,7 @@ public class Sonet {
 	protected static final String Sjob = "job";
 	protected static final String Sposition = "position";
 	protected static final String SmemberGroups = "memberGroups";
-	
+
 	protected enum LinkedIn_UpdateTypes {
 		ANSW("updated an answer"),
 		APPS("updated the application "),
@@ -249,13 +250,13 @@ public class Sonet {
 		SHAR("shared something"),
 		VIRL("updated the viral "),
 		PICU("updated their profile picture");
-		
+
 		public String message = null;
-		
+
 		private LinkedIn_UpdateTypes(String message) {
 			this.message = message;
 		}
-		
+
 		public static boolean contains(String type) {
 			for (LinkedIn_UpdateTypes t : LinkedIn_UpdateTypes.values()) {
 				if (t.name().equals(type))
@@ -263,7 +264,7 @@ public class Sonet {
 			}
 			return false;
 		}
-		
+
 		public static String getMessage(String type) {
 			for (LinkedIn_UpdateTypes t : LinkedIn_UpdateTypes.values()) {
 				if (t.name().equals(type))
@@ -692,7 +693,7 @@ public class Sonet {
 			return String.format("%s %d", Sonet.MONTHS[calendar.get(Calendar.MONTH)], calendar.get(Calendar.DATE));
 		}
 	}
-	
+
 	protected static Class getPackageClass(Context context, Class cls) {
 		try {
 			return Class.forName(context.getPackageName() + "." + cls.getSimpleName());
@@ -701,7 +702,7 @@ public class Sonet {
 		}
 		return cls;
 	}
-	
+
 	protected static Intent getPackageIntent(Context context, Class cls) {
 		return new Intent(context, getPackageClass(context, cls));
 	}
@@ -771,7 +772,7 @@ public class Sonet {
 				if (d != b)
 					c[i++] = d;
 			}
-			return c;			
+			return c;
 		} else
 			return a;
 	}
@@ -855,18 +856,18 @@ public class Sonet {
 		}
 		return bg;
 	}
-	
+
 	protected static String initAccountSettings(Context context, int widget, long account) {
 		ContentValues values = new ContentValues();
 		values.put(Widgets.WIDGET, widget);
 		values.put(Widgets.ACCOUNT, account);
 		return context.getContentResolver().insert(Widgets.getContentUri(context), values).getLastPathSegment();
 	}
-	
+
 	protected static int getCropSize(int src, int dst) {
 		return (int) Math.round((src - dst) / 2.0);
 	}
-	
+
 	protected static boolean insertStatusImageBg(Context context, long statusId, byte[] bImg, int height) {
 		Bitmap bmpBg = Bitmap.createBitmap(1, height, Config.ARGB_8888);
 		ByteArrayOutputStream baosBg = new ByteArrayOutputStream();
