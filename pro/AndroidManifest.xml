@@ -19,8 +19,8 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.piusvelte.sonetpro" android:versionCode="325"
-	android:versionName="3.2.5">
+	package="com.piusvelte.sonetpro" android:versionCode="326"
+	android:versionName="3.2.6">
 
 	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 	<uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -151,7 +151,7 @@
             android:permission="android.permission.BIND_REMOTEVIEWS"
             android:exported="false" />
 		<provider android:name=".SonetProvider" android:authorities="com.piusvelte.sonetpro.SonetProvider"
-			android:multiprocess="true" android:grantUriPermissions="true" />
+			android:multiprocess="true" android:grantUriPermissions="true" android:exported="true" />
 		<meta-data android:name="com.google.android.backup.api_key"
     	android:value="AEdPqrEAAAAIsOmdkEfwMbYa6A6g34kghppCmR4pVA7umoAcjw" />
 	</application>
