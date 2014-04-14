@@ -514,7 +514,7 @@ containing a value of this type.
 
           <p>Must be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
-          @attr name android:actionbarCompatItemHomeStyle
+          @attr name com.piusvelte.sonetpro:actionbarCompatItemHomeStyle
         */
         public static final int AppTheme_actionbarCompatItemHomeStyle = 2;
         /**
@@ -524,7 +524,7 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
 
           <p>Must be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
-          @attr name android:actionbarCompatItemStyle
+          @attr name com.piusvelte.sonetpro:actionbarCompatItemStyle
         */
         public static final int AppTheme_actionbarCompatItemStyle = 1;
         /**
@@ -534,7 +534,7 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
 
           <p>Must be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
-          @attr name android:actionbarCompatProgressIndicatorStyle
+          @attr name com.piusvelte.sonetpro:actionbarCompatProgressIndicatorStyle
         */
         public static final int AppTheme_actionbarCompatProgressIndicatorStyle = 3;
         /**
@@ -544,7 +544,7 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
 
           <p>Must be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
-          @attr name android:actionbarCompatTitleStyle
+          @attr name com.piusvelte.sonetpro:actionbarCompatTitleStyle
         */
         public static final int AppTheme_actionbarCompatTitleStyle = 0;
         /** Attributes that can be used with a BezelImageView.
@@ -569,7 +569,7 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
 
           <p>Must be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
-          @attr name android:borderDrawable
+          @attr name com.piusvelte.sonetpro:borderDrawable
         */
         public static final int BezelImageView_borderDrawable = 1;
         /**
@@ -579,7 +579,7 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
 
           <p>Must be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
-          @attr name android:maskDrawable
+          @attr name com.piusvelte.sonetpro:maskDrawable
         */
         public static final int BezelImageView_maskDrawable = 0;
         /** Attributes that can be used with a com_admob_android_ads_AdView.
@@ -616,7 +616,7 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
 theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
-          @attr name android:backgroundColor
+          @attr name com.piusvelte.sonetpro:backgroundColor
         */
         public static final int com_admob_android_ads_AdView_backgroundColor = 0;
         /**
@@ -630,7 +630,7 @@ containing a value of this type.
 theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
-          @attr name android:keywords
+          @attr name com.piusvelte.sonetpro:keywords
         */
         public static final int com_admob_android_ads_AdView_keywords = 3;
         /**
@@ -645,7 +645,7 @@ containing a value of this type.
 theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
-          @attr name android:primaryTextColor
+          @attr name com.piusvelte.sonetpro:primaryTextColor
         */
         public static final int com_admob_android_ads_AdView_primaryTextColor = 1;
         /**
@@ -659,7 +659,7 @@ containing a value of this type.
 theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
-          @attr name android:refreshInterval
+          @attr name com.piusvelte.sonetpro:refreshInterval
         */
         public static final int com_admob_android_ads_AdView_refreshInterval = 4;
         /**
@@ -674,7 +674,7 @@ containing a value of this type.
 theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
-          @attr name android:secondaryTextColor
+          @attr name com.piusvelte.sonetpro:secondaryTextColor
         */
         public static final int com_admob_android_ads_AdView_secondaryTextColor = 2;
     };

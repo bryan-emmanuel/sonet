@@ -19,6 +19,7 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
 	package="com.piusvelte.sonetpro" android:versionCode="326"
 	android:versionName="3.2.6">
 
