@@ -32,6 +32,7 @@ import static com.piusvelte.sonet.core.SonetProvider.TABLE_WIDGET_ACCOUNTS;
 
 import com.example.android.actionbarcompat.ActionBarListActivity;
 import com.google.ads.*;
+import com.piusvelte.eidos.Eidos;
 import com.piusvelte.sonet.core.Sonet.Accounts;
 import com.piusvelte.sonet.core.Sonet.Accounts_styles;
 import com.piusvelte.sonet.core.Sonet.Notifications;
@@ -300,11 +301,7 @@ public class ManageAccounts extends ActionBarListActivity implements DialogInter
 	protected void onPause() {
 		super.onPause();
 		if (!mAddingAccount && mUpdateWidget) {
-			try {
-				BackupManager.dataChanged(this);
-			} catch (Throwable t) {
-				Log.d(TAG, "backupagent not supported");
-			}
+            Eidos.requestBackup(this);
 			(Toast.makeText(getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
 			startService(Sonet.getPackageIntent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
 		}

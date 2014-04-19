@@ -21,6 +21,7 @@ package com.piusvelte.sonet.core;
 
 import java.util.HashMap;
 
+import com.piusvelte.eidos.Eidos;
 import com.piusvelte.sonet.core.Sonet.Accounts;
 import com.piusvelte.sonet.core.Sonet.Accounts_styles;
 import com.piusvelte.sonet.core.Sonet.Entities;
@@ -336,18 +337,18 @@ public class SonetProvider extends ContentProvider {
 	@Override
 	public int delete(Uri uri, String whereClause, String[] whereArgs) {
 		SQLiteDatabase db;
-		synchronized (Sonet.sDatabaseLock) {
+		synchronized (Eidos.DatabaseLock) {
 			db = mDatabaseHelper.getWritableDatabase();
 		}
 		int count;
 		switch (sUriMatcher.match(uri)) {
 		case ACCOUNTS:
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				count = db.delete(TABLE_ACCOUNTS, whereClause, whereArgs);
 			}
 			break;
 		case WIDGET_ACCOUNTS:
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				count = db.delete(TABLE_WIDGET_ACCOUNTS, whereClause, whereArgs);
 			}
 			break;
@@ -355,32 +356,32 @@ public class SonetProvider extends ContentProvider {
 			count = db.delete(TABLE_WIDGETS, whereClause, whereArgs);
 			break;
 		case STATUSES:
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				count = db.delete(TABLE_STATUSES, whereClause, whereArgs);
 			}
 			break;
 		case ENTITIES:
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				count = db.delete(TABLE_ENTITIES, whereClause, whereArgs);
 			}
 			break;
 		case NOTIFICATIONS:
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				count = db.delete(TABLE_NOTIFICATIONS, whereClause, whereArgs);
 			}
 			break;
 		case WIDGETS_SETTINGS:
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				count = db.delete(VIEW_WIDGETS_SETTINGS, whereClause, whereArgs);
 			}
 			break;
 		case STATUS_LINKS:
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				count = db.delete(TABLE_STATUS_LINKS, whereClause, whereArgs);
 			}
 			break;
 		case STATUS_IMAGES:
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				count = db.delete(TABLE_STATUS_IMAGES, whereClause, whereArgs);
 			}
 			break;
@@ -394,7 +395,7 @@ public class SonetProvider extends ContentProvider {
 	@Override
 	public Uri insert(Uri uri, ContentValues values) {
 		SQLiteDatabase db;
-		synchronized (Sonet.sDatabaseLock) {
+		synchronized (Eidos.DatabaseLock) {
 			db = mDatabaseHelper.getWritableDatabase();
 		}
 		long rowId;
@@ -410,21 +411,21 @@ public class SonetProvider extends ContentProvider {
 				values.put(Accounts.SECRET, sonetCrypto.Encrypt(values.getAsString(Accounts.SECRET)));
 			if (values.containsKey(Accounts.SID))
 				values.put(Accounts.SID, sonetCrypto.Encrypt(values.getAsString(Accounts.SID)));
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				rowId = db.insert(TABLE_ACCOUNTS, Accounts._ID, values);
 			}
 			returnUri = ContentUris.withAppendedId(Accounts.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case WIDGET_ACCOUNTS:
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				rowId = db.insert(TABLE_WIDGET_ACCOUNTS, Widget_accounts._ID, values);
 			}
 			returnUri = ContentUris.withAppendedId(Widget_accounts.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case WIDGETS:
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				rowId = db.insert(TABLE_WIDGETS, Widgets._ID, values);
 			}
 			returnUri = ContentUris.withAppendedId(Widgets.getContentUri(getContext()), rowId);
@@ -435,7 +436,7 @@ public class SonetProvider extends ContentProvider {
 			sonetCrypto = SonetCrypto.getInstance(getContext());
 			if (values.containsKey(Statuses.SID))
 				values.put(Statuses.SID, sonetCrypto.Encrypt(values.getAsString(Statuses.SID)));
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				rowId = db.insert(TABLE_STATUSES, Accounts._ID, values);
 			}
 			returnUri = ContentUris.withAppendedId(Accounts.getContentUri(getContext()), rowId);
@@ -447,7 +448,7 @@ public class SonetProvider extends ContentProvider {
 			sonetCrypto = SonetCrypto.getInstance(getContext());
 			if (values.containsKey(Entities.ESID))
 				values.put(Entities.ESID, sonetCrypto.Encrypt(values.getAsString(Entities.ESID)));
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				rowId = db.insert(TABLE_ENTITIES, Entities._ID, values);
 			}
 			returnUri = ContentUris.withAppendedId(Entities.getContentUri(getContext()), rowId);
@@ -459,28 +460,28 @@ public class SonetProvider extends ContentProvider {
 				values.put(Notifications.SID, sonetCrypto.Encrypt(values.getAsString(Notifications.SID)));
 			if (values.containsKey(Notifications.ESID))
 				values.put(Notifications.ESID, sonetCrypto.Encrypt(values.getAsString(Notifications.ESID)));
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				rowId = db.insert(TABLE_NOTIFICATIONS, Notifications._ID, values);
 			}
 			returnUri = ContentUris.withAppendedId(Notifications.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case WIDGETS_SETTINGS:
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				rowId = db.insert(VIEW_WIDGETS_SETTINGS, Widgets_settings._ID, values);
 			}
 			returnUri = ContentUris.withAppendedId(Widgets_settings.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case STATUS_LINKS:
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				rowId = db.insert(TABLE_STATUS_LINKS, Status_links._ID, values);
 			}
 			returnUri = ContentUris.withAppendedId(Status_links.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case STATUS_IMAGES:
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				rowId = db.insert(TABLE_STATUS_IMAGES, Status_images._ID, values);
 			}
 			returnUri = ContentUris.withAppendedId(Status_images.getContentUri(getContext()), rowId);
@@ -568,7 +569,7 @@ public class SonetProvider extends ContentProvider {
 	@Override
 	public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
 		SQLiteDatabase db;
-		synchronized (Sonet.sDatabaseLock) {
+		synchronized (Eidos.DatabaseLock) {
 			db = mDatabaseHelper.getWritableDatabase();
 		}
 		int count;
@@ -583,17 +584,17 @@ public class SonetProvider extends ContentProvider {
 				values.put(Accounts.SECRET, sonetCrypto.Encrypt(values.getAsString(Accounts.SECRET)));
 			if (values.containsKey(Accounts.SID))
 				values.put(Accounts.SID, sonetCrypto.Encrypt(values.getAsString(Accounts.SID)));
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				count = db.update(TABLE_ACCOUNTS, values, selection, selectionArgs);
 			}
 			break;
 		case WIDGET_ACCOUNTS:
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				count = db.update(TABLE_WIDGET_ACCOUNTS, values, selection, selectionArgs);
 			}
 			break;
 		case WIDGETS:
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				count = db.update(TABLE_WIDGETS, values, selection, selectionArgs);
 			}
 			break;
@@ -602,7 +603,7 @@ public class SonetProvider extends ContentProvider {
 			sonetCrypto = SonetCrypto.getInstance(getContext());
 			if (values.containsKey(Statuses.SID))
 				values.put(Statuses.SID, sonetCrypto.Encrypt(values.getAsString(Statuses.SID)));
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				count = db.update(TABLE_STATUSES, values, selection, selectionArgs);
 			}
 			break;
@@ -611,7 +612,7 @@ public class SonetProvider extends ContentProvider {
 			sonetCrypto = SonetCrypto.getInstance(getContext());
 			if (values.containsKey(Entities.ESID))
 				values.put(Entities.ESID, sonetCrypto.Encrypt(values.getAsString(Entities.ESID)));
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				count = db.update(TABLE_ENTITIES, values, selection, selectionArgs);
 			}
 			break;
@@ -622,17 +623,17 @@ public class SonetProvider extends ContentProvider {
 				values.put(Notifications.SID, sonetCrypto.Encrypt(values.getAsString(Notifications.SID)));
 			if (values.containsKey(Notifications.ESID))
 				values.put(Notifications.ESID, sonetCrypto.Encrypt(values.getAsString(Notifications.ESID)));
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				count = db.update(TABLE_NOTIFICATIONS, values, selection, selectionArgs);
 			}
 			break;
 		case STATUS_LINKS:
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				count = db.update(TABLE_STATUS_LINKS, values, selection, selectionArgs);
 			}
 			break;
 		case STATUS_IMAGES:
-			synchronized (Sonet.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				count = db.update(TABLE_STATUS_IMAGES, values, selection, selectionArgs);
 			}
 			break;

@@ -1,0 +1,2 @@
+include 'Eidos'
+project(':Eidos').projectDir = new File('Eidos')

@@ -22,7 +22,7 @@ android {
     defaultConfig {
         versionCode 326
         versionName '3.2.6'
-        minSdkVersion 7
+        minSdkVersion 8
         targetSdkVersion 19
     }
 
@@ -46,6 +46,8 @@ android {
 
 dependencies {
     compile 'com.android.support:support-v4:19.+'
+
+    compile project(':Eidos')
 
     compile files('libs/GoogleAdMobAdsSdk-6.0.1.jar',
                   'libs/commons-codec-1.4.jar',

@@ -22,7 +22,7 @@ android {
     defaultConfig {
         versionCode 326
         versionName '3.2.6'
-        minSdkVersion 7
+        minSdkVersion 8
         targetSdkVersion 19
     }
 
@@ -59,6 +59,7 @@ android {
 }
 
 dependencies {
+    compile project(':Eidos')
     compile project('..:core')
 }
 

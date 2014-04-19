@@ -1,0 +1,3 @@
+[submodule "core/Eidos"]
+	path = core/Eidos
+	url = https://github.com/piusvelte/Eidos.git

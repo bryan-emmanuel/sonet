@@ -62,6 +62,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import com.piusvelte.eidos.Eidos;
 import com.piusvelte.sonet.core.Sonet.Entities;
 import com.piusvelte.sonet.core.Sonet.Notifications;
 import com.piusvelte.sonet.core.Sonet.Statuses;
@@ -143,11 +144,7 @@ public class SonetService extends Service {
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		if (!sp.contains(getString(R.string.key_version)) || (currVer > sp.getInt(getString(R.string.key_version), 0))) {
 			sp.edit().putInt(getString(R.string.key_version), currVer).commit();
-			try {
-				BackupManager.dataChanged(this);
-			} catch (Throwable t) {
-				Log.d(TAG, "backupagent not supported");
-			}
+            Eidos.requestBackup(this);
 		}
 		mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 		mConnectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
