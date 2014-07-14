@@ -1,0 +1,105 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.12.+'
+    }
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 20
+    buildToolsVersion "19.1.0"
+
+    defaultConfig {
+        versionCode 326
+        versionName '3.2.6'
+        minSdkVersion 8
+        targetSdkVersion 20
+        // keys
+        buildConfigField "String", "TWITTER_KEY", '"' + project.property('twitter.key') + '"'
+        buildConfigField "String", "TWITTER_SECRET", '"' + project.property('twitter.secret') + '"'
+        buildConfigField "String", "FACEBOOK_ID", '"' + project.property('facebook.id') + '"'
+        buildConfigField "String", "MYSPACE_KEY", '"' + project.property('myspace.key') + '"'
+        buildConfigField "String", "MYSPACE_SECRET", '"' + project.property('myspace.secret') + '"'
+        buildConfigField "String", "CHATTER_KEY", '"' + project.property('chatter.key') + '"'
+        buildConfigField "String", "CHATTER_SECRET", '"' + project.property('chatter.secret') + '"'
+        buildConfigField "String", "FOURSQUARE_KEY", '"' + project.property('foursquare.key') + '"'
+        buildConfigField "String", "FOURSQUARE_SECRET", '"' + project.property('foursquare.secret') + '"'
+        buildConfigField "String", "LINKEDIN_KEY", '"' + project.property('linkedin.key') + '"'
+        buildConfigField "String", "LINKEDIN_SECRET", '"' + project.property('linkedin.secret') + '"'
+        buildConfigField "String", "IDENTICA_KEY", '"' + project.property('identica.key') + '"'
+        buildConfigField "String", "IDENTICA_SECRET", '"' + project.property('identica.secret') + '"'
+        buildConfigField "String", "GOOGLECLIENT_ID", '"' + project.property('googleClient.id') + '"'
+        buildConfigField "String", "GOOGLECLIENT_SECRET", '"' + project.property('googleClient.secret') + '"'
+        buildConfigField "String", "GOOGLEAD_ID", '"' + project.property('googleAd.id') + '"'
+    }
+
+    sourceSets {
+        main {
+        }
+    }
+
+    buildTypes {
+        debug {
+            versionNameSuffix = '-debug'
+            runProguard false
+        }
+        release {
+            debuggable false
+            runProguard false
+            zipAlign true
+            proguardFile getDefaultProguardFile('proguard-android.txt')
+            proguardFile 'proguard-project.txt'
+        }
+    }
+
+    productFlavors {
+        free {
+            applicationId = "com.piusvelte.sonet"
+            manifestPlaceholders = [
+                    backupApiKey: project.property('freeBackupApiKey')
+            ]
+        }
+
+        paid {
+            applicationId = "com.piusvelte.sonetpro"
+            manifestPlaceholders = [
+                    backupApiKey: project.property('paidBackupApiKey')
+            ]
+        }
+    }
+
+    packagingOptions {
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+    }
+}
+
+dependencies {
+    compile 'com.android.support:support-annotations:+'
+    compile 'com.android.support:support-v4:20.+'
+
+    compile project(':Eidos')
+
+    compile files('libs/GoogleAdMobAdsSdk-6.0.1.jar',
+                  'libs/commons-codec-1.4.jar',
+                  'libs/httpclient-4.1.1.jar',
+                  'libs/httpclient-cache-4.1.1.jar',
+                  'libs/httpcore-4.1.jar',
+                  'libs/httpmime-4.1.1.jar',
+                  'libs/signpost-core-1.2.1.1.jar')
+}
+
+def signing = System.properties['user.home'] + '/.signing/signing.gradle';
+if (new File(signing).exists()) {
+    apply from: signing
+}

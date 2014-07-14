@@ -1,2 +1,0 @@
-include 'Eidos', '..:core'
-project(':Eidos').projectDir = new File('../core/Eidos')
