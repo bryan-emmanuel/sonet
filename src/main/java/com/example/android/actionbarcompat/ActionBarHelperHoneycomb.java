@@ -16,8 +16,9 @@
 
 package com.example.android.actionbarcompat;
 
-import com.piusvelte.sonet.core.R;
+import com.piusvelte.sonet.R;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -43,6 +44,7 @@ public class ActionBarHelperHoneycomb extends ActionBarHelper {
         return super.onCreateOptionsMenu(menu);
     }
 
+    @SuppressLint("NewApi")
     @Override
     public void setRefreshActionItemState(boolean refreshing) {
         // On Honeycomb, we can set the state of the refresh button by giving it a custom

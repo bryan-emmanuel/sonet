@@ -19,7 +19,7 @@ package com.example.android.actionbarcompat;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
-import com.piusvelte.sonet.core.R;
+import com.piusvelte.sonet.R;
 
 import android.app.Activity;
 import android.content.Context;
