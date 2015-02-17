@@ -49,6 +49,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 
@@ -150,15 +151,16 @@ public class SonetCrypto {
 		}		
 	}
 
-	protected static synchronized SonetCrypto getInstance(Context context) {
+	public static synchronized SonetCrypto getInstance(Context context) {
 		if (instance == null) {
 			instance = new SonetCrypto(context);
 		}
+
 		return instance;
 	}
 
-	protected String Decrypt(String data) {
-		if ((mSecretKey != null) && (data != null)) {
+	public String Decrypt(String data) {
+		if (mSecretKey != null && !TextUtils.isEmpty(data)) {
 			try {
 				Cipher cipher = Cipher.getInstance("AES");
 				cipher.init(Cipher.DECRYPT_MODE, mSecretKey);
@@ -177,10 +179,11 @@ public class SonetCrypto {
 				Log.e(TAG,e.toString());
 			}
 		}
-		return null;
+
+		return data;
 	}
 
-	protected String Encrypt(String data) {
+	public String Encrypt(String data) {
 		if ((mSecretKey != null) && (data != null)) {
 			try {
 				Cipher cipher = Cipher.getInstance("AES");

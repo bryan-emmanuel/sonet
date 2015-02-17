@@ -155,4 +155,5 @@
 	<string name="add_tags">Tag Friends</string>
 	<string name="add_location">Add Location</string>
 	<string name="key_version">version</string>
+    <string name="notify_multiple_updates">Multiple updates</string>
 </resources>

@@ -27,15 +27,16 @@ import android.content.Intent;
 import android.os.Bundle;
 
 public class SonetSMSReceiver extends BroadcastReceiver {
-	
-	@Override
-	public void onReceive(Context context, Intent intent) {
-		if (intent.getAction().equals(SMS_RECEIVED)) {
-			Bundle bundle = intent.getExtras();
-			if (bundle != null) {
-				context.startService(Sonet.getPackageIntent(context, SonetService.class).setAction(SMS_RECEIVED).putExtras(bundle));
-			}
-		}
-	}
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        if (intent.getAction().equals(SMS_RECEIVED)) {
+            Bundle bundle = intent.getExtras();
+
+            if (bundle != null) {
+                context.startService(Sonet.getPackageIntent(context, SonetService.class).setAction(SMS_RECEIVED).putExtras(bundle));
+            }
+        }
+    }
 
 }

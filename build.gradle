@@ -3,8 +3,13 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.12.+'
+        classpath 'com.android.tools.build:gradle:1.0.1'
     }
+}
+
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.2.1'
 }
 
 allprojects {
@@ -23,7 +28,7 @@ android {
         versionCode 326
         versionName '3.2.6'
         minSdkVersion 8
-        targetSdkVersion 20
+        targetSdkVersion 21
         // keys
         buildConfigField "String", "TWITTER_KEY", '"' + project.property('twitter.key') + '"'
         buildConfigField "String", "TWITTER_SECRET", '"' + project.property('twitter.secret') + '"'
@@ -51,14 +56,13 @@ android {
     buildTypes {
         debug {
             versionNameSuffix = '-debug'
-            runProguard false
+            minifyEnabled false
         }
         release {
             debuggable false
-            runProguard false
-            zipAlign true
-            proguardFile getDefaultProguardFile('proguard-android.txt')
-            proguardFile 'proguard-project.txt'
+            minifyEnabled false
+            zipAlignEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-project.txt'
         }
     }
 
@@ -86,7 +90,7 @@ android {
 
 dependencies {
     compile 'com.android.support:support-annotations:+'
-    compile 'com.android.support:support-v4:20.+'
+    compile 'com.android.support:support-v4:21.+'
 
     compile project(':Eidos')
 

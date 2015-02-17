@@ -23,6 +23,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 
 import android.util.Log;
+
 import oauth.signpost.OAuthConsumer;
 import oauth.signpost.OAuthProvider;
 import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
@@ -35,65 +36,67 @@ import oauth.signpost.signature.HmacSha1MessageSigner;
 
 public class SonetOAuth {
 
-	private OAuthConsumer mOAuthConsumer;
-	private OAuthProvider mOAuthProvider;
-	private static final String TAG = "SonetOAuth";
+    private OAuthConsumer mOAuthConsumer;
+    private OAuthProvider mOAuthProvider;
+    private static final String TAG = "SonetOAuth";
 
-	public SonetOAuth(String apiKey, String apiSecret) {
-		Log.d(TAG, "creating SonetOAuth");
-		mOAuthConsumer = new CommonsHttpOAuthConsumer(apiKey, apiSecret);
-		mOAuthConsumer.setMessageSigner(new HmacSha1MessageSigner());
-	}
+    public SonetOAuth(String apiKey, String apiSecret) {
+        if (BuildConfig.DEBUG) Log.d(TAG, "creating SonetOAuth");
+        mOAuthConsumer = new CommonsHttpOAuthConsumer(apiKey, apiSecret);
+        mOAuthConsumer.setMessageSigner(new HmacSha1MessageSigner());
+    }
 
-	public SonetOAuth(String apiKey, String apiSecret, String token, String tokenSecret) {
-		mOAuthConsumer = new CommonsHttpOAuthConsumer(apiKey, apiSecret);
-		mOAuthConsumer.setMessageSigner(new HmacSha1MessageSigner());
-		mOAuthConsumer.setTokenWithSecret(token, tokenSecret);
-	}
+    public SonetOAuth(String apiKey, String apiSecret, String token, String tokenSecret) {
+        mOAuthConsumer = new CommonsHttpOAuthConsumer(apiKey, apiSecret);
+        mOAuthConsumer.setMessageSigner(new HmacSha1MessageSigner());
+        mOAuthConsumer.setTokenWithSecret(token, tokenSecret);
+    }
 
-	public String getAuthUrl(String request, String access, String authorize, String callback, boolean isOAuth10a, HttpClient httpClient) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
-		Log.d(TAG, "getAuthUrl");
-		mOAuthProvider = new CommonsHttpOAuthProvider(request, access, authorize, httpClient);
-		mOAuthProvider.setOAuth10a(isOAuth10a);
-		return mOAuthProvider.retrieveRequestToken(mOAuthConsumer, callback);
-	}
+    public String getAuthUrl(String request, String access, String authorize, String callback, boolean isOAuth10a, HttpClient httpClient) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
+        if (BuildConfig.DEBUG) Log.d(TAG, "getAuthUrl");
+        mOAuthProvider = new CommonsHttpOAuthProvider(request, access, authorize, httpClient);
+        mOAuthProvider.setOAuth10a(isOAuth10a);
+        return mOAuthProvider.retrieveRequestToken(mOAuthConsumer, callback);
+    }
 
-	public boolean retrieveAccessToken(String verifier) {
-		try {
-			mOAuthProvider.retrieveAccessToken(mOAuthConsumer, verifier);
-			return true;
-		} catch (OAuthMessageSignerException e) {
-			Log.e(TAG, e.toString());
-		} catch (OAuthNotAuthorizedException e) {
-			Log.e(TAG, e.toString());
-		} catch (OAuthExpectationFailedException e) {
-			Log.e(TAG, e.toString());
-		} catch (OAuthCommunicationException e) {
-			Log.e(TAG, e.toString());
-		}
-		return false;
-	}
+    public boolean retrieveAccessToken(String verifier) {
+        try {
+            mOAuthProvider.retrieveAccessToken(mOAuthConsumer, verifier);
+            return true;
+        } catch (OAuthMessageSignerException e) {
+            Log.e(TAG, e.toString());
+        } catch (OAuthNotAuthorizedException e) {
+            Log.e(TAG, e.toString());
+        } catch (OAuthExpectationFailedException e) {
+            Log.e(TAG, e.toString());
+        } catch (OAuthCommunicationException e) {
+            Log.e(TAG, e.toString());
+        }
 
-	public HttpUriRequest getSignedRequest(HttpUriRequest httpRequest) {
-		try {
-			mOAuthConsumer.sign(httpRequest);
-			return httpRequest;
-		} catch (OAuthMessageSignerException e) {
-			Log.e(TAG,e.toString());
-		} catch (OAuthExpectationFailedException e) {
-			Log.e(TAG,e.toString());
-		} catch (OAuthCommunicationException e) {
-			Log.e(TAG,e.toString());
-		}
-		return null;
-	}
+        return false;
+    }
 
-	public String getToken() {
-		return mOAuthConsumer.getToken();
-	}
+    public HttpUriRequest getSignedRequest(HttpUriRequest httpRequest) {
+        try {
+            mOAuthConsumer.sign(httpRequest);
+            return httpRequest;
+        } catch (OAuthMessageSignerException e) {
+            Log.e(TAG, e.toString());
+        } catch (OAuthExpectationFailedException e) {
+            Log.e(TAG, e.toString());
+        } catch (OAuthCommunicationException e) {
+            Log.e(TAG, e.toString());
+        }
 
-	public String getTokenSecret() {
-		return mOAuthConsumer.getTokenSecret();
-	}
+        return null;
+    }
+
+    public String getToken() {
+        return mOAuthConsumer.getToken();
+    }
+
+    public String getTokenSecret() {
+        return mOAuthConsumer.getTokenSecret();
+    }
 
 }

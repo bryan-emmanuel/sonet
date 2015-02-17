@@ -55,14 +55,7 @@ import android.util.Log;
 
 public class PhotoUploadService extends Service {
 	private static final String TAG = "PhotoUploadService";
-	private SonetCrypto mSonetCrypto;
 	private int mStartId = Sonet.INVALID_SERVICE;
-
-	@Override
-	public void onCreate() {
-		super.onCreate();
-		mSonetCrypto = SonetCrypto.getInstance(getApplicationContext());
-	}
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -83,11 +76,17 @@ public class PhotoUploadService extends Service {
 			if (Sonet.ACTION_UPLOAD.equals(action)) {
 				if (intent.hasExtra(Accounts.TOKEN) && intent.hasExtra(Statuses.MESSAGE) && intent.hasExtra(Widgets.INSTANT_UPLOAD)) {
 					String place = null;
-					if (intent.hasExtra(Splace))
-						place = intent.getStringExtra(Splace);
+
+					if (intent.hasExtra(Splace)) {
+                        place = intent.getStringExtra(Splace);
+                    }
+
 					String tags = null;
-					if (intent.hasExtra(Stags))
-						tags = intent.getStringExtra(Stags);
+
+					if (intent.hasExtra(Stags)) {
+                        tags = intent.getStringExtra(Stags);
+                    }
+
 					// upload a photo
 					Notification notification = new Notification(R.drawable.notification, "uploading photo", System.currentTimeMillis());
 					notification.setLatestEventInfo(getBaseContext(), "photo upload", "uploading", PendingIntent.getActivity(PhotoUploadService.this, 0, (Sonet.getPackageIntent(PhotoUploadService.this, About.class)), 0));
@@ -99,7 +98,7 @@ public class PhotoUploadService extends Service {
 							String response = null;
 							if (params.length > 2) {
 								Log.d(TAG, "upload file: " + params[2]);
-								HttpPost httpPost = new HttpPost(String.format(FACEBOOK_PHOTOS, FACEBOOK_BASE_URL, Saccess_token, mSonetCrypto.Decrypt(params[0])));
+								HttpPost httpPost = new HttpPost(String.format(FACEBOOK_PHOTOS, FACEBOOK_BASE_URL, Saccess_token, params[0]));
 								MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
 								File file = new File(params[2]);
 								ContentBody fileBody = new FileBody(file);

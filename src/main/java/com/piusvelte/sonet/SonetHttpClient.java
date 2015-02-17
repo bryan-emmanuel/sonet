@@ -49,6 +49,7 @@ import org.apache.http.params.HttpProtocolParams;
 import android.content.Context;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 public class SonetHttpClient {
@@ -108,7 +109,7 @@ public class SonetHttpClient {
 		return sHttpClient;
 	}
 
-	protected static byte[] httpBlobResponse(HttpClient httpClient, HttpUriRequest httpRequest) {
+	public static byte[] httpBlobResponse(HttpClient httpClient, HttpUriRequest httpRequest) {
 		if (httpClient != null) {
 			HttpResponse httpResponse;
 			HttpEntity entity = null;
@@ -153,7 +154,11 @@ public class SonetHttpClient {
 		return null;
 	}
 
-	protected static String httpResponse(HttpClient httpClient, HttpUriRequest httpRequest) {
+    public static String httpResponse(@NonNull Context context, HttpUriRequest httpRequest) {
+        return httpResponse(SonetHttpClient.getThreadSafeClient(context), httpRequest);
+    }
+
+	public static String httpResponse(HttpClient httpClient, HttpUriRequest httpRequest) {
 		String response = null;
 		if (httpClient != null) {
 			HttpResponse httpResponse;
