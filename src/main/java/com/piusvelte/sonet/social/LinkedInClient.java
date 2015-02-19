@@ -2,6 +2,8 @@ package com.piusvelte.sonet.social;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.piusvelte.sonet.BuildConfig;
@@ -14,6 +16,7 @@ import com.piusvelte.sonet.SonetOAuth;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
 import org.json.JSONArray;
@@ -22,12 +25,14 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 import static com.piusvelte.sonet.Sonet.LINKEDIN_BASE_URL;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_HEADERS;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_POST;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_POST_BODY;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATE;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATES;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATE_COMMENTS;
 import static com.piusvelte.sonet.Sonet.S_total;
@@ -62,8 +67,20 @@ import static com.piusvelte.sonet.Sonet.Svalues;
  */
 public class LinkedInClient extends SocialClient {
 
+    private static final String IS_LIKABLE = "isLikable";
+    private static final String IS_LIKED = "isLiked";
+    private static final String IS_COMMENTABLE = "isCommentable";
+
     public LinkedInClient(Context context, String token, String secret, String accountEsid) {
         super(context, token, secret, accountEsid);
+    }
+
+    private static final <T extends HttpUriRequest> T addHeaders(@NonNull T httpUriRequest) {
+        for (String[] header : LINKEDIN_HEADERS) {
+            httpUriRequest.setHeader(header[0], header[1]);
+        }
+
+        return httpUriRequest;
     }
 
     @Override
@@ -105,9 +122,7 @@ public class LinkedInClient extends SocialClient {
                     }
 
                     // get comments for current notifications
-                    httpGet = new HttpGet(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, sid));
-                    for (String[] header : LINKEDIN_HEADERS)
-                        httpGet.setHeader(header[0], header[1]);
+                    httpGet = addHeaders(new HttpGet(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, sid)));
 
                     if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(httpGet))) != null) {
                         // check for a newer post, if it's the user's own, then set CLEARED=0
@@ -143,11 +158,7 @@ public class LinkedInClient extends SocialClient {
             currentNotifications.close();
         }
 
-        httpGet = new HttpGet(String.format(LINKEDIN_UPDATES, LINKEDIN_BASE_URL));
-
-        for (String[] header : LINKEDIN_HEADERS) {
-            httpGet.setHeader(header[0], header[1]);
-        }
+        httpGet = addHeaders(new HttpGet(String.format(LINKEDIN_UPDATES, LINKEDIN_BASE_URL)));
 
         // parse the response
         if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(httpGet))) != null) {
@@ -338,6 +349,106 @@ public class LinkedInClient extends SocialClient {
         }
 
         return false;
+    }
+
+    @Nullable
+    private JSONObject getStatus(String statusId) {
+        HttpGet httpGet = addHeaders(new HttpGet(String.format(LINKEDIN_UPDATE, LINKEDIN_BASE_URL, statusId)));
+        String response = SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(httpGet));
+
+        if (response != null) {
+            try {
+                return new JSONObject(response);
+            } catch (JSONException e) {
+                if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    public boolean isLikeable(String statusId) {
+        return isLikeable(getStatus(statusId));
+    }
+
+    private boolean isLikeable(@Nullable JSONObject jsonStatus) {
+        if (jsonStatus != null) {
+            return jsonStatus.has(IS_LIKABLE);
+        }
+
+        return false;
+    }
+
+    @Override
+    public boolean isLiked(String statusId, String accountId) {
+        JSONObject jsonStatus = getStatus(statusId);
+
+        if (jsonStatus != null && isLikeable(jsonStatus)) {
+            try {
+                return jsonStatus.has(IS_LIKED) && jsonStatus.getBoolean(IS_LIKED);
+            } catch (JSONException e) {
+                if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public String getLikeText(boolean isLiked) {
+        return getString(isLiked ? R.string.unlike : R.string.like);
+    }
+
+    @Override
+    public boolean isCommentable(String statusId) {
+        JSONObject jsonStatus = getStatus(statusId);
+
+        if (jsonStatus != null && jsonStatus.has(IS_COMMENTABLE)) {
+            try {
+                return jsonStatus.getBoolean(IS_COMMENTABLE);
+            } catch (JSONException e) {
+                if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public String getCommentPretext(String accountId) {
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public String getCommentsResponse(String statusId) {
+        return SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(addHeaders(new HttpGet(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, statusId)))));
+    }
+
+    @Nullable
+    @Override
+    public JSONArray parseComments(@NonNull String response) throws JSONException {
+        JSONObject jsonResponse = new JSONObject(response);
+
+        if (jsonResponse.has(S_total) && (jsonResponse.getInt(S_total) > 0)) {
+            return jsonResponse.getJSONArray(Svalues);
+        }
+
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public HashMap<String, String> parseComment(@NonNull String statusId, @NonNull JSONObject jsonComment, boolean time24hr) throws JSONException {
+        JSONObject person = jsonComment.getJSONObject(Sperson);
+        HashMap<String, String> commentMap = new HashMap<>();
+        commentMap.put(Sonet.Statuses.SID, jsonComment.getString(Sid));
+        commentMap.put(Sonet.Entities.FRIEND, person.getString(SfirstName) + " " + person.getString(SlastName));
+        commentMap.put(Sonet.Statuses.MESSAGE, jsonComment.getString(Scomment));
+        commentMap.put(Sonet.Statuses.CREATEDTEXT, Sonet.getCreatedText(jsonComment.getLong(Stimestamp), time24hr));
+        commentMap.put(getString(R.string.like), "");
+        return commentMap;
     }
 
     @Override

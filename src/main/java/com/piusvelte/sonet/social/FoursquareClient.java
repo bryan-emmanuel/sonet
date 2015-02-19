@@ -4,6 +4,8 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.database.Cursor;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -47,6 +49,7 @@ import static com.piusvelte.sonet.Sonet.Sphoto;
 import static com.piusvelte.sonet.Sonet.Srecent;
 import static com.piusvelte.sonet.Sonet.Sresponse;
 import static com.piusvelte.sonet.Sonet.Sshout;
+import static com.piusvelte.sonet.Sonet.Stext;
 import static com.piusvelte.sonet.Sonet.Suser;
 import static com.piusvelte.sonet.Sonet.Svenue;
 
@@ -247,10 +250,60 @@ public class FoursquareClient extends SocialClient {
     }
 
     @Override
+    public boolean isLikeable(String statusId) {
+        return true;
+    }
+
+    @Override
+    public boolean isLiked(String statusId, String accountId) {
+        return false;
+    }
+
+    @Override
+    public String getLikeText(boolean isLiked) {
+        return getString(isLiked ? R.string.unlike : R.string.like);
+    }
+
+    @Override
+    public boolean isCommentable(String statusId) {
+        return true;
+    }
+
+    @Override
+    public String getCommentPretext(String accountId) {
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public String getCommentsResponse(String statusId) {
+        return SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, statusId, mToken)));
+    }
+
+    @Nullable
+    @Override
+    public JSONArray parseComments(@NonNull String response) throws JSONException {
+        return new JSONObject(response).getJSONObject(Sresponse).getJSONObject(Scheckin).getJSONObject(Scomments).getJSONArray(Sitems);
+    }
+
+    @Nullable
+    @Override
+    public HashMap<String, String> parseComment(@NonNull String statusId, @NonNull JSONObject jsonComment, boolean time24hr) throws JSONException {
+        JSONObject user = jsonComment.getJSONObject(Suser);
+        HashMap<String, String> commentMap = new HashMap<>();
+        commentMap.put(Sonet.Statuses.SID, jsonComment.getString(Sid));
+        commentMap.put(Sonet.Entities.FRIEND, user.getString(SfirstName) + " " + user.getString(SlastName));
+        commentMap.put(Sonet.Statuses.MESSAGE, jsonComment.getString(Stext));
+        commentMap.put(Sonet.Statuses.CREATEDTEXT, Sonet.getCreatedText(jsonComment.getLong(ScreatedAt) * 1000, time24hr));
+        commentMap.put(getString(R.string.like), "");
+        return commentMap;
+    }
+
+    @Override
     public LinkedHashMap<String, String> getLocations(String latitude, String longitude) {
         String response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FOURSQUARE_SEARCH, FOURSQUARE_BASE_URL, latitude, longitude, mToken)));
 
-        if (response != null) {
+        if (!TextUtils.isEmpty(response)) {
             LinkedHashMap<String, String> locations = new LinkedHashMap<String, String>();
 
             try {

@@ -2,9 +2,11 @@ package com.piusvelte.sonet.social;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.piusvelte.sonet.BuildConfig;
+import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
@@ -22,6 +24,7 @@ import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -29,10 +32,12 @@ import java.util.regex.Matcher;
 import static com.piusvelte.sonet.Sonet.Screated_at;
 import static com.piusvelte.sonet.Sonet.Sfull_name;
 import static com.piusvelte.sonet.Sonet.Sid;
+import static com.piusvelte.sonet.Sonet.Sin_reply_to_status_id;
 import static com.piusvelte.sonet.Sonet.Sname;
 import static com.piusvelte.sonet.Sonet.Splaces;
 import static com.piusvelte.sonet.Sonet.Sprofile_image_url;
 import static com.piusvelte.sonet.Sonet.Sresult;
+import static com.piusvelte.sonet.Sonet.Sscreen_name;
 import static com.piusvelte.sonet.Sonet.Sstatus;
 import static com.piusvelte.sonet.Sonet.Stext;
 import static com.piusvelte.sonet.Sonet.Suser;
@@ -43,6 +48,7 @@ import static com.piusvelte.sonet.Sonet.TWITTER_SEARCH;
 import static com.piusvelte.sonet.Sonet.TWITTER_SINCE_ID;
 import static com.piusvelte.sonet.Sonet.TWITTER_UPDATE;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_FEED;
+import static com.piusvelte.sonet.Sonet.TWITTER_USER;
 
 /**
  * Created by bemmanuel on 2/15/15.
@@ -71,6 +77,10 @@ public class TwitterClient extends SocialClient {
 
     String getSearchUrl() {
         return TWITTER_SEARCH;
+    }
+
+    String getUserUrl() {
+        return TWITTER_USER;
     }
 
     @Override
@@ -234,6 +244,65 @@ public class TwitterClient extends SocialClient {
     }
 
     @Override
+    public boolean isLikeable(String statusId) {
+        // retweetable
+        return true;
+    }
+
+    @Override
+    public boolean isLiked(String statusId, String accountId) {
+        return false;
+    }
+
+    @Override
+    public String getLikeText(boolean isLiked) {
+        return getString(R.string.retweet);
+    }
+
+    @Override
+    public boolean isCommentable(String statusId) {
+        return true;
+    }
+
+    @Override
+    public String getCommentPretext(String accountId) {
+        return "@" + getScreenName(accountId) + " ";
+    }
+
+    @Override
+    public String getCommentsResponse(String statusId) {
+        return SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(getMentionsUrl(), getBaseUrl(), String.format(TWITTER_SINCE_ID, statusId)))));
+    }
+
+    @Override
+    public JSONArray parseComments(String response) throws JSONException {
+        return new JSONArray(response);
+    }
+
+    @Override
+    public HashMap<String, String> parseComment(String statusId, JSONObject jsonComment, boolean time24hr) throws JSONException {
+        String replyId = null;
+
+        try {
+            replyId = jsonComment.getString(Sin_reply_to_status_id);
+        } catch (JSONException e) {
+            if (BuildConfig.DEBUG) Log.d(mTag, "exception getting reply id", e);
+        }
+
+        if (statusId.equals(replyId)) {
+            HashMap<String, String> commentMap = new HashMap<>();
+            commentMap.put(Sonet.Statuses.SID, jsonComment.getString(Sid));
+            commentMap.put(Sonet.Entities.FRIEND, jsonComment.getJSONObject(Suser).getString(Sname));
+            commentMap.put(Sonet.Statuses.MESSAGE, jsonComment.getString(Stext));
+            commentMap.put(Sonet.Statuses.CREATEDTEXT, Sonet.getCreatedText(parseDate(jsonComment.getString(Screated_at), TWITTER_DATE_FORMAT), time24hr));
+            commentMap.put(getString(R.string.like), getLikeText(true));
+            return commentMap;
+        }
+
+        return null;
+    }
+
+    @Override
     public LinkedHashMap<String, String> getLocations(String latitude, String longitude) {
         // anonymous requests are rate limited to 150 per hour
         // authenticated requests are rate limited to 350 per hour, so authenticate this!
@@ -250,10 +319,26 @@ public class TwitterClient extends SocialClient {
                     locations.put(place.getString(Sid), place.getString(Sfull_name));
                 }
             } catch (JSONException e) {
-                Log.e(mTag, e.toString());
+                if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
             }
 
             return locations;
+        }
+
+        return null;
+    }
+
+    @Nullable
+    private String getScreenName(String accountId) {
+        String response = SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(getUserUrl(), getBaseUrl(), accountId))));
+
+        if (response != null) {
+            try {
+                JSONObject user = new JSONObject(response);
+                return user.getString(Sscreen_name);
+            } catch (JSONException e) {
+                if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
+            }
         }
 
         return null;

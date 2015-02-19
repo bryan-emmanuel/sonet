@@ -6,6 +6,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -35,6 +37,7 @@ import java.util.List;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_COMMENTS;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_HOME;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_LIKES;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_PICTURE;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_POST;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_SEARCH;
@@ -55,6 +58,7 @@ import static com.piusvelte.sonet.Sonet.Sstory;
 import static com.piusvelte.sonet.Sonet.Stags;
 import static com.piusvelte.sonet.Sonet.Sto;
 import static com.piusvelte.sonet.Sonet.Stype;
+import static com.piusvelte.sonet.Sonet.Suser_likes;
 
 /**
  * Created by bemmanuel on 2/15/15.
@@ -376,11 +380,78 @@ public class FacebookClient extends SocialClient {
                 httpPost.setEntity(new UrlEncodedFormEntity(params));
                 return SonetHttpClient.httpResponse(mContext, httpPost) != null;
             } catch (UnsupportedEncodingException e) {
-                Log.e(mTag, e.toString());
+                if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
             }
         }
 
         return false;
+    }
+
+    @Override
+    public boolean isLikeable(String statusId) {
+        return true;
+    }
+
+    @Override
+    public boolean isLiked(String statusId, String accountId) {
+        String response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken)));
+
+        if (!TextUtils.isEmpty(response)) {
+            try {
+                JSONArray likes = new JSONObject(response).getJSONArray(Sdata);
+
+                for (int i = 0, i2 = likes.length(); i < i2; i++) {
+                    JSONObject like = likes.getJSONObject(i);
+
+                    if (like.getString(Sid).equals(accountId)) {
+                        return true;
+                    }
+                }
+            } catch (JSONException e) {
+                if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public String getLikeText(boolean isLiked) {
+        return getString(isLiked ? R.string.unlike : R.string.like);
+    }
+
+    @Override
+    public boolean isCommentable(String statusId) {
+        return true;
+    }
+
+    @Override
+    public String getCommentPretext(String accountId) {
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public String getCommentsResponse(String statusId) {
+        return SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken)));
+    }
+
+    @Nullable
+    @Override
+    public JSONArray parseComments(@NonNull String response) throws JSONException {
+        return new JSONObject(response).getJSONArray(Sdata);
+    }
+
+    @Nullable
+    @Override
+    public HashMap<String, String> parseComment(@NonNull String statusId, @NonNull JSONObject jsonComment, boolean time24hr) throws JSONException {
+        HashMap<String, String> commentMap = new HashMap<>();
+        commentMap.put(Sonet.Statuses.SID, jsonComment.getString(Sid));
+        commentMap.put(Sonet.Entities.FRIEND, jsonComment.getJSONObject(Sfrom).getString(Sname));
+        commentMap.put(Sonet.Statuses.MESSAGE, jsonComment.getString(Smessage));
+        commentMap.put(Sonet.Statuses.CREATEDTEXT, Sonet.getCreatedText(jsonComment.getLong(Screated_time) * 1000, time24hr));
+        commentMap.put(getString(R.string.like), getLikeText(jsonComment.has(Suser_likes) && jsonComment.getBoolean(Suser_likes)));
+        return commentMap;
     }
 
     @Override

@@ -70,7 +70,7 @@ public class Sonet {
 	protected static final String TWITTER_URL_ACCESS = "%soauth/access_token";
 	public static final String TWITTER_URL_FEED = "%s1.1/statuses/home_timeline.json?count=%s";
 	protected static final String TWITTER_RETWEET = "%s1.1/statuses/retweets/%s.json";
-	protected static final String TWITTER_USER = "%s1.1/users/show.json?user_id=%s";
+	public static final String TWITTER_USER = "%s1.1/users/show.json?user_id=%s";
 	public static final String TWITTER_UPDATE = "%s1.1/statuses/update.json";
 	public static final String TWITTER_SEARCH = "%s1.1/geo/search.json?lat=%s&long=%s";
 	protected static final String TWITTER_PROFILE = "http://twitter.com/%s";
@@ -86,7 +86,7 @@ public class Sonet {
 	public static final String FACEBOOK_HOME = "%sme/home?date_format=U&format=json&sdk=android&%s=%s&fields=actions,link,type,from,message,created_time,to,comments,story,source,picture";
 	public static final String FACEBOOK_POST = "%sme/feed?format=json&sdk=android&%s=%s";
 //	protected static final String FACEBOOK_CHECKIN = "%sme/checkins?format=json&sdk=android&%s=%s";
-	protected static final String FACEBOOK_LIKES = "%s%s/likes?format=json&sdk=android&%s=%s";
+	public static final String FACEBOOK_LIKES = "%s%s/likes?format=json&sdk=android&%s=%s";
 	public static final String FACEBOOK_COMMENTS = "%s%s/comments?date_format=U&format=json&sdk=android&%s=%s";
 	public static final String FACEBOOK_SEARCH = "%ssearch?type=place&center=%s,%s&distance=1000&format=json&sdk=android&%s=%s";
 //	protected static final String FACEBOOK_COORDINATES = "{\"latitude\":\"%s\",\"longitude\":\"%s\"}";
@@ -133,7 +133,7 @@ public class Sonet {
 	public static final String LINKEDIN_UPDATES = "%s/network/updates?type=APPS&type=CMPY&type=CONN&type=JOBS&type=JGRP&type=PICT&type=PRFU&type=RECU&type=PRFX&type=ANSW&type=QSTN&type=SHAR&type=VIRL";
 	public static final String[][] LINKEDIN_HEADERS = new String[][] {{"x-li-format", "json"}};
 	protected static final String LINKEDIN_IS_LIKED = "%s/network/updates/key=%s/is-liked";
-	protected static final String LINKEDIN_UPDATE = "%s/network/updates/key=%s";
+	public static final String LINKEDIN_UPDATE = "%s/network/updates/key=%s";
 	public static final String LINKEDIN_UPDATE_COMMENTS = "%s/network/updates/key=%s/update-comments";
 	public static final String LINKEDIN_POST = "%s/person-activities";
 	public static final String LINKEDIN_POST_BODY = "<?xml version='1.0' encoding='UTF-8'?><activity locale=\"%s\"><content-type>linkedin-html</content-type><body>%s</body></activity>";
@@ -181,9 +181,9 @@ public class Sonet {
 	public static final String CHATTER_URL_POST = "%s/services/data/v22.0/chatter/feeds/news/me/feed-items?text=%s";
 	protected static final String CHATTER_URL_COMMENT = "%s/services/data/v22.0/chatter/feed-items/%s/comments?text=%s";
 	public static final String CHATTER_URL_FEED = "%s/services/data/v22.0/chatter/feeds/news/me/feed-items";
-	protected static final String CHATTER_URL_LIKES = "%s/services/data/v22.0/chatter/feed-items/%s/likes";
+	public static final String CHATTER_URL_LIKES = "%s/services/data/v22.0/chatter/feed-items/%s/likes";
 	protected static final String CHATTER_URL_LIKE = "%s/services/data/v22.0/chatter/likes/%s";
-	protected static final String CHATTER_URL_COMMENTS = "%s/services/data/v22.0/chatter/feed-items/%s/comments";
+	public static final String CHATTER_URL_COMMENTS = "%s/services/data/v22.0/chatter/feed-items/%s/comments";
 	public static final String CHATTER_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
 	protected static final String AM = "a.m.";
@@ -311,10 +311,10 @@ public class Sonet {
 	public static final String SisCommentable = "isCommentable";
 	public static final String SrecommendationSnippet = "recommendationSnippet";
 	public static final String Srecommendee = "recommendee";
-	protected static final String Sscreen_name = "screen_name";
-	protected static final String Sin_reply_to_status_id = "in_reply_to_status_id";
-	protected static final String Suser_likes = "user_likes";
-	protected static final String ScommentId = "commentId";
+	public static final String Sscreen_name = "screen_name";
+	public static final String Sin_reply_to_status_id = "in_reply_to_status_id";
+	public static final String Suser_likes = "user_likes";
+	public static final String ScommentId = "commentId";
 	public static final String Sgroups = "groups";
 	public static final String SNearby = "Nearby";
 	public static final String Splaces = "places";

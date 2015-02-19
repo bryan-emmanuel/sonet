@@ -1,6 +1,8 @@
 package com.piusvelte.sonet.social;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.piusvelte.sonet.BuildConfig;
@@ -14,6 +16,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 import static com.piusvelte.sonet.Sonet.PINTEREST_BASE_URL;
@@ -120,6 +123,49 @@ public class PinterestClient extends SocialClient {
     @Override
     public boolean createPost(String message, String placeId, String latitude, String longitude, String photoPath, String[] tags) {
         return false;
+    }
+
+    @Override
+    public boolean isLikeable(String statusId) {
+        return false;
+    }
+
+    @Override
+    public boolean isLiked(String statusId, String accountId) {
+        return false;
+    }
+
+    @Override
+    public String getLikeText(boolean isLiked) {
+        return null;
+    }
+
+    @Override
+    public boolean isCommentable(String statusId) {
+        return false;
+    }
+
+    @Override
+    public String getCommentPretext(String accountId) {
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public String getCommentsResponse(String statusId) {
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public JSONArray parseComments(@NonNull String response) throws JSONException {
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public HashMap<String, String> parseComment(@NonNull String statusId, @NonNull JSONObject jsonComment, boolean time24hr) throws JSONException {
+        return null;
     }
 
     @Override

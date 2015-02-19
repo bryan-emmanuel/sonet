@@ -10,9 +10,11 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.piusvelte.sonet.BuildConfig;
 import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
@@ -21,13 +23,18 @@ import com.piusvelte.sonet.SonetOAuth;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -133,6 +140,69 @@ abstract public class SocialClient {
     abstract public String getFeed(int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient);
 
     abstract public boolean createPost(String message, String placeId, String latitude, String longitude, String photoPath, String[] tags);
+
+    abstract public boolean isLikeable(String statusId);
+
+    abstract public boolean isLiked(String statusId, String accountId);
+
+    abstract public String getLikeText(boolean isLiked);
+
+    abstract public boolean isCommentable(String statusId);
+
+    abstract public String getCommentPretext(String accountId);
+
+    public List<HashMap<String, String>> getComments(@NonNull String statusId, boolean time24hr) {
+        List<HashMap<String, String>> parsedComments = new ArrayList<>();
+
+        String response = getCommentsResponse(statusId);
+
+        if (!TextUtils.isEmpty(response)) {
+            JSONArray jsonComments = null;
+
+            try {
+                jsonComments = parseComments(response);
+            } catch (JSONException e) {
+                if (BuildConfig.DEBUG) Log.d(mTag, "exception parsing: " + response, e);
+            }
+
+            if (jsonComments != null) {
+                for (int commentsIdx = 0, commentsLength = jsonComments.length(); commentsIdx < commentsLength; commentsIdx++) {
+                    JSONObject comment = null;
+
+                    try {
+                        comment = jsonComments.getJSONObject(commentsIdx);
+                    } catch (JSONException e) {
+                        if (BuildConfig.DEBUG) Log.d(mTag, "exception getting comment", e);
+                    }
+
+                    if (comment != null) {
+                        HashMap<String, String> parsedComment = null;
+
+                        try {
+                            parsedComment = parseComment(statusId, comment, time24hr);
+                        } catch (JSONException e) {
+                            if (BuildConfig.DEBUG) Log.d(mTag, "exception parsing comment", e);
+                        }
+
+                        if (parsedComment != null) {
+                            parsedComments.add(parsedComment);
+                        }
+                    }
+                }
+            }
+        }
+
+        return parsedComments;
+    }
+
+    @Nullable
+    abstract public String getCommentsResponse(String statusId);
+
+    @Nullable
+    abstract public JSONArray parseComments(@NonNull String response) throws JSONException;
+
+    @Nullable
+    abstract public HashMap<String, String> parseComment(@NonNull String statusId, @NonNull JSONObject jsonComment, boolean time24hr) throws JSONException;
 
     abstract public LinkedHashMap<String, String> getLocations(String latitude, String longitude);
 

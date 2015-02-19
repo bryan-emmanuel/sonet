@@ -2,6 +2,8 @@ package com.piusvelte.sonet.social;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.piusvelte.sonet.BuildConfig;
@@ -21,7 +23,9 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import static com.piusvelte.sonet.Sonet.MYSPACE_BASE_URL;
 import static com.piusvelte.sonet.Sonet.MYSPACE_DATE_FORMAT;
@@ -30,6 +34,8 @@ import static com.piusvelte.sonet.Sonet.MYSPACE_STATUSMOOD_BODY;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOOD;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOODCOMMENTS;
 import static com.piusvelte.sonet.Sonet.Sauthor;
+import static com.piusvelte.sonet.Sonet.Sbody;
+import static com.piusvelte.sonet.Sonet.ScommentId;
 import static com.piusvelte.sonet.Sonet.SdisplayName;
 import static com.piusvelte.sonet.Sonet.Sentry;
 import static com.piusvelte.sonet.Sonet.Sid;
@@ -244,6 +250,55 @@ public class MySpaceClient extends SocialClient {
         }
 
         return false;
+    }
+
+    @Override
+    public boolean isLikeable(String statusId) {
+        return false;
+    }
+
+    @Override
+    public boolean isLiked(String statusId, String accountId) {
+        return false;
+    }
+
+    @Override
+    public String getLikeText(boolean isLiked) {
+        return null;
+    }
+
+    @Override
+    public boolean isCommentable(String statusId) {
+        return true;
+    }
+
+    @Override
+    public String getCommentPretext(String accountId) {
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public String getCommentsResponse(String statusId) {
+        return SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mAccountEsid, statusId))));
+    }
+
+    @Nullable
+    @Override
+    public JSONArray parseComments(@NonNull String response) throws JSONException {
+        return new JSONObject(response).getJSONArray(Sentry);
+    }
+
+    @Nullable
+    @Override
+    public HashMap<String, String> parseComment(@NonNull String statusId, @NonNull JSONObject jsonComment, boolean time24hr) throws JSONException {
+        HashMap<String, String> commentMap = new HashMap<String, String>();
+        commentMap.put(Sonet.Statuses.SID, jsonComment.getString(ScommentId));
+        commentMap.put(Sonet.Entities.FRIEND, jsonComment.getJSONObject(Sauthor).getString(SdisplayName));
+        commentMap.put(Sonet.Statuses.MESSAGE, jsonComment.getString(Sbody));
+        commentMap.put(Sonet.Statuses.CREATEDTEXT, Sonet.getCreatedText(parseDate(jsonComment.getString(SpostedDate), MYSPACE_DATE_FORMAT), time24hr));
+        commentMap.put(getString(R.string.like), "");
+        return commentMap;
     }
 
     @Override
