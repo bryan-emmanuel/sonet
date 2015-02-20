@@ -106,7 +106,7 @@ public class Sonet {
 	public static final String MYSPACE_URL_STATUSMOODCOMMENTS = "%sstatusmoodcomments/%s/@self/%s?format=json&includeself=true&fields=author";
 	public static final String MYSPACE_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
 	public static final String MYSPACE_STATUSMOOD_BODY = "{\"status\":\"%s\"}";
-	protected static final String MYSPACE_STATUSMOODCOMMENTS_BODY = "{\"body\":\"%s\"}";
+	public static final String MYSPACE_STATUSMOODCOMMENTS_BODY = "{\"body\":\"%s\"}";
 	protected static final String MYSPACE_USER = "%speople/%s/@self";
 
 	public static final int FOURSQUARE = 4;
@@ -119,7 +119,7 @@ public class Sonet {
 	public static final String FOURSQUARE_CHECKIN = "%scheckins/add?venueId=%s&shout=%s&ll=%s,%s&broadcast=public&oauth_token=%s";
 	public static final String FOURSQUARE_CHECKIN_NO_VENUE = "%scheckins/add?shout=%s&broadcast=public&oauth_token=%s";
 	public static final String FOURSQUARE_CHECKIN_NO_SHOUT = "%scheckins/add?venueId=%s&ll=%s,%s&broadcast=public&oauth_token=%s";
-	protected static final String FOURSQUARE_ADDCOMMENT = "%scheckins/%s/addcomment?text=%s&oauth_token=%s";
+	public static final String FOURSQUARE_ADDCOMMENT = "%scheckins/%s/addcomment?text=%s&oauth_token=%s";
 	public static final String FOURSQUARE_SEARCH = "%svenues/search?ll=%s,%s&intent=checkin&oauth_token=%s";
 	public static final String FOURSQUARE_GET_CHECKIN = "%scheckins/%s?oauth_token=%s";
 
@@ -137,7 +137,7 @@ public class Sonet {
 	public static final String LINKEDIN_UPDATE_COMMENTS = "%s/network/updates/key=%s/update-comments";
 	public static final String LINKEDIN_POST = "%s/person-activities";
 	public static final String LINKEDIN_POST_BODY = "<?xml version='1.0' encoding='UTF-8'?><activity locale=\"%s\"><content-type>linkedin-html</content-type><body>%s</body></activity>";
-	protected static final String LINKEDIN_COMMENT_BODY = "<?xml version='1.0' encoding='UTF-8'?><update-comment><comment>%s</comment></update-comment>";
+	public static final String LINKEDIN_COMMENT_BODY = "<?xml version='1.0' encoding='UTF-8'?><update-comment><comment>%s</comment></update-comment>";
 	protected static final String LINKEDIN_LIKE_BODY = "<?xml version='1.0' encoding='UTF-8'?><is-liked>%s</is-liked>";
 
 	protected static final int SMS = 6;
@@ -179,7 +179,7 @@ public class Sonet {
 	public static final String CHATTER_URL_ACCESS = "https://login.salesforce.com/services/oauth2/token?grant_type=refresh_token&client_id=%s&refresh_token=%s";
 	protected static final String CHATTER_URL_ME = "%s/services/data/v22.0/chatter/users/me";
 	public static final String CHATTER_URL_POST = "%s/services/data/v22.0/chatter/feeds/news/me/feed-items?text=%s";
-	protected static final String CHATTER_URL_COMMENT = "%s/services/data/v22.0/chatter/feed-items/%s/comments?text=%s";
+	public static final String CHATTER_URL_COMMENT = "%s/services/data/v22.0/chatter/feed-items/%s/comments?text=%s";
 	public static final String CHATTER_URL_FEED = "%s/services/data/v22.0/chatter/feeds/news/me/feed-items";
 	public static final String CHATTER_URL_LIKES = "%s/services/data/v22.0/chatter/feed-items/%s/likes";
 	protected static final String CHATTER_URL_LIKE = "%s/services/data/v22.0/chatter/likes/%s";

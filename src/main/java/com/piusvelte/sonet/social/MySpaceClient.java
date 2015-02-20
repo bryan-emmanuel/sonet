@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.piusvelte.sonet.BuildConfig;
@@ -15,6 +16,7 @@ import com.piusvelte.sonet.SonetOAuth;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.json.JSONArray;
@@ -30,6 +32,7 @@ import java.util.List;
 import static com.piusvelte.sonet.Sonet.MYSPACE_BASE_URL;
 import static com.piusvelte.sonet.Sonet.MYSPACE_DATE_FORMAT;
 import static com.piusvelte.sonet.Sonet.MYSPACE_HISTORY;
+import static com.piusvelte.sonet.Sonet.MYSPACE_STATUSMOODCOMMENTS_BODY;
 import static com.piusvelte.sonet.Sonet.MYSPACE_STATUSMOOD_BODY;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOOD;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOODCOMMENTS;
@@ -304,6 +307,20 @@ public class MySpaceClient extends SocialClient {
     @Override
     public LinkedHashMap<String, String> getLocations(String latitude, String longitude) {
         return null;
+    }
+
+    @Override
+    public boolean sendComment(@NonNull String statusId, @NonNull String message) {
+        HttpPost httpPost = new HttpPost(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mAccountEsid, statusId));
+
+        try {
+            httpPost.setEntity(new StringEntity(String.format(MYSPACE_STATUSMOODCOMMENTS_BODY, message)));
+            return !TextUtils.isEmpty(SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(httpPost)));
+        } catch (IOException e) {
+            if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
+        }
+
+        return false;
     }
 
     @Override

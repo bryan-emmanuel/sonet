@@ -1,8 +1,6 @@
 package com.piusvelte.sonet.social;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -476,6 +474,22 @@ public class FacebookClient extends SocialClient {
         }
 
         return null;
+    }
+
+    @Override
+    public boolean sendComment(@NonNull String statusId, @NonNull String message) {
+        HttpPost httpPost = new HttpPost(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken));
+        List<NameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair(Smessage, message));
+
+        try {
+            httpPost.setEntity(new UrlEncodedFormEntity(params));
+            return !TextUtils.isEmpty(SonetHttpClient.httpResponse(mContext, httpPost));
+        } catch (UnsupportedEncodingException e) {
+            if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
+        }
+
+        return false;
     }
 
     @Override

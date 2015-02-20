@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.piusvelte.sonet.BuildConfig;
@@ -29,6 +30,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 import static com.piusvelte.sonet.Sonet.LINKEDIN_BASE_URL;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_COMMENT_BODY;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_HEADERS;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_POST;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_POST_BODY;
@@ -454,6 +456,20 @@ public class LinkedInClient extends SocialClient {
     @Override
     public LinkedHashMap<String, String> getLocations(String latitude, String longitude) {
         return null;
+    }
+
+    @Override
+    public boolean sendComment(@NonNull String statusId, @NonNull String message) {
+        try {
+            HttpPost httpPost = new HttpPost(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, statusId));
+            httpPost.setEntity(new StringEntity(String.format(LINKEDIN_COMMENT_BODY, message)));
+            httpPost.addHeader(new BasicHeader("Content-Type", "application/xml"));
+            return !TextUtils.isEmpty(SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(httpPost)));
+        } catch (IOException e) {
+            if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
+        }
+
+        return false;
     }
 
     @Override

@@ -2,7 +2,9 @@ package com.piusvelte.sonet.social;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.piusvelte.sonet.BuildConfig;
@@ -185,45 +187,45 @@ public class TwitterClient extends SocialClient {
         return notificationMessage;
     }
 
+    private int getNext140CharactersIndex(@NonNull String message, int startIndex) {
+        // check if the message needs to be trimmed
+        int messageLength = message.length();
+
+        if (messageLength - startIndex > 140) {
+            // this is the max stopIndex
+            int stopIndex = Math.min(messageLength, startIndex + 140);
+
+            // find the last space to break on, defaulting to cutting at startIndex + 140
+            for (int nextCharIndex = stopIndex - 1; nextCharIndex > startIndex; nextCharIndex--) {
+                if (" ".equals(message.substring(nextCharIndex, nextCharIndex + 1))) {
+                    stopIndex = nextCharIndex + 1;
+                    break;
+                }
+            }
+
+            return stopIndex;
+        }
+
+        return messageLength;
+    }
+
     @Override
     public boolean createPost(String message, String placeId, String latitude, String longitude, String photoPath, String[] tags) {
         boolean result = false;
         HttpPost httpPost;
+        int startTweetIndex = 0;
 
         // limit tweets to 140, breaking up the message if necessary
-        while (message.length() > 0) {
-            final String send;
+        do {
+            int endTweetIndex = getNext140CharactersIndex(message, startTweetIndex);
 
-            if (message.length() > 140) {
-                // need to break on a word
-                int end = 0;
-                int nextSpace = 0;
-
-                for (int i = 0, i2 = message.length(); i < i2; i++) {
-                    end = nextSpace;
-
-                    if (message.substring(i, i + 1).equals(" ")) {
-                        nextSpace = i;
-                    }
-                }
-
-                // in case there are no spaces, just break on 140
-                if (end == 0) {
-                    end = 140;
-                }
-
-                send = message.substring(0, end);
-                message = message.substring(end + 1);
-            } else {
-                send = message;
-                message = "";
-            }
+            String tweet = message.substring(startTweetIndex, endTweetIndex);
 
             httpPost = new HttpPost(String.format(getUpdateUrl(), getBaseUrl()));
             // resolve Error 417 Expectation by Twitter
             httpPost.getParams().setBooleanParameter("http.protocol.expect-continue", false);
             List<NameValuePair> params = new ArrayList<NameValuePair>();
-            params.add(new BasicNameValuePair(Sstatus, send));
+            params.add(new BasicNameValuePair(Sstatus, tweet));
 
             if (placeId != null) {
                 params.add(new BasicNameValuePair("place_id", placeId));
@@ -238,7 +240,10 @@ public class TwitterClient extends SocialClient {
                 Log.e(mTag, e.toString());
                 break;
             }
-        }
+
+            // advance the start index for the next tweet
+            startTweetIndex = endTweetIndex;
+        } while (startTweetIndex < message.length());
 
         return result;
     }
@@ -326,6 +331,40 @@ public class TwitterClient extends SocialClient {
         }
 
         return null;
+    }
+
+    @Override
+    public boolean sendComment(@NonNull String statusId, @NonNull String message) {
+        boolean success;
+        HttpPost httpPost;
+        int startTweetIndex = 0;
+
+        // limit tweets to 140, breaking up the message if necessary
+        do {
+            int endTweetIndex = getNext140CharactersIndex(message, startTweetIndex);
+
+            String tweet = message.substring(startTweetIndex, endTweetIndex);
+
+            httpPost = new HttpPost(String.format(getUpdateUrl(), getBaseUrl()));
+            // resolve Error 417 Expectation by Twitter
+            httpPost.getParams().setBooleanParameter("http.protocol.expect-continue", false);
+            List<NameValuePair> params = new ArrayList<>();
+            params.add(new BasicNameValuePair(Sstatus, tweet));
+            params.add(new BasicNameValuePair(Sin_reply_to_status_id, statusId));
+
+            try {
+                httpPost.setEntity(new UrlEncodedFormEntity(params));
+                success = !TextUtils.isEmpty(SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(httpPost)));
+            } catch (UnsupportedEncodingException e) {
+                if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
+                return false;
+            }
+
+            // advance the start index for the next tweet
+            startTweetIndex = endTweetIndex;
+        } while (startTweetIndex < message.length());
+
+        return success;
     }
 
     @Nullable

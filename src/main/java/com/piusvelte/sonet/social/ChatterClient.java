@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 
 import static com.piusvelte.sonet.Sonet.CHATTER_DATE_FORMAT;
 import static com.piusvelte.sonet.Sonet.CHATTER_URL_ACCESS;
+import static com.piusvelte.sonet.Sonet.CHATTER_URL_COMMENT;
 import static com.piusvelte.sonet.Sonet.CHATTER_URL_COMMENTS;
 import static com.piusvelte.sonet.Sonet.CHATTER_URL_FEED;
 import static com.piusvelte.sonet.Sonet.CHATTER_URL_LIKES;
@@ -238,6 +239,17 @@ public class ChatterClient extends SocialClient {
     @Override
     public LinkedHashMap<String, String> getLocations(String latitude, String longitude) {
         return null;
+    }
+
+    @Override
+    public boolean sendComment(@NonNull String statusId, @NonNull String message) {
+        if (getChatterInstance()) {
+            HttpPost httpPost = new HttpPost(String.format(CHATTER_URL_COMMENT, mChatterInstance, statusId, Uri.encode(message)));
+            httpPost.setHeader("Authorization", "OAuth " + mChatterToken);
+            return !TextUtils.isEmpty(SonetHttpClient.httpResponse(mContext, httpPost));
+        }
+
+        return false;
     }
 
     @Override

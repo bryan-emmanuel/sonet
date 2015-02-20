@@ -206,6 +206,8 @@ abstract public class SocialClient {
 
     abstract public LinkedHashMap<String, String> getLocations(String latitude, String longitude);
 
+    abstract public boolean sendComment(@NonNull String statusId, @NonNull String message);
+
     abstract String getApiKey();
 
     abstract String getApiSecret();

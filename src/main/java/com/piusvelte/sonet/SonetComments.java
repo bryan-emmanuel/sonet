@@ -19,9 +19,7 @@
  */
 package com.piusvelte.sonet;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -31,16 +29,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 
-import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicNameValuePair;
 
 import com.google.ads.*;
 
@@ -171,144 +166,18 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
                 final AsyncTask<Void, String, String> asyncTask = new AsyncTask<Void, String, String>() {
                     @Override
                     protected String doInBackground(Void... arg0) {
-                        List<NameValuePair> params;
-                        String message;
-                        String response = null;
-                        HttpPost httpPost;
-                        SonetOAuth sonetOAuth;
                         String serviceName = Sonet.getServiceName(getResources(), mService);
                         publishProgress(serviceName);
-                        switch (mService) {
-                            case TWITTER:
-                                // limit tweets to 140, breaking up the message if necessary
-                                sonetOAuth = new SonetOAuth(BuildConfig.TWITTER_KEY, BuildConfig.TWITTER_SECRET, mToken, mSecret);
-                                message = mMessage.getText().toString();
-                                while (message.length() > 0) {
-                                    final String send;
-                                    if (message.length() > 140) {
-                                        // need to break on a word
-                                        int end = 0;
-                                        int nextSpace = 0;
-                                        for (int i = 0, i2 = message.length(); i < i2; i++) {
-                                            end = nextSpace;
-                                            if (message.substring(i, i + 1).equals(" ")) {
-                                                nextSpace = i;
-                                            }
-                                        }
-                                        // in case there are no spaces, just break on 140
-                                        if (end == 0) {
-                                            end = 140;
-                                        }
-                                        send = message.substring(0, end);
-                                        message = message.substring(end + 1);
-                                    } else {
-                                        send = message;
-                                        message = "";
-                                    }
-                                    httpPost = new HttpPost(String.format(TWITTER_UPDATE, TWITTER_BASE_URL));
-                                    // resolve Error 417 Expectation by Twitter
-                                    httpPost.getParams().setBooleanParameter("http.protocol.expect-continue", false);
-                                    params = new ArrayList<NameValuePair>();
-                                    params.add(new BasicNameValuePair(Sstatus, send));
-                                    params.add(new BasicNameValuePair(Sin_reply_to_status_id, mSid));
-                                    try {
-                                        httpPost.setEntity(new UrlEncodedFormEntity(params));
-                                        response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
-                                    } catch (UnsupportedEncodingException e) {
-                                        Log.e(TAG, e.toString());
-                                    }
-                                }
-                                break;
-                            case FACEBOOK:
-                                httpPost = new HttpPost(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, mSid, Saccess_token, mToken));
-                                params = new ArrayList<NameValuePair>();
-                                params.add(new BasicNameValuePair(Smessage, mMessage.getText().toString()));
-                                try {
-                                    httpPost.setEntity(new UrlEncodedFormEntity(params));
-                                    response = SonetHttpClient.httpResponse(mHttpClient, httpPost);
-                                } catch (UnsupportedEncodingException e) {
-                                    Log.e(TAG, e.toString());
-                                }
-                                break;
-                            case MYSPACE:
-                                sonetOAuth = new SonetOAuth(BuildConfig.MYSPACE_KEY, BuildConfig.MYSPACE_SECRET, mToken, mSecret);
-                                try {
-                                    httpPost = new HttpPost(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mEsid, mSid));
-                                    httpPost.setEntity(new StringEntity(String.format(MYSPACE_STATUSMOODCOMMENTS_BODY, mMessage.getText().toString())));
-                                    response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
-                                } catch (IOException e) {
-                                    Log.e(TAG, e.toString());
-                                }
-                                break;
-                            case FOURSQUARE:
-                                try {
-                                    message = URLEncoder.encode(mMessage.getText().toString(), "UTF-8");
-                                    httpPost = new HttpPost(String.format(FOURSQUARE_ADDCOMMENT, FOURSQUARE_BASE_URL, mSid, message, mToken));
-                                    response = SonetHttpClient.httpResponse(mHttpClient, httpPost);
-                                } catch (UnsupportedEncodingException e) {
-                                    Log.e(TAG, e.toString());
-                                }
-                                break;
-                            case LINKEDIN:
-                                sonetOAuth = new SonetOAuth(BuildConfig.LINKEDIN_KEY, BuildConfig.LINKEDIN_SECRET, mToken, mSecret);
-                                try {
-                                    httpPost = new HttpPost(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, mSid));
-                                    httpPost.setEntity(new StringEntity(String.format(LINKEDIN_COMMENT_BODY, mMessage.getText().toString())));
-                                    httpPost.addHeader(new BasicHeader("Content-Type", "application/xml"));
-                                    response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
-                                } catch (IOException e) {
-                                    Log.e(TAG, e.toString());
-                                }
-                                break;
-                            case IDENTICA:
-                                // limit tweets to 140, breaking up the message if necessary
-                                sonetOAuth = new SonetOAuth(BuildConfig.IDENTICA_KEY, BuildConfig.IDENTICA_SECRET, mToken, mSecret);
-                                message = mMessage.getText().toString();
-                                while (message.length() > 0) {
-                                    final String send;
-                                    if (message.length() > 140) {
-                                        // need to break on a word
-                                        int end = 0;
-                                        int nextSpace = 0;
-                                        for (int i = 0, i2 = message.length(); i < i2; i++) {
-                                            end = nextSpace;
-                                            if (message.substring(i, i + 1).equals(" ")) {
-                                                nextSpace = i;
-                                            }
-                                        }
-                                        // in case there are no spaces, just break on 140
-                                        if (end == 0) {
-                                            end = 140;
-                                        }
-                                        send = message.substring(0, end);
-                                        message = message.substring(end + 1);
-                                    } else {
-                                        send = message;
-                                        message = "";
-                                    }
-                                    httpPost = new HttpPost(String.format(IDENTICA_UPDATE, IDENTICA_BASE_URL));
-                                    // resolve Error 417 Expectation by Twitter
-                                    httpPost.getParams().setBooleanParameter("http.protocol.expect-continue", false);
-                                    params = new ArrayList<NameValuePair>();
-                                    params.add(new BasicNameValuePair(Sstatus, send));
-                                    params.add(new BasicNameValuePair(Sin_reply_to_status_id, mSid));
-                                    try {
-                                        httpPost.setEntity(new UrlEncodedFormEntity(params));
-                                        response = SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
-                                    } catch (UnsupportedEncodingException e) {
-                                        Log.e(TAG, e.toString());
-                                    }
-                                }
-                                break;
-                            case GOOGLEPLUS:
-                                break;
-                            case CHATTER:
-                                httpPost = new HttpPost(String.format(CHATTER_URL_COMMENT, mChatterInstance, mSid, Uri.encode(mMessage.getText().toString())));
-                                httpPost.setHeader("Authorization", "OAuth " + mChatterToken);
-                                response = SonetHttpClient.httpResponse(mHttpClient, httpPost);
-                                break;
-                        }
-                        return ((response == null) && (mService == MYSPACE)) ? null : serviceName + " " + getString(response != null ? R.string.success : R.string.failure);
+
+                        SocialClient socialClient = new SocialClient.Builder(SonetComments.this)
+                                .setNetwork(mService)
+                                .setCredentials(mToken, mSecret)
+                                .setAccount(mEsid)
+                                .build();
+
+                        boolean success = socialClient.sendComment(mSid, mMessage.getText().toString());
+
+                        return !success && mService == MYSPACE ? null : serviceName + " " + getString(success ? R.string.success : R.string.failure);
                     }
 
                     @Override
@@ -324,6 +193,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
                             // myspace permissions
                             (Toast.makeText(SonetComments.this, SonetComments.this.getResources().getStringArray(R.array.service_entries)[MYSPACE] + getString(R.string.failure) + " " + getString(R.string.myspace_permissions_message), Toast.LENGTH_LONG)).show();
                         }
+
                         if (loadingDialog.isShowing()) loadingDialog.dismiss();
                         finish();
                     }
@@ -876,9 +746,6 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
                             commentMap.put(getString(R.string.like), "");
                             mComments.add(commentMap);
                     }
-
-                    boolean liked = false;
-                    String screen_name = "";
 
                     SocialClient socialClient = new SocialClient.Builder(SonetComments.this)
                             .setNetwork(mService)

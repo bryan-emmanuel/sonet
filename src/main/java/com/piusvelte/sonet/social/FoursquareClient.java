@@ -1,8 +1,6 @@
 package com.piusvelte.sonet.social;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.database.Cursor;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -28,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
+import static com.piusvelte.sonet.Sonet.FOURSQUARE_ADDCOMMENT;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_BASE_URL;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_CHECKIN;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_CHECKINS;
@@ -329,6 +328,19 @@ public class FoursquareClient extends SocialClient {
         }
 
         return null;
+    }
+
+    @Override
+    public boolean sendComment(@NonNull String statusId, @NonNull String message) {
+        try {
+            message = URLEncoder.encode(message, "UTF-8");
+            HttpPost httpPost = new HttpPost(String.format(FOURSQUARE_ADDCOMMENT, FOURSQUARE_BASE_URL, statusId, message, mToken));
+            return !TextUtils.isEmpty(SonetHttpClient.httpResponse(mContext, httpPost));
+        } catch (UnsupportedEncodingException e) {
+            if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
+        }
+
+        return false;
     }
 
     @Override

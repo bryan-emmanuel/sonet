@@ -205,6 +205,11 @@ public class RssClient extends SocialClient {
     }
 
     @Override
+    public boolean sendComment(@NonNull String statusId, @NonNull String message) {
+        return false;
+    }
+
+    @Override
     String getApiKey() {
         return null;
     }
