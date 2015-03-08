@@ -266,6 +266,11 @@ public class MySpaceClient extends SocialClient {
     }
 
     @Override
+    public boolean likeStatus(String statusId, String accountId, boolean doLike) {
+        return false;
+    }
+
+    @Override
     public String getLikeText(boolean isLiked) {
         return null;
     }

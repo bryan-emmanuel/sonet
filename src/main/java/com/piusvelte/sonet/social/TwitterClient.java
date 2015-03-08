@@ -46,6 +46,7 @@ import static com.piusvelte.sonet.Sonet.Suser;
 import static com.piusvelte.sonet.Sonet.TWITTER_BASE_URL;
 import static com.piusvelte.sonet.Sonet.TWITTER_DATE_FORMAT;
 import static com.piusvelte.sonet.Sonet.TWITTER_MENTIONS;
+import static com.piusvelte.sonet.Sonet.TWITTER_RETWEET;
 import static com.piusvelte.sonet.Sonet.TWITTER_SEARCH;
 import static com.piusvelte.sonet.Sonet.TWITTER_SINCE_ID;
 import static com.piusvelte.sonet.Sonet.TWITTER_UPDATE;
@@ -83,6 +84,10 @@ public class TwitterClient extends SocialClient {
 
     String getUserUrl() {
         return TWITTER_USER;
+    }
+
+    String getRetweetUrl() {
+        return TWITTER_RETWEET;
     }
 
     @Override
@@ -256,6 +261,19 @@ public class TwitterClient extends SocialClient {
 
     @Override
     public boolean isLiked(String statusId, String accountId) {
+        return false;
+    }
+
+    @Override
+    public boolean likeStatus(String statusId, String accountId, boolean doLike) {
+        if (doLike) {
+            // retweet
+            HttpPost httpPost = new HttpPost(String.format(getRetweetUrl(), getBaseUrl(), statusId));
+            // resolve Error 417 Expectation by Twitter
+            httpPost.getParams().setBooleanParameter("http.protocol.expect-continue", false);
+            return !TextUtils.isEmpty(SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(httpPost)));
+        }
+
         return false;
     }
 

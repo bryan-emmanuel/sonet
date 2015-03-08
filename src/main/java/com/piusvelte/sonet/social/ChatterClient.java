@@ -13,8 +13,10 @@ import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetHttpClient;
 
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -28,6 +30,7 @@ import static com.piusvelte.sonet.Sonet.CHATTER_URL_ACCESS;
 import static com.piusvelte.sonet.Sonet.CHATTER_URL_COMMENT;
 import static com.piusvelte.sonet.Sonet.CHATTER_URL_COMMENTS;
 import static com.piusvelte.sonet.Sonet.CHATTER_URL_FEED;
+import static com.piusvelte.sonet.Sonet.CHATTER_URL_LIKE;
 import static com.piusvelte.sonet.Sonet.CHATTER_URL_LIKES;
 import static com.piusvelte.sonet.Sonet.CHATTER_URL_POST;
 import static com.piusvelte.sonet.Sonet.Saccess_token;
@@ -183,6 +186,20 @@ public class ChatterClient extends SocialClient {
         }
 
         return false;
+    }
+
+    @Override
+    public boolean likeStatus(String statusId, String accountId, boolean doLike) {
+        HttpUriRequest httpRequest;
+
+        if (doLike) {
+            httpRequest = new HttpPost(String.format(CHATTER_URL_LIKES, mChatterInstance, statusId));
+        } else {
+            httpRequest = new HttpDelete(String.format(CHATTER_URL_LIKE, mChatterInstance, "" /* TODO replace this string with the like id from isLiked */));
+        }
+
+        httpRequest.setHeader("Authorization", "OAuth " + mChatterToken);
+        return SonetHttpClient.httpResponse(mContext, httpRequest) != null;
     }
 
     @Override

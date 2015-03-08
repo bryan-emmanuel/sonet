@@ -19,6 +19,7 @@ import com.piusvelte.sonet.SonetHttpClient;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.BasicNameValuePair;
@@ -411,6 +412,17 @@ public class FacebookClient extends SocialClient {
         }
 
         return false;
+    }
+
+    @Override
+    public boolean likeStatus(String statusId, String accountId, boolean doLike) {
+        if (doLike) {
+            return SonetHttpClient.httpResponse(mContext, new HttpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken))) != null;
+        } else {
+            HttpDelete httpDelete = new HttpDelete(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken));
+            httpDelete.setHeader("Content-Length", "0");
+            return SonetHttpClient.httpResponse(mContext, httpDelete) != null;
+        }
     }
 
     @Override

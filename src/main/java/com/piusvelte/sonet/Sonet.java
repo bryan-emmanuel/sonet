@@ -69,7 +69,7 @@ public class Sonet {
 	protected static final String TWITTER_URL_AUTHORIZE = "%soauth/authorize";
 	protected static final String TWITTER_URL_ACCESS = "%soauth/access_token";
 	public static final String TWITTER_URL_FEED = "%s1.1/statuses/home_timeline.json?count=%s";
-	protected static final String TWITTER_RETWEET = "%s1.1/statuses/retweets/%s.json";
+	public static final String TWITTER_RETWEET = "%s1.1/statuses/retweets/%s.json";
 	public static final String TWITTER_USER = "%s1.1/users/show.json?user_id=%s";
 	public static final String TWITTER_UPDATE = "%s1.1/statuses/update.json";
 	public static final String TWITTER_SEARCH = "%s1.1/geo/search.json?lat=%s&long=%s";
@@ -132,13 +132,13 @@ public class Sonet {
 	protected static final String LINKEDIN_URL_USER = "https://api.linkedin.com/v1/people/id=%s";
 	public static final String LINKEDIN_UPDATES = "%s/network/updates?type=APPS&type=CMPY&type=CONN&type=JOBS&type=JGRP&type=PICT&type=PRFU&type=RECU&type=PRFX&type=ANSW&type=QSTN&type=SHAR&type=VIRL";
 	public static final String[][] LINKEDIN_HEADERS = new String[][] {{"x-li-format", "json"}};
-	protected static final String LINKEDIN_IS_LIKED = "%s/network/updates/key=%s/is-liked";
+	public static final String LINKEDIN_IS_LIKED = "%s/network/updates/key=%s/is-liked";
 	public static final String LINKEDIN_UPDATE = "%s/network/updates/key=%s";
 	public static final String LINKEDIN_UPDATE_COMMENTS = "%s/network/updates/key=%s/update-comments";
 	public static final String LINKEDIN_POST = "%s/person-activities";
 	public static final String LINKEDIN_POST_BODY = "<?xml version='1.0' encoding='UTF-8'?><activity locale=\"%s\"><content-type>linkedin-html</content-type><body>%s</body></activity>";
 	public static final String LINKEDIN_COMMENT_BODY = "<?xml version='1.0' encoding='UTF-8'?><update-comment><comment>%s</comment></update-comment>";
-	protected static final String LINKEDIN_LIKE_BODY = "<?xml version='1.0' encoding='UTF-8'?><is-liked>%s</is-liked>";
+	public static final String LINKEDIN_LIKE_BODY = "<?xml version='1.0' encoding='UTF-8'?><is-liked>%s</is-liked>";
 
 	protected static final int SMS = 6;
 	public static final int RSS = 7;
@@ -149,7 +149,7 @@ public class Sonet {
 	protected static final String IDENTICA_URL_AUTHORIZE = "%soauth/authorize";
 	protected static final String IDENTICA_URL_ACCESS = "%soauth/access_token";
 	public static final String IDENTICA_URL_FEED = "%sstatuses/home_timeline.json?count=%s";
-	protected static final String IDENTICA_RETWEET = "%sstatuses/retweet/%s.json";
+	public static final String IDENTICA_RETWEET = "%sstatuses/retweet/%s.json";
 	protected static final String IDENTICA_USER = "%susers/show.json?user_id=%s";
 	public static final String IDENTICA_UPDATE = "%sstatuses/update.json";
 	protected static final String IDENTICA_PROFILE = "http://identi.ca/%s";
@@ -182,7 +182,7 @@ public class Sonet {
 	public static final String CHATTER_URL_COMMENT = "%s/services/data/v22.0/chatter/feed-items/%s/comments?text=%s";
 	public static final String CHATTER_URL_FEED = "%s/services/data/v22.0/chatter/feeds/news/me/feed-items";
 	public static final String CHATTER_URL_LIKES = "%s/services/data/v22.0/chatter/feed-items/%s/likes";
-	protected static final String CHATTER_URL_LIKE = "%s/services/data/v22.0/chatter/likes/%s";
+	public static final String CHATTER_URL_LIKE = "%s/services/data/v22.0/chatter/likes/%s";
 	public static final String CHATTER_URL_COMMENTS = "%s/services/data/v22.0/chatter/feed-items/%s/comments";
 	public static final String CHATTER_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 

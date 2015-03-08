@@ -19,23 +19,11 @@
  */
 package com.piusvelte.sonet;
 
-import java.io.UnsupportedEncodingException;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.regex.Matcher;
-
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.message.BasicHeader;
 
 import com.google.ads.*;
 
@@ -63,10 +51,10 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -83,28 +71,24 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class SonetComments extends ListActivity implements OnKeyListener, OnClickListener, TextWatcher, DialogInterface.OnClickListener, OnCancelListener {
-    private static final String TAG = "SonetComments";
-    private int mService;
+    private int mService = Sonet.INVALID_SERVICE;
     private long mAccount;
     private String mSid = null;
     private String mEsid = null;
     private EditText mMessage;
     private ImageButton mSend;
     private TextView mCount;
-    private List<HashMap<String, String>> mComments = new ArrayList<HashMap<String, String>>();
+    private List<HashMap<String, String>> mComments = new ArrayList<>();
     private boolean mTime24hr = false;
-    private String mChatterInstance = null;
-    private String mChatterToken = null;
-    private String mChatterLikeId = null;
     private String mToken = null;
     private String mSecret = null;
     private String mAccountSid = null;
     private String mServiceName = null;
     private Uri mData = null;
-    private SimpleDateFormat mSimpleDateFormat = null;
-    private HttpClient mHttpClient;
     private String[] items = null;
     private AlertDialog mDialog;
+    @Nullable
+    private SocialClient mSocialClient;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -113,18 +97,19 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
         // allow selecting which accounts to use
         // get existing comments, allow liking|unliking those comments
         setContentView(R.layout.comments);
+
         if (!getPackageName().toLowerCase().contains(PRO)) {
             AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);
             ((LinearLayout) findViewById(R.id.ad)).addView(adView);
             adView.loadAd(new AdRequest());
         }
+
         mMessage = (EditText) findViewById(R.id.message);
         mSend = (ImageButton) findViewById(R.id.send);
         mCount = (TextView) findViewById(R.id.count);
         mMessage.addTextChangedListener(this);
         mMessage.setOnKeyListener(this);
         mSend.setOnClickListener(this);
-        mHttpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
         setResult(RESULT_OK);
     }
 
@@ -137,8 +122,11 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
     protected void onResume() {
         super.onResume();
         Intent intent = getIntent();
-        if (intent != null)
+
+        if (intent != null) {
             mData = intent.getData();
+        }
+
         if (mData == null) {
             (Toast.makeText(this, getString(R.string.failure), Toast.LENGTH_LONG)).show();
             finish();
@@ -150,6 +138,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
     @Override
     protected void onPause() {
         super.onPause();
+
         if ((mDialog != null) && mDialog.isShowing()) {
             mDialog.dismiss();
         }
@@ -158,7 +147,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
     @Override
     public void onClick(View v) {
         if (v == mSend) {
-            if ((mMessage.getText().toString() != null) && (mMessage.getText().toString().length() > 0) && (mSid != null) && (mEsid != null)) {
+            if (!TextUtils.isEmpty(mMessage.getText().toString()) && mSocialClient != null) {
                 mMessage.setEnabled(false);
                 mSend.setEnabled(false);
                 // post or comment!
@@ -169,13 +158,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
                         String serviceName = Sonet.getServiceName(getResources(), mService);
                         publishProgress(serviceName);
 
-                        SocialClient socialClient = new SocialClient.Builder(SonetComments.this)
-                                .setNetwork(mService)
-                                .setCredentials(mToken, mSecret)
-                                .setAccount(mEsid)
-                                .build();
-
-                        boolean success = socialClient.sendComment(mSid, mMessage.getText().toString());
+                        boolean success = mSocialClient.sendComment(mSid, mMessage.getText().toString());
 
                         return !success && mService == MYSPACE ? null : serviceName + " " + getString(success ? R.string.success : R.string.failure);
                     }
@@ -233,354 +216,78 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int itemId = item.getItemId();
-        if (itemId == R.id.menu_comments_refresh)
+
+        if (itemId == R.id.menu_comments_refresh) {
             loadComments();
+        }
+
         return super.onOptionsItemSelected(item);
     }
 
     @Override
     protected void onListItemClick(ListView list, View view, final int position, long id) {
         super.onListItemClick(list, view, position, id);
-        final String sid = mComments.get(position).get(Statuses.SID);
-        final String liked = mComments.get(position).get(getString(R.string.like));
+        HashMap<String, String> comment = mComments.get(position);
+        final String sid = comment.get(Statuses.SID);
+        final String liked = comment.get(getString(R.string.like));
+        final boolean isLiked = getString(R.string.like).equals(liked);
+
         // wait for previous attempts to finish
-        if ((liked.length() > 0) && !liked.equals(getString(R.string.loading))) {
+        if (!TextUtils.isEmpty(liked) && !liked.equals(getString(R.string.loading))) {
             // parse comment body, as in StatusDialog.java
             Matcher m = Sonet.getLinksMatcher(mComments.get(position).get(Statuses.MESSAGE));
             int count = 0;
+
             while (m.find()) {
                 count++;
             }
-            // like comments, the first comment is the post itself
-            switch (mService) {
-                case TWITTER:
-                    // retweet
-                    items = new String[count + 1];
-                    items[0] = getString(R.string.retweet);
-                    count = 1;
-                    m.reset();
-                    while (m.find()) {
-                        items[count++] = m.group();
-                    }
-                    mDialog = (new AlertDialog.Builder(this))
-                            .setItems(items, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    if (which == 0) {
-                                        AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
-                                            @Override
-                                            protected String doInBackground(String... arg0) {
-                                                SonetOAuth sonetOAuth = new SonetOAuth(BuildConfig.TWITTER_KEY, BuildConfig.TWITTER_SECRET, mToken, mSecret);
-                                                HttpPost httpPost = new HttpPost(String.format(TWITTER_RETWEET, TWITTER_BASE_URL, sid));
-                                                // resolve Error 417 Expectation by Twitter
-                                                httpPost.getParams().setBooleanParameter("http.protocol.expect-continue", false);
-                                                return SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
-                                            }
 
-                                            @Override
-                                            protected void onPostExecute(String response) {
-                                                setCommentStatus(0, getString(R.string.retweet));
-                                                (Toast.makeText(SonetComments.this, mServiceName + " " + getString(response != null ? R.string.success : R.string.failure), Toast.LENGTH_LONG)).show();
-                                            }
-                                        };
-                                        setCommentStatus(0, getString(R.string.loading));
-                                        asyncTask.execute();
-                                    } else {
-                                        if ((which < items.length) && (items[which] != null))
-                                            // open link
-                                            startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
-                                        else
-                                            (Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-                                    }
-                                }
-                            })
-                            .setCancelable(true)
-                            .setOnCancelListener(this)
-                            .create();
-                    mDialog.show();
-                    break;
-                case FACEBOOK:
-                    items = new String[count + 1];
-                    items[0] = getString(mComments.get(position).get(getString(R.string.like)) == getString(R.string.like) ? R.string.like : R.string.unlike);
-                    count = 1;
-                    m.reset();
-                    while (m.find()) {
-                        items[count++] = m.group();
-                    }
-                    mDialog = (new AlertDialog.Builder(this))
-                            .setItems(items, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    if (which == 0) {
-                                        AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
-                                            @Override
-                                            protected String doInBackground(String... arg0) {
-                                                if (liked.equals(getString(R.string.like))) {
-                                                    return SonetHttpClient.httpResponse(mHttpClient, new HttpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, sid, Saccess_token, mToken)));
-                                                } else {
-                                                    HttpDelete httpDelete = new HttpDelete(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, sid, Saccess_token, mToken));
-                                                    httpDelete.setHeader("Content-Length", "0");
-                                                    return SonetHttpClient.httpResponse(mHttpClient, httpDelete);
-                                                }
-                                            }
+            items = new String[count + 1];
+            items[0] = mSocialClient.getLikeText(isLiked);
+            count = 1;
+            m.reset();
 
-                                            @Override
-                                            protected void onPostExecute(String response) {
-                                                if (response != null) {
-                                                    setCommentStatus(position, getString(liked.equals(getString(R.string.like)) ? R.string.unlike : R.string.like));
-                                                    (Toast.makeText(SonetComments.this, mServiceName + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-                                                } else {
-                                                    setCommentStatus(position, getString(liked.equals(getString(R.string.like)) ? R.string.like : R.string.unlike));
-                                                    (Toast.makeText(SonetComments.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
-                                                }
-                                            }
-                                        };
-                                        setCommentStatus(position, getString(R.string.loading));
-                                        asyncTask.execute();
-                                    } else {
-                                        if ((which < items.length) && (items[which] != null))
-                                            // open link
-                                            startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
-                                        else
-                                            (Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-                                    }
-                                }
-                            })
-                            .setCancelable(true)
-                            .setOnCancelListener(this)
-                            .create();
-                    mDialog.show();
-                    break;
-                case LINKEDIN:
-                    if (position == 0) {
-                        items = new String[count + 1];
-                        items[0] = getString(mComments.get(position).get(getString(R.string.like)) == getString(R.string.like) ? R.string.like : R.string.unlike);
-                        count = 1;
-                        m.reset();
-                        while (m.find()) {
-                            items[count++] = m.group();
-                        }
-                        mDialog = (new AlertDialog.Builder(this))
-                                .setItems(items, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        if (which == 0) {
-                                            AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
-                                                @Override
-                                                protected String doInBackground(String... arg0) {
-                                                    SonetOAuth sonetOAuth = new SonetOAuth(BuildConfig.LINKEDIN_KEY, BuildConfig.LINKEDIN_SECRET, mToken, mSecret);
-                                                    HttpPut httpPut = new HttpPut(String.format(LINKEDIN_IS_LIKED, LINKEDIN_BASE_URL, mSid));
-                                                    httpPut.addHeader(new BasicHeader("Content-Type", "application/xml"));
-                                                    try {
-                                                        httpPut.setEntity(new StringEntity(String.format(LINKEDIN_LIKE_BODY, Boolean.toString(liked.equals(getString(R.string.like))))));
-                                                        return SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPut));
-                                                    } catch (UnsupportedEncodingException e) {
-                                                        Log.e(TAG, e.toString());
-                                                    }
-                                                    return null;
-                                                }
-
-                                                @Override
-                                                protected void onPostExecute(String response) {
-                                                    if (response != null) {
-                                                        setCommentStatus(position, getString(liked.equals(getString(R.string.like)) ? R.string.unlike : R.string.like));
-                                                        (Toast.makeText(SonetComments.this, mServiceName + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-                                                    } else {
-                                                        setCommentStatus(position, getString(liked.equals(getString(R.string.like)) ? R.string.like : R.string.unlike));
-                                                        (Toast.makeText(SonetComments.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
-                                                    }
-                                                }
-                                            };
-                                            setCommentStatus(position, getString(R.string.loading));
-                                            asyncTask.execute();
-                                        } else {
-                                            if ((which < items.length) && (items[which] != null))
-                                                // open link
-                                                startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
-                                            else
-                                                (Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-                                        }
-                                    }
-                                })
-                                .setCancelable(true)
-                                .setOnCancelListener(this)
-                                .create();
-                        mDialog.show();
-                    } else {
-                        // no like option here
-                        items = new String[count];
-                        count = 1;
-                        m.reset();
-                        while (m.find()) {
-                            items[count++] = m.group();
-                        }
-                        mDialog = (new AlertDialog.Builder(this))
-                                .setItems(items, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        if ((which < items.length) && (items[which] != null))
-                                            // open link
-                                            startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
-                                        else
-                                            (Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-                                    }
-                                })
-                                .setCancelable(true)
-                                .setOnCancelListener(this)
-                                .create();
-                        mDialog.show();
-                    }
-                    break;
-                case IDENTICA:
-                    // retweet
-                    items = new String[count + 1];
-                    items[0] = getString(R.string.repeat);
-                    count = 1;
-                    m.reset();
-                    while (m.find()) {
-                        items[count++] = m.group();
-                    }
-                    mDialog = (new AlertDialog.Builder(this))
-                            .setItems(items, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    if (which == 0) {
-                                        AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
-                                            @Override
-                                            protected String doInBackground(String... arg0) {
-                                                SonetOAuth sonetOAuth = new SonetOAuth(BuildConfig.IDENTICA_KEY, BuildConfig.IDENTICA_SECRET, mToken, mSecret);
-                                                HttpPost httpPost = new HttpPost(String.format(IDENTICA_RETWEET, IDENTICA_BASE_URL, sid));
-                                                // resolve Error 417 Expectation by Twitter
-                                                httpPost.getParams().setBooleanParameter("http.protocol.expect-continue", false);
-                                                return SonetHttpClient.httpResponse(mHttpClient, sonetOAuth.getSignedRequest(httpPost));
-                                            }
-
-                                            @Override
-                                            protected void onPostExecute(String response) {
-                                                setCommentStatus(0, getString(R.string.repeat));
-                                                (Toast.makeText(SonetComments.this, mServiceName + " " + getString(response != null ? R.string.success : R.string.failure), Toast.LENGTH_LONG)).show();
-                                            }
-                                        };
-                                        setCommentStatus(0, getString(R.string.loading));
-                                        asyncTask.execute();
-                                    } else {
-                                        if ((which < items.length) && (items[which] != null))
-                                            // open link
-                                            startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
-                                        else
-                                            (Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-                                    }
-                                }
-                            })
-                            .setCancelable(true)
-                            .setOnCancelListener(this)
-                            .create();
-                    mDialog.show();
-                    break;
-                case GOOGLEPLUS:
-                    //TODO:
-                    // plus1
-                    items = new String[count];
-                    count = 1;
-                    m.reset();
-                    while (m.find()) {
-                        items[count++] = m.group();
-                    }
-                    mDialog = (new AlertDialog.Builder(this))
-                            .setItems(items, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    if ((which < items.length) && (items[which] != null))
-                                        // open link
-                                        startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
-                                    else
-                                        (Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-                                }
-                            })
-                            .setCancelable(true)
-                            .setOnCancelListener(this)
-                            .create();
-                    mDialog.show();
-                    break;
-                case CHATTER:
-                    if (position == 0) {
-                        items = new String[count + 1];
-                        items[0] = getString(mComments.get(position).get(getString(R.string.like)) == getString(R.string.like) ? R.string.like : R.string.unlike);
-                        count = 1;
-                        m.reset();
-                        while (m.find()) {
-                            items[count++] = m.group();
-                        }
-                        mDialog = (new AlertDialog.Builder(this))
-                                .setItems(items, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        if (which == 0) {
-                                            AsyncTask<String, Void, String> asyncTask = new AsyncTask<String, Void, String>() {
-                                                @Override
-                                                protected String doInBackground(String... arg0) {
-                                                    HttpUriRequest httpRequest;
-                                                    if (liked.equals(getString(R.string.like))) {
-                                                        httpRequest = new HttpPost(String.format(CHATTER_URL_LIKES, mChatterInstance, mSid));
-                                                    } else {
-                                                        httpRequest = new HttpDelete(String.format(CHATTER_URL_LIKE, mChatterInstance, mChatterLikeId));
-                                                    }
-                                                    httpRequest.setHeader("Authorization", "OAuth " + mChatterToken);
-                                                    return SonetHttpClient.httpResponse(mHttpClient, httpRequest);
-                                                }
-
-                                                @Override
-                                                protected void onPostExecute(String response) {
-                                                    if (response != null) {
-                                                        setCommentStatus(position, getString(liked.equals(getString(R.string.like)) ? R.string.unlike : R.string.like));
-                                                        (Toast.makeText(SonetComments.this, mServiceName + " " + getString(R.string.success), Toast.LENGTH_LONG)).show();
-                                                    } else {
-                                                        setCommentStatus(position, getString(liked.equals(getString(R.string.like)) ? R.string.like : R.string.unlike));
-                                                        (Toast.makeText(SonetComments.this, mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
-                                                    }
-                                                }
-                                            };
-                                            setCommentStatus(position, getString(R.string.loading));
-                                            asyncTask.execute();
-                                        } else {
-                                            if ((which < items.length) && (items[which] != null))
-                                                // open link
-                                                startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
-                                            else
-                                                (Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-                                        }
-                                    }
-                                })
-                                .setCancelable(true)
-                                .setOnCancelListener(this)
-                                .create();
-                        mDialog.show();
-                    } else {
-                        // no like option here
-                        items = new String[count];
-                        count = 1;
-                        m.reset();
-                        while (m.find()) {
-                            items[count++] = m.group();
-                        }
-                        mDialog = (new AlertDialog.Builder(this))
-                                .setItems(items, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        if ((which < items.length) && (items[which] != null))
-                                            // open link
-                                            startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
-                                        else
-                                            (Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-                                    }
-                                })
-                                .setCancelable(true)
-                                .setOnCancelListener(this)
-                                .create();
-                        mDialog.show();
-                    }
-                    break;
+            while (m.find()) {
+                items[count++] = m.group();
             }
+
+            mDialog = (new AlertDialog.Builder(this))
+                    .setItems(items, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (which == 0) {
+                                AsyncTask<String, Void, Void> asyncTask = new AsyncTask<String, Void, Void>() {
+
+                                    boolean success = false;
+
+                                    @Override
+                                    protected Void doInBackground(String... arg0) {
+                                        success = mSocialClient.likeStatus(sid, mEsid, true);
+                                        return null;
+                                    }
+
+                                    @Override
+                                    protected void onPostExecute(Void aVoid) {
+                                        setCommentStatus(0, mSocialClient.getLikeText(success ? !isLiked : isLiked));
+                                        (Toast.makeText(SonetComments.this, mServiceName + " " + getString(success ? R.string.success : R.string.failure), Toast.LENGTH_LONG)).show();
+                                    }
+                                };
+                                setCommentStatus(0, getString(R.string.loading));
+                                asyncTask.execute();
+                            } else {
+                                if ((which < items.length) && (items[which] != null)) {
+                                    // open link
+                                    startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(items[which])));
+                                } else {
+                                    (Toast.makeText(SonetComments.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
+                                }
+                            }
+                        }
+                    })
+                    .setCancelable(true)
+                    .setOnCancelListener(this)
+                    .create();
+            mDialog.show();
         }
     }
 
@@ -747,18 +454,18 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
                             mComments.add(commentMap);
                     }
 
-                    SocialClient socialClient = new SocialClient.Builder(SonetComments.this)
+                    mSocialClient = new SocialClient.Builder(SonetComments.this)
                             .setNetwork(mService)
                             .setCredentials(mToken, mSecret)
                             .setAccount(mEsid)
                             .build();
 
-                    mMessagePretext = socialClient.getCommentPretext(mEsid);
-                    mIsLikeable = socialClient.isLikeable(mSid);
-                    mIsLiked = socialClient.isLiked(mSid, mAccountSid);
-                    mIsCommentable = socialClient.isCommentable(mSid);
-                    mLikeText = socialClient.getLikeText(mIsLiked);
-                    mSocialClientComments = socialClient.getComments(mSid, mTime24hr);
+                    mMessagePretext = mSocialClient.getCommentPretext(mEsid);
+                    mIsLikeable = mSocialClient.isLikeable(mSid);
+                    mIsLiked = mSocialClient.isLiked(mSid, mAccountSid);
+                    mIsCommentable = mSocialClient.isCommentable(mSid);
+                    mLikeText = mSocialClient.getLikeText(mIsLiked);
+                    mSocialClientComments = mSocialClient.getComments(mSid, mTime24hr);
                 }
 
                 return null;
@@ -804,51 +511,6 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
                 commentMap.put(Statuses.CREATEDTEXT, "");
                 commentMap.put(getString(R.string.like), "");
                 mComments.add(commentMap);
-            }
-
-            private long parseDate(String date, String format) {
-                if (date != null) {
-                    // hack for the literal 'Z'
-                    if (date.substring(date.length() - 1).equals("Z")) {
-                        date = date.substring(0, date.length() - 2) + "+0000";
-                    }
-                    Date created = null;
-                    if (format != null) {
-                        if (mSimpleDateFormat == null) {
-                            mSimpleDateFormat = new SimpleDateFormat(format, Locale.ENGLISH);
-                            // all dates should be GMT/UTC
-                            mSimpleDateFormat.setTimeZone(sTimeZone);
-                        }
-                        try {
-                            created = mSimpleDateFormat.parse(date);
-                            return created.getTime();
-                        } catch (ParseException e) {
-                            Log.e(TAG, e.toString());
-                        }
-                    } else {
-                        // attempt to parse RSS date
-                        if (mSimpleDateFormat != null) {
-                            try {
-                                created = mSimpleDateFormat.parse(date);
-                                return created.getTime();
-                            } catch (ParseException e) {
-                                Log.e(TAG, e.toString());
-                            }
-                        }
-                        for (String rfc822 : sRFC822) {
-                            mSimpleDateFormat = new SimpleDateFormat(rfc822, Locale.ENGLISH);
-                            mSimpleDateFormat.setTimeZone(sTimeZone);
-                            try {
-                                if ((created = mSimpleDateFormat.parse(date)) != null) {
-                                    return created.getTime();
-                                }
-                            } catch (ParseException e) {
-                                Log.e(TAG, e.toString());
-                            }
-                        }
-                    }
-                }
-                return System.currentTimeMillis();
             }
         };
         loadingDialog.setMessage(getString(R.string.loading));

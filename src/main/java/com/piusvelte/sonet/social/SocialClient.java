@@ -145,6 +145,8 @@ abstract public class SocialClient {
 
     abstract public boolean isLiked(String statusId, String accountId);
 
+    abstract public boolean likeStatus(String statusId, String accountId, boolean doLike);
+
     abstract public String getLikeText(boolean isLiked);
 
     abstract public boolean isCommentable(String statusId);

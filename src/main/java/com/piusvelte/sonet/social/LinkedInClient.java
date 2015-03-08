@@ -17,6 +17,7 @@ import com.piusvelte.sonet.SonetOAuth;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
@@ -25,6 +26,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -32,6 +34,8 @@ import java.util.LinkedHashMap;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_BASE_URL;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_COMMENT_BODY;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_HEADERS;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_IS_LIKED;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_LIKE_BODY;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_POST;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_POST_BODY;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATE;
@@ -392,6 +396,22 @@ public class LinkedInClient extends SocialClient {
             } catch (JSONException e) {
                 if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
             }
+        }
+
+        return false;
+    }
+
+    @Override
+    public boolean likeStatus(String statusId, String accountId, boolean doLike) {
+        SonetOAuth sonetOAuth = new SonetOAuth(BuildConfig.LINKEDIN_KEY, BuildConfig.LINKEDIN_SECRET, mToken, mSecret);
+        HttpPut httpPut = new HttpPut(String.format(LINKEDIN_IS_LIKED, LINKEDIN_BASE_URL, statusId));
+        httpPut.addHeader(new BasicHeader("Content-Type", "application/xml"));
+
+        try {
+            httpPut.setEntity(new StringEntity(String.format(LINKEDIN_LIKE_BODY, Boolean.toString(doLike))));
+            return SonetHttpClient.httpResponse(mContext, sonetOAuth.getSignedRequest(httpPut)) != null;
+        } catch (UnsupportedEncodingException e) {
+            if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
         }
 
         return false;

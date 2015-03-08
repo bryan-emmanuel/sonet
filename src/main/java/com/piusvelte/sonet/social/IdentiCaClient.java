@@ -8,6 +8,7 @@ import static com.piusvelte.sonet.Sonet.IDENTICA_BASE_URL;
 import static com.piusvelte.sonet.Sonet.IDENTICA_MENTIONS;
 import static com.piusvelte.sonet.Sonet.IDENTICA_UPDATE;
 import static com.piusvelte.sonet.Sonet.IDENTICA_URL_FEED;
+import static com.piusvelte.sonet.Sonet.IDENTICA_RETWEET;
 
 /**
  * Created by bemmanuel on 2/15/15.
@@ -32,6 +33,10 @@ public class IdentiCaClient extends TwitterClient {
 
     String getUpdateUrl() {
         return IDENTICA_UPDATE;
+    }
+
+    String getRetweetUrl() {
+        return IDENTICA_RETWEET;
     }
 
     @Override
