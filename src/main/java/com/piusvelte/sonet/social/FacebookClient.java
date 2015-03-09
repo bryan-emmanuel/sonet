@@ -30,8 +30,10 @@ import org.json.JSONObject;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 
 import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_COMMENTS;
@@ -53,6 +55,7 @@ import static com.piusvelte.sonet.Sonet.Sphoto;
 import static com.piusvelte.sonet.Sonet.Spicture;
 import static com.piusvelte.sonet.Sonet.Splace;
 import static com.piusvelte.sonet.Sonet.Ssource;
+import static com.piusvelte.sonet.Sonet.Sstatus;
 import static com.piusvelte.sonet.Sonet.Sstory;
 import static com.piusvelte.sonet.Sonet.Stags;
 import static com.piusvelte.sonet.Sonet.Sto;
@@ -97,6 +100,63 @@ public class FacebookClient extends SocialClient {
         return super.getPostFriend(friend);
     }
 
+    private String getNotifications(long account, @NonNull Set<String> notificationSids) {
+        String notificationMessage = null;
+        Cursor currentNotifications = mContext.getContentResolver().query(Sonet.Notifications.getContentUri(mContext), new String[]{Sonet.Notifications._ID, Sonet.Notifications.SID, Sonet.Notifications.UPDATED, Sonet.Notifications.CLEARED, Sonet.Notifications.ESID}, Sonet.Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+
+        // loop over notifications
+        if (currentNotifications.moveToFirst()) {
+            long notificationId;
+            long updated;
+            String sid;
+            boolean cleared;
+
+            while (!currentNotifications.isAfterLast()) {
+                notificationId = currentNotifications.getLong(0);
+                sid = SonetCrypto.getInstance(mContext).Decrypt(currentNotifications.getString(1));
+                updated = currentNotifications.getLong(2);
+                cleared = currentNotifications.getInt(3) == 1;
+
+                // store sids, to avoid duplicates when requesting the latest feed
+                notificationSids.add(sid);
+
+                // get comments for current notifications
+                String response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, sid, Saccess_token, mToken)));
+
+                if (!TextUtils.isEmpty(response)) {
+                    JSONArray commentsArray;
+
+                    // check for a newer post, if it's the user's own, then set CLEARED=0
+                    try {
+                        commentsArray = new JSONObject(response).getJSONArray(Sdata);
+                        final int i2 = commentsArray.length();
+
+                        if (i2 > 0) {
+                            for (int i = 0; i < i2; i++) {
+                                JSONObject commentObj = commentsArray.getJSONObject(i);
+                                final long created_time = commentObj.getLong(Screated_time) * 1000;
+
+                                if (created_time > updated) {
+                                    final JSONObject from = commentObj.getJSONObject(Sfrom);
+                                    notificationMessage = updateNotificationMessage(notificationMessage,
+                                            updateNotification(notificationId, created_time, mAccountEsid, from.getString(Sid), from.getString(Sname), cleared));
+                                }
+                            }
+                        }
+                    } catch (JSONException e) {
+                        if (BuildConfig.DEBUG)
+                            Log.e(mTag, "error parsing notifications: " + response, e);
+                    }
+                }
+
+                currentNotifications.moveToNext();
+            }
+        }
+
+        currentNotifications.close();
+        return notificationMessage;
+    }
+
     @Override
     public String getFeed(int appWidgetId,
                           String widget,
@@ -110,64 +170,19 @@ public class FacebookClient extends SocialClient {
         String notificationMessage = null;
         String response;
         JSONArray statusesArray;
-        ArrayList<String[]> links = new ArrayList<String[]>();
-        final ArrayList<String> notificationSids = new ArrayList<String>();
+        ArrayList<String[]> links = new ArrayList<>();
+        Set<String> notificationSids = new HashSet<>();
         JSONObject statusObj;
         JSONObject friendObj;
         JSONArray commentsArray;
         JSONObject commentObj;
-        Cursor currentNotifications;
         String sid;
         String esid;
-        long notificationId;
-        long updated;
-        boolean cleared;
         String friend;
+
         // notifications first to populate notificationsSids
         if (notifications != 0) {
-            currentNotifications = mContext.getContentResolver().query(Sonet.Notifications.getContentUri(mContext), new String[]{Sonet.Notifications._ID, Sonet.Notifications.SID, Sonet.Notifications.UPDATED, Sonet.Notifications.CLEARED, Sonet.Notifications.ESID}, Sonet.Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
-            // loop over notifications
-            if (currentNotifications.moveToFirst()) {
-                while (!currentNotifications.isAfterLast()) {
-                    notificationId = currentNotifications.getLong(0);
-                    sid = SonetCrypto.getInstance(mContext).Decrypt(currentNotifications.getString(1));
-                    updated = currentNotifications.getLong(2);
-                    cleared = currentNotifications.getInt(3) == 1;
-
-                    // store sids, to avoid duplicates when requesting the latest feed
-                    if (!notificationSids.contains(sid)) {
-                        notificationSids.add(sid);
-                    }
-
-                    // get comments for current notifications
-                    if ((response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, sid, Saccess_token, mToken)))) != null) {
-                        // check for a newer post, if it's the user's own, then set CLEARED=0
-                        try {
-                            commentsArray = new JSONObject(response).getJSONArray(Sdata);
-                            final int i2 = commentsArray.length();
-
-                            if (i2 > 0) {
-                                for (int i = 0; i < i2; i++) {
-                                    commentObj = commentsArray.getJSONObject(i);
-                                    final long created_time = commentObj.getLong(Screated_time) * 1000;
-
-                                    if (created_time > updated) {
-                                        final JSONObject from = commentObj.getJSONObject(Sfrom);
-                                        notificationMessage = updateNotificationMessage(notificationMessage,
-                                                updateNotification(notificationId, created_time, mAccountEsid, from.getString(Sid), from.getString(Sname), cleared));
-                                    }
-                                }
-                            }
-                        } catch (JSONException e) {
-                            Log.e(mTag, service + ":" + e.toString() + ":" + response);
-                        }
-                    }
-
-                    currentNotifications.moveToNext();
-                }
-            }
-
-            currentNotifications.close();
+            notificationMessage = getNotifications(account, notificationSids);
         }
 
         // parse the response
@@ -312,7 +327,117 @@ public class FacebookClient extends SocialClient {
                     }
                 }
             } catch (JSONException e) {
-                Log.e(mTag, service + ":" + e.toString() + ":" + response);
+                if (BuildConfig.DEBUG) Log.e(mTag, service + ":" + e.toString() + ":" + response);
+            }
+        }
+
+        return notificationMessage;
+    }
+
+    @Override
+    public String getNotifications(long account) {
+        Set<String> notificationSids = new HashSet<>();
+        String notificationMessage = getNotifications(account, notificationSids);
+
+        if (!notificationSids.isEmpty()) {
+            // check the latest feed
+            String response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FACEBOOK_HOME, FACEBOOK_BASE_URL, Saccess_token, mToken)));
+
+            if (!TextUtils.isEmpty(response)) {
+                try {
+                    JSONArray jarr = new JSONObject(response).getJSONArray(Sdata);
+                    // if there are updates, clear the cache
+                    int d2 = jarr.length();
+
+                    if (d2 > 0) {
+                        for (int d = 0; d < d2; d++) {
+                            JSONObject o = jarr.getJSONObject(d);
+                            String sid = o.getString(Sid);
+
+                            // if already notified, ignore
+                            if (!notificationSids.contains(sid)) {
+                                // only parse status types, not photo, video or link
+                                if (o.has(Stype) && o.has(Sfrom)) {
+                                    JSONObject f = o.getJSONObject(Sfrom);
+
+                                    if (f.has(Sname) && f.has(Sid)) {
+                                        String notification = null;
+                                        String esid = f.getString(Sid);
+                                        String friend = f.getString(Sname);
+
+                                        if (o.has(Sto)) {
+                                            // handle wall messages from one friend to another
+                                            JSONObject t = o.getJSONObject(Sto);
+
+                                            if (t.has(Sdata)) {
+                                                JSONObject n = t.getJSONArray(Sdata).getJSONObject(0);
+
+                                                if (n.has(Sname)) {
+                                                    if (n.has(Sid) && (n.getString(Sid).equals(mAccountEsid))) {
+                                                        notification = String.format(getString(R.string.friendcommented), friend);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        int commentCount = 0;
+
+                                        if (o.has(Scomments)) {
+                                            JSONObject jo = o.getJSONObject(Scomments);
+
+                                            if (jo.has(Sdata)) {
+                                                JSONArray comments = jo.getJSONArray(Sdata);
+                                                commentCount = comments.length();
+
+                                                // notifications
+                                                if ((sid != null) && (commentCount > 0)) {
+                                                    // default hasCommented to whether or not these comments are for the own user's status
+                                                    boolean hasCommented = notification != null || esid.equals(mAccountEsid);
+
+                                                    for (int c2 = 0; c2 < commentCount; c2++) {
+                                                        JSONObject c3 = comments.getJSONObject(c2);
+
+                                                        if (c3.has(Sfrom)) {
+                                                            JSONObject c4 = c3.getJSONObject(Sfrom);
+
+                                                            if (c4.getString(Sid).equals(mAccountEsid)) {
+                                                                if (!hasCommented) {
+                                                                    // the user has commented on this thread, notify any updates
+                                                                    hasCommented = true;
+                                                                }
+
+                                                                // clear any notifications, as the user is already aware
+                                                                if (notification != null) {
+                                                                    notification = null;
+                                                                }
+                                                            } else if (hasCommented) {
+                                                                // don't notify about user's own comments
+                                                                // send the parent comment sid
+                                                                notification = String.format(getString(R.string.friendcommented), c4.getString(Sname));
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        if (notification != null) {
+                                            String message = o.has(Smessage) ? o.getString(Smessage) : null;
+
+                                            if (!o.getString(Stype).equals(Sstatus) && o.has(Slink)) {
+                                                message = message == null ? "[" + o.getString(Stype) + "]" : "[" + o.getString(Stype) + "]";
+                                            }
+
+                                            // new notification
+                                            addNotification(sid, esid, friend, message, o.getLong(Screated_time) * 1000, account, notification);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (JSONException e) {
+                    if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
+                }
             }
         }
 

@@ -139,6 +139,8 @@ abstract public class SocialClient {
 
     abstract public String getFeed(int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient);
 
+    abstract public String getNotifications(long account);
+
     abstract public boolean createPost(String message, String placeId, String latitude, String longitude, String photoPath, String[] tags);
 
     abstract public boolean isLikeable(String statusId);
@@ -232,86 +234,6 @@ abstract public class SocialClient {
 
     ContentResolver getContentResolver() {
         return mContext.getContentResolver();
-    }
-
-    void addStatusItem(String widget, String message, int appWidgetId) {
-        int status_bg_color = Sonet.default_message_bg_color;
-        int profile_bg_color = Sonet.default_message_bg_color;
-        int friend_bg_color = Sonet.default_friend_bg_color;
-        boolean icon = true;
-        Cursor c = getContentResolver().query(Sonet.Widgets_settings.getContentUri(mContext), new String[]{Sonet.Widgets.TIME24HR, Sonet.Widgets.MESSAGES_BG_COLOR, Sonet.Widgets.ICON, Sonet.Widgets.STATUSES_PER_ACCOUNT, Sonet.Widgets.SOUND, Sonet.Widgets.VIBRATE, Sonet.Widgets.LIGHTS, Sonet.Widgets.PROFILES_BG_COLOR, Sonet.Widgets.FRIEND_BG_COLOR}, Sonet.Widgets.WIDGET + "=? and " + Sonet.Widgets.ACCOUNT + "=?", new String[]{widget, Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
-
-        if (!c.moveToFirst()) {
-            // no widget settings
-            c.close();
-            c = getContentResolver().query(Sonet.Widgets_settings.getContentUri(mContext), new String[]{Sonet.Widgets.TIME24HR, Sonet.Widgets.MESSAGES_BG_COLOR, Sonet.Widgets.ICON, Sonet.Widgets.STATUSES_PER_ACCOUNT, Sonet.Widgets.SOUND, Sonet.Widgets.VIBRATE, Sonet.Widgets.LIGHTS, Sonet.Widgets.PROFILES_BG_COLOR, Sonet.Widgets.FRIEND_BG_COLOR}, Sonet.Widgets.WIDGET + "=? and " + Sonet.Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
-        }
-
-        if (c.moveToFirst()) {
-            status_bg_color = c.getInt(1);
-            icon = c.getInt(2) == 1;
-            profile_bg_color = c.getInt(7);
-            friend_bg_color = c.getInt(8);
-        }
-
-        c.close();
-        long id;
-        long created = System.currentTimeMillis();
-        int service = 0;
-        boolean time24hr = false;
-        long accountId = Sonet.INVALID_ACCOUNT_ID;
-        String sid = "-1";
-        String esid = "-1";
-        String friend = getString(R.string.app_name);
-        byte[] profile = getBlob(getResources(), R.drawable.icon);
-        Cursor entity = getContentResolver().query(Sonet.Entities.getContentUri(mContext), new String[]{Sonet.Entities._ID}, Sonet.Entities.ACCOUNT + "=? and " + Sonet.Entities.ESID + "=?", new String[]{Long.toString(accountId), SonetCrypto.getInstance(mContext).Encrypt(esid)}, null);
-
-        if (entity.moveToFirst()) {
-            id = entity.getLong(0);
-        } else {
-            ContentValues entityValues = new ContentValues();
-            entityValues.put(Sonet.Entities.ESID, esid);
-            entityValues.put(Sonet.Entities.FRIEND, friend);
-            entityValues.put(Sonet.Entities.PROFILE, profile);
-            entityValues.put(Sonet.Entities.ACCOUNT, accountId);
-            id = Long.parseLong(getContentResolver().insert(Sonet.Entities.getContentUri(mContext), entityValues).getLastPathSegment());
-        }
-
-        entity.close();
-        ContentValues values = new ContentValues();
-        values.put(Sonet.Statuses.CREATED, created);
-        values.put(Sonet.Statuses.ENTITY, id);
-        values.put(Sonet.Statuses.MESSAGE, message);
-        values.put(Sonet.Statuses.SERVICE, service);
-        values.put(Sonet.Statuses.CREATEDTEXT, Sonet.getCreatedText(created, time24hr));
-        values.put(Sonet.Statuses.WIDGET, appWidgetId);
-        values.put(Sonet.Statuses.ACCOUNT, accountId);
-        values.put(Sonet.Statuses.SID, sid);
-        values.put(Sonet.Statuses.FRIEND_OVERRIDE, friend);
-        values.put(Sonet.Statuses.STATUS_BG, createBackground(status_bg_color));
-        values.put(Sonet.Statuses.FRIEND_BG, createBackground(friend_bg_color));
-        values.put(Sonet.Statuses.PROFILE_BG, createBackground(profile_bg_color));
-        Bitmap emptyBmp = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
-        ByteArrayOutputStream imageBgStream = new ByteArrayOutputStream();
-        emptyBmp.compress(Bitmap.CompressFormat.PNG, 100, imageBgStream);
-        byte[] emptyImg = imageBgStream.toByteArray();
-        emptyBmp.recycle();
-        emptyBmp = null;
-
-        if (icon && (emptyImg != null)) {
-            values.put(Sonet.Statuses.ICON, emptyImg);
-        }
-
-        long statusId = Long.parseLong(getContentResolver().insert(Sonet.Statuses.getContentUri(mContext), values).getLastPathSegment());
-
-        // remote views can be reused, avoid images being repeated across multiple statuses
-        if (emptyImg != null) {
-            ContentValues imageValues = new ContentValues();
-            imageValues.put(Sonet.Status_images.STATUS_ID, statusId);
-            imageValues.put(Sonet.Status_images.IMAGE, emptyImg);
-            imageValues.put(Sonet.Status_images.IMAGE_BG, emptyImg);
-            getContentResolver().insert(Sonet.Status_images.getContentUri(mContext), imageValues);
-        }
     }
 
     String getFirstPhotoUrl(String[] parts) {

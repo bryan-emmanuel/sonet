@@ -1,5 +1,6 @@
 package com.piusvelte.sonet.social;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.support.annotation.NonNull;
@@ -29,7 +30,9 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 import static com.piusvelte.sonet.Sonet.LINKEDIN_BASE_URL;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_COMMENT_BODY;
@@ -339,6 +342,195 @@ public class LinkedInClient extends SocialClient {
         }
 
         return notificationMessage;
+    }
+
+    @Override
+    public String getNotifications(long account) {
+        Cursor currentNotifications = getContentResolver().query(Sonet.Notifications.getContentUri(mContext), new String[]{Sonet.Notifications._ID, Sonet.Notifications.SID, Sonet.Notifications.UPDATED, Sonet.Notifications.CLEARED, Sonet.Notifications.ESID}, Sonet.Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+
+        if (currentNotifications.moveToFirst()) {
+            Set<String> notificationSids = new HashSet<>();
+
+            // loop over notifications
+            while (!currentNotifications.isAfterLast()) {
+                long notificationId = currentNotifications.getLong(0);
+                String sid = SonetCrypto.getInstance(mContext).Decrypt(currentNotifications.getString(1));
+                long updated = currentNotifications.getLong(2);
+                boolean cleared = currentNotifications.getInt(3) == 1;
+                // store sids, to avoid duplicates when requesting the latest feed
+                    notificationSids.add(sid);
+                // get comments for current notifications
+                HttpGet httpGet = addHeaders(new HttpGet(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, sid)));
+                String response = SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(httpGet));
+
+                if (!TextUtils.isEmpty(response)) {
+                    // check for a newer post, if it's the user's own, then set CLEARED=0
+                    try {
+                        JSONObject jsonResponse = new JSONObject(response);
+                        if (jsonResponse.has(S_total) && (jsonResponse.getInt(S_total) != 0)) {
+                            JSONArray comments = jsonResponse.getJSONArray(Svalues);
+                            int i2 = comments.length();
+                            if (i2 > 0) {
+                                for (int i = 0; i < i2; i++) {
+                                    JSONObject comment = comments.getJSONObject(i);
+                                    long created_time = comment.getLong(Stimestamp);
+                                    if (created_time > updated) {
+                                        // new comment
+                                        ContentValues values = new ContentValues();
+                                        values.put(Sonet.Notifications.UPDATED, created_time);
+                                        JSONObject person = comment.getJSONObject(Sperson);
+                                        if (mAccountEsid.equals(person.getString(Sid))) {
+                                            // user's own comment, clear the notification
+                                            values.put(Sonet.Notifications.CLEARED, 1);
+                                        } else if (cleared) {
+                                            values.put(Sonet.Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), person.getString(SfirstName) + " " + person.getString(SlastName)));
+                                            values.put(Sonet.Notifications.CLEARED, 0);
+                                        } else {
+                                            values.put(Sonet.Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), person.getString(SfirstName) + " " + person.getString(SlastName) + " and others"));
+                                        }
+                                        getContentResolver().update(Sonet.Notifications.getContentUri(mContext), values, Sonet.Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
+                                    }
+                                }
+                            }
+                        }
+                    } catch (JSONException e) {
+                        if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
+                    }
+                }
+                currentNotifications.moveToNext();
+            }
+            // check the latest feed
+            HttpGet httpGet = addHeaders(new HttpGet(String.format(LINKEDIN_UPDATES, LINKEDIN_BASE_URL)));
+            String response = SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(httpGet));
+
+            if (!TextUtils.isEmpty(response)) {
+                try {
+                    JSONArray jarr = new JSONObject(response).getJSONArray(Svalues);
+                    // if there are updates, clear the cache
+                    int d2 = jarr.length();
+                    if (d2 > 0) {
+                        for (int d = 0; d < d2; d++) {
+                            JSONObject o = jarr.getJSONObject(d);
+                            String sid = o.getString(SupdateKey);
+                            // if already notified, ignore
+                            if (!notificationSids.contains(sid)) {
+                                String updateType = o.getString(SupdateType);
+                                JSONObject updateContent = o.getJSONObject(SupdateContent);
+                                if (Sonet.LinkedIn_UpdateTypes.contains(updateType) && updateContent.has(Sperson)) {
+                                    JSONObject f = updateContent.getJSONObject(Sperson);
+                                    if (f.has(SfirstName) && f.has(SlastName) && f.has(Sid) && o.has(SupdateComments)) {
+                                        JSONObject updateComments = o.getJSONObject(SupdateComments);
+                                        if (updateComments.has(Svalues)) {
+                                            String notification = null;
+                                            String esid = f.getString(Sid);
+                                            JSONArray comments = updateComments.getJSONArray(Svalues);
+                                            int commentCount = comments.length();
+                                            // notifications
+                                            if (commentCount > 0) {
+                                                // default hasCommented to whether or not these comments are for the own user's status
+                                                boolean hasCommented = notification != null || esid.equals(mAccountEsid);
+                                                for (int c2 = 0; c2 < commentCount; c2++) {
+                                                    JSONObject c3 = comments.getJSONObject(c2);
+                                                    if (c3.has(Sperson)) {
+                                                        JSONObject c4 = c3.getJSONObject(Sperson);
+                                                        if (c4.getString(Sid).equals(mAccountEsid)) {
+                                                            if (!hasCommented) {
+                                                                // the user has commented on this thread, notify any updates
+                                                                hasCommented = true;
+                                                            }
+                                                            // clear any notifications, as the user is already aware
+                                                            if (notification != null) {
+                                                                notification = null;
+                                                            }
+                                                        } else if (hasCommented) {
+                                                            // don't notify about user's own comments
+                                                            // send the parent comment sid
+                                                            notification = String.format(getString(R.string.friendcommented), c4.getString(SfirstName) + " " + c4.getString(SlastName));
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            if (notification != null) {
+                                                String update = Sonet.LinkedIn_UpdateTypes.getMessage(updateType);
+                                                if (Sonet.LinkedIn_UpdateTypes.APPS.name().equals(updateType)) {
+                                                    if (f.has(SpersonActivities)) {
+                                                        JSONObject personActivities = f.getJSONObject(SpersonActivities);
+                                                        if (personActivities.has(Svalues)) {
+                                                            JSONArray updates = personActivities.getJSONArray(Svalues);
+                                                            for (int u = 0, u2 = updates.length(); u < u2; u++) {
+                                                                update += updates.getJSONObject(u).getString(Sbody);
+                                                                if (u < (updates.length() - 1))
+                                                                    update += ", ";
+                                                            }
+                                                        }
+                                                    }
+                                                } else if (Sonet.LinkedIn_UpdateTypes.CONN.name().equals(updateType)) {
+                                                    if (f.has(Sconnections)) {
+                                                        JSONObject connections = f.getJSONObject(Sconnections);
+                                                        if (connections.has(Svalues)) {
+                                                            JSONArray updates = connections.getJSONArray(Svalues);
+                                                            for (int u = 0, u2 = updates.length(); u < u2; u++) {
+                                                                update += updates.getJSONObject(u).getString(SfirstName) + " " + updates.getJSONObject(u).getString(SlastName);
+                                                                if (u < (updates.length() - 1))
+                                                                    update += ", ";
+                                                            }
+                                                        }
+                                                    }
+                                                } else if (Sonet.LinkedIn_UpdateTypes.JOBP.name().equals(updateType)) {
+                                                    if (updateContent.has(Sjob) && updateContent.getJSONObject(Sjob).has(Sposition) && updateContent.getJSONObject(Sjob).getJSONObject(Sposition).has(Stitle))
+                                                        update += updateContent.getJSONObject(Sjob).getJSONObject(Sposition).getString(Stitle);
+                                                } else if (Sonet.LinkedIn_UpdateTypes.JGRP.name().equals(updateType)) {
+                                                    if (f.has(SmemberGroups)) {
+                                                        JSONObject memberGroups = f.getJSONObject(SmemberGroups);
+                                                        if (memberGroups.has(Svalues)) {
+                                                            JSONArray updates = memberGroups.getJSONArray(Svalues);
+                                                            for (int u = 0, u2 = updates.length(); u < u2; u++) {
+                                                                update += updates.getJSONObject(u).getString(Sname);
+                                                                if (u < (updates.length() - 1))
+                                                                    update += ", ";
+                                                            }
+                                                        }
+                                                    }
+                                                } else if (Sonet.LinkedIn_UpdateTypes.PREC.name().equals(updateType)) {
+                                                    if (f.has(SrecommendationsGiven)) {
+                                                        JSONObject recommendationsGiven = f.getJSONObject(SrecommendationsGiven);
+                                                        if (recommendationsGiven.has(Svalues)) {
+                                                            JSONArray updates = recommendationsGiven.getJSONArray(Svalues);
+                                                            for (int u = 0, u2 = updates.length(); u < u2; u++) {
+                                                                JSONObject recommendation = updates.getJSONObject(u);
+                                                                JSONObject recommendee = recommendation.getJSONObject(Srecommendee);
+                                                                if (recommendee.has(SfirstName))
+                                                                    update += recommendee.getString(SfirstName);
+                                                                if (recommendee.has(SlastName))
+                                                                    update += recommendee.getString(SlastName);
+                                                                if (recommendation.has(SrecommendationSnippet))
+                                                                    update += ":" + recommendation.getString(SrecommendationSnippet);
+                                                                if (u < (updates.length() - 1))
+                                                                    update += ", ";
+                                                            }
+                                                        }
+                                                    }
+                                                } else if (Sonet.LinkedIn_UpdateTypes.SHAR.name().equals(updateType) && f.has(ScurrentShare)) {
+                                                    JSONObject currentShare = f.getJSONObject(ScurrentShare);
+                                                    if (currentShare.has(Scomment))
+                                                        update = currentShare.getString(Scomment);
+                                                }
+                                                // new notification
+                                                addNotification(sid, esid, f.getString(SfirstName) + " " + f.getString(SlastName), update, o.getLong(Stimestamp), account, notification);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (JSONException e) {
+                    if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
+                }
+            }
+        }
+
+        return null;
     }
 
     @Override

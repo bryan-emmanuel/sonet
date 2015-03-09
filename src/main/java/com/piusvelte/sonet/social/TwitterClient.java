@@ -97,16 +97,11 @@ public class TwitterClient extends SocialClient {
 
     @Override
     public String getFeed(int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
-        String notificationMessage = null;
         String response;
         JSONArray statusesArray;
-        ArrayList<String[]> links = new ArrayList<String[]>();
-        final ArrayList<String> notificationSids = new ArrayList<String>();
+        ArrayList<String[]> links = new ArrayList<>();
         JSONObject statusObj;
         JSONObject friendObj;
-        Cursor currentNotifications;
-        String sid;
-        String friend;
         SonetOAuth sonetOAuth = getOAuth();
 
         // parse the response
@@ -139,53 +134,68 @@ public class TwitterClient extends SocialClient {
                     }
                 }
             } catch (JSONException e) {
-                Log.e(mTag, service + ":" + e.toString());
+                if (BuildConfig.DEBUG) Log.e(mTag, "error parsing response", e);
             }
         }
 
         // notifications
         if (notifications != 0) {
-            currentNotifications = getContentResolver().query(Sonet.Notifications.getContentUri(mContext), new String[]{Sonet.Notifications.SID}, Sonet.Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+            return getNotifications(account);
+        }
 
-            // loop over notifications
-            if (currentNotifications.moveToFirst()) {
-                // store sids, to avoid duplicates when requesting the latest feed
-                sid = SonetCrypto.getInstance(mContext).Decrypt(currentNotifications.getString(0));
+        return null;
+    }
 
-                if (!notificationSids.contains(sid)) {
-                    notificationSids.add(sid);
-                }
+    @Override
+    public String getNotifications(long account) {
+        String notificationMessage = null;
+        ArrayList<String> notificationSids = new ArrayList<>();
+        String sid;
+        String friend;
+        Cursor currentNotifications = getContentResolver().query(Sonet.Notifications.getContentUri(mContext), new String[]{Sonet.Notifications.SID}, Sonet.Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+
+        // loop over notifications
+        if (currentNotifications.moveToFirst()) {
+            // store sids, to avoid duplicates when requesting the latest feed
+            sid = SonetCrypto.getInstance(mContext).Decrypt(currentNotifications.getString(0));
+
+            if (!notificationSids.contains(sid)) {
+                notificationSids.add(sid);
             }
+        }
 
-            currentNotifications.close();
-            // limit to oldest status
-            String last_sid = null;
-            Cursor last_status = getContentResolver().query(Sonet.Statuses.getContentUri(mContext), new String[]{Sonet.Statuses.SID}, Sonet.Statuses.ACCOUNT + "=?", new String[]{Long.toString(account)}, Sonet.Statuses.CREATED + " ASC LIMIT 1");
+        currentNotifications.close();
+        // limit to oldest status
+        String last_sid = null;
+        Cursor last_status = getContentResolver().query(Sonet.Statuses.getContentUri(mContext), new String[]{Sonet.Statuses.SID}, Sonet.Statuses.ACCOUNT + "=?", new String[]{Long.toString(account)}, Sonet.Statuses.CREATED + " ASC LIMIT 1");
 
-            if (last_status.moveToFirst()) {
-                last_sid = SonetCrypto.getInstance(mContext).Decrypt(last_status.getString(0));
-            }
+        if (last_status.moveToFirst()) {
+            last_sid = SonetCrypto.getInstance(mContext).Decrypt(last_status.getString(0));
+        }
 
-            last_status.close();
+        last_status.close();
 
-            // get all mentions since the oldest status for this account
-            if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(getMentionsUrl(), getBaseUrl(), last_sid != null ? String.format(TWITTER_SINCE_ID, last_sid) : ""))))) != null) {
-                try {
-                    statusesArray = new JSONArray(response);
+        // get all mentions since the oldest status for this account
+        String response = SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(getMentionsUrl(), getBaseUrl(), last_sid != null ? String.format(TWITTER_SINCE_ID, last_sid) : ""))));
 
-                    for (int i = 0, i2 = statusesArray.length(); i < i2; i++) {
-                        statusObj = statusesArray.getJSONObject(i);
-                        friendObj = statusObj.getJSONObject(Suser);
+        if (!TextUtils.isEmpty(response)) {
+            try {
+                JSONObject statusObj;
+                JSONObject friendObj;
+                JSONArray statusesArray = new JSONArray(response);
 
-                        if (!friendObj.getString(Sid).equals(mAccountEsid) && !notificationSids.contains(statusObj.getString(Sid))) {
-                            friend = friendObj.getString(Sname);
-                            addNotification(statusObj.getString(Sid), friendObj.getString(Sid), friend, statusObj.getString(Stext), parseDate(statusObj.getString(Screated_at), TWITTER_DATE_FORMAT), account, friend + " mentioned you on Twitter");
-                            notificationMessage = updateNotificationMessage(notificationMessage, friend + " mentioned you on Twitter");
-                        }
+                for (int i = 0, i2 = statusesArray.length(); i < i2; i++) {
+                    statusObj = statusesArray.getJSONObject(i);
+                    friendObj = statusObj.getJSONObject(Suser);
+
+                    if (!friendObj.getString(Sid).equals(mAccountEsid) && !notificationSids.contains(statusObj.getString(Sid))) {
+                        friend = friendObj.getString(Sname);
+                        addNotification(statusObj.getString(Sid), friendObj.getString(Sid), friend, statusObj.getString(Stext), parseDate(statusObj.getString(Screated_at), TWITTER_DATE_FORMAT), account, friend + " mentioned you on Twitter");
+                        notificationMessage = updateNotificationMessage(notificationMessage, friend + " mentioned you on Twitter");
                     }
-                } catch (JSONException e) {
-                    Log.e(mTag, service + ":" + e.toString());
                 }
+            } catch (JSONException e) {
+                if (BuildConfig.DEBUG) Log.e(mTag, "error parsing response", e);
             }
         }
 

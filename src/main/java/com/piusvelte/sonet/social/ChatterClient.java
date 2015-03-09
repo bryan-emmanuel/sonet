@@ -141,6 +141,11 @@ public class ChatterClient extends SocialClient {
     }
 
     @Override
+    public String getNotifications(long account) {
+        return null;
+    }
+
+    @Override
     public boolean createPost(String message, String placeId, String latitude, String longitude, String photoPath, String[] tags) {
         if (getChatterInstance()) {
             HttpPost httpPost = new HttpPost(String.format(CHATTER_URL_POST, mChatterInstance, Uri.encode(message)));

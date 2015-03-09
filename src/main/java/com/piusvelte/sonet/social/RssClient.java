@@ -152,6 +152,11 @@ public class RssClient extends SocialClient {
     }
 
     @Override
+    public String getNotifications(long account) {
+        return null;
+    }
+
+    @Override
     public boolean createPost(String message, String placeId, String latitude, String longitude, String photoPath, String[] tags) {
         return false;
     }
