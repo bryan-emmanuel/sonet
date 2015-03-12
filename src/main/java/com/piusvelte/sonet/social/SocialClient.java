@@ -1,6 +1,5 @@
 package com.piusvelte.sonet.social;
 
-import android.appwidget.AppWidgetManager;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -36,12 +35,12 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.piusvelte.sonet.Sonet.Simgur;
 import static com.piusvelte.sonet.Sonet.Slink;
-import static com.piusvelte.sonet.Sonet.createBackground;
 import static com.piusvelte.sonet.Sonet.getBlob;
 import static com.piusvelte.sonet.Sonet.getCropSize;
 import static com.piusvelte.sonet.Sonet.insertStatusImageBg;
@@ -137,9 +136,98 @@ abstract public class SocialClient {
         }
     }
 
-    abstract public String getFeed(int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient);
+    public String getFeed(int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
+        String[] notificationMessage = new String[1];
+        Set<String> notificationSids = null;
+        boolean doNotify = notifications != 0;
 
-    abstract public String getNotifications(long account);
+        if (doNotify) {
+            getNotificationStatusIds(account, notificationMessage);
+        }
+
+        String response = getFeedResponse(status_count);
+
+        if (!TextUtils.isEmpty(response)) {
+            JSONArray feedItems;
+            int parseCount;
+
+            try {
+                feedItems = parseFeed(response);
+
+                if (feedItems != null) {
+                    parseCount = Math.min(feedItems.length(), status_count);
+
+                    if (parseCount > 0) {
+                        removeOldStatuses(widget, Long.toString(account));
+
+                        for (int itemIdx = 0; itemIdx < parseCount; itemIdx++) {
+                            JSONObject item = feedItems.getJSONObject(itemIdx);
+
+                            if (item != null) {
+                                addFeedItem(item, display_profile, service, time24hr, appWidgetId, account, httpClient, notificationSids, notificationMessage, doNotify);
+                            }
+                        }
+                    } else if (this instanceof MySpaceClient) {
+                        // warn about myspace permissions
+                        addStatusItem(0,
+                                getString(R.string.myspace_permissions_title),
+                                null,
+                                getString(R.string.myspace_permissions_message),
+                                service,
+                                time24hr,
+                                appWidgetId,
+                                account,
+                                "",
+                                "",
+                                new ArrayList<String[]>(),
+                                httpClient);
+                    }
+                }
+            } catch (JSONException e) {
+                if (BuildConfig.DEBUG) {
+                    Log.d(mTag, "error parsing feed response: " + response, e);
+                }
+            }
+        } else if (this instanceof MySpaceClient) {
+            // warn about myspace permissions
+            addStatusItem(0,
+                    getString(R.string.myspace_permissions_title),
+                    null,
+                    getString(R.string.myspace_permissions_message),
+                    service,
+                    time24hr,
+                    appWidgetId,
+                    account,
+                    "",
+                    "",
+                    new ArrayList<String[]>(),
+                    httpClient);
+        }
+
+        if (doNotify) {
+            getNotificationMessage(account, notificationMessage);
+            return notificationMessage[0];
+        }
+
+        return null;
+    }
+
+    @Nullable
+    abstract public Set<String> getNotificationStatusIds(long account, String[] notificationMessage);
+
+    @Nullable
+    abstract public String getFeedResponse(int status_count);
+
+    @Nullable
+    abstract public JSONArray parseFeed(@NonNull String response) throws JSONException;
+
+    @Nullable
+    abstract public void addFeedItem(@NonNull JSONObject item, boolean display_profile, int service, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException;
+
+    @Nullable
+    abstract public void getNotificationMessage(long account, String[] notificationMessage);
+
+    abstract public void getNotifications(long account, String[] notificationMessage);
 
     abstract public boolean createPost(String message, String placeId, String latitude, String longitude, String photoPath, String[] tags);
 
@@ -258,6 +346,10 @@ abstract public class SocialClient {
 
     void formatLink(Matcher matcher, StringBuffer stringBuffer, String link) {
         matcher.appendReplacement(stringBuffer, "(" + Slink + ": " + Uri.parse(link).getHost() + ")");
+    }
+
+    void addStatusItem(long created, String friend, String url, String message, int service, boolean time24hr, int appWidgetId, long accountId, String sid, String esid, HttpClient httpClient) {
+        addStatusItem(created, friend, url, message, service, time24hr, appWidgetId, accountId, sid, esid, new ArrayList<String[]>(), httpClient);
     }
 
     void addStatusItem(long created, String friend, String url, String message, int service, boolean time24hr, int appWidgetId, long accountId, String sid, String esid, ArrayList<String[]> links, HttpClient httpClient) {
@@ -501,14 +593,12 @@ abstract public class SocialClient {
         return message;
     }
 
-    String updateNotificationMessage(String originalMessage, String newMessage) {
-        if (TextUtils.isEmpty(originalMessage)) {
-            return newMessage;
+    void updateNotificationMessage(String[] originalMessage, String newMessage) {
+        if (TextUtils.isEmpty(originalMessage[0])) {
+            originalMessage[0] = newMessage;
         } else if (!TextUtils.isEmpty(newMessage)) {
-            return mContext.getString(R.string.notify_multiple_updates);
+            originalMessage[0] = mContext.getString(R.string.notify_multiple_updates);
         }
-
-        return originalMessage;
     }
 
     long parseDate(String date, String format) {

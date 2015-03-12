@@ -24,6 +24,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 import static com.piusvelte.sonet.Sonet.CHATTER_DATE_FORMAT;
 import static com.piusvelte.sonet.Sonet.CHATTER_URL_ACCESS;
@@ -86,63 +87,62 @@ public class ChatterClient extends SocialClient {
         return false;
     }
 
+    @Nullable
     @Override
-    public String getFeed(int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
-        if (getChatterInstance()) {
-            String response;
-            JSONArray statusesArray;
-            ArrayList<String[]> links = new ArrayList<String[]>();
-            JSONObject statusObj;
-            JSONObject friendObj;
+    public Set<String> getNotificationStatusIds(long account, String[] notificationMessage) {
+        return null;
+    }
 
+    @Nullable
+    @Override
+    public String getFeedResponse(int status_count) {
+        if (getChatterInstance()) {
             HttpGet httpGet = new HttpGet(String.format(CHATTER_URL_FEED, mChatterInstance));
             httpGet.setHeader("Authorization", "OAuth " + mChatterToken);
-
-            if ((response = SonetHttpClient.httpResponse(httpClient, httpGet)) != null) {
-                try {
-                    statusesArray = new JSONObject(response).getJSONArray(Sitems);
-                    // if there are updates, clear the cache
-                    int e2 = statusesArray.length();
-
-                    if (e2 > 0) {
-                        removeOldStatuses(widget, Long.toString(account));
-
-                        for (int e = 0; (e < e2) && (e < status_count); e++) {
-                            links.clear();
-                            statusObj = statusesArray.getJSONObject(e);
-                            friendObj = statusObj.getJSONObject(Suser);
-                            JSONObject photo = friendObj.getJSONObject(Sphoto);
-                            JSONObject comments = statusObj.getJSONObject(Scomments);
-                            long date = parseDate(statusObj.getString(ScreatedDate), CHATTER_DATE_FORMAT);
-
-                            if (e < status_count) {
-                                addStatusItem(date,
-                                        friendObj.getString(Sname),
-                                        display_profile ? photo.getString(SsmallPhotoUrl) + "?oauth_token=" + mChatterToken : null,
-                                        String.format(getString(R.string.messageWithCommentCount), statusObj.getJSONObject(Sbody).getString(Stext), comments.getInt(Stotal)),
-                                        service,
-                                        time24hr,
-                                        appWidgetId,
-                                        account,
-                                        statusObj.getString(Sid),
-                                        friendObj.getString(Sid),
-                                        links,
-                                        httpClient);
-                            }
-                        }
-                    }
-                } catch (JSONException e) {
-                    if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
-                }
-            }
+            return SonetHttpClient.httpResponse(mContext, httpGet);
         }
 
         return null;
     }
 
+    @Nullable
     @Override
-    public String getNotifications(long account) {
-        return null;
+    public JSONArray parseFeed(@NonNull String response) throws JSONException {
+        return new JSONObject(response).getJSONArray(Sitems);
+    }
+
+    @Nullable
+    @Override
+    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, int service, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+        ArrayList<String[]> links = new ArrayList<>();
+        JSONObject friendObj = item.getJSONObject(Suser);
+        JSONObject photo = friendObj.getJSONObject(Sphoto);
+        JSONObject comments = item.getJSONObject(Scomments);
+        long date = parseDate(item.getString(ScreatedDate), CHATTER_DATE_FORMAT);
+
+        addStatusItem(date,
+                friendObj.getString(Sname),
+                display_profile ? photo.getString(SsmallPhotoUrl) + "?oauth_token=" + mChatterToken : null,
+                String.format(getString(R.string.messageWithCommentCount), item.getJSONObject(Sbody).getString(Stext), comments.getInt(Stotal)),
+                service,
+                time24hr,
+                appWidgetId,
+                account,
+                item.getString(Sid),
+                friendObj.getString(Sid),
+                links,
+                httpClient);
+    }
+
+    @Nullable
+    @Override
+    public void getNotificationMessage(long account, String[] notificationMessage) {
+        // NO-OP
+    }
+
+    @Override
+    public void getNotifications(long account, String[] notificationMessage) {
+        // NO-OP
     }
 
     @Override
@@ -254,6 +254,7 @@ public class ChatterClient extends SocialClient {
         commentMap.put(Sonet.Entities.FRIEND, jsonComment.getJSONObject(Suser).getString(Sname));
         commentMap.put(Sonet.Statuses.MESSAGE, jsonComment.getJSONObject(Sbody).getString(Stext));
         commentMap.put(Sonet.Statuses.CREATEDTEXT, Sonet.getCreatedText(parseDate(jsonComment.getString(ScreatedDate), CHATTER_DATE_FORMAT), time24hr));
+        // TODO does this have the like id for unliking?
         commentMap.put(getString(R.string.like), "");
         return commentMap;
     }

@@ -3,9 +3,7 @@ package com.piusvelte.sonet.social;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
-import com.piusvelte.sonet.BuildConfig;
 import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.SonetHttpClient;
 
@@ -18,6 +16,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 import static com.piusvelte.sonet.Sonet.PINTEREST_BASE_URL;
 import static com.piusvelte.sonet.Sonet.PINTEREST_DATE_FORMAT;
@@ -53,76 +52,78 @@ public class PinterestClient extends SocialClient {
         return super.getFirstPhotoUrl(parts);
     }
 
+    @Nullable
     @Override
-    public String getFeed(int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
-        String response;
-        JSONArray statusesArray;
-        ArrayList<String[]> links = new ArrayList<String[]>();
-        JSONObject statusObj;
-        JSONObject friendObj;
+    public Set<String> getNotificationStatusIds(long account, String[] notificationMessage) {
+        return null;
+    }
 
-        // parse the response
-        if ((response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(PINTEREST_URL_FEED, PINTEREST_BASE_URL)))) != null) {
-            // if not a full_refresh, only update the status_bg and icons
-            try {
-                JSONObject pins = new JSONObject(response);
-                if (pins.has("pins")) {
-                    statusesArray = pins.getJSONArray("pins");
-                    // if there are updates, clear the cache
-                    int e2 = statusesArray.length();
-                    if (e2 > 0) {
-                        removeOldStatuses(widget, Long.toString(account));
+    @Nullable
+    @Override
+    public String getFeedResponse(int status_count) {
+        return SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(PINTEREST_URL_FEED, PINTEREST_BASE_URL)));
+    }
 
-                        for (int e = 0; e < e2; e++) {
-                            links.clear();
-                            statusObj = statusesArray.getJSONObject(e);
-                            friendObj = statusObj.getJSONObject(Suser);
-                            long date = parseDate(statusObj.getString(Screated_at), PINTEREST_DATE_FORMAT);
-                            int commentCount = 0;
-
-                            if (statusObj.has(Scounts)) {
-                                JSONObject counts = statusObj.getJSONObject(Scounts);
-
-                                if (counts.has(Scomments)) {
-                                    commentCount = counts.getInt(Scomments);
-                                }
-                            }
-
-                            if (statusObj.has(Simages)) {
-                                JSONObject images = statusObj.getJSONObject(Simages);
-
-                                if (images.has(Smobile)) {
-                                    links.add(new String[]{Simage, images.getString(Smobile)});
-                                } else if (images.has(Sboard)) {
-                                    links.add(new String[]{Simage, images.getString(Sboard)});
-                                }
-                            }
-                            addStatusItem(date,
-                                    friendObj.getString(Susername),
-                                    display_profile ? friendObj.getString(Simage_url) : null,
-                                    String.format(getString(R.string.messageWithCommentCount), statusObj.getString(Sdescription), commentCount),
-                                    service,
-                                    time24hr,
-                                    appWidgetId,
-                                    account,
-                                    statusObj.getString(Sid),
-                                    friendObj.getString(Sid),
-                                    links,
-                                    httpClient);
-                        }
-                    }
-                }
-            } catch (JSONException e) {
-                Log.e(mTag, service + ":" + e.toString());
-            }
+    @Nullable
+    @Override
+    public JSONArray parseFeed(@NonNull String response) throws JSONException {
+        JSONObject pins = new JSONObject(response);
+        if (pins.has("pins")) {
+            return pins.getJSONArray("pins");
         }
 
         return null;
     }
 
+    @Nullable
     @Override
-    public String getNotifications(long account) {
-        return null;
+    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, int service, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+        ArrayList<String[]> links = new ArrayList<>();
+        JSONObject friendObj = item.getJSONObject(Suser);
+        long date = parseDate(item.getString(Screated_at), PINTEREST_DATE_FORMAT);
+        int commentCount = 0;
+
+        if (item.has(Scounts)) {
+            JSONObject counts = item.getJSONObject(Scounts);
+
+            if (counts.has(Scomments)) {
+                commentCount = counts.getInt(Scomments);
+            }
+        }
+
+        if (item.has(Simages)) {
+            JSONObject images = item.getJSONObject(Simages);
+
+            if (images.has(Smobile)) {
+                links.add(new String[]{Simage, images.getString(Smobile)});
+            } else if (images.has(Sboard)) {
+                links.add(new String[]{Simage, images.getString(Sboard)});
+            }
+        }
+
+        addStatusItem(date,
+                friendObj.getString(Susername),
+                display_profile ? friendObj.getString(Simage_url) : null,
+                String.format(getString(R.string.messageWithCommentCount), item.getString(Sdescription), commentCount),
+                service,
+                time24hr,
+                appWidgetId,
+                account,
+                item.getString(Sid),
+                friendObj.getString(Sid),
+                links,
+                httpClient);
+    }
+
+    @Nullable
+    @Override
+    public void getNotificationMessage(long account, String[] notificationMessage) {
+        // NO-OP
+    }
+
+    @Override
+    public void getNotifications(long account, String[] notificationMessage) {
+        // NO-OP
     }
 
     @Override

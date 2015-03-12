@@ -24,6 +24,7 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -46,114 +47,140 @@ public class RssClient extends SocialClient {
         super(context, token, secret, accountEsid);
     }
 
+    @Nullable
     @Override
-    public String getFeed(int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
-        ArrayList<String[]> links = new ArrayList<String[]>();
-        String response = SonetHttpClient.httpResponse(httpClient, new HttpGet(mAccountEsid));
-        if (response != null) {
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            try {
-                DocumentBuilder db = dbf.newDocumentBuilder();
-                InputSource is = new InputSource();
-                is.setCharacterStream(new StringReader(response));
-                Document doc = db.parse(is);
-                NodeList nodes = doc.getElementsByTagName(Sitem);
-                int i2 = nodes.getLength();
-
-                if (i2 > 0) {
-                    // check for an image
-                    String image_url = null;
-                    NodeList images = doc.getElementsByTagName(Simage);
-                    int i3 = images.getLength();
-
-                    if (i3 > 0) {
-                        NodeList imageChildren = images.item(0).getChildNodes();
-
-                        for (int i = 0; (i < i3) && (image_url == null); i++) {
-                            Node n = imageChildren.item(i);
-
-                            if (n.getNodeName().toLowerCase().equals(Surl)) {
-                                if (n.hasChildNodes()) {
-                                    image_url = n.getChildNodes().item(0).getNodeValue();
-                                }
-                            }
-                        }
-                    }
-
-                    removeOldStatuses(widget, Long.toString(account));
-                    int item_count = 0;
-                    for (int i = 0; (i < i2) && (item_count < status_count); i++) {
-                        links.clear();
-                        NodeList children = nodes.item(i).getChildNodes();
-                        String date = null;
-                        String title = null;
-                        String description = null;
-                        String link = null;
-                        int values_count = 0;
-                        for (int child = 0, c2 = children.getLength(); (child < c2) && (values_count < 4); child++) {
-                            Node n = children.item(child);
-                            final String nodeName = n.getNodeName().toLowerCase();
-
-                            if (nodeName.equals(Spubdate)) {
-                                values_count++;
-
-                                if (n.hasChildNodes()) {
-                                    date = n.getChildNodes().item(0).getNodeValue();
-                                }
-                            } else if (nodeName.equals(Stitle)) {
-                                values_count++;
-
-                                if (n.hasChildNodes()) {
-                                    title = n.getChildNodes().item(0).getNodeValue();
-                                }
-                            } else if (nodeName.equals(Sdescription)) {
-                                values_count++;
-
-                                if (n.hasChildNodes()) {
-                                    StringBuilder sb = new StringBuilder();
-                                    NodeList descNodes = n.getChildNodes();
-
-                                    for (int dn = 0, dn2 = descNodes.getLength(); dn < dn2; dn++) {
-                                        Node descNode = descNodes.item(dn);
-
-                                        if (descNode.getNodeType() == Node.TEXT_NODE) {
-                                            sb.append(descNode.getNodeValue());
-                                        }
-                                    }
-
-                                    // strip out the html tags
-                                    description = sb.toString().replaceAll("\\<(.|\n)*?>", "");
-                                }
-                            } else if (nodeName.equals(Slink)) {
-                                values_count++;
-
-                                if (n.hasChildNodes()) {
-                                    link = n.getChildNodes().item(0).getNodeValue();
-                                }
-                            }
-                        }
-
-                        if (Sonet.HasValues(new String[]{title, description, link, date})) {
-                            item_count++;
-                            addStatusItem(parseDate(date, null), title, display_profile ? image_url : null, description, service, time24hr, appWidgetId, account, null, link, links, httpClient);
-                        }
-                    }
-                }
-            } catch (ParserConfigurationException e) {
-                Log.e(mTag, "RSS:" + e.toString());
-            } catch (SAXException e) {
-                Log.e(mTag, "RSS:" + e.toString());
-            } catch (IOException e) {
-                Log.e(mTag, "RSS:" + e.toString());
-            }
-        }
-
+    public Set<String> getNotificationStatusIds(long account, String[] notificationMessage) {
         return null;
     }
 
+    @Nullable
     @Override
-    public String getNotifications(long account) {
-        return null;
+    public String getFeedResponse(int status_count) {
+        return SonetHttpClient.httpResponse(mContext, new HttpGet(mAccountEsid));
+    }
+
+    @Nullable
+    @Override
+    public JSONArray parseFeed(@NonNull String response) throws JSONException {
+        // RSS isn't JSON, so we need to coerce this
+        JSONArray feedItems = new JSONArray();
+
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        try {
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            InputSource is = new InputSource();
+            is.setCharacterStream(new StringReader(response));
+            Document doc = db.parse(is);
+            NodeList nodes = doc.getElementsByTagName(Sitem);
+            int i2 = nodes.getLength();
+
+            if (i2 > 0) {
+                // check for an image
+                String image_url = null;
+                NodeList images = doc.getElementsByTagName(Simage);
+                int i3 = images.getLength();
+
+                if (i3 > 0) {
+                    NodeList imageChildren = images.item(0).getChildNodes();
+
+                    for (int i = 0; (i < i3) && (image_url == null); i++) {
+                        Node n = imageChildren.item(i);
+
+                        if (n.getNodeName().toLowerCase().equals(Surl)) {
+                            if (n.hasChildNodes()) {
+                                image_url = n.getChildNodes().item(0).getNodeValue();
+                            }
+                        }
+                    }
+                }
+
+                for (int i = 0; i < i2; i++) {
+                    NodeList children = nodes.item(i).getChildNodes();
+                    String date = null;
+                    String title = null;
+                    String description = null;
+                    String link = null;
+                    int values_count = 0;
+                    for (int child = 0, c2 = children.getLength(); (child < c2) && (values_count < 4); child++) {
+                        Node n = children.item(child);
+                        final String nodeName = n.getNodeName().toLowerCase();
+
+                        if (nodeName.equals(Spubdate)) {
+                            values_count++;
+
+                            if (n.hasChildNodes()) {
+                                date = n.getChildNodes().item(0).getNodeValue();
+                            }
+                        } else if (nodeName.equals(Stitle)) {
+                            values_count++;
+
+                            if (n.hasChildNodes()) {
+                                title = n.getChildNodes().item(0).getNodeValue();
+                            }
+                        } else if (nodeName.equals(Sdescription)) {
+                            values_count++;
+
+                            if (n.hasChildNodes()) {
+                                StringBuilder sb = new StringBuilder();
+                                NodeList descNodes = n.getChildNodes();
+
+                                for (int dn = 0, dn2 = descNodes.getLength(); dn < dn2; dn++) {
+                                    Node descNode = descNodes.item(dn);
+
+                                    if (descNode.getNodeType() == Node.TEXT_NODE) {
+                                        sb.append(descNode.getNodeValue());
+                                    }
+                                }
+
+                                // strip out the html tags
+                                description = sb.toString().replaceAll("\\<(.|\n)*?>", "");
+                            }
+                        } else if (nodeName.equals(Slink)) {
+                            values_count++;
+
+                            if (n.hasChildNodes()) {
+                                link = n.getChildNodes().item(0).getNodeValue();
+                            }
+                        }
+                    }
+
+                    if (Sonet.HasValues(new String[]{title, description, link, date})) {
+                        feedItems.put(new JSONObject()
+                                .put(Stitle, title)
+                                .put(Sdescription, description)
+                                .put(Slink, link)
+                                .put(Spubdate, parseDate(date, null))
+                                .put(Simage, image_url)
+                                .toString());
+                    }
+                }
+            }
+        } catch (ParserConfigurationException e) {
+            Log.e(mTag, "RSS:" + e.toString());
+        } catch (SAXException e) {
+            Log.e(mTag, "RSS:" + e.toString());
+        } catch (IOException e) {
+            Log.e(mTag, "RSS:" + e.toString());
+        }
+
+        return feedItems;
+    }
+
+    @Nullable
+    @Override
+    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, int service, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+        addStatusItem(item.getLong(Spubdate), item.getString(Stitle), display_profile ? item.getString(Simage) : null, item.getString(Sdescription), service, time24hr, appWidgetId, account, null, item.getString(Slink), new ArrayList<String[]>(), httpClient);
+    }
+
+    @Nullable
+    @Override
+    public void getNotificationMessage(long account, String[] notificationMessage) {
+        // NO-OP
+    }
+
+    @Override
+    public void getNotifications(long account, String[] notificationMessage) {
+        // NO-OP
     }
 
     @Override

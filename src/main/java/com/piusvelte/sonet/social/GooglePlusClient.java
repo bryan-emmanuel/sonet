@@ -59,22 +59,62 @@ public class GooglePlusClient extends SocialClient {
         super(context, token, secret, accountEsid);
     }
 
+    @Nullable
     @Override
-    public String getFeed(int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
-        String notificationMessage = null;
-        String response;
-        JSONArray statusesArray;
-        ArrayList<String[]> links = new ArrayList<String[]>();
-        final ArrayList<String> notificationSids = new ArrayList<String>();
-        JSONObject statusObj;
-        JSONObject friendObj;
-        Cursor currentNotifications;
-        String sid;
-        String esid;
-        long notificationId;
-        long updated;
-        boolean cleared;
-        String friend;
+    public Set<String> getNotificationStatusIds(long account, String[] notificationMessage) {
+        Set<String> notificationSids = new HashSet<>();
+        Cursor currentNotifications = getContentResolver().query(Sonet.Notifications.getContentUri(mContext), new String[]{Sonet.Notifications._ID, Sonet.Notifications.SID, Sonet.Notifications.UPDATED, Sonet.Notifications.CLEARED, Sonet.Notifications.ESID}, Sonet.Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+
+        // loop over notifications
+        if (currentNotifications.moveToFirst()) {
+            while (!currentNotifications.isAfterLast()) {
+                long notificationId = currentNotifications.getLong(0);
+                String sid = SonetCrypto.getInstance(mContext).Decrypt(currentNotifications.getString(1));
+                long updated = currentNotifications.getLong(2);
+                boolean cleared = currentNotifications.getInt(3) == 1;
+
+                // store sids, to avoid duplicates when requesting the latest feed
+                if (!notificationSids.contains(sid)) {
+                    notificationSids.add(sid);
+                }
+
+                // TODO
+                // get comments for current notifications
+//                String response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(GOOGLEPLUS_ACTIVITY, GOOGLEPLUS_BASE_URL, sid, access_token)));
+//
+//                if (!TextUtils.isEmpty(response)) {
+//                    // check for a newer post, if it's the user's own, then set CLEARED=0
+//                    try {
+//                        JSONObject item = new JSONObject(response);
+//
+//                        if (item.has(Sobject)) {
+//                            JSONObject object = item.getJSONObject(Sobject);
+//
+//                            if (object.has(Sreplies)) {
+//                                int commentCount = 0;
+//                                JSONObject replies = object.getJSONObject(Sreplies);
+//
+//                                if (replies.has(StotalItems)) {
+//                                    commentCount = replies.getInt(StotalItems);
+//                                }
+//                            }
+//                        }
+//                    } catch (JSONException e) {
+//                        // TODO
+//                    }
+//                }
+
+                currentNotifications.moveToNext();
+            }
+        }
+
+        currentNotifications.close();
+        return notificationSids;
+    }
+
+    @Nullable
+    @Override
+    public String getFeedResponse(int status_count) {
         // get new access token, need different request here
         HttpPost httpPost = new HttpPost(GOOGLE_ACCESS);
         List<NameValuePair> httpParams = new ArrayList<NameValuePair>();
@@ -82,143 +122,108 @@ public class GooglePlusClient extends SocialClient {
         httpParams.add(new BasicNameValuePair("client_secret", BuildConfig.GOOGLECLIENT_SECRET));
         httpParams.add(new BasicNameValuePair("refresh_token", mToken));
         httpParams.add(new BasicNameValuePair("grant_type", "refresh_token"));
-
         try {
             httpPost.setEntity(new UrlEncodedFormEntity(httpParams));
 
-            if ((response = SonetHttpClient.httpResponse(httpClient, httpPost)) != null) {
+            String response = SonetHttpClient.httpResponse(mContext, httpPost);
+
+            if (!TextUtils.isEmpty(response)) {
                 JSONObject j = new JSONObject(response);
 
                 if (j.has("access_token")) {
                     String access_token = j.getString("access_token");
 
-                    // notifications
-                    if (notifications != 0) {
-                        currentNotifications = getContentResolver().query(Sonet.Notifications.getContentUri(mContext), new String[]{Sonet.Notifications._ID, Sonet.Notifications.SID, Sonet.Notifications.UPDATED, Sonet.Notifications.CLEARED, Sonet.Notifications.ESID}, Sonet.Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
-
-                        // loop over notifications
-                        if (currentNotifications.moveToFirst()) {
-                            while (!currentNotifications.isAfterLast()) {
-                                notificationId = currentNotifications.getLong(0);
-                                sid = SonetCrypto.getInstance(mContext).Decrypt(currentNotifications.getString(1));
-                                updated = currentNotifications.getLong(2);
-                                cleared = currentNotifications.getInt(3) == 1;
-
-                                // store sids, to avoid duplicates when requesting the latest feed
-                                if (!notificationSids.contains(sid)) {
-                                    notificationSids.add(sid);
-                                }
-
-                                // get comments for current notifications
-                                if ((response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(GOOGLEPLUS_ACTIVITY, GOOGLEPLUS_BASE_URL, sid, access_token)))) != null) {
-                                    // check for a newer post, if it's the user's own, then set CLEARED=0
-                                    try {
-                                        JSONObject item = new JSONObject(response);
-
-                                        if (item.has(Sobject)) {
-                                            JSONObject object = item.getJSONObject(Sobject);
-
-                                            if (object.has(Sreplies)) {
-                                                int commentCount = 0;
-                                                JSONObject replies = object.getJSONObject(Sreplies);
-
-                                                if (replies.has(StotalItems)) {
-                                                    commentCount = replies.getInt(StotalItems);
-                                                }
-                                            }
-                                        }
-                                    } catch (JSONException e) {
-                                        Log.e(mTag, service + ":" + e.toString());
-                                    }
-                                }
-
-                                currentNotifications.moveToNext();
-                            }
-                        }
-
-                        currentNotifications.close();
-                    }
-
-                    // get new feed
-                    if ((response = SonetHttpClient.httpResponse(httpClient, new HttpGet(String.format(GOOGLEPLUS_ACTIVITIES, GOOGLEPLUS_BASE_URL, "me", "public", status_count, access_token)))) != null) {
-                        JSONObject r = new JSONObject(response);
-
-                        if (r.has(Sitems)) {
-                            statusesArray = r.getJSONArray(Sitems);
-                            removeOldStatuses(widget, Long.toString(account));
-
-                            for (int i1 = 0, i2 = statusesArray.length(); i1 < i2; i1++) {
-                                statusObj = statusesArray.getJSONObject(i1);
-
-                                if (statusObj.has(Sactor) && statusObj.has(Sobject)) {
-                                    friendObj = statusObj.getJSONObject(Sactor);
-                                    JSONObject object = statusObj.getJSONObject(Sobject);
-
-                                    if (statusObj.has(Sid) && friendObj.has(Sid) && friendObj.has(SdisplayName) && statusObj.has(Spublished) && object.has(Sreplies) && object.has(SoriginalContent)) {
-                                        sid = statusObj.getString(Sid);
-                                        esid = friendObj.getString(Sid);
-                                        friend = friendObj.getString(SdisplayName);
-                                        String originalContent = object.getString(SoriginalContent);
-
-                                        if ((originalContent == null) || (originalContent.length() == 0)) {
-                                            originalContent = object.getString(Scontent);
-                                        }
-
-                                        String photo = null;
-
-                                        if (display_profile && friendObj.has(Simage)) {
-                                            JSONObject image = friendObj.getJSONObject(Simage);
-                                            if (image.has(Surl))
-                                                photo = image.getString(Surl);
-                                        }
-
-                                        long date = parseDate(statusObj.getString(Spublished), GOOGLEPLUS_DATE_FORMAT);
-                                        int commentCount = 0;
-                                        JSONObject replies = object.getJSONObject(Sreplies);
-                                        String notification = null;
-
-                                        if (replies.has(StotalItems)) {
-                                            commentCount = replies.getInt(StotalItems);
-                                        }
-
-                                        if ((notifications != 0) && (notification != null)) {
-                                            // new notification
-                                            addNotification(sid, esid, friend, originalContent, date, account, notification);
-                                            notificationMessage = updateNotificationMessage(notificationMessage, notification);
-                                        }
-
-                                        if (i1 < status_count) {
-                                            addStatusItem(date,
-                                                    friend,
-                                                    photo,
-                                                    String.format(getString(R.string.messageWithCommentCount), originalContent, commentCount),
-                                                    service,
-                                                    time24hr,
-                                                    appWidgetId,
-                                                    account,
-                                                    sid,
-                                                    esid,
-                                                    links,
-                                                    httpClient);
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    if (!TextUtils.isEmpty(access_token)) {
+                        return SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(GOOGLEPLUS_ACTIVITIES, GOOGLEPLUS_BASE_URL, "me", "public", status_count, access_token)));
                     }
                 }
             }
         } catch (UnsupportedEncodingException e) {
-            Log.e(mTag, e.toString());
+            if (BuildConfig.DEBUG) Log.d(mTag, "error setting entity", e);
         } catch (JSONException e) {
-            Log.e(mTag, e.toString());
+            if (BuildConfig.DEBUG) Log.d(mTag, "error parsing response", e);
         }
 
-        return notificationMessage;
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public JSONArray parseFeed(@NonNull String response) throws JSONException {
+        JSONObject r = new JSONObject(response);
+
+        if (r.has(Sitems)) {
+            return r.getJSONArray(Sitems);
+        }
+
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, int service, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+
+        if (item.has(Sactor) && item.has(Sobject)) {
+            JSONObject friendObj = item.getJSONObject(Sactor);
+            JSONObject object = item.getJSONObject(Sobject);
+
+            if (item.has(Sid) && friendObj.has(Sid) && friendObj.has(SdisplayName) && item.has(Spublished) && object.has(Sreplies) && object.has(SoriginalContent)) {
+                String sid = item.getString(Sid);
+                String esid = friendObj.getString(Sid);
+                String friend = friendObj.getString(SdisplayName);
+                String originalContent = object.getString(SoriginalContent);
+
+                if ((originalContent == null) || (originalContent.length() == 0)) {
+                    originalContent = object.getString(Scontent);
+                }
+
+                String photo = null;
+
+                if (display_profile && friendObj.has(Simage)) {
+                    JSONObject image = friendObj.getJSONObject(Simage);
+                    if (image.has(Surl))
+                        photo = image.getString(Surl);
+                }
+
+                long date = parseDate(item.getString(Spublished), GOOGLEPLUS_DATE_FORMAT);
+                int commentCount = 0;
+                JSONObject replies = object.getJSONObject(Sreplies);
+//                String notification = null;
+
+                if (replies.has(StotalItems)) {
+                    commentCount = replies.getInt(StotalItems);
+                }
+
+//                if (doNotify && notification != null) {
+//                    // new notification
+//                    addNotification(sid, esid, friend, originalContent, date, account, notification);
+//                    updateNotificationMessage(notificationMessage, notification);
+//                }
+
+                addStatusItem(date,
+                        friend,
+                        photo,
+                        String.format(getString(R.string.messageWithCommentCount), originalContent, commentCount),
+                        service,
+                        time24hr,
+                        appWidgetId,
+                        account,
+                        sid,
+                        esid,
+                        new ArrayList<String[]>(),
+                        httpClient);
+            }
+        }
+    }
+
+    @Nullable
+    @Override
+    public void getNotificationMessage(long account, String[] notificationMessage) {
+        // NO-OP
     }
 
     @Override
-    public String getNotifications(long account) {
+    public void getNotifications(long account, String[] notificationMessage) {
         Cursor currentNotifications = getContentResolver().query(Sonet.Notifications.getContentUri(mContext), new String[]{Sonet.Notifications._ID, Sonet.Notifications.SID, Sonet.Notifications.UPDATED, Sonet.Notifications.CLEARED, Sonet.Notifications.ESID}, Sonet.Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
 
         if (currentNotifications.moveToFirst()) {
@@ -322,8 +327,6 @@ public class GooglePlusClient extends SocialClient {
                 if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
             }
         }
-
-        return null;
     }
 
     @Override

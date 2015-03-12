@@ -12,7 +12,6 @@ import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
-import com.piusvelte.sonet.SonetOAuth;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -29,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 
 import static com.piusvelte.sonet.Sonet.Screated_at;
@@ -95,60 +95,50 @@ public class TwitterClient extends SocialClient {
         // NO-OP
     }
 
+    @Nullable
     @Override
-    public String getFeed(int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
-        String response;
-        JSONArray statusesArray;
-        ArrayList<String[]> links = new ArrayList<>();
-        JSONObject statusObj;
-        JSONObject friendObj;
-        SonetOAuth sonetOAuth = getOAuth();
-
-        // parse the response
-        if ((response = SonetHttpClient.httpResponse(httpClient, sonetOAuth.getSignedRequest(new HttpGet(String.format(getFeedUrl(), getBaseUrl(), status_count))))) != null) {
-            // if not a full_refresh, only update the status_bg and icons
-            try {
-                statusesArray = new JSONArray(response);
-                // if there are updates, clear the cache
-                int e2 = statusesArray.length();
-
-                if (e2 > 0) {
-                    removeOldStatuses(widget, Long.toString(account));
-
-                    for (int e = 0; (e < e2) && (e < status_count); e++) {
-                        links.clear();
-                        statusObj = statusesArray.getJSONObject(e);
-                        friendObj = statusObj.getJSONObject(Suser);
-                        addStatusItem(parseDate(statusObj.getString(Screated_at), TWITTER_DATE_FORMAT),
-                                friendObj.getString(Sname),
-                                display_profile ? friendObj.getString(Sprofile_image_url) : null,
-                                statusObj.getString(Stext),
-                                service,
-                                time24hr,
-                                appWidgetId,
-                                account,
-                                statusObj.getString(Sid),
-                                friendObj.getString(Sid),
-                                links,
-                                httpClient);
-                    }
-                }
-            } catch (JSONException e) {
-                if (BuildConfig.DEBUG) Log.e(mTag, "error parsing response", e);
-            }
-        }
-
-        // notifications
-        if (notifications != 0) {
-            return getNotifications(account);
-        }
-
+    public Set<String> getNotificationStatusIds(long account, String[] notificationMessage) {
         return null;
     }
 
+    @Nullable
     @Override
-    public String getNotifications(long account) {
-        String notificationMessage = null;
+    public String getFeedResponse(int status_count) {
+        return SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(getFeedUrl(), getBaseUrl(), status_count))));
+    }
+
+    @Nullable
+    @Override
+    public JSONArray parseFeed(@NonNull String response) throws JSONException {
+        return new JSONArray(response);
+    }
+
+    @Nullable
+    @Override
+    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, int service, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+        JSONObject user = item.getJSONObject(Suser);
+
+        addStatusItem(parseDate(item.getString(Screated_at), TWITTER_DATE_FORMAT),
+                user.getString(Sname),
+                display_profile ? user.getString(Sprofile_image_url) : null,
+                item.getString(Stext),
+                service,
+                time24hr,
+                appWidgetId,
+                account,
+                item.getString(Sid),
+                user.getString(Sid),
+                httpClient);
+    }
+
+    @Nullable
+    @Override
+    public void getNotificationMessage(long account, String[] notificationMessage) {
+        getNotifications(account, notificationMessage);
+    }
+
+    @Override
+    public void getNotifications(long account, String[] notificationMessage) {
         ArrayList<String> notificationSids = new ArrayList<>();
         String sid;
         String friend;
@@ -191,15 +181,13 @@ public class TwitterClient extends SocialClient {
                     if (!friendObj.getString(Sid).equals(mAccountEsid) && !notificationSids.contains(statusObj.getString(Sid))) {
                         friend = friendObj.getString(Sname);
                         addNotification(statusObj.getString(Sid), friendObj.getString(Sid), friend, statusObj.getString(Stext), parseDate(statusObj.getString(Screated_at), TWITTER_DATE_FORMAT), account, friend + " mentioned you on Twitter");
-                        notificationMessage = updateNotificationMessage(notificationMessage, friend + " mentioned you on Twitter");
+                        updateNotificationMessage(notificationMessage, friend + " mentioned you on Twitter");
                     }
                 }
             } catch (JSONException e) {
                 if (BuildConfig.DEBUG) Log.e(mTag, "error parsing response", e);
             }
         }
-
-        return notificationMessage;
     }
 
     private int getNext140CharactersIndex(@NonNull String message, int startIndex) {

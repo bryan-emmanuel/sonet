@@ -183,7 +183,7 @@ public class SonetNotifications extends ListActivity {
                                         .setAccount(accountEsid)
                                         .build();
 
-                                socialClient.getNotifications(accountId);
+                                socialClient.getNotifications(accountId, new String[1]);
 
                                 // remove old notifications
                                 getContentResolver().delete(Notifications.getContentUri(SonetNotifications.this), Notifications.CLEARED + "=1 and " + Notifications.ACCOUNT + "=? and " + Notifications.CREATED + "<?", new String[]{Long.toString(accountId), Long.toString(System.currentTimeMillis() - 86400000)});
