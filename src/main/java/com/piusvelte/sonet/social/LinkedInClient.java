@@ -80,8 +80,8 @@ public class LinkedInClient extends SocialClient {
     private static final String IS_LIKED = "isLiked";
     private static final String IS_COMMENTABLE = "isCommentable";
 
-    public LinkedInClient(Context context, String token, String secret, String accountEsid) {
-        super(context, token, secret, accountEsid);
+    public LinkedInClient(Context context, String token, String secret, String accountEsid, int network) {
+        super(context, token, secret, accountEsid, network);
     }
 
     private static final <T extends HttpUriRequest> T addHeaders(@NonNull T httpUriRequest) {
@@ -163,7 +163,7 @@ public class LinkedInClient extends SocialClient {
 
     @Nullable
     @Override
-    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, int service, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
         String updateType = item.getString(SupdateType);
         JSONObject updateContent = item.getJSONObject(SupdateContent);
         String update = Sonet.LinkedIn_UpdateTypes.getMessage(updateType);
@@ -306,7 +306,6 @@ public class LinkedInClient extends SocialClient {
                     friend,
                     display_profile && friendObj.has(SpictureUrl) ? friendObj.getString(SpictureUrl) : null,
                     (item.has(SisCommentable) && item.getBoolean(SisCommentable) ? String.format(getString(R.string.messageWithCommentCount), update, commentCount) : update),
-                    service,
                     time24hr,
                     appWidgetId,
                     account,

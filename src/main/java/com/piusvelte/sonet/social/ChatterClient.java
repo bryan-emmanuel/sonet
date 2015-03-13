@@ -57,8 +57,8 @@ public class ChatterClient extends SocialClient {
     private String mChatterInstance = null;
     private String mChatterToken = null;
 
-    public ChatterClient(Context context, String token, String secret, String accountEsid) {
-        super(context, token, secret, accountEsid);
+    public ChatterClient(Context context, String token, String secret, String accountEsid, int network) {
+        super(context, token, secret, accountEsid, network);
     }
 
     private boolean hasChatterInstance() {
@@ -113,7 +113,7 @@ public class ChatterClient extends SocialClient {
 
     @Nullable
     @Override
-    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, int service, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
         ArrayList<String[]> links = new ArrayList<>();
         JSONObject friendObj = item.getJSONObject(Suser);
         JSONObject photo = friendObj.getJSONObject(Sphoto);
@@ -124,7 +124,6 @@ public class ChatterClient extends SocialClient {
                 friendObj.getString(Sname),
                 display_profile ? photo.getString(SsmallPhotoUrl) + "?oauth_token=" + mChatterToken : null,
                 String.format(getString(R.string.messageWithCommentCount), item.getJSONObject(Sbody).getString(Stext), comments.getInt(Stotal)),
-                service,
                 time24hr,
                 appWidgetId,
                 account,

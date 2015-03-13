@@ -59,8 +59,8 @@ import static com.piusvelte.sonet.Sonet.Svenue;
  */
 public class FoursquareClient extends SocialClient {
 
-    public FoursquareClient(Context context, String token, String secret, String accountEsid) {
-        super(context, token, secret, accountEsid);
+    public FoursquareClient(Context context, String token, String secret, String accountEsid, int network) {
+        super(context, token, secret, accountEsid, network);
     }
 
     @Nullable
@@ -130,7 +130,7 @@ public class FoursquareClient extends SocialClient {
 
     @Nullable
     @Override
-    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, int service, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
         JSONObject friendObj = item.getJSONObject(Suser);
         String shout = "";
 
@@ -194,17 +194,16 @@ public class FoursquareClient extends SocialClient {
             updateNotificationMessage(notificationMessage, notification);
         }
 
-            addStatusItem(date,
-                    friend,
-                    display_profile ? friendObj.getString(Sphoto) : null,
-                    String.format(getString(R.string.messageWithCommentCount), shout, commentCount),
-                    service,
-                    time24hr,
-                    appWidgetId,
-                    account,
-                    sid,
-                    esid,
-                    httpClient);
+        addStatusItem(date,
+                friend,
+                display_profile ? friendObj.getString(Sphoto) : null,
+                String.format(getString(R.string.messageWithCommentCount), shout, commentCount),
+                time24hr,
+                appWidgetId,
+                account,
+                sid,
+                esid,
+                httpClient);
     }
 
     @Nullable

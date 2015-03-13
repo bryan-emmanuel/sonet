@@ -643,6 +643,7 @@ public class SonetService extends Service {
                     while (!accounts.isAfterLast()) {
                         HttpClient httpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
                         long account = accounts.getLong(0);
+                        @SocialClient.Network
                         int service = accounts.getInt(3);
                         // get the settings form time24hr and bg_color
                         boolean time24hr = false;
@@ -712,7 +713,7 @@ public class SonetService extends Service {
                                     .setCredentials(token, secret)
                                     .build();
 
-                            String notificationMessage = socialClient.getFeed(appWidgetId, widget, account, service, status_count, time24hr, display_profile, notifications, httpClient);
+                            String notificationMessage = socialClient.getFeed(appWidgetId, widget, account, status_count, time24hr, display_profile, notifications, httpClient);
 
                             if (TextUtils.isEmpty(mNotify)) {
                                 mNotify = notificationMessage;

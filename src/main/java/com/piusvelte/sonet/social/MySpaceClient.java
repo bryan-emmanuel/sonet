@@ -56,8 +56,8 @@ import static com.piusvelte.sonet.Sonet.SuserId;
  */
 public class MySpaceClient extends SocialClient {
 
-    public MySpaceClient(Context context, String token, String secret, String accountEsid) {
-        super(context, token, secret, accountEsid);
+    public MySpaceClient(Context context, String token, String secret, String accountEsid, int network) {
+        super(context, token, secret, accountEsid, network);
     }
 
     @Nullable
@@ -126,7 +126,7 @@ public class MySpaceClient extends SocialClient {
 
     @Nullable
     @Override
-    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, int service, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
         JSONObject friendObj = item.getJSONObject(Sauthor);
         long date = parseDate(item.getString(SmoodStatusLastUpdated), MYSPACE_DATE_FORMAT);
         String esid = item.getString(SuserId);
@@ -180,7 +180,6 @@ public class MySpaceClient extends SocialClient {
                 friend,
                 display_profile ? friendObj.getString(SthumbnailUrl) : null,
                 String.format(getString(R.string.messageWithCommentCount), statusValue, commentCount),
-                service,
                 time24hr,
                 appWidgetId,
                 account,

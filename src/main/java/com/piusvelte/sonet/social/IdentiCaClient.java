@@ -15,8 +15,8 @@ import static com.piusvelte.sonet.Sonet.IDENTICA_RETWEET;
  */
 public class IdentiCaClient extends TwitterClient {
 
-    public IdentiCaClient(Context context, String token, String secret, String accountEsid) {
-        super(context, token, secret, accountEsid);
+    public IdentiCaClient(Context context, String token, String secret, String accountEsid, int network) {
+        super(context, token, secret, accountEsid, network);
     }
 
     String getBaseUrl() {

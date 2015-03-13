@@ -55,8 +55,8 @@ import static com.piusvelte.sonet.Sonet.Surl;
  */
 public class GooglePlusClient extends SocialClient {
 
-    public GooglePlusClient(Context context, String token, String secret, String accountEsid) {
-        super(context, token, secret, accountEsid);
+    public GooglePlusClient(Context context, String token, String secret, String accountEsid, int network) {
+        super(context, token, secret, accountEsid, network);
     }
 
     @Nullable
@@ -161,7 +161,7 @@ public class GooglePlusClient extends SocialClient {
 
     @Nullable
     @Override
-    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, int service, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
 
         if (item.has(Sactor) && item.has(Sobject)) {
             JSONObject friendObj = item.getJSONObject(Sactor);
@@ -204,7 +204,6 @@ public class GooglePlusClient extends SocialClient {
                         friend,
                         photo,
                         String.format(getString(R.string.messageWithCommentCount), originalContent, commentCount),
-                        service,
                         time24hr,
                         appWidgetId,
                         account,

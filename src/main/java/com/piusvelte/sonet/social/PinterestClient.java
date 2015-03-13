@@ -39,8 +39,8 @@ import static com.piusvelte.sonet.Sonet.Susername;
  */
 public class PinterestClient extends SocialClient {
 
-    public PinterestClient(Context context, String token, String secret, String accountEsid) {
-        super(context, token, secret, accountEsid);
+    public PinterestClient(Context context, String token, String secret, String accountEsid, int network) {
+        super(context, token, secret, accountEsid, network);
     }
 
     @Override
@@ -77,7 +77,7 @@ public class PinterestClient extends SocialClient {
 
     @Nullable
     @Override
-    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, int service, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
         ArrayList<String[]> links = new ArrayList<>();
         JSONObject friendObj = item.getJSONObject(Suser);
         long date = parseDate(item.getString(Screated_at), PINTEREST_DATE_FORMAT);
@@ -105,7 +105,6 @@ public class PinterestClient extends SocialClient {
                 friendObj.getString(Susername),
                 display_profile ? friendObj.getString(Simage_url) : null,
                 String.format(getString(R.string.messageWithCommentCount), item.getString(Sdescription), commentCount),
-                service,
                 time24hr,
                 appWidgetId,
                 account,

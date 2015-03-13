@@ -59,15 +59,65 @@ abstract public class SocialClient {
     String mToken;
     String mSecret;
     String mAccountEsid;
+    int mNetwork;
     SonetOAuth mOAuth;
 
     private SimpleDateFormat mSimpleDateFormat = null;
 
-    public SocialClient(Context context, String token, String secret, String accountEsid) {
+    public SocialClient(Context context, String token, String secret, String accountEsid, int network) {
         mContext = context;
         mToken = token;
         mSecret = secret;
         mAccountEsid = accountEsid;
+        mNetwork = network;
+    }
+
+    public enum Network {
+        Twitter, Facebook, MySpace, Foursquare, LinkedIn, Sms, Rss, IdentiCa, GooglePlus, Pinterest, Chatter;
+
+        public static Network get(int network) {
+            return Network.values()[network];
+        }
+
+        public SocialClient getClient(Context context, String token, String secret, String accountEntityId) {
+            switch (this) {
+                case Twitter:
+                    return new TwitterClient(context, token, secret, accountEntityId, this.ordinal());
+
+                case Facebook:
+                    return new FacebookClient(context, token, secret, accountEntityId, this.ordinal());
+
+                case MySpace:
+                    return new MySpaceClient(context, token, secret, accountEntityId, this.ordinal());
+
+                case Foursquare:
+                    return new FoursquareClient(context, token, secret, accountEntityId, this.ordinal());
+
+                case LinkedIn:
+                    return new LinkedInClient(context, token, secret, accountEntityId, this.ordinal());
+
+                case Sms:
+                    throw new IllegalArgumentException("SMS is not a SocialClient");
+
+                case Rss:
+                    return new RssClient(context, token, secret, accountEntityId, this.ordinal());
+
+                case IdentiCa:
+                    return new IdentiCaClient(context, token, secret, accountEntityId, this.ordinal());
+
+                case GooglePlus:
+                    return new GooglePlusClient(context, token, secret, accountEntityId, this.ordinal());
+
+                case Pinterest:
+                    return new PinterestClient(context, token, secret, accountEntityId, this.ordinal());
+
+                case Chatter:
+                    return new ChatterClient(context, token, secret, accountEntityId, this.ordinal());
+
+                default:
+                    throw new IllegalArgumentException("Unsupported network: " + this);
+            }
+        }
     }
 
     public static class Builder {
@@ -99,44 +149,11 @@ abstract public class SocialClient {
         }
 
         public SocialClient build() {
-            switch (mNetwork) {
-                case Sonet.TWITTER:
-                    return new TwitterClient(mContext, mToken, mSecret, mAccountEsid);
-
-                case Sonet.FACEBOOK:
-                    return new FacebookClient(mContext, mToken, mSecret, mAccountEsid);
-
-                case Sonet.MYSPACE:
-                    return new MySpaceClient(mContext, mToken, mSecret, mAccountEsid);
-
-                case Sonet.FOURSQUARE:
-                    return new FoursquareClient(mContext, mToken, mSecret, mAccountEsid);
-
-                case Sonet.LINKEDIN:
-                    return new LinkedInClient(mContext, mToken, mSecret, mAccountEsid);
-
-                case Sonet.RSS:
-                    return new RssClient(mContext, mToken, mSecret, mAccountEsid);
-
-                case Sonet.IDENTICA:
-                    return new IdentiCaClient(mContext, mToken, mSecret, mAccountEsid);
-
-                case Sonet.GOOGLEPLUS:
-                    return new GooglePlusClient(mContext, mToken, mSecret, mAccountEsid);
-
-                case Sonet.PINTEREST:
-                    return new PinterestClient(mContext, mToken, mSecret, mAccountEsid);
-
-                case Sonet.CHATTER:
-                    return new ChatterClient(mContext, mToken, mSecret, mAccountEsid);
-
-                default:
-                    throw new IllegalArgumentException("Unsupported network: " + mNetwork);
-            }
+            return Network.get(mNetwork).getClient(mContext, mToken, mSecret, mAccountEsid);
         }
     }
 
-    public String getFeed(int appWidgetId, String widget, long account, int service, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
+    public String getFeed(int appWidgetId, String widget, long account, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
         String[] notificationMessage = new String[1];
         Set<String> notificationSids = null;
         boolean doNotify = notifications != 0;
@@ -164,7 +181,7 @@ abstract public class SocialClient {
                             JSONObject item = feedItems.getJSONObject(itemIdx);
 
                             if (item != null) {
-                                addFeedItem(item, display_profile, service, time24hr, appWidgetId, account, httpClient, notificationSids, notificationMessage, doNotify);
+                                addFeedItem(item, display_profile, time24hr, appWidgetId, account, httpClient, notificationSids, notificationMessage, doNotify);
                             }
                         }
                     } else if (this instanceof MySpaceClient) {
@@ -173,7 +190,6 @@ abstract public class SocialClient {
                                 getString(R.string.myspace_permissions_title),
                                 null,
                                 getString(R.string.myspace_permissions_message),
-                                service,
                                 time24hr,
                                 appWidgetId,
                                 account,
@@ -194,7 +210,6 @@ abstract public class SocialClient {
                     getString(R.string.myspace_permissions_title),
                     null,
                     getString(R.string.myspace_permissions_message),
-                    service,
                     time24hr,
                     appWidgetId,
                     account,
@@ -222,7 +237,7 @@ abstract public class SocialClient {
     abstract public JSONArray parseFeed(@NonNull String response) throws JSONException;
 
     @Nullable
-    abstract public void addFeedItem(@NonNull JSONObject item, boolean display_profile, int service, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException;
+    abstract public void addFeedItem(@NonNull JSONObject item, boolean display_profile, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException;
 
     @Nullable
     abstract public void getNotificationMessage(long account, String[] notificationMessage);
@@ -348,11 +363,11 @@ abstract public class SocialClient {
         matcher.appendReplacement(stringBuffer, "(" + Slink + ": " + Uri.parse(link).getHost() + ")");
     }
 
-    void addStatusItem(long created, String friend, String url, String message, int service, boolean time24hr, int appWidgetId, long accountId, String sid, String esid, HttpClient httpClient) {
-        addStatusItem(created, friend, url, message, service, time24hr, appWidgetId, accountId, sid, esid, new ArrayList<String[]>(), httpClient);
+    void addStatusItem(long created, String friend, String url, String message, boolean time24hr, int appWidgetId, long accountId, String sid, String esid, HttpClient httpClient) {
+        addStatusItem(created, friend, url, message, time24hr, appWidgetId, accountId, sid, esid, new ArrayList<String[]>(), httpClient);
     }
 
-    void addStatusItem(long created, String friend, String url, String message, int service, boolean time24hr, int appWidgetId, long accountId, String sid, String esid, ArrayList<String[]> links, HttpClient httpClient) {
+    void addStatusItem(long created, String friend, String url, String message, boolean time24hr, int appWidgetId, long accountId, String sid, String esid, ArrayList<String[]> links, HttpClient httpClient) {
         long id;
         byte[] profile = null;
 
@@ -419,7 +434,7 @@ abstract public class SocialClient {
         values.put(Sonet.Statuses.CREATED, created);
         values.put(Sonet.Statuses.ENTITY, id);
         values.put(Sonet.Statuses.MESSAGE, message);
-        values.put(Sonet.Statuses.SERVICE, service);
+        values.put(Sonet.Statuses.SERVICE, mNetwork);
         values.put(Sonet.Statuses.CREATEDTEXT, Sonet.getCreatedText(created, time24hr));
         values.put(Sonet.Statuses.WIDGET, appWidgetId);
         values.put(Sonet.Statuses.ACCOUNT, accountId);

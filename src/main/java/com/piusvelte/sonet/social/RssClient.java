@@ -43,8 +43,8 @@ import static com.piusvelte.sonet.Sonet.Surl;
  */
 public class RssClient extends SocialClient {
 
-    public RssClient(Context context, String token, String secret, String accountEsid) {
-        super(context, token, secret, accountEsid);
+    public RssClient(Context context, String token, String secret, String accountEsid, int network) {
+        super(context, token, secret, accountEsid, network);
     }
 
     @Nullable
@@ -168,8 +168,8 @@ public class RssClient extends SocialClient {
 
     @Nullable
     @Override
-    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, int service, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
-        addStatusItem(item.getLong(Spubdate), item.getString(Stitle), display_profile ? item.getString(Simage) : null, item.getString(Sdescription), service, time24hr, appWidgetId, account, null, item.getString(Slink), new ArrayList<String[]>(), httpClient);
+    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+        addStatusItem(item.getLong(Spubdate), item.getString(Stitle), display_profile ? item.getString(Simage) : null, item.getString(Sdescription), time24hr, appWidgetId, account, null, item.getString(Slink), new ArrayList<String[]>(), httpClient);
     }
 
     @Nullable

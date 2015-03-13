@@ -58,8 +58,8 @@ import static com.piusvelte.sonet.Sonet.TWITTER_USER;
  */
 public class TwitterClient extends SocialClient {
 
-    public TwitterClient(Context context, String token, String secret, String accountEsid) {
-        super(context, token, secret, accountEsid);
+    public TwitterClient(Context context, String token, String secret, String accountEsid, int network) {
+        super(context, token, secret, accountEsid, network);
     }
 
     String getBaseUrl() {
@@ -115,14 +115,13 @@ public class TwitterClient extends SocialClient {
 
     @Nullable
     @Override
-    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, int service, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
         JSONObject user = item.getJSONObject(Suser);
 
         addStatusItem(parseDate(item.getString(Screated_at), TWITTER_DATE_FORMAT),
                 user.getString(Sname),
                 display_profile ? user.getString(Sprofile_image_url) : null,
                 item.getString(Stext),
-                service,
                 time24hr,
                 appWidgetId,
                 account,
