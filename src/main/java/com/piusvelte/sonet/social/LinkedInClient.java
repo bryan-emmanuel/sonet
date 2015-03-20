@@ -3,6 +3,7 @@ package com.piusvelte.sonet.social;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -44,6 +45,7 @@ import static com.piusvelte.sonet.Sonet.LINKEDIN_POST_BODY;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATE;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATES;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATE_COMMENTS;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_ME;
 import static com.piusvelte.sonet.Sonet.S_total;
 import static com.piusvelte.sonet.Sonet.Sbody;
 import static com.piusvelte.sonet.Sonet.Scomment;
@@ -70,6 +72,7 @@ import static com.piusvelte.sonet.Sonet.SupdateContent;
 import static com.piusvelte.sonet.Sonet.SupdateKey;
 import static com.piusvelte.sonet.Sonet.SupdateType;
 import static com.piusvelte.sonet.Sonet.Svalues;
+import static oauth.signpost.OAuth.OAUTH_VERIFIER;
 
 /**
  * Created by bemmanuel on 2/15/15.
@@ -82,6 +85,72 @@ public class LinkedInClient extends SocialClient {
 
     public LinkedInClient(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
+    }
+
+    @Nullable
+    @Override
+    public Uri getCallback() {
+        return Uri.parse("sonet://linkedin");
+    }
+
+    @Override
+    String getRequestUrl() {
+        return Sonet.LINKEDIN_URL_REQUEST;
+    }
+
+    @Override
+    String getAccessUrl() {
+        return Sonet.LINKEDIN_URL_ACCESS;
+    }
+
+    @Override
+    String getAuthorizeUrl() {
+        return Sonet.LINKEDIN_URL_AUTHORIZE;
+    }
+
+    @Override
+    public String getCallbackUrl() {
+        return getCallback().toString();
+    }
+
+    @Override
+    boolean isOAuth10a() {
+        return true;
+    }
+
+    @Override
+    public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
+        Uri uri = Uri.parse(authenticatedUrl);
+        String verifier = uri.getQueryParameter(OAUTH_VERIFIER);
+
+        if (!TextUtils.isEmpty(verifier) && sonetOAuth.retrieveAccessToken(verifier)) {
+            HttpGet request = addHeaders(new HttpGet(String.format(LINKEDIN_URL_ME, LINKEDIN_BASE_URL)));
+
+            String httpResponse = SonetHttpClient.httpResponse(mContext, sonetOAuth.getSignedRequest(request));
+
+            if (!TextUtils.isEmpty(httpResponse)) {
+                try {
+                    JSONObject jobj = new JSONObject(httpResponse);
+
+                    if (jobj.has("firstName") && jobj.has(Sid)) {
+                        MemberAuthentication memberAuthentication = new MemberAuthentication();
+                        memberAuthentication.username = jobj.getString("firstName") + " " + jobj.getString("lastName");
+                        memberAuthentication.token = sonetOAuth.getToken();
+                        memberAuthentication.secret = sonetOAuth.getTokenSecret();
+                        memberAuthentication.expiry = 0;
+                        memberAuthentication.network = mNetwork;
+                        memberAuthentication.id = jobj.getString(Sid);
+                        return memberAuthentication;
+                    }
+                } catch (JSONException e) {
+                    if (BuildConfig.DEBUG) {
+                        Log.d(mTag, "error parsing me response: " + httpResponse, e);
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     private static final <T extends HttpUriRequest> T addHeaders(@NonNull T httpUriRequest) {

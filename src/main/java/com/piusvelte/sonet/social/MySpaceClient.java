@@ -3,6 +3,7 @@ package com.piusvelte.sonet.social;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -13,6 +14,7 @@ import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
+import com.piusvelte.sonet.SonetOAuth;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -35,6 +37,7 @@ import static com.piusvelte.sonet.Sonet.MYSPACE_DATE_FORMAT;
 import static com.piusvelte.sonet.Sonet.MYSPACE_HISTORY;
 import static com.piusvelte.sonet.Sonet.MYSPACE_STATUSMOODCOMMENTS_BODY;
 import static com.piusvelte.sonet.Sonet.MYSPACE_STATUSMOOD_BODY;
+import static com.piusvelte.sonet.Sonet.MYSPACE_URL_ME;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOOD;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOODCOMMENTS;
 import static com.piusvelte.sonet.Sonet.Sauthor;
@@ -50,6 +53,7 @@ import static com.piusvelte.sonet.Sonet.Sstatus;
 import static com.piusvelte.sonet.Sonet.SstatusId;
 import static com.piusvelte.sonet.Sonet.SthumbnailUrl;
 import static com.piusvelte.sonet.Sonet.SuserId;
+import static oauth.signpost.OAuth.OAUTH_VERIFIER;
 
 /**
  * Created by bemmanuel on 2/15/15.
@@ -58,6 +62,73 @@ public class MySpaceClient extends SocialClient {
 
     public MySpaceClient(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
+    }
+
+    @Nullable
+    @Override
+    public Uri getCallback() {
+        return Uri.parse("sonet://myspace");
+    }
+
+    @Override
+    String getRequestUrl() {
+        return Sonet.MYSPACE_URL_REQUEST;
+    }
+
+    @Override
+    String getAccessUrl() {
+        return Sonet.MYSPACE_URL_ACCESS;
+    }
+
+    @Override
+    String getAuthorizeUrl() {
+        return Sonet.MYSPACE_URL_AUTHORIZE;
+    }
+
+    @Override
+    public String getCallbackUrl() {
+        return getCallback().toString();
+    }
+
+    @Override
+    boolean isOAuth10a() {
+        return true;
+    }
+
+    @Override
+    public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
+        Uri uri = Uri.parse(authenticatedUrl);
+        String verifier = uri.getQueryParameter(OAUTH_VERIFIER);
+
+        if (!TextUtils.isEmpty(verifier)) {
+            if (sonetOAuth.retrieveAccessToken(verifier)) {
+                String httpResponse = SonetHttpClient.httpResponse(mContext, sonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_URL_ME, MYSPACE_BASE_URL))));
+
+                if (!TextUtils.isEmpty(httpResponse)) {
+                    try {
+                        JSONObject jobj = new JSONObject(httpResponse);
+                        JSONObject person = jobj.getJSONObject("person");
+
+                        if (person.has(SdisplayName) && person.has(Sid)) {
+                            MemberAuthentication memberAuthentication = new MemberAuthentication();
+                            memberAuthentication.username = person.getString(SdisplayName);
+                            memberAuthentication.token = sonetOAuth.getToken();
+                            memberAuthentication.secret = sonetOAuth.getTokenSecret();
+                            memberAuthentication.expiry = 0;
+                            memberAuthentication.network = mNetwork;
+                            memberAuthentication.id = person.getString(Sid);
+                            return memberAuthentication;
+                        }
+                    } catch (JSONException e) {
+                        if (BuildConfig.DEBUG) {
+                            Log.d(mTag, "error parsing me response: " + httpResponse, e);
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     @Nullable

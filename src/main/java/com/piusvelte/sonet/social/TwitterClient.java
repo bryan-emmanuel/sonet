@@ -2,6 +2,7 @@ package com.piusvelte.sonet.social;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -12,6 +13,7 @@ import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
+import com.piusvelte.sonet.SonetOAuth;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -43,6 +45,7 @@ import static com.piusvelte.sonet.Sonet.Sscreen_name;
 import static com.piusvelte.sonet.Sonet.Sstatus;
 import static com.piusvelte.sonet.Sonet.Stext;
 import static com.piusvelte.sonet.Sonet.Suser;
+import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.TWITTER_BASE_URL;
 import static com.piusvelte.sonet.Sonet.TWITTER_DATE_FORMAT;
 import static com.piusvelte.sonet.Sonet.TWITTER_MENTIONS;
@@ -50,8 +53,12 @@ import static com.piusvelte.sonet.Sonet.TWITTER_RETWEET;
 import static com.piusvelte.sonet.Sonet.TWITTER_SEARCH;
 import static com.piusvelte.sonet.Sonet.TWITTER_SINCE_ID;
 import static com.piusvelte.sonet.Sonet.TWITTER_UPDATE;
+import static com.piusvelte.sonet.Sonet.TWITTER_URL_ACCESS;
+import static com.piusvelte.sonet.Sonet.TWITTER_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.TWITTER_URL_FEED;
+import static com.piusvelte.sonet.Sonet.TWITTER_URL_REQUEST;
 import static com.piusvelte.sonet.Sonet.TWITTER_USER;
+import static oauth.signpost.OAuth.OAUTH_VERIFIER;
 
 /**
  * Created by bemmanuel on 2/15/15.
@@ -60,6 +67,65 @@ public class TwitterClient extends SocialClient {
 
     public TwitterClient(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
+    }
+
+    @Nullable
+    @Override
+    public Uri getCallback() {
+        return Uri.parse("sonet://twitter");
+    }
+
+    @Override
+    String getRequestUrl() {
+        return String.format(getRequestUrlFormat(), getBaseUrl());
+    }
+
+    @Override
+    String getAccessUrl() {
+        return String.format(getAccessUrlFormat(), getBaseUrl());
+    }
+
+    @Override
+    String getAuthorizeUrl() {
+        return String.format(getAuthorizeUrlFormat(), getBaseUrl());
+    }
+
+    @Override
+    public String getCallbackUrl() {
+        return getCallback().toString();
+    }
+
+    @Override
+    boolean isOAuth10a() {
+        return true;
+    }
+
+    @Override
+    public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
+        Uri uri = Uri.parse(authenticatedUrl);
+        String verifier = uri.getQueryParameter(OAUTH_VERIFIER);
+
+        if (!TextUtils.isEmpty(verifier) && sonetOAuth.retrieveAccessToken(verifier)) {
+            String httpResponse = SonetHttpClient.httpResponse(mContext, sonetOAuth.getSignedRequest(new HttpGet(getVerifyCredentialsUrl())));
+
+            if (!TextUtils.isEmpty(httpResponse)) {
+                try {
+                    JSONObject jobj = new JSONObject(httpResponse);
+                    MemberAuthentication memberAuthentication = new MemberAuthentication();
+                    memberAuthentication.username = jobj.getString(Sscreen_name);
+                    memberAuthentication.token = sonetOAuth.getToken();
+                    memberAuthentication.secret = sonetOAuth.getTokenSecret();
+                    memberAuthentication.expiry = 0;
+                    memberAuthentication.network = mNetwork;
+                    memberAuthentication.id = jobj.getString(Sid);
+                    return memberAuthentication;
+                } catch (JSONException e) {
+                    if (BuildConfig.DEBUG) Log.e(mTag, e.getMessage());
+                }
+            }
+        }
+
+        return null;
     }
 
     String getBaseUrl() {
@@ -88,6 +154,22 @@ public class TwitterClient extends SocialClient {
 
     String getRetweetUrl() {
         return TWITTER_RETWEET;
+    }
+
+    String getRequestUrlFormat() {
+        return TWITTER_URL_REQUEST;
+    }
+
+    String getAccessUrlFormat() {
+        return TWITTER_URL_ACCESS;
+    }
+
+    String getAuthorizeUrlFormat() {
+        return TWITTER_URL_AUTHORIZE;
+    }
+
+    String getVerifyCredentialsUrl() {
+        return String.format(Sonet.TWITTER_VERIFY_CREDENTIALS, getBaseUrl());
     }
 
     @Override

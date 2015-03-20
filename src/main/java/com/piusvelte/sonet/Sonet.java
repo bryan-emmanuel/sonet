@@ -48,7 +48,7 @@ public class Sonet {
 
 	protected static final String PRO = "pro";
 	public static final String Saccess_token = "access_token";
-	protected static final String Sexpires_in = "expires_in";
+	public static final String Sexpires_in = "expires_in";
 	public static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
 	protected static final String ACTION_PAGE_UP = "com.piusvelte.sonet.Sonet.PAGE_UP";
 	protected static final String ACTION_PAGE_DOWN = "com.piusvelte.sonet.Sonet.PAGE_DOWN";
@@ -65,9 +65,9 @@ public class Sonet {
 
 	public static final int TWITTER = 0;
 	public static final String TWITTER_BASE_URL = "https://api.twitter.com/";
-	protected static final String TWITTER_URL_REQUEST = "%soauth/request_token";
-	protected static final String TWITTER_URL_AUTHORIZE = "%soauth/authorize";
-	protected static final String TWITTER_URL_ACCESS = "%soauth/access_token";
+	public static final String TWITTER_URL_REQUEST = "%soauth/request_token";
+	public static final String TWITTER_URL_AUTHORIZE = "%soauth/authorize";
+	public static final String TWITTER_URL_ACCESS = "%soauth/access_token";
 	public static final String TWITTER_URL_FEED = "%s1.1/statuses/home_timeline.json?count=%s";
 	public static final String TWITTER_RETWEET = "%s1.1/statuses/retweets/%s.json";
 	public static final String TWITTER_USER = "%s1.1/users/show.json?user_id=%s";
@@ -77,12 +77,12 @@ public class Sonet {
 	public static final String TWITTER_DATE_FORMAT = "EEE MMM dd HH:mm:ss Z yyyy";
 	public static final String TWITTER_MENTIONS = "%s1.1/statuses/mentions_timeline.json%s";
 	public static final String TWITTER_SINCE_ID = "?since_id=%s";
-	protected static final String TWITTER_VERIFY_CREDENTIALS = "%s1.1/account/verify_credentials.json";
+	public static final String TWITTER_VERIFY_CREDENTIALS = "%s1.1/account/verify_credentials.json";
 
 	public static final int FACEBOOK = 1;
 	public static final String FACEBOOK_BASE_URL = "https://graph.facebook.com/";
-	protected static final String FACEBOOK_URL_AUTHORIZE = "%soauth/authorize?client_id=%s&scope=offline_access,read_stream,publish_stream,publish_checkins&type=user_agent&redirect_uri=%s&display=touch&sdk=android";
-	protected static final String FACEBOOK_URL_ME = "%sme?format=json&sdk=android&%s=%s";
+	public static final String FACEBOOK_URL_AUTHORIZE = "%soauth/authorize?client_id=%s&scope=offline_access,read_stream,publish_stream,publish_checkins&type=user_agent&redirect_uri=%s&display=touch&sdk=android";
+	public static final String FACEBOOK_URL_ME = "%sme?format=json&sdk=android&%s=%s";
 	public static final String FACEBOOK_HOME = "%sme/home?date_format=U&format=json&sdk=android&%s=%s&fields=actions,link,type,from,message,created_time,to,comments,story,source,picture";
 	public static final String FACEBOOK_POST = "%sme/feed?format=json&sdk=android&%s=%s";
 //	protected static final String FACEBOOK_CHECKIN = "%sme/checkins?format=json&sdk=android&%s=%s";
@@ -97,10 +97,10 @@ public class Sonet {
 
 	public static final int MYSPACE = 2;
 	public static final String MYSPACE_BASE_URL = "http://api.myspace.com/1.0/";
-	protected static final String MYSPACE_URL_REQUEST = "http://api.myspace.com/request_token";
-	protected static final String MYSPACE_URL_AUTHORIZE = "http://api.myspace.com/authorize";
-	protected static final String MYSPACE_URL_ACCESS = "http://api.myspace.com/access_token";
-	protected static final String MYSPACE_URL_ME = "%speople/@me/@self";
+	public static final String MYSPACE_URL_REQUEST = "http://api.myspace.com/request_token";
+	public static final String MYSPACE_URL_AUTHORIZE = "http://api.myspace.com/authorize";
+	public static final String MYSPACE_URL_ACCESS = "http://api.myspace.com/access_token";
+	public static final String MYSPACE_URL_ME = "%speople/@me/@self";
 	public static final String MYSPACE_HISTORY = "%sstatusmood/@me/@friends/history?includeself=true&fields=author,source,recentComments";
 	public static final String MYSPACE_URL_STATUSMOOD = "%sstatusmood/@me/@self";
 	public static final String MYSPACE_URL_STATUSMOODCOMMENTS = "%sstatusmoodcomments/%s/@self/%s?format=json&includeself=true&fields=author";
@@ -111,8 +111,8 @@ public class Sonet {
 
 	public static final int FOURSQUARE = 4;
 	public static final String FOURSQUARE_BASE_URL = "https://api.foursquare.com/v2/";
-	protected static final String FOURSQUARE_URL_AUTHORIZE = "https://foursquare.com/oauth2/authorize?client_id=%s&response_type=token&redirect_uri=%s&display=touch";
-	protected static final String FOURSQUARE_URL_ME = "%susers/self?oauth_token=%s";
+	public static final String FOURSQUARE_URL_AUTHORIZE = "https://foursquare.com/oauth2/authorize?client_id=%s&response_type=token&redirect_uri=%s&display=touch";
+	public static final String FOURSQUARE_URL_ME = "%susers/self?oauth_token=%s";
 	protected static final String FOURSQUARE_URL_USER = "%susers/%s?oauth_token=%s";
 	protected static final String FOURSQUARE_URL_PROFILE = "https://foursquare.com/user/%s";
 	public static final String FOURSQUARE_CHECKINS = "%scheckins/recent?oauth_token=%s";
@@ -125,10 +125,10 @@ public class Sonet {
 
 	public static final int LINKEDIN = 5;
 	public static final String LINKEDIN_BASE_URL = "https://api.linkedin.com/v1/people/~";
-	protected static final String LINKEDIN_URL_REQUEST = "https://api.linkedin.com/uas/oauth/requestToken";
-	protected static final String LINKEDIN_URL_AUTHORIZE = "https://www.linkedin.com/uas/oauth/authorize";
-	protected static final String LINKEDIN_URL_ACCESS = "https://api.linkedin.com/uas/oauth/accessToken";
-	protected static final String LINKEDIN_URL_ME = "%s:(id,first-name,last-name)";
+	public static final String LINKEDIN_URL_REQUEST = "https://api.linkedin.com/uas/oauth/requestToken";
+	public static final String LINKEDIN_URL_AUTHORIZE = "https://www.linkedin.com/uas/oauth/authorize";
+	public static final String LINKEDIN_URL_ACCESS = "https://api.linkedin.com/uas/oauth/accessToken";
+	public static final String LINKEDIN_URL_ME = "%s:(id,first-name,last-name)";
 	protected static final String LINKEDIN_URL_USER = "https://api.linkedin.com/v1/people/id=%s";
 	public static final String LINKEDIN_UPDATES = "%s/network/updates?type=APPS&type=CMPY&type=CONN&type=JOBS&type=JGRP&type=PICT&type=PRFU&type=RECU&type=PRFX&type=ANSW&type=QSTN&type=SHAR&type=VIRL";
 	public static final String[][] LINKEDIN_HEADERS = new String[][] {{"x-li-format", "json"}};
@@ -145,9 +145,9 @@ public class Sonet {
 
 	public static final int IDENTICA = 8;
 	public static final String IDENTICA_BASE_URL = "https://identi.ca/api/";
-	protected static final String IDENTICA_URL_REQUEST = "%soauth/request_token";
-	protected static final String IDENTICA_URL_AUTHORIZE = "%soauth/authorize";
-	protected static final String IDENTICA_URL_ACCESS = "%soauth/access_token";
+	public static final String IDENTICA_URL_REQUEST = "%soauth/request_token";
+	public static final String IDENTICA_URL_AUTHORIZE = "%soauth/authorize";
+	public static final String IDENTICA_URL_ACCESS = "%soauth/access_token";
 	public static final String IDENTICA_URL_FEED = "%sstatuses/home_timeline.json?count=%s";
 	public static final String IDENTICA_RETWEET = "%sstatuses/retweet/%s.json";
 	protected static final String IDENTICA_USER = "%susers/show.json?user_id=%s";
@@ -158,10 +158,10 @@ public class Sonet {
 	public static final String IDENTICA_SINCE_ID = "?since_id=%s";
 
 	public static final int GOOGLEPLUS = 9;
-	protected static final String GOOGLEPLUS_AUTHORIZE = "https://accounts.google.com/o/oauth2/auth?client_id=%s&redirect_uri=%s&scope=https://www.googleapis.com/auth/plus.me&response_type=code";
+	public static final String GOOGLEPLUS_AUTHORIZE = "https://accounts.google.com/o/oauth2/auth?client_id=%s&redirect_uri=%s&scope=https://www.googleapis.com/auth/plus.me&response_type=code";
 	public static final String GOOGLE_ACCESS = "https://accounts.google.com/o/oauth2/token";
 	public static final String GOOGLEPLUS_BASE_URL = "https://www.googleapis.com/plus/v1/";
-	protected static final String GOOGLEPLUS_URL_ME = "%speople/me?fields=displayName,id&access_token=%s";
+	public static final String GOOGLEPLUS_URL_ME = "%speople/me?fields=displayName,id&access_token=%s";
 	public static final String GOOGLEPLUS_ACTIVITIES = "%speople/%s/activities/%s?maxResults=%s&access_token=%s";
 	public static final String GOOGLEPLUS_ACTIVITY = "%sactivities/%s?access_token=%s";
 	protected static final String GOOGLEPLUS_PROFILE = "https://plus.google.com/%s";
@@ -175,9 +175,9 @@ public class Sonet {
 	public static final String PINTEREST_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
 
 	public static final int CHATTER = 11;
-	protected static final String CHATTER_URL_AUTHORIZE = "https://login.salesforce.com/services/oauth2/authorize?response_type=token&display=touch&client_id=%s&redirect_uri=%s";
+	public static final String CHATTER_URL_AUTHORIZE = "https://login.salesforce.com/services/oauth2/authorize?response_type=token&display=touch&client_id=%s&redirect_uri=%s";
 	public static final String CHATTER_URL_ACCESS = "https://login.salesforce.com/services/oauth2/token?grant_type=refresh_token&client_id=%s&refresh_token=%s";
-	protected static final String CHATTER_URL_ME = "%s/services/data/v22.0/chatter/users/me";
+	public static final String CHATTER_URL_ME = "%s/services/data/v22.0/chatter/users/me";
 	public static final String CHATTER_URL_POST = "%s/services/data/v22.0/chatter/feeds/news/me/feed-items?text=%s";
 	public static final String CHATTER_URL_COMMENT = "%s/services/data/v22.0/chatter/feed-items/%s/comments?text=%s";
 	public static final String CHATTER_URL_FEED = "%s/services/data/v22.0/chatter/feeds/news/me/feed-items";

@@ -3,6 +3,7 @@ package com.piusvelte.sonet.social;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -13,6 +14,7 @@ import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
+import com.piusvelte.sonet.SonetOAuth;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -36,7 +38,10 @@ import static com.piusvelte.sonet.Sonet.FOURSQUARE_CHECKIN_NO_SHOUT;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_CHECKIN_NO_VENUE;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_GET_CHECKIN;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_SEARCH;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_AUTHORIZE;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_ME;
 import static com.piusvelte.sonet.Sonet.SNearby;
+import static com.piusvelte.sonet.Sonet.Saccess_token;
 import static com.piusvelte.sonet.Sonet.Scheckin;
 import static com.piusvelte.sonet.Sonet.Scomments;
 import static com.piusvelte.sonet.Sonet.ScreatedAt;
@@ -61,6 +66,79 @@ public class FoursquareClient extends SocialClient {
 
     public FoursquareClient(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
+    }
+
+    @Nullable
+    @Override
+    public Uri getCallback() {
+        return Uri.parse("sonet://foursquare");
+    }
+
+    @Override
+    String getRequestUrl() {
+        return null;
+    }
+
+    @Override
+    String getAccessUrl() {
+        return null;
+    }
+
+    @Override
+    String getAuthorizeUrl() {
+        return null;
+    }
+
+    @Override
+    public String getCallbackUrl() {
+        return null;
+    }
+
+    @Override
+    boolean isOAuth10a() {
+        return false;
+    }
+
+    @Override
+    public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
+        // get the access_token
+        Uri uri = Uri.parse(authenticatedUrl);
+        String token = uri.getQueryParameter(Saccess_token);
+
+        if (!TextUtils.isEmpty(token)) {
+            String httpResponse = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FOURSQUARE_URL_ME, FOURSQUARE_BASE_URL, token)));
+
+            if (!TextUtils.isEmpty(httpResponse)) {
+                JSONObject jobj;
+
+                try {
+                    jobj = (new JSONObject(httpResponse)).getJSONObject("response").getJSONObject("user");
+
+                    if (jobj.has("firstName") && jobj.has(Sid)) {
+                        MemberAuthentication memberAuthentication = new MemberAuthentication();
+                        memberAuthentication.username = jobj.getString("firstName") + " " + jobj.getString("lastName");
+                        memberAuthentication.token = token;
+                        memberAuthentication.secret = "";
+                        memberAuthentication.expiry = 0;
+                        memberAuthentication.network = mNetwork;
+                        memberAuthentication.id = jobj.getString(Sid);
+                        return memberAuthentication;
+                    }
+                } catch (JSONException e) {
+                    if (BuildConfig.DEBUG) {
+                        Log.d(mTag, "error parsing foursquare me response: " + httpResponse, e);
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public String getAuthUrl(@NonNull SonetOAuth sonetOAuth) {
+        return String.format(FOURSQUARE_URL_AUTHORIZE, BuildConfig.FOURSQUARE_KEY, getCallback().toString());
     }
 
     @Nullable

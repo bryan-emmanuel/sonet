@@ -15,6 +15,7 @@ import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
+import com.piusvelte.sonet.SonetOAuth;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -42,10 +43,13 @@ import static com.piusvelte.sonet.Sonet.FACEBOOK_LIKES;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_PICTURE;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_POST;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_SEARCH;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_AUTHORIZE;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_ME;
 import static com.piusvelte.sonet.Sonet.Saccess_token;
 import static com.piusvelte.sonet.Sonet.Scomments;
 import static com.piusvelte.sonet.Sonet.Screated_time;
 import static com.piusvelte.sonet.Sonet.Sdata;
+import static com.piusvelte.sonet.Sonet.Sexpires_in;
 import static com.piusvelte.sonet.Sonet.Sfrom;
 import static com.piusvelte.sonet.Sonet.Sid;
 import static com.piusvelte.sonet.Sonet.Slink;
@@ -69,6 +73,83 @@ public class FacebookClient extends SocialClient {
 
     public FacebookClient(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
+    }
+
+    @Nullable
+    @Override
+    public Uri getCallback() {
+        return Uri.parse("fbconnect://success");
+    }
+
+    @Override
+    String getRequestUrl() {
+        return null;
+    }
+
+    @Override
+    String getAccessUrl() {
+        return null;
+    }
+
+    @Override
+    String getAuthorizeUrl() {
+        return null;
+    }
+
+    @Override
+    public String getCallbackUrl() {
+        return null;
+    }
+
+    @Override
+    boolean isOAuth10a() {
+        return false;
+    }
+
+    @Override
+    public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
+        Uri uri = Uri.parse(authenticatedUrl);
+        String token = uri.getQueryParameter(Saccess_token);
+
+        if (!TextUtils.isEmpty(token)) {
+            String expiryValue = uri.getQueryParameter(Sexpires_in);
+            int expiry = 0;
+
+            if (!TextUtils.isEmpty(expiryValue) && !"0".equals(expiryValue)) {
+                expiry = (int) System.currentTimeMillis() + Integer.parseInt(expiryValue) * 1000;
+            }
+
+            String httpResponse = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FACEBOOK_URL_ME, FACEBOOK_BASE_URL, Saccess_token, token)));
+
+            if (!TextUtils.isEmpty(httpResponse)) {
+                try {
+                    JSONObject jobj = new JSONObject(httpResponse);
+
+                    if (jobj.has(Sname) && jobj.has(Sid)) {
+                        MemberAuthentication memberAuthentication = new MemberAuthentication();
+                        memberAuthentication.username = jobj.getString(Sname);
+                        memberAuthentication.token = token;
+                        memberAuthentication.secret = "";
+                        memberAuthentication.expiry = expiry;
+                        memberAuthentication.network = mNetwork;
+                        memberAuthentication.id = jobj.getString(Sid);
+                        return memberAuthentication;
+                    }
+                } catch (JSONException e) {
+                    if (BuildConfig.DEBUG) {
+                        Log.d(mTag, "error parsing facebook me: " + httpResponse, e);
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public String getAuthUrl(@NonNull SonetOAuth sonetOAuth) {
+        return String.format(FACEBOOK_URL_AUTHORIZE, FACEBOOK_BASE_URL, BuildConfig.FACEBOOK_ID, getCallback().toString());
     }
 
     @Override

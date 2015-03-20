@@ -2,6 +2,7 @@ package com.piusvelte.sonet.social;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -12,6 +13,7 @@ import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
+import com.piusvelte.sonet.SonetOAuth;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -33,8 +35,10 @@ import java.util.Set;
 
 import static com.piusvelte.sonet.Sonet.GOOGLEPLUS_ACTIVITIES;
 import static com.piusvelte.sonet.Sonet.GOOGLEPLUS_ACTIVITY;
+import static com.piusvelte.sonet.Sonet.GOOGLEPLUS_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.GOOGLEPLUS_BASE_URL;
 import static com.piusvelte.sonet.Sonet.GOOGLEPLUS_DATE_FORMAT;
+import static com.piusvelte.sonet.Sonet.GOOGLEPLUS_URL_ME;
 import static com.piusvelte.sonet.Sonet.GOOGLE_ACCESS;
 import static com.piusvelte.sonet.Sonet.Saccess_token;
 import static com.piusvelte.sonet.Sonet.Sactor;
@@ -57,6 +61,110 @@ public class GooglePlusClient extends SocialClient {
 
     public GooglePlusClient(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
+    }
+
+    @Nullable
+    @Override
+    public Uri getCallback() {
+        return null;//Uri.parse("http://localhost")
+    }
+
+    @Override
+    String getRequestUrl() {
+        return null;
+    }
+
+    @Override
+    String getAccessUrl() {
+        return null;
+    }
+
+    @Override
+    String getAuthorizeUrl() {
+        return null;
+    }
+
+    @Override
+    public String getCallbackUrl() {
+        return null;
+    }
+
+    @Override
+    boolean isOAuth10a() {
+        return false;
+    }
+
+    @Override
+    public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
+        // get the access_token
+        String[] title = authenticatedUrl.split("=");
+
+        if (title != null && title.length > 0) {
+            String code = title[1];
+
+            if (!TextUtils.isEmpty(code)) {
+                HttpPost httpPost = new HttpPost(GOOGLE_ACCESS);
+                List<NameValuePair> params = new ArrayList<NameValuePair>();
+                params.add(new BasicNameValuePair("code", code));
+                params.add(new BasicNameValuePair("client_id", BuildConfig.GOOGLECLIENT_ID));
+                params.add(new BasicNameValuePair("client_secret", BuildConfig.GOOGLECLIENT_SECRET));
+                params.add(new BasicNameValuePair("redirect_uri", "urn:ietf:wg:oauth:2.0:oob"));
+                params.add(new BasicNameValuePair("grant_type", "authorization_code"));
+
+                try {
+                    httpPost.setEntity(new UrlEncodedFormEntity(params));
+                    String response = SonetHttpClient.httpResponse(mContext, httpPost);
+
+                    if (!TextUtils.isEmpty(response)) {
+                        JSONObject j = new JSONObject(response);
+                        if (j.has("access_token") && j.has("refresh_token")) {
+                            String refresh_token = j.getString("refresh_token");
+                            String httpResponse = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(GOOGLEPLUS_URL_ME, GOOGLEPLUS_BASE_URL, j.getString("access_token"))));
+
+                            if (!TextUtils.isEmpty(httpResponse)) {
+
+                                try {
+                                    JSONObject jObj = new JSONObject(response);
+
+                                    if (jObj.has(Sid) && jObj.has(SdisplayName)) {
+                                        MemberAuthentication memberAuthentication = new MemberAuthentication();
+                                        memberAuthentication.username = jObj.getString(SdisplayName);
+                                        memberAuthentication.token = refresh_token;
+                                        memberAuthentication.secret = "";
+                                        memberAuthentication.expiry = 0;
+                                        memberAuthentication.network = mNetwork;
+                                        memberAuthentication.id = jObj.getString(Sid);
+                                        return memberAuthentication;
+                                    }
+                                } catch (JSONException e) {
+                                    if (BuildConfig.DEBUG) {
+                                        Log.d(mTag, e.toString());
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        return null;
+                    }
+                } catch (UnsupportedEncodingException e) {
+                    if (BuildConfig.DEBUG) {
+                        Log.d(mTag, e.toString());
+                    }
+                } catch (JSONException e) {
+                    if (BuildConfig.DEBUG) {
+                        Log.d(mTag, e.toString());
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public String getAuthUrl(@NonNull SonetOAuth sonetOAuth) {
+        return String.format(GOOGLEPLUS_AUTHORIZE, BuildConfig.GOOGLECLIENT_ID, "urn:ietf:wg:oauth:2.0:oob");
     }
 
     @Nullable

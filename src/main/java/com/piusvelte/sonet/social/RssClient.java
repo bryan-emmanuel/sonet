@@ -1,12 +1,14 @@
 package com.piusvelte.sonet.social;
 
 import android.content.Context;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetHttpClient;
+import com.piusvelte.sonet.SonetOAuth;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -45,6 +47,42 @@ public class RssClient extends SocialClient {
 
     public RssClient(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
+    }
+
+    @Nullable
+    @Override
+    public Uri getCallback() {
+        return null;
+    }
+
+    @Override
+    String getRequestUrl() {
+        return null;
+    }
+
+    @Override
+    String getAccessUrl() {
+        return null;
+    }
+
+    @Override
+    String getAuthorizeUrl() {
+        return null;
+    }
+
+    @Override
+    public String getCallbackUrl() {
+        return null;
+    }
+
+    @Override
+    boolean isOAuth10a() {
+        return false;
+    }
+
+    @Override
+    public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
+        return null;
     }
 
     @Nullable

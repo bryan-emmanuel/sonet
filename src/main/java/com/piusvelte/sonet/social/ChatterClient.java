@@ -11,6 +11,7 @@ import com.piusvelte.sonet.BuildConfig;
 import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetHttpClient;
+import com.piusvelte.sonet.SonetOAuth;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
@@ -28,11 +29,13 @@ import java.util.Set;
 
 import static com.piusvelte.sonet.Sonet.CHATTER_DATE_FORMAT;
 import static com.piusvelte.sonet.Sonet.CHATTER_URL_ACCESS;
+import static com.piusvelte.sonet.Sonet.CHATTER_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.CHATTER_URL_COMMENT;
 import static com.piusvelte.sonet.Sonet.CHATTER_URL_COMMENTS;
 import static com.piusvelte.sonet.Sonet.CHATTER_URL_FEED;
 import static com.piusvelte.sonet.Sonet.CHATTER_URL_LIKE;
 import static com.piusvelte.sonet.Sonet.CHATTER_URL_LIKES;
+import static com.piusvelte.sonet.Sonet.CHATTER_URL_ME;
 import static com.piusvelte.sonet.Sonet.CHATTER_URL_POST;
 import static com.piusvelte.sonet.Sonet.Saccess_token;
 import static com.piusvelte.sonet.Sonet.Sbody;
@@ -282,5 +285,76 @@ public class ChatterClient extends SocialClient {
     @Override
     String getApiSecret() {
         return BuildConfig.CHATTER_SECRET;
+    }
+
+    @Nullable
+    @Override
+    public Uri getCallback() {
+        return Uri.parse("sonet://chatter");
+    }
+
+    @Override
+    String getRequestUrl() {
+        return null;
+    }
+
+    @Override
+    String getAccessUrl() {
+        return null;
+    }
+
+    @Override
+    String getAuthorizeUrl() {
+        return null;
+    }
+
+    @Override
+    public String getCallbackUrl() {
+        return null;
+    }
+
+    @Override
+    boolean isOAuth10a() {
+        return false;
+    }
+
+    @Override
+    public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
+        // get the access_token
+        Uri uri = Uri.parse(authenticatedUrl);
+        String token = uri.getQueryParameter(Saccess_token);
+        String refresh_token = uri.getQueryParameter("refresh_token");
+        String instance_url = uri.getQueryParameter("instance_url");
+
+
+        HttpGet httpGet = new HttpGet(String.format(CHATTER_URL_ME, instance_url));
+        httpGet.setHeader("Authorization", "OAuth " + token);
+        String httpRespnose = SonetHttpClient.httpResponse(mContext, httpGet);
+
+        if (!TextUtils.isEmpty(httpRespnose)) {
+            try {
+                JSONObject jobj = new JSONObject(httpRespnose);
+                if (jobj.has(Sname) && jobj.has(Sid)) {
+                    MemberAuthentication memberAuthentication = new MemberAuthentication();
+                    memberAuthentication.username = jobj.getString(Sname);
+                    memberAuthentication.token = refresh_token;
+                    memberAuthentication.secret = "";
+                    memberAuthentication.expiry = 0;
+                    memberAuthentication.network = mNetwork;
+                    memberAuthentication.id = jobj.getString(Sid);
+                    return memberAuthentication;
+                }
+            } catch (JSONException e) {
+                if (BuildConfig.DEBUG) Log.d(mTag, "error parse chatter me: " + httpRespnose, e);
+            }
+        }
+
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public String getAuthUrl(@NonNull SonetOAuth sonetOAuth) {
+        return String.format(CHATTER_URL_AUTHORIZE, BuildConfig.CHATTER_KEY, getCallback().toString());
     }
 }

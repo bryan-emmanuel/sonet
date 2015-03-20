@@ -20,6 +20,7 @@ import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.SonetOAuth;
 
+import org.apache.http.auth.NTCredentials;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.json.JSONArray;
@@ -39,6 +40,11 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import oauth.signpost.exception.OAuthCommunicationException;
+import oauth.signpost.exception.OAuthExpectationFailedException;
+import oauth.signpost.exception.OAuthMessageSignerException;
+import oauth.signpost.exception.OAuthNotAuthorizedException;
+
 import static com.piusvelte.sonet.Sonet.Simgur;
 import static com.piusvelte.sonet.Sonet.Slink;
 import static com.piusvelte.sonet.Sonet.getBlob;
@@ -53,7 +59,7 @@ import static com.piusvelte.sonet.Sonet.sTimeZone;
  */
 abstract public class SocialClient {
 
-    String mTag = SocialClient.class.getSimpleName();
+    String mTag;
 
     Context mContext;
     String mToken;
@@ -65,6 +71,7 @@ abstract public class SocialClient {
     private SimpleDateFormat mSimpleDateFormat = null;
 
     public SocialClient(Context context, String token, String secret, String accountEsid, int network) {
+        mTag = getClass().getSimpleName();
         mContext = context;
         mToken = token;
         mSecret = secret;
@@ -123,7 +130,7 @@ abstract public class SocialClient {
     public static class Builder {
 
         private Context mContext;
-        private int mNetwork;
+        private Network mNetwork;
         private String mToken;
         private String mSecret;
         private String mAccountEsid;
@@ -132,8 +139,13 @@ abstract public class SocialClient {
             mContext = context.getApplicationContext();
         }
 
-        public Builder setNetwork(int network) {
+        public Builder setNetwork(Network network) {
             mNetwork = network;
+            return this;
+        }
+
+        public Builder setNetwork(int network) {
+            mNetwork = Network.get(network);
             return this;
         }
 
@@ -149,7 +161,7 @@ abstract public class SocialClient {
         }
 
         public SocialClient build() {
-            return Network.get(mNetwork).getClient(mContext, mToken, mSecret, mAccountEsid);
+            return mNetwork.getClient(mContext, mToken, mSecret, mAccountEsid);
         }
     }
 
@@ -159,7 +171,7 @@ abstract public class SocialClient {
         boolean doNotify = notifications != 0;
 
         if (doNotify) {
-            getNotificationStatusIds(account, notificationMessage);
+            notificationSids = getNotificationStatusIds(account, notificationMessage);
         }
 
         String response = getFeedResponse(status_count);
@@ -318,6 +330,43 @@ abstract public class SocialClient {
     abstract String getApiKey();
 
     abstract String getApiSecret();
+
+    @Nullable
+    abstract public Uri getCallback();
+
+    abstract String getRequestUrl();
+
+    abstract String getAccessUrl();
+
+    abstract String getAuthorizeUrl();
+
+    abstract public String getCallbackUrl();
+
+    abstract boolean isOAuth10a();
+
+    abstract public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl);
+
+    @NonNull
+    public SonetOAuth getLoginOAuth() {
+        return new SonetOAuth(getApiKey(), getApiSecret());
+    }
+
+    @Nullable
+    public String getAuthUrl(@NonNull SonetOAuth sonetOAuth) {
+        try {
+            return sonetOAuth.getAuthUrl(getRequestUrl(), getAccessUrl(), getAuthorizeUrl(), getCallbackUrl(), isOAuth10a(), null);
+        } catch (OAuthMessageSignerException e) {
+            if (BuildConfig.DEBUG) Log.d(mTag, e.toString());
+        } catch (OAuthNotAuthorizedException e) {
+            if (BuildConfig.DEBUG) Log.d(mTag, e.toString());
+        } catch (OAuthExpectationFailedException e) {
+            if (BuildConfig.DEBUG) Log.d(mTag, e.toString());
+        } catch (OAuthCommunicationException e) {
+            if (BuildConfig.DEBUG) Log.d(mTag, e.toString());
+        }
+
+        return null;
+    }
 
     SonetOAuth getOAuth() {
         if (mOAuth == null) {
@@ -665,5 +714,16 @@ abstract public class SocialClient {
         }
 
         return System.currentTimeMillis();
+    }
+
+    public static class MemberAuthentication {
+
+        public String username;
+        public String token;
+        public String secret;
+        public int expiry;
+        public int network;
+        public String id;
+
     }
 }

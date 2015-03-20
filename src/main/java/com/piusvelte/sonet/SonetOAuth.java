@@ -47,8 +47,7 @@ public class SonetOAuth {
     }
 
     public SonetOAuth(String apiKey, String apiSecret, String token, String tokenSecret) {
-        mOAuthConsumer = new CommonsHttpOAuthConsumer(apiKey, apiSecret);
-        mOAuthConsumer.setMessageSigner(new HmacSha1MessageSigner());
+        this(apiKey, apiSecret);
         mOAuthConsumer.setTokenWithSecret(token, tokenSecret);
     }
 
