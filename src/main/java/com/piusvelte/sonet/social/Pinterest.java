@@ -39,9 +39,9 @@ import static com.piusvelte.sonet.Sonet.Susername;
 /**
  * Created by bemmanuel on 2/15/15.
  */
-public class PinterestClient extends SocialClient {
+public class Pinterest extends Client {
 
-    public PinterestClient(Context context, String token, String secret, String accountEsid, int network) {
+    public Pinterest(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
     }
 

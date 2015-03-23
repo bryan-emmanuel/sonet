@@ -40,9 +40,9 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
-import com.piusvelte.sonet.Sonet.Accounts;
-import com.piusvelte.sonet.Sonet.Entities;
-import com.piusvelte.sonet.Sonet.Statuses;
+import com.piusvelte.sonet.provider.Accounts;
+import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.provider.Statuses;
 
 import android.content.ContentValues;
 import android.content.Context;

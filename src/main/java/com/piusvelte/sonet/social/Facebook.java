@@ -16,6 +16,11 @@ import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.SonetOAuth;
+import com.piusvelte.sonet.provider.Accounts;
+import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.provider.Notifications;
+import com.piusvelte.sonet.provider.Statuses;
+import com.piusvelte.sonet.provider.Widgets;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -69,9 +74,9 @@ import static com.piusvelte.sonet.Sonet.Suser_likes;
 /**
  * Created by bemmanuel on 2/15/15.
  */
-public class FacebookClient extends SocialClient {
+public class Facebook extends Client {
 
-    public FacebookClient(Context context, String token, String secret, String accountEsid, int network) {
+    public Facebook(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
     }
 
@@ -182,7 +187,7 @@ public class FacebookClient extends SocialClient {
     }
 
     private void getNotifications(long account, @NonNull Set<String> notificationSids, @Nullable String[] notificationMessage) {
-        Cursor currentNotifications = mContext.getContentResolver().query(Sonet.Notifications.getContentUri(mContext), new String[]{Sonet.Notifications._ID, Sonet.Notifications.SID, Sonet.Notifications.UPDATED, Sonet.Notifications.CLEARED, Sonet.Notifications.ESID}, Sonet.Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+        Cursor currentNotifications = mContext.getContentResolver().query(Notifications.getContentUri(mContext), new String[]{Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
 
         // loop over notifications
         if (currentNotifications.moveToFirst()) {
@@ -531,9 +536,9 @@ public class FacebookClient extends SocialClient {
             // uploading a photo takes a long time, have the service handle it
             Intent i = Sonet.getPackageIntent(mContext, PhotoUploadService.class);
             i.setAction(Sonet.ACTION_UPLOAD);
-            i.putExtra(Sonet.Accounts.TOKEN, mToken);
-            i.putExtra(Sonet.Widgets.INSTANT_UPLOAD, photoPath);
-            i.putExtra(Sonet.Statuses.MESSAGE, message);
+            i.putExtra(Accounts.TOKEN, mToken);
+            i.putExtra(Widgets.INSTANT_UPLOAD, photoPath);
+            i.putExtra(Statuses.MESSAGE, message);
             i.putExtra(Splace, placeId);
 
             if (tags != null) {
@@ -637,10 +642,10 @@ public class FacebookClient extends SocialClient {
     @Override
     public HashMap<String, String> parseComment(@NonNull String statusId, @NonNull JSONObject jsonComment, boolean time24hr) throws JSONException {
         HashMap<String, String> commentMap = new HashMap<>();
-        commentMap.put(Sonet.Statuses.SID, jsonComment.getString(Sid));
-        commentMap.put(Sonet.Entities.FRIEND, jsonComment.getJSONObject(Sfrom).getString(Sname));
-        commentMap.put(Sonet.Statuses.MESSAGE, jsonComment.getString(Smessage));
-        commentMap.put(Sonet.Statuses.CREATEDTEXT, Sonet.getCreatedText(jsonComment.getLong(Screated_time) * 1000, time24hr));
+        commentMap.put(Statuses.SID, jsonComment.getString(Sid));
+        commentMap.put(Entities.FRIEND, jsonComment.getJSONObject(Sfrom).getString(Sname));
+        commentMap.put(Statuses.MESSAGE, jsonComment.getString(Smessage));
+        commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(jsonComment.getLong(Screated_time) * 1000, time24hr));
         commentMap.put(getString(R.string.like), getLikeText(jsonComment.has(Suser_likes) && jsonComment.getBoolean(Suser_likes)));
         return commentMap;
     }

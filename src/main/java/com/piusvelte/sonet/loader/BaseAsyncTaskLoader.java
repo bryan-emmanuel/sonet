@@ -2,9 +2,6 @@ package com.piusvelte.sonet.loader;
 
 import android.content.Context;
 import android.support.v4.content.AsyncTaskLoader;
-import android.text.TextUtils;
-
-import com.piusvelte.sonet.social.SocialClient;
 
 /**
  * Created by bemmanuel on 3/17/15.

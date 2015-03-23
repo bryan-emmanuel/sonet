@@ -14,6 +14,8 @@ import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.SonetOAuth;
+import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.provider.Notifications;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -45,7 +47,6 @@ import static com.piusvelte.sonet.Sonet.Sscreen_name;
 import static com.piusvelte.sonet.Sonet.Sstatus;
 import static com.piusvelte.sonet.Sonet.Stext;
 import static com.piusvelte.sonet.Sonet.Suser;
-import static com.piusvelte.sonet.Sonet.TWITTER;
 import static com.piusvelte.sonet.Sonet.TWITTER_BASE_URL;
 import static com.piusvelte.sonet.Sonet.TWITTER_DATE_FORMAT;
 import static com.piusvelte.sonet.Sonet.TWITTER_MENTIONS;
@@ -63,9 +64,9 @@ import static oauth.signpost.OAuth.OAUTH_VERIFIER;
 /**
  * Created by bemmanuel on 2/15/15.
  */
-public class TwitterClient extends SocialClient {
+public class Twitter extends Client {
 
-    public TwitterClient(Context context, String token, String secret, String accountEsid, int network) {
+    public Twitter(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
     }
 
@@ -223,7 +224,7 @@ public class TwitterClient extends SocialClient {
         ArrayList<String> notificationSids = new ArrayList<>();
         String sid;
         String friend;
-        Cursor currentNotifications = getContentResolver().query(Sonet.Notifications.getContentUri(mContext), new String[]{Sonet.Notifications.SID}, Sonet.Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext), new String[]{Notifications.SID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
 
         // loop over notifications
         if (currentNotifications.moveToFirst()) {
@@ -238,7 +239,7 @@ public class TwitterClient extends SocialClient {
         currentNotifications.close();
         // limit to oldest status
         String last_sid = null;
-        Cursor last_status = getContentResolver().query(Sonet.Statuses.getContentUri(mContext), new String[]{Sonet.Statuses.SID}, Sonet.Statuses.ACCOUNT + "=?", new String[]{Long.toString(account)}, Sonet.Statuses.CREATED + " ASC LIMIT 1");
+        Cursor last_status = getContentResolver().query(Statuses.getContentUri(mContext), new String[]{Statuses.SID}, Statuses.ACCOUNT + "=?", new String[]{Long.toString(account)}, Statuses.CREATED + " ASC LIMIT 1");
 
         if (last_status.moveToFirst()) {
             last_sid = SonetCrypto.getInstance(mContext).Decrypt(last_status.getString(0));
@@ -393,10 +394,10 @@ public class TwitterClient extends SocialClient {
 
         if (statusId.equals(replyId)) {
             HashMap<String, String> commentMap = new HashMap<>();
-            commentMap.put(Sonet.Statuses.SID, jsonComment.getString(Sid));
-            commentMap.put(Sonet.Entities.FRIEND, jsonComment.getJSONObject(Suser).getString(Sname));
-            commentMap.put(Sonet.Statuses.MESSAGE, jsonComment.getString(Stext));
-            commentMap.put(Sonet.Statuses.CREATEDTEXT, Sonet.getCreatedText(parseDate(jsonComment.getString(Screated_at), TWITTER_DATE_FORMAT), time24hr));
+            commentMap.put(Statuses.SID, jsonComment.getString(Sid));
+            commentMap.put(Entities.FRIEND, jsonComment.getJSONObject(Suser).getString(Sname));
+            commentMap.put(Statuses.MESSAGE, jsonComment.getString(Stext));
+            commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(parseDate(jsonComment.getString(Screated_at), TWITTER_DATE_FORMAT), time24hr));
             commentMap.put(getString(R.string.like), getLikeText(true));
             return commentMap;
         }

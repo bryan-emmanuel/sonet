@@ -15,6 +15,8 @@ import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.SonetOAuth;
+import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.provider.Notifications;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -77,13 +79,51 @@ import static oauth.signpost.OAuth.OAUTH_VERIFIER;
 /**
  * Created by bemmanuel on 2/15/15.
  */
-public class LinkedInClient extends SocialClient {
+public class LinkedIn extends Client {
 
     private static final String IS_LIKABLE = "isLikable";
     private static final String IS_LIKED = "isLiked";
     private static final String IS_COMMENTABLE = "isCommentable";
 
-    public LinkedInClient(Context context, String token, String secret, String accountEsid, int network) {
+    public enum LinkedIn_UpdateTypes {
+        ANSW("updated an answer"),
+        APPS("updated the application "),
+        CMPY("company update"),
+        CONN("is now connected to "),
+        JOBP("posted the job "),
+        JGRP("joined the group "),
+        PRFX("updated their extended profile"),
+        PREC("recommends "),
+        PROF("changed their profile"),
+        QSTN("updated a question"),
+        SHAR("shared something"),
+        VIRL("updated the viral "),
+        PICU("updated their profile picture");
+
+        public String message = null;
+
+        private LinkedIn_UpdateTypes(String message) {
+            this.message = message;
+        }
+
+        public static boolean contains(String type) {
+            for (LinkedIn_UpdateTypes t : LinkedIn_UpdateTypes.values()) {
+                if (t.name().equals(type))
+                    return true;
+            }
+            return false;
+        }
+
+        public static String getMessage(String type) {
+            for (LinkedIn_UpdateTypes t : LinkedIn_UpdateTypes.values()) {
+                if (t.name().equals(type))
+                    return t.message;
+            }
+            return null;
+        }
+    }
+
+    public LinkedIn(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
     }
 
@@ -165,7 +205,7 @@ public class LinkedInClient extends SocialClient {
     @Override
     public Set<String> getNotificationStatusIds(long account, String[] notificationMessage) {
         Set<String> notificationSids = new HashSet<>();
-        Cursor currentNotifications = getContentResolver().query(Sonet.Notifications.getContentUri(mContext), new String[]{Sonet.Notifications._ID, Sonet.Notifications.SID, Sonet.Notifications.UPDATED, Sonet.Notifications.CLEARED, Sonet.Notifications.ESID}, Sonet.Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext), new String[]{Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
 
         // loop over notifications
         if (currentNotifications.moveToFirst()) {
@@ -235,12 +275,12 @@ public class LinkedInClient extends SocialClient {
     public void addFeedItem(@NonNull JSONObject item, boolean display_profile, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
         String updateType = item.getString(SupdateType);
         JSONObject updateContent = item.getJSONObject(SupdateContent);
-        String update = Sonet.LinkedIn_UpdateTypes.getMessage(updateType);
+        String update = LinkedIn_UpdateTypes.getMessage(updateType);
 
         if (update != null && updateContent.has(Sperson)) {
             JSONObject friendObj = updateContent.getJSONObject(Sperson);
 
-            if (Sonet.LinkedIn_UpdateTypes.APPS.name().equals(updateType)) {
+            if (LinkedIn_UpdateTypes.APPS.name().equals(updateType)) {
                 if (friendObj.has(SpersonActivities)) {
                     JSONObject personActivities = friendObj.getJSONObject(SpersonActivities);
 
@@ -254,7 +294,7 @@ public class LinkedInClient extends SocialClient {
                         }
                     }
                 }
-            } else if (Sonet.LinkedIn_UpdateTypes.CONN.name().equals(updateType)) {
+            } else if (LinkedIn_UpdateTypes.CONN.name().equals(updateType)) {
                 if (friendObj.has(Sconnections)) {
                     JSONObject connections = friendObj.getJSONObject(Sconnections);
 
@@ -270,11 +310,11 @@ public class LinkedInClient extends SocialClient {
                         }
                     }
                 }
-            } else if (Sonet.LinkedIn_UpdateTypes.JOBP.name().equals(updateType)) {
+            } else if (LinkedIn_UpdateTypes.JOBP.name().equals(updateType)) {
                 if (updateContent.has(Sjob) && updateContent.getJSONObject(Sjob).has(Sposition) && updateContent.getJSONObject(Sjob).getJSONObject(Sposition).has(Stitle)) {
                     update += updateContent.getJSONObject(Sjob).getJSONObject(Sposition).getString(Stitle);
                 }
-            } else if (Sonet.LinkedIn_UpdateTypes.JGRP.name().equals(updateType)) {
+            } else if (LinkedIn_UpdateTypes.JGRP.name().equals(updateType)) {
                 if (friendObj.has(SmemberGroups)) {
                     JSONObject memberGroups = friendObj.getJSONObject(SmemberGroups);
 
@@ -290,7 +330,7 @@ public class LinkedInClient extends SocialClient {
                         }
                     }
                 }
-            } else if (Sonet.LinkedIn_UpdateTypes.PREC.name().equals(updateType)) {
+            } else if (LinkedIn_UpdateTypes.PREC.name().equals(updateType)) {
                 if (friendObj.has(SrecommendationsGiven)) {
                     JSONObject recommendationsGiven = friendObj.getJSONObject(SrecommendationsGiven);
 
@@ -312,7 +352,7 @@ public class LinkedInClient extends SocialClient {
                         }
                     }
                 }
-            } else if (Sonet.LinkedIn_UpdateTypes.SHAR.name().equals(updateType) && friendObj.has(ScurrentShare)) {
+            } else if (LinkedIn_UpdateTypes.SHAR.name().equals(updateType) && friendObj.has(ScurrentShare)) {
                 JSONObject currentShare = friendObj.getJSONObject(ScurrentShare);
 
                 if (currentShare.has(Scomment)) {
@@ -393,7 +433,7 @@ public class LinkedInClient extends SocialClient {
 
     @Override
     public void getNotifications(long account, String[] notificationMessage) {
-        Cursor currentNotifications = getContentResolver().query(Sonet.Notifications.getContentUri(mContext), new String[]{Sonet.Notifications._ID, Sonet.Notifications.SID, Sonet.Notifications.UPDATED, Sonet.Notifications.CLEARED, Sonet.Notifications.ESID}, Sonet.Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext), new String[]{Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
 
         if (currentNotifications.moveToFirst()) {
             Set<String> notificationSids = new HashSet<>();
@@ -424,18 +464,18 @@ public class LinkedInClient extends SocialClient {
                                     if (created_time > updated) {
                                         // new comment
                                         ContentValues values = new ContentValues();
-                                        values.put(Sonet.Notifications.UPDATED, created_time);
+                                        values.put(Notifications.UPDATED, created_time);
                                         JSONObject person = comment.getJSONObject(Sperson);
                                         if (mAccountEsid.equals(person.getString(Sid))) {
                                             // user's own comment, clear the notification
-                                            values.put(Sonet.Notifications.CLEARED, 1);
+                                            values.put(Notifications.CLEARED, 1);
                                         } else if (cleared) {
-                                            values.put(Sonet.Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), person.getString(SfirstName) + " " + person.getString(SlastName)));
-                                            values.put(Sonet.Notifications.CLEARED, 0);
+                                            values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), person.getString(SfirstName) + " " + person.getString(SlastName)));
+                                            values.put(Notifications.CLEARED, 0);
                                         } else {
-                                            values.put(Sonet.Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), person.getString(SfirstName) + " " + person.getString(SlastName) + " and others"));
+                                            values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), person.getString(SfirstName) + " " + person.getString(SlastName) + " and others"));
                                         }
-                                        getContentResolver().update(Sonet.Notifications.getContentUri(mContext), values, Sonet.Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
+                                        getContentResolver().update(Notifications.getContentUri(mContext), values, Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
                                     }
                                 }
                             }
@@ -466,7 +506,7 @@ public class LinkedInClient extends SocialClient {
                                 String updateType = o.getString(SupdateType);
                                 JSONObject updateContent = o.getJSONObject(SupdateContent);
 
-                                if (Sonet.LinkedIn_UpdateTypes.contains(updateType) && updateContent.has(Sperson)) {
+                                if (LinkedIn_UpdateTypes.contains(updateType) && updateContent.has(Sperson)) {
                                     JSONObject f = updateContent.getJSONObject(Sperson);
 
                                     if (f.has(SfirstName) && f.has(SlastName) && f.has(Sid) && o.has(SupdateComments)) {
@@ -509,9 +549,9 @@ public class LinkedInClient extends SocialClient {
                                             }
 
                                             if (notification != null) {
-                                                String update = Sonet.LinkedIn_UpdateTypes.getMessage(updateType);
+                                                String update = LinkedIn_UpdateTypes.getMessage(updateType);
 
-                                                if (Sonet.LinkedIn_UpdateTypes.APPS.name().equals(updateType)) {
+                                                if (LinkedIn_UpdateTypes.APPS.name().equals(updateType)) {
                                                     if (f.has(SpersonActivities)) {
                                                         JSONObject personActivities = f.getJSONObject(SpersonActivities);
 
@@ -527,7 +567,7 @@ public class LinkedInClient extends SocialClient {
                                                             }
                                                         }
                                                     }
-                                                } else if (Sonet.LinkedIn_UpdateTypes.CONN.name().equals(updateType)) {
+                                                } else if (LinkedIn_UpdateTypes.CONN.name().equals(updateType)) {
                                                     if (f.has(Sconnections)) {
                                                         JSONObject connections = f.getJSONObject(Sconnections);
 
@@ -543,11 +583,11 @@ public class LinkedInClient extends SocialClient {
                                                             }
                                                         }
                                                     }
-                                                } else if (Sonet.LinkedIn_UpdateTypes.JOBP.name().equals(updateType)) {
+                                                } else if (LinkedIn_UpdateTypes.JOBP.name().equals(updateType)) {
                                                     if (updateContent.has(Sjob) && updateContent.getJSONObject(Sjob).has(Sposition) && updateContent.getJSONObject(Sjob).getJSONObject(Sposition).has(Stitle)) {
                                                         update += updateContent.getJSONObject(Sjob).getJSONObject(Sposition).getString(Stitle);
                                                     }
-                                                } else if (Sonet.LinkedIn_UpdateTypes.JGRP.name().equals(updateType)) {
+                                                } else if (LinkedIn_UpdateTypes.JGRP.name().equals(updateType)) {
                                                     if (f.has(SmemberGroups)) {
                                                         JSONObject memberGroups = f.getJSONObject(SmemberGroups);
 
@@ -563,7 +603,7 @@ public class LinkedInClient extends SocialClient {
                                                             }
                                                         }
                                                     }
-                                                } else if (Sonet.LinkedIn_UpdateTypes.PREC.name().equals(updateType)) {
+                                                } else if (LinkedIn_UpdateTypes.PREC.name().equals(updateType)) {
                                                     if (f.has(SrecommendationsGiven)) {
                                                         JSONObject recommendationsGiven = f.getJSONObject(SrecommendationsGiven);
 
@@ -592,7 +632,7 @@ public class LinkedInClient extends SocialClient {
                                                             }
                                                         }
                                                     }
-                                                } else if (Sonet.LinkedIn_UpdateTypes.SHAR.name().equals(updateType) && f.has(ScurrentShare)) {
+                                                } else if (LinkedIn_UpdateTypes.SHAR.name().equals(updateType) && f.has(ScurrentShare)) {
                                                     JSONObject currentShare = f.getJSONObject(ScurrentShare);
 
                                                     if (currentShare.has(Scomment)) {
@@ -740,10 +780,10 @@ public class LinkedInClient extends SocialClient {
     public HashMap<String, String> parseComment(@NonNull String statusId, @NonNull JSONObject jsonComment, boolean time24hr) throws JSONException {
         JSONObject person = jsonComment.getJSONObject(Sperson);
         HashMap<String, String> commentMap = new HashMap<>();
-        commentMap.put(Sonet.Statuses.SID, jsonComment.getString(Sid));
-        commentMap.put(Sonet.Entities.FRIEND, person.getString(SfirstName) + " " + person.getString(SlastName));
-        commentMap.put(Sonet.Statuses.MESSAGE, jsonComment.getString(Scomment));
-        commentMap.put(Sonet.Statuses.CREATEDTEXT, Sonet.getCreatedText(jsonComment.getLong(Stimestamp), time24hr));
+        commentMap.put(Statuses.SID, jsonComment.getString(Sid));
+        commentMap.put(Entities.FRIEND, person.getString(SfirstName) + " " + person.getString(SlastName));
+        commentMap.put(Statuses.MESSAGE, jsonComment.getString(Scomment));
+        commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(jsonComment.getLong(Stimestamp), time24hr));
         commentMap.put(getString(R.string.like), "");
         return commentMap;
     }

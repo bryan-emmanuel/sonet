@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
  * Sonet - Android Social Networking Widget
  * Copyright (C) 2009 Bryan Emmanuel
  * 
@@ -19,12 +18,16 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="fill_parent" android:layout_height="fill_parent">
-	<LinearLayout android:id="@+id/ad" android:layout_width="fill_parent"
-		android:layout_height="wrap_content" />
-	<ListView android:layout_below="@id/ad" android:id="@android:id/list" android:layout_width="fill_parent"
-		android:layout_height="fill_parent" />
-	<TextView android:id="@android:id/empty" android:layout_width="fill_parent"
-		android:layout_height="fill_parent"
-		android:text="@string/loading" />
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/ad"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <com.piusvelte.sonet.fragment.WidgetsList
+        android:layout_below="@id/ad"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 </RelativeLayout>

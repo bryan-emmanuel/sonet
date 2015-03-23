@@ -19,7 +19,7 @@
  */
 package com.piusvelte.sonet;
 
-import com.piusvelte.sonet.Sonet.Widgets;
+import com.piusvelte.sonet.provider.Widgets;
 
 import android.app.Service;
 import android.content.Intent;

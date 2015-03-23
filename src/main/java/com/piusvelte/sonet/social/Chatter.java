@@ -12,6 +12,8 @@ import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.SonetOAuth;
+import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.provider.Statuses;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
@@ -53,14 +55,14 @@ import static com.piusvelte.sonet.Sonet.Suser;
 /**
  * Created by bemmanuel on 2/15/15.
  */
-public class ChatterClient extends SocialClient {
+public class Chatter extends Client {
 
     private static final String INSTANCE_URL = "instance_url";
 
     private String mChatterInstance = null;
     private String mChatterToken = null;
 
-    public ChatterClient(Context context, String token, String secret, String accountEsid, int network) {
+    public Chatter(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
     }
 
@@ -252,10 +254,10 @@ public class ChatterClient extends SocialClient {
     @Override
     public HashMap<String, String> parseComment(@NonNull String statusId, @NonNull JSONObject jsonComment, boolean time24hr) throws JSONException {
         HashMap<String, String> commentMap = new HashMap<String, String>();
-        commentMap.put(Sonet.Statuses.SID, jsonComment.getString(Sid));
-        commentMap.put(Sonet.Entities.FRIEND, jsonComment.getJSONObject(Suser).getString(Sname));
-        commentMap.put(Sonet.Statuses.MESSAGE, jsonComment.getJSONObject(Sbody).getString(Stext));
-        commentMap.put(Sonet.Statuses.CREATEDTEXT, Sonet.getCreatedText(parseDate(jsonComment.getString(ScreatedDate), CHATTER_DATE_FORMAT), time24hr));
+        commentMap.put(Statuses.SID, jsonComment.getString(Sid));
+        commentMap.put(Entities.FRIEND, jsonComment.getJSONObject(Suser).getString(Sname));
+        commentMap.put(Statuses.MESSAGE, jsonComment.getJSONObject(Sbody).getString(Stext));
+        commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(parseDate(jsonComment.getString(ScreatedDate), CHATTER_DATE_FORMAT), time24hr));
         // TODO does this have the like id for unliking?
         commentMap.put(getString(R.string.like), "");
         return commentMap;

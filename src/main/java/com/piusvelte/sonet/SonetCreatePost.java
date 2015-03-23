@@ -28,9 +28,9 @@ import java.util.Map;
 import org.apache.http.client.HttpClient;
 
 import com.google.ads.*;
-import com.piusvelte.sonet.Sonet.Accounts;
-import com.piusvelte.sonet.Sonet.Widgets;
-import com.piusvelte.sonet.social.SocialClient;
+import com.piusvelte.sonet.provider.Accounts;
+import com.piusvelte.sonet.provider.Widgets;
+import com.piusvelte.sonet.social.Client;
 
 import static com.piusvelte.sonet.Sonet.*;
 
@@ -248,9 +248,12 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
                     HashMap<Long, String> accountEntries = new HashMap<Long, String>();
                     while (accountIds.hasNext()) {
                         Long accountId = accountIds.next();
-                        Cursor account = this.getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID, ACCOUNTS_QUERY}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
-                        if (account.moveToFirst() && sLocationSupported.contains(mAccountsService.get(accountId)))
+                        Cursor account = Accounts.get(this, accountId);
+
+                        if (account.moveToFirst() && sLocationSupported.contains(mAccountsService.get(accountId))) {
                             accountEntries.put(account.getLong(account.getColumnIndex(Accounts._ID)), account.getString(account.getColumnIndex(Accounts.USERNAME)));
+                        }
+
                     }
                     int size = accountEntries.size();
                     if (size != 0) {
@@ -303,12 +306,12 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
                     int serviceId = account.getInt(account.getColumnIndex(Accounts.SERVICE));
                     String token = mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN)));
                     String secret = mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET)));
-                    SocialClient socialClient = new SocialClient.Builder(SonetCreatePost.this)
+                    Client client = new Client.Builder(SonetCreatePost.this)
                             .setNetwork(serviceId)
                             .setCredentials(token, secret)
                             .build();
 
-                    locations = socialClient.getLocations(mLat, mLong);
+                    locations = client.getLocations(mLat, mLong);
                 }
 
                 account.close();
@@ -413,11 +416,11 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
                                 String message = mMessage.getText().toString();
                                 String token = mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN)));
                                 String secret = mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET)));
-                                SocialClient socialClient = new SocialClient.Builder(SonetCreatePost.this)
+                                Client client = new Client.Builder(SonetCreatePost.this)
                                         .setNetwork(service)
                                         .setCredentials(token, secret)
                                         .build();
-                                boolean success = socialClient.createPost(message, placeId, mLat, mLong, mPhotoPath, mAccountsTags.get(accountId));
+                                boolean success = client.createPost(message, placeId, mLat, mLong, mPhotoPath, mAccountsTags.get(accountId));
                                 publishProgress(serviceName, getString(success ? R.string.success : R.string.failure));
                             }
 
@@ -524,7 +527,8 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 
     protected void chooseAccounts() {
         // don't limit accounts to the widget...
-        Cursor c = this.getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID, ACCOUNTS_QUERY, Accounts.SERVICE}, null, null, null);
+        Cursor c = Accounts.get(this);
+
         if (c.moveToFirst()) {
             int i = 0;
             int count = c.getCount();

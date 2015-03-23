@@ -4,7 +4,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.piusvelte.sonet.social.SocialClient;
+import com.piusvelte.sonet.social.Client;
 
 /**
  * Created by bemmanuel on 3/19/15.
@@ -16,7 +16,7 @@ public class MemberAuthenticationLoader extends BaseAsyncTaskLoader {
     @NonNull
     String mAuthenticatedUrl;
     @Nullable
-    SocialClient.MemberAuthentication mMemberAuthentication;
+    Client.MemberAuthentication mMemberAuthentication;
 
     public MemberAuthenticationLoader(@NonNull Context context, @NonNull OAuthLoginLoader.OAuthLoginLoaderResult oAuthLoginLoaderResult, @NonNull String authenticatedUrl) {
         super(context);
@@ -26,7 +26,7 @@ public class MemberAuthenticationLoader extends BaseAsyncTaskLoader {
 
     @Override
     public Object loadInBackground() {
-        mMemberAuthentication = mOAuthLoginLoaderResult.socialClient.getMemberAuthentication(mOAuthLoginLoaderResult.sonetOAuth, mAuthenticatedUrl);
+        mMemberAuthentication = mOAuthLoginLoaderResult.client.getMemberAuthentication(mOAuthLoginLoaderResult.sonetOAuth, mAuthenticatedUrl);
         return mMemberAuthentication;
     }
 }

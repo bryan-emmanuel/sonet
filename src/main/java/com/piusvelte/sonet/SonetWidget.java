@@ -19,11 +19,11 @@
  */
 package com.piusvelte.sonet;
 
-import com.piusvelte.sonet.Sonet.Status_links;
-import com.piusvelte.sonet.Sonet.Statuses;
-import com.piusvelte.sonet.Sonet.Statuses_styles;
-import com.piusvelte.sonet.Sonet.Widget_accounts;
-import com.piusvelte.sonet.Sonet.Widgets;
+import com.piusvelte.sonet.provider.StatusLinks;
+import com.piusvelte.sonet.provider.Statuses;
+import com.piusvelte.sonet.provider.StatusesStyles;
+import com.piusvelte.sonet.provider.WidgetAccounts;
+import com.piusvelte.sonet.provider.Widgets;
 
 import mobi.intuitit.android.content.LauncherIntent;
 
@@ -95,11 +95,11 @@ public class SonetWidget extends AppWidgetProvider {
 		for (int appWidgetId : appWidgetIds) {
 			((AlarmManager) context.getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getService(context, 0, Sonet.getPackageIntent(context, SonetService.class).setAction(Integer.toString(appWidgetId)), 0));
 			context.getContentResolver().delete(Widgets.getContentUri(context), Widgets.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
-			context.getContentResolver().delete(Widget_accounts.getContentUri(context), Widget_accounts.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
+			context.getContentResolver().delete(WidgetAccounts.getContentUri(context), WidgetAccounts.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)});
 			Cursor statuses = context.getContentResolver().query(Statuses.getContentUri(context), new String[]{Statuses._ID}, Statuses.WIDGET + "=?", new String[]{Integer.toString(appWidgetId)}, null);
 			if (statuses.moveToFirst()) {
 				while (!statuses.isAfterLast()) {
-					context.getContentResolver().delete(Status_links.getContentUri(context), Status_links.STATUS_ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
+					context.getContentResolver().delete(StatusLinks.getContentUri(context), StatusLinks.STATUS_ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
 					statuses.moveToNext();
 				}
 			}
@@ -113,10 +113,10 @@ public class SonetWidget extends AppWidgetProvider {
 		String statusId = "";
 		if (intent.hasExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS)) {
 			statusId = intent.getStringExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS);
-		} else if (intent.hasExtra(Sonet.Status_links.STATUS_ID)) {
-			statusId = intent.getStringExtra(Sonet.Status_links.STATUS_ID);		
+		} else if (intent.hasExtra(StatusLinks.STATUS_ID)) {
+			statusId = intent.getStringExtra(StatusLinks.STATUS_ID);
 		}
-		context.startActivity(intent.setClass(context, Sonet.getPackageClass(context, StatusDialog.class)).setData(Uri.withAppendedPath(Statuses_styles.getContentUri(context), statusId)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+		context.startActivity(intent.setClass(context, Sonet.getPackageClass(context, StatusDialog.class)).setData(Uri.withAppendedPath(StatusesStyles.getContentUri(context), statusId)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
 	}
 
 }

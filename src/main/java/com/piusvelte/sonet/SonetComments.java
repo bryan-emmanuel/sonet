@@ -28,14 +28,14 @@ import com.google.ads.*;
 
 import static com.piusvelte.sonet.Sonet.*;
 
-import com.piusvelte.sonet.Sonet.Accounts;
-import com.piusvelte.sonet.Sonet.Entities;
-import com.piusvelte.sonet.Sonet.Notifications;
-import com.piusvelte.sonet.Sonet.Statuses;
-import com.piusvelte.sonet.Sonet.Statuses_styles;
-import com.piusvelte.sonet.Sonet.Widgets;
-import com.piusvelte.sonet.Sonet.Widgets_settings;
-import com.piusvelte.sonet.social.SocialClient;
+import com.piusvelte.sonet.provider.Accounts;
+import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.provider.Notifications;
+import com.piusvelte.sonet.provider.Statuses;
+import com.piusvelte.sonet.provider.StatusesStyles;
+import com.piusvelte.sonet.provider.Widgets;
+import com.piusvelte.sonet.provider.WidgetsSettings;
+import com.piusvelte.sonet.social.Client;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -87,7 +87,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
     private String[] items = null;
     private AlertDialog mDialog;
     @Nullable
-    private SocialClient mSocialClient;
+    private Client mClient;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -146,7 +146,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
     @Override
     public void onClick(View v) {
         if (v == mSend) {
-            if (!TextUtils.isEmpty(mMessage.getText().toString()) && mSocialClient != null) {
+            if (!TextUtils.isEmpty(mMessage.getText().toString()) && mClient != null) {
                 mMessage.setEnabled(false);
                 mSend.setEnabled(false);
                 // post or comment!
@@ -157,7 +157,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
                         String serviceName = Sonet.getServiceName(getResources(), mService);
                         publishProgress(serviceName);
 
-                        boolean success = mSocialClient.sendComment(mSid, mMessage.getText().toString());
+                        boolean success = mClient.sendComment(mSid, mMessage.getText().toString());
 
                         return !success && mService == MYSPACE ? null : serviceName + " " + getString(success ? R.string.success : R.string.failure);
                     }
@@ -242,7 +242,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
             }
 
             items = new String[count + 1];
-            items[0] = mSocialClient.getLikeText(isLiked);
+            items[0] = mClient.getLikeText(isLiked);
             count = 1;
             m.reset();
 
@@ -261,13 +261,13 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 
                                     @Override
                                     protected Void doInBackground(String... arg0) {
-                                        success = mSocialClient.likeStatus(sid, mEsid, true);
+                                        success = mClient.likeStatus(sid, mEsid, true);
                                         return null;
                                     }
 
                                     @Override
                                     protected void onPostExecute(Void aVoid) {
-                                        setCommentStatus(0, mSocialClient.getLikeText(success ? !isLiked : isLiked));
+                                        setCommentStatus(0, mClient.getLikeText(success ? !isLiked : isLiked));
                                         (Toast.makeText(SonetComments.this, mServiceName + " " + getString(success ? R.string.success : R.string.failure), Toast.LENGTH_LONG)).show();
                                     }
                                 };
@@ -351,7 +351,7 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
 
                     switch (um.match(mData)) {
                         case SonetProvider.STATUSES_STYLES:
-                            status = getContentResolver().query(Statuses_styles.getContentUri(SonetComments.this), new String[]{Statuses_styles.ACCOUNT, Statuses_styles.SID, Statuses_styles.ESID, Statuses_styles.WIDGET, Statuses_styles.SERVICE, Statuses_styles.FRIEND, Statuses_styles.MESSAGE, Statuses_styles.CREATED}, Statuses_styles._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
+                            status = getContentResolver().query(StatusesStyles.getContentUri(SonetComments.this), new String[]{StatusesStyles.ACCOUNT, StatusesStyles.SID, StatusesStyles.ESID, StatusesStyles.WIDGET, StatusesStyles.SERVICE, StatusesStyles.FRIEND, StatusesStyles.MESSAGE, StatusesStyles.CREATED}, StatusesStyles._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
 
                             if (status.moveToFirst()) {
                                 mService = status.getInt(4);
@@ -359,17 +359,17 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
                                 mAccount = status.getLong(0);
                                 mSid = sonetCrypto.Decrypt(status.getString(1));
                                 mEsid = sonetCrypto.Decrypt(status.getString(2));
-                                Cursor widget = getContentResolver().query(Widgets_settings.getContentUri(SonetComments.this), new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(status.getInt(3)), Long.toString(mAccount)}, null);
+                                Cursor widget = getContentResolver().query(WidgetsSettings.getContentUri(SonetComments.this), new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(status.getInt(3)), Long.toString(mAccount)}, null);
 
                                 if (widget.moveToFirst()) {
                                     mTime24hr = widget.getInt(0) == 1;
                                 } else {
-                                    Cursor b = getContentResolver().query(Widgets_settings.getContentUri(SonetComments.this), new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(status.getInt(3)), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+                                    Cursor b = getContentResolver().query(WidgetsSettings.getContentUri(SonetComments.this), new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(status.getInt(3)), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 
                                     if (b.moveToFirst()) {
                                         mTime24hr = b.getInt(0) == 1;
                                     } else {
-                                        Cursor c = getContentResolver().query(Widgets_settings.getContentUri(SonetComments.this), new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+                                        Cursor c = getContentResolver().query(WidgetsSettings.getContentUri(SonetComments.this), new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
 
                                         if (c.moveToFirst()) {
                                             mTime24hr = c.getInt(0) == 1;
@@ -453,18 +453,18 @@ public class SonetComments extends ListActivity implements OnKeyListener, OnClic
                             mComments.add(commentMap);
                     }
 
-                    mSocialClient = new SocialClient.Builder(SonetComments.this)
+                    mClient = new Client.Builder(SonetComments.this)
                             .setNetwork(mService)
                             .setCredentials(mToken, mSecret)
                             .setAccount(mEsid)
                             .build();
 
-                    mMessagePretext = mSocialClient.getCommentPretext(mEsid);
-                    mIsLikeable = mSocialClient.isLikeable(mSid);
-                    mIsLiked = mSocialClient.isLiked(mSid, mAccountSid);
-                    mIsCommentable = mSocialClient.isCommentable(mSid);
-                    mLikeText = mSocialClient.getLikeText(mIsLiked);
-                    mSocialClientComments = mSocialClient.getComments(mSid, mTime24hr);
+                    mMessagePretext = mClient.getCommentPretext(mEsid);
+                    mIsLikeable = mClient.isLikeable(mSid);
+                    mIsLiked = mClient.isLiked(mSid, mAccountSid);
+                    mIsCommentable = mClient.isCommentable(mSid);
+                    mLikeText = mClient.getLikeText(mIsLiked);
+                    mSocialClientComments = mClient.getComments(mSid, mTime24hr);
                 }
 
                 return null;

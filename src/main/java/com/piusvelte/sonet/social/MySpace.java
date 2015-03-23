@@ -15,6 +15,8 @@ import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.SonetOAuth;
+import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.provider.Notifications;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -58,9 +60,9 @@ import static oauth.signpost.OAuth.OAUTH_VERIFIER;
 /**
  * Created by bemmanuel on 2/15/15.
  */
-public class MySpaceClient extends SocialClient {
+public class MySpace extends Client {
 
-    public MySpaceClient(Context context, String token, String secret, String accountEsid, int network) {
+    public MySpace(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
     }
 
@@ -135,7 +137,7 @@ public class MySpaceClient extends SocialClient {
     @Override
     public Set<String> getNotificationStatusIds(long account, String[] notificationMessage) {
         Set<String> notificationSids = new HashSet<>();
-        Cursor currentNotifications = getContentResolver().query(Sonet.Notifications.getContentUri(mContext), new String[]{Sonet.Notifications._ID, Sonet.Notifications.SID, Sonet.Notifications.UPDATED, Sonet.Notifications.CLEARED, Sonet.Notifications.ESID}, Sonet.Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext), new String[]{Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
 
         // loop over notifications
         if (currentNotifications.moveToFirst()) {
@@ -268,7 +270,7 @@ public class MySpaceClient extends SocialClient {
 
     @Override
     public void getNotifications(long account, String[] notificationMessage) {
-        Cursor currentNotifications = getContentResolver().query(Sonet.Notifications.getContentUri(mContext), new String[]{Sonet.Notifications._ID, Sonet.Notifications.SID, Sonet.Notifications.UPDATED, Sonet.Notifications.CLEARED, Sonet.Notifications.ESID}, Sonet.Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext), new String[]{Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
 
         if (currentNotifications.moveToFirst()) {
             Set<String> notificationSids = new HashSet<>();
@@ -299,18 +301,18 @@ public class MySpaceClient extends SocialClient {
                                 if (created_time > updated) {
                                     // new comment
                                     ContentValues values = new ContentValues();
-                                    values.put(Sonet.Notifications.UPDATED, created_time);
+                                    values.put(Notifications.UPDATED, created_time);
                                     JSONObject author = comment.getJSONObject(Sauthor);
                                     if (mAccountEsid.equals(author.getString(Sid))) {
                                         // user's own comment, clear the notification
-                                        values.put(Sonet.Notifications.CLEARED, 1);
+                                        values.put(Notifications.CLEARED, 1);
                                     } else if (cleared) {
-                                        values.put(Sonet.Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), comment.getString(SdisplayName)));
-                                        values.put(Sonet.Notifications.CLEARED, 0);
+                                        values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), comment.getString(SdisplayName)));
+                                        values.put(Notifications.CLEARED, 0);
                                     } else {
-                                        values.put(Sonet.Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), comment.getString(SdisplayName) + " and others"));
+                                        values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), comment.getString(SdisplayName) + " and others"));
                                     }
-                                    getContentResolver().update(Sonet.Notifications.getContentUri(mContext), values, Sonet.Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
+                                    getContentResolver().update(Notifications.getContentUri(mContext), values, Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
                                 }
                             }
                         }
@@ -450,10 +452,10 @@ public class MySpaceClient extends SocialClient {
     @Override
     public HashMap<String, String> parseComment(@NonNull String statusId, @NonNull JSONObject jsonComment, boolean time24hr) throws JSONException {
         HashMap<String, String> commentMap = new HashMap<String, String>();
-        commentMap.put(Sonet.Statuses.SID, jsonComment.getString(ScommentId));
-        commentMap.put(Sonet.Entities.FRIEND, jsonComment.getJSONObject(Sauthor).getString(SdisplayName));
-        commentMap.put(Sonet.Statuses.MESSAGE, jsonComment.getString(Sbody));
-        commentMap.put(Sonet.Statuses.CREATEDTEXT, Sonet.getCreatedText(parseDate(jsonComment.getString(SpostedDate), MYSPACE_DATE_FORMAT), time24hr));
+        commentMap.put(Statuses.SID, jsonComment.getString(ScommentId));
+        commentMap.put(Entities.FRIEND, jsonComment.getJSONObject(Sauthor).getString(SdisplayName));
+        commentMap.put(Statuses.MESSAGE, jsonComment.getString(Sbody));
+        commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(parseDate(jsonComment.getString(SpostedDate), MYSPACE_DATE_FORMAT), time24hr));
         commentMap.put(getString(R.string.like), "");
         return commentMap;
     }

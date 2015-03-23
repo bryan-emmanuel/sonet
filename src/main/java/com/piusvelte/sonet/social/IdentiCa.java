@@ -18,9 +18,9 @@ import static com.piusvelte.sonet.Sonet.IDENTICA_URL_REQUEST;
 /**
  * Created by bemmanuel on 2/15/15.
  */
-public class IdentiCaClient extends TwitterClient {
+public class IdentiCa extends Twitter {
 
-    public IdentiCaClient(Context context, String token, String secret, String accountEsid, int network) {
+    public IdentiCa(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
     }
 

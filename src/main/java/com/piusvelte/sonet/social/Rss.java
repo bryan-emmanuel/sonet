@@ -43,9 +43,9 @@ import static com.piusvelte.sonet.Sonet.Surl;
 /**
  * Created by bemmanuel on 2/15/15.
  */
-public class RssClient extends SocialClient {
+public class Rss extends Client {
 
-    public RssClient(Context context, String token, String secret, String accountEsid, int network) {
+    public Rss(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
     }
 

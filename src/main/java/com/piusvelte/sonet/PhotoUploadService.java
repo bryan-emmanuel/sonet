@@ -39,9 +39,9 @@ import org.apache.http.entity.mime.content.ContentBody;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
 
-import com.piusvelte.sonet.Sonet.Accounts;
-import com.piusvelte.sonet.Sonet.Statuses;
-import com.piusvelte.sonet.Sonet.Widgets;
+import com.piusvelte.sonet.provider.Accounts;
+import com.piusvelte.sonet.provider.Statuses;
+import com.piusvelte.sonet.provider.Widgets;
 
 import android.app.Notification;
 import android.app.NotificationManager;

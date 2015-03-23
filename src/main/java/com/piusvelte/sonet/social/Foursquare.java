@@ -15,6 +15,8 @@ import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.SonetOAuth;
+import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.provider.Notifications;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -62,9 +64,9 @@ import static com.piusvelte.sonet.Sonet.Svenue;
 /**
  * Created by bemmanuel on 2/15/15.
  */
-public class FoursquareClient extends SocialClient {
+public class Foursquare extends Client {
 
-    public FoursquareClient(Context context, String token, String secret, String accountEsid, int network) {
+    public Foursquare(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
     }
 
@@ -145,7 +147,7 @@ public class FoursquareClient extends SocialClient {
     @Override
     public Set<String> getNotificationStatusIds(long account, String[] notificationMessage) {
         Set<String> notificationSids = new HashSet<>();
-        Cursor currentNotifications = getContentResolver().query(Sonet.Notifications.getContentUri(mContext), new String[]{Sonet.Notifications._ID, Sonet.Notifications.SID, Sonet.Notifications.UPDATED, Sonet.Notifications.CLEARED, Sonet.Notifications.ESID}, Sonet.Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext), new String[]{Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
 
         // loop over notifications
         if (currentNotifications.moveToFirst()) {
@@ -292,7 +294,7 @@ public class FoursquareClient extends SocialClient {
 
     @Override
     public void getNotifications(long account, String[] notificationMessage) {
-        Cursor currentNotifications = getContentResolver().query(Sonet.Notifications.getContentUri(mContext), new String[]{Sonet.Notifications._ID, Sonet.Notifications.SID, Sonet.Notifications.UPDATED, Sonet.Notifications.CLEARED, Sonet.Notifications.ESID}, Sonet.Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext), new String[]{Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
 
         if (currentNotifications.moveToFirst()) {
             Set<String> notificationSids = new HashSet<>();
@@ -322,20 +324,20 @@ public class FoursquareClient extends SocialClient {
                                 if (created_time > updated) {
                                     // new comment
                                     ContentValues values = new ContentValues();
-                                    values.put(Sonet.Notifications.UPDATED, created_time);
+                                    values.put(Notifications.UPDATED, created_time);
                                     JSONObject user = comment.getJSONObject(Suser);
 
                                     if (mAccountEsid.equals(user.getString(Sid))) {
                                         // user's own comment, clear the notification
-                                        values.put(Sonet.Notifications.CLEARED, 1);
+                                        values.put(Notifications.CLEARED, 1);
                                     } else if (cleared) {
-                                        values.put(Sonet.Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), user.getString(SfirstName) + " " + user.getString(SlastName)));
-                                        values.put(Sonet.Notifications.CLEARED, 0);
+                                        values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), user.getString(SfirstName) + " " + user.getString(SlastName)));
+                                        values.put(Notifications.CLEARED, 0);
                                     } else {
-                                        values.put(Sonet.Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), user.getString(SfirstName) + " " + user.getString(SlastName) + " and others"));
+                                        values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), user.getString(SfirstName) + " " + user.getString(SlastName) + " and others"));
                                     }
 
-                                    getContentResolver().update(Sonet.Notifications.getContentUri(mContext), values, Sonet.Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
+                                    getContentResolver().update(Notifications.getContentUri(mContext), values, Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
                                 }
                             }
                         }
@@ -501,10 +503,10 @@ public class FoursquareClient extends SocialClient {
     public HashMap<String, String> parseComment(@NonNull String statusId, @NonNull JSONObject jsonComment, boolean time24hr) throws JSONException {
         JSONObject user = jsonComment.getJSONObject(Suser);
         HashMap<String, String> commentMap = new HashMap<>();
-        commentMap.put(Sonet.Statuses.SID, jsonComment.getString(Sid));
-        commentMap.put(Sonet.Entities.FRIEND, user.getString(SfirstName) + " " + user.getString(SlastName));
-        commentMap.put(Sonet.Statuses.MESSAGE, jsonComment.getString(Stext));
-        commentMap.put(Sonet.Statuses.CREATEDTEXT, Sonet.getCreatedText(jsonComment.getLong(ScreatedAt) * 1000, time24hr));
+        commentMap.put(Statuses.SID, jsonComment.getString(Sid));
+        commentMap.put(Entities.FRIEND, user.getString(SfirstName) + " " + user.getString(SlastName));
+        commentMap.put(Statuses.MESSAGE, jsonComment.getString(Stext));
+        commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(jsonComment.getLong(ScreatedAt) * 1000, time24hr));
         commentMap.put(getString(R.string.like), "");
         return commentMap;
     }

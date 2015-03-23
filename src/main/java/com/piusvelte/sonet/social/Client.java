@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -19,8 +20,12 @@ import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.SonetOAuth;
+import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.provider.Notifications;
+import com.piusvelte.sonet.provider.StatusImages;
+import com.piusvelte.sonet.provider.StatusLinks;
+import com.piusvelte.sonet.provider.Statuses;
 
-import org.apache.http.auth.NTCredentials;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.json.JSONArray;
@@ -57,7 +62,7 @@ import static com.piusvelte.sonet.Sonet.sTimeZone;
 /**
  * Created by bemmanuel on 2/15/15.
  */
-abstract public class SocialClient {
+abstract public class Client {
 
     String mTag;
 
@@ -70,7 +75,7 @@ abstract public class SocialClient {
 
     private SimpleDateFormat mSimpleDateFormat = null;
 
-    public SocialClient(Context context, String token, String secret, String accountEsid, int network) {
+    public Client(Context context, String token, String secret, String accountEsid, int network) {
         mTag = getClass().getSimpleName();
         mContext = context;
         mToken = token;
@@ -86,40 +91,94 @@ abstract public class SocialClient {
             return Network.values()[network];
         }
 
-        public SocialClient getClient(Context context, String token, String secret, String accountEntityId) {
+        public static int[] getIcons() {
+            int[] icons = new int[values().length];
+            int iconIndex = 0;
+
+            for (Network network : values()) {
+                icons[iconIndex] = network.getIcon();
+                iconIndex++;
+            }
+
+            return icons;
+        }
+
+        public Client getClient(Context context, String token, String secret, String accountEntityId) {
             switch (this) {
                 case Twitter:
-                    return new TwitterClient(context, token, secret, accountEntityId, this.ordinal());
+                    return new Twitter(context, token, secret, accountEntityId, this.ordinal());
 
                 case Facebook:
-                    return new FacebookClient(context, token, secret, accountEntityId, this.ordinal());
+                    return new Facebook(context, token, secret, accountEntityId, this.ordinal());
 
                 case MySpace:
-                    return new MySpaceClient(context, token, secret, accountEntityId, this.ordinal());
+                    return new MySpace(context, token, secret, accountEntityId, this.ordinal());
 
                 case Foursquare:
-                    return new FoursquareClient(context, token, secret, accountEntityId, this.ordinal());
+                    return new Foursquare(context, token, secret, accountEntityId, this.ordinal());
 
                 case LinkedIn:
-                    return new LinkedInClient(context, token, secret, accountEntityId, this.ordinal());
+                    return new LinkedIn(context, token, secret, accountEntityId, this.ordinal());
 
                 case Sms:
                     throw new IllegalArgumentException("SMS is not a SocialClient");
 
                 case Rss:
-                    return new RssClient(context, token, secret, accountEntityId, this.ordinal());
+                    return new Rss(context, token, secret, accountEntityId, this.ordinal());
 
                 case IdentiCa:
-                    return new IdentiCaClient(context, token, secret, accountEntityId, this.ordinal());
+                    return new IdentiCa(context, token, secret, accountEntityId, this.ordinal());
 
                 case GooglePlus:
-                    return new GooglePlusClient(context, token, secret, accountEntityId, this.ordinal());
+                    return new GooglePlus(context, token, secret, accountEntityId, this.ordinal());
 
                 case Pinterest:
-                    return new PinterestClient(context, token, secret, accountEntityId, this.ordinal());
+                    return new Pinterest(context, token, secret, accountEntityId, this.ordinal());
 
                 case Chatter:
-                    return new ChatterClient(context, token, secret, accountEntityId, this.ordinal());
+                    return new Chatter(context, token, secret, accountEntityId, this.ordinal());
+
+                default:
+                    throw new IllegalArgumentException("Unsupported network: " + this);
+            }
+        }
+
+        @DrawableRes
+        public int getIcon() {
+            switch (this) {
+                case Twitter:
+                    return R.drawable.twitter;
+
+                case Facebook:
+                    return R.drawable.facebook;
+
+                case MySpace:
+                    return R.drawable.myspace;
+
+                case Foursquare:
+                    return R.drawable.foursquare;
+
+                case LinkedIn:
+                    return R.drawable.linkedin;
+
+                case Sms:
+                    return R.drawable.sms;
+
+                case Rss:
+                    return R.drawable.rss;
+
+                case IdentiCa:
+                    return R.drawable.identica;
+
+                case GooglePlus:
+                    return R.drawable.googleplus;
+
+                case Pinterest:
+                    // TODO replace this
+                    return R.drawable.buzz;
+
+                case Chatter:
+                    return R.drawable.salesforce;
 
                 default:
                     throw new IllegalArgumentException("Unsupported network: " + this);
@@ -160,7 +219,7 @@ abstract public class SocialClient {
             return this;
         }
 
-        public SocialClient build() {
+        public Client build() {
             return mNetwork.getClient(mContext, mToken, mSecret, mAccountEsid);
         }
     }
@@ -196,7 +255,7 @@ abstract public class SocialClient {
                                 addFeedItem(item, display_profile, time24hr, appWidgetId, account, httpClient, notificationSids, notificationMessage, doNotify);
                             }
                         }
-                    } else if (this instanceof MySpaceClient) {
+                    } else if (this instanceof MySpace) {
                         // warn about myspace permissions
                         addStatusItem(0,
                                 getString(R.string.myspace_permissions_title),
@@ -216,7 +275,7 @@ abstract public class SocialClient {
                     Log.d(mTag, "error parsing feed response: " + response, e);
                 }
             }
-        } else if (this instanceof MySpaceClient) {
+        } else if (this instanceof MySpace) {
             // warn about myspace permissions
             addStatusItem(0,
                     getString(R.string.myspace_permissions_title),
@@ -432,17 +491,17 @@ abstract public class SocialClient {
         String friend_override = getPostFriendOverride(friend);
         friend = getPostFriend(friend);
 
-        Cursor entity = getContentResolver().query(Sonet.Entities.getContentUri(mContext), new String[]{Sonet.Entities._ID}, Sonet.Entities.ACCOUNT + "=? and " + Sonet.Entities.ESID + "=?", new String[]{Long.toString(accountId), SonetCrypto.getInstance(mContext).Encrypt(esid)}, null);
+        Cursor entity = getContentResolver().query(Entities.getContentUri(mContext), new String[]{Entities._ID}, Entities.ACCOUNT + "=? and " + Entities.ESID + "=?", new String[]{Long.toString(accountId), SonetCrypto.getInstance(mContext).Encrypt(esid)}, null);
 
         if (entity.moveToFirst()) {
             id = entity.getLong(0);
         } else {
             ContentValues entityValues = new ContentValues();
-            entityValues.put(Sonet.Entities.ESID, esid);
-            entityValues.put(Sonet.Entities.FRIEND, friend);
-            entityValues.put(Sonet.Entities.PROFILE, profile);
-            entityValues.put(Sonet.Entities.ACCOUNT, accountId);
-            id = Long.parseLong(getContentResolver().insert(Sonet.Entities.getContentUri(mContext), entityValues).getLastPathSegment());
+            entityValues.put(Entities.ESID, esid);
+            entityValues.put(Entities.FRIEND, friend);
+            entityValues.put(Entities.PROFILE, profile);
+            entityValues.put(Entities.ACCOUNT, accountId);
+            id = Long.parseLong(getContentResolver().insert(Entities.getContentUri(mContext), entityValues).getLastPathSegment());
         }
 
         entity.close();
@@ -480,16 +539,16 @@ abstract public class SocialClient {
         m.appendTail(sb);
         message = sb.toString();
         ContentValues values = new ContentValues();
-        values.put(Sonet.Statuses.CREATED, created);
-        values.put(Sonet.Statuses.ENTITY, id);
-        values.put(Sonet.Statuses.MESSAGE, message);
-        values.put(Sonet.Statuses.SERVICE, mNetwork);
-        values.put(Sonet.Statuses.CREATEDTEXT, Sonet.getCreatedText(created, time24hr));
-        values.put(Sonet.Statuses.WIDGET, appWidgetId);
-        values.put(Sonet.Statuses.ACCOUNT, accountId);
-        values.put(Sonet.Statuses.SID, sid);
-        values.put(Sonet.Statuses.FRIEND_OVERRIDE, friend_override);
-        long statusId = Long.parseLong(getContentResolver().insert(Sonet.Statuses.getContentUri(mContext), values).getLastPathSegment());
+        values.put(Statuses.CREATED, created);
+        values.put(Statuses.ENTITY, id);
+        values.put(Statuses.MESSAGE, message);
+        values.put(Statuses.SERVICE, mNetwork);
+        values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(created, time24hr));
+        values.put(Statuses.WIDGET, appWidgetId);
+        values.put(Statuses.ACCOUNT, accountId);
+        values.put(Statuses.SID, sid);
+        values.put(Statuses.FRIEND_OVERRIDE, friend_override);
+        long statusId = Long.parseLong(getContentResolver().insert(Statuses.getContentUri(mContext), values).getLastPathSegment());
         String imageUrl = null;
 
         for (String[] s : links) {
@@ -499,10 +558,10 @@ abstract public class SocialClient {
             }
 
             ContentValues linkValues = new ContentValues();
-            linkValues.put(Sonet.Status_links.STATUS_ID, statusId);
-            linkValues.put(Sonet.Status_links.LINK_TYPE, s[0]);
-            linkValues.put(Sonet.Status_links.LINK_URI, s[1]);
-            getContentResolver().insert(Sonet.Status_links.getContentUri(mContext), linkValues);
+            linkValues.put(StatusLinks.STATUS_ID, statusId);
+            linkValues.put(StatusLinks.LINK_TYPE, s[0]);
+            linkValues.put(StatusLinks.LINK_URI, s[1]);
+            getContentResolver().insert(StatusLinks.getContentUri(mContext), linkValues);
         }
 
         boolean insertEmptyImage = true;
@@ -591,27 +650,27 @@ abstract public class SocialClient {
     }
 
     void removeOldStatuses(String widgetId, String accountId) {
-        Cursor statuses = getContentResolver().query(Sonet.Statuses.getContentUri(mContext), new String[]{Sonet.Statuses._ID}, Sonet.Statuses.WIDGET + "=? and " + Sonet.Statuses.ACCOUNT + "=?", new String[]{widgetId, accountId}, null);
+        Cursor statuses = getContentResolver().query(Statuses.getContentUri(mContext), new String[]{Statuses._ID}, Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widgetId, accountId}, null);
 
         if (statuses.moveToFirst()) {
             while (!statuses.isAfterLast()) {
                 String id = Long.toString(statuses.getLong(0));
-                getContentResolver().delete(Sonet.Status_links.getContentUri(mContext), Sonet.Status_links.STATUS_ID + "=?", new String[]{id});
-                getContentResolver().delete(Sonet.Status_images.getContentUri(mContext), Sonet.Status_images.STATUS_ID + "=?", new String[]{id});
+                getContentResolver().delete(StatusLinks.getContentUri(mContext), StatusLinks.STATUS_ID + "=?", new String[]{id});
+                getContentResolver().delete(StatusImages.getContentUri(mContext), StatusImages.STATUS_ID + "=?", new String[]{id});
                 statuses.moveToNext();
             }
         }
 
         statuses.close();
-        getContentResolver().delete(Sonet.Statuses.getContentUri(mContext), Sonet.Statuses.WIDGET + "=? and " + Sonet.Statuses.ACCOUNT + "=?", new String[]{widgetId, accountId});
-        Cursor entities = getContentResolver().query(Sonet.Entities.getContentUri(mContext), new String[]{Sonet.Entities._ID}, Sonet.Entities.ACCOUNT + "=?", new String[]{accountId}, null);
+        getContentResolver().delete(Statuses.getContentUri(mContext), Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widgetId, accountId});
+        Cursor entities = getContentResolver().query(Entities.getContentUri(mContext), new String[]{Entities._ID}, Entities.ACCOUNT + "=?", new String[]{accountId}, null);
 
         if (entities.moveToFirst()) {
             while (!entities.isAfterLast()) {
-                Cursor s = getContentResolver().query(Sonet.Statuses.getContentUri(mContext), new String[]{Sonet.Statuses._ID}, Sonet.Statuses.ACCOUNT + "=? and " + Sonet.Statuses.WIDGET + " !=?", new String[]{accountId, widgetId}, null);
+                Cursor s = getContentResolver().query(Statuses.getContentUri(mContext), new String[]{Statuses._ID}, Statuses.ACCOUNT + "=? and " + Statuses.WIDGET + " !=?", new String[]{accountId, widgetId}, null);
                 if (!s.moveToFirst()) {
                     // not in use, remove it
-                    getContentResolver().delete(Sonet.Entities.getContentUri(mContext), Sonet.Entities._ID + "=?", new String[]{Long.toString(entities.getLong(0))});
+                    getContentResolver().delete(Entities.getContentUri(mContext), Entities._ID + "=?", new String[]{Long.toString(entities.getLong(0))});
                 }
                 s.close();
                 entities.moveToNext();
@@ -623,37 +682,37 @@ abstract public class SocialClient {
 
     void addNotification(String sid, String esid, String friend, String message, long created, long accountId, String notification) {
         ContentValues values = new ContentValues();
-        values.put(Sonet.Notifications.SID, sid);
-        values.put(Sonet.Notifications.ESID, esid);
-        values.put(Sonet.Notifications.FRIEND, friend);
-        values.put(Sonet.Notifications.MESSAGE, message);
-        values.put(Sonet.Notifications.CREATED, created);
-        values.put(Sonet.Notifications.ACCOUNT, accountId);
-        values.put(Sonet.Notifications.NOTIFICATION, notification);
-        values.put(Sonet.Notifications.CLEARED, 0);
-        values.put(Sonet.Notifications.UPDATED, created);
-        getContentResolver().insert(Sonet.Notifications.getContentUri(mContext), values);
+        values.put(Notifications.SID, sid);
+        values.put(Notifications.ESID, esid);
+        values.put(Notifications.FRIEND, friend);
+        values.put(Notifications.MESSAGE, message);
+        values.put(Notifications.CREATED, created);
+        values.put(Notifications.ACCOUNT, accountId);
+        values.put(Notifications.NOTIFICATION, notification);
+        values.put(Notifications.CLEARED, 0);
+        values.put(Notifications.UPDATED, created);
+        getContentResolver().insert(Notifications.getContentUri(mContext), values);
     }
 
     String updateNotification(long notificationId, long created_time, String accountEsid, String esid, String name, boolean cleared) {
         String message = null;
         // new comment
         ContentValues values = new ContentValues();
-        values.put(Sonet.Notifications.UPDATED, created_time);
+        values.put(Notifications.UPDATED, created_time);
 
         if (accountEsid.equals(esid)) {
             // user's own comment, clear the notification
-            values.put(Sonet.Notifications.CLEARED, 1);
+            values.put(Notifications.CLEARED, 1);
         } else if (cleared) {
-            values.put(Sonet.Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), name));
-            values.put(Sonet.Notifications.CLEARED, 0);
+            values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), name));
+            values.put(Notifications.CLEARED, 0);
             message = String.format(getString(R.string.friendcommented), name);
         } else {
-            values.put(Sonet.Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), name + " and others"));
+            values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), name + " and others"));
             message = String.format(getString(R.string.friendcommented), name + " and others");
         }
 
-        getContentResolver().update(Sonet.Notifications.getContentUri(mContext), values, Sonet.Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
+        getContentResolver().update(Notifications.getContentUri(mContext), values, Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
         return message;
     }
 

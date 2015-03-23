@@ -4,7 +4,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 
 import com.piusvelte.sonet.SonetOAuth;
-import com.piusvelte.sonet.social.SocialClient;
+import com.piusvelte.sonet.social.Client;
 
 /**
  * Created by bemmanuel on 3/17/15.
@@ -31,17 +31,17 @@ public class OAuthLoginLoader extends BaseAsyncTaskLoader {
     public class OAuthLoginLoaderResult {
 
         public OAuthLoginLoaderResult(@NonNull Context context, int network) {
-            socialClient = new SocialClient.Builder(context)
+            client = new Client.Builder(context)
                     .setNetwork(network)
                     .build();
-            sonetOAuth = socialClient.getLoginOAuth();
+            sonetOAuth = client.getLoginOAuth();
         }
 
         void loadAuthUrl() {
-            authUrl = socialClient.getAuthUrl(sonetOAuth);
+            authUrl = client.getAuthUrl(sonetOAuth);
         }
 
-        public SocialClient socialClient;
+        public Client client;
         public SonetOAuth sonetOAuth;
         public String authUrl;
 

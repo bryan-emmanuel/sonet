@@ -43,8 +43,8 @@ import org.json.JSONObject;
 import com.google.ads.AdRequest;
 import com.google.ads.AdSize;
 import com.google.ads.AdView;
-import com.piusvelte.sonet.Sonet.Accounts;
-import com.piusvelte.sonet.Sonet.Entities;
+import com.piusvelte.sonet.provider.Accounts;
+import com.piusvelte.sonet.provider.Entities;
 import static com.piusvelte.sonet.Sonet.*;
 
 import android.app.ListActivity;

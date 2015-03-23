@@ -3,8 +3,9 @@ package com.piusvelte.sonet;
 import static com.piusvelte.sonet.Sonet.getBlob;
 import static com.piusvelte.sonet.Sonet.sBFOptions;
 
-import com.piusvelte.sonet.Sonet.Statuses_styles;
-import com.piusvelte.sonet.Sonet.Widgets;
+import com.piusvelte.sonet.provider.StatusLinks;
+import com.piusvelte.sonet.provider.StatusesStyles;
+import com.piusvelte.sonet.provider.Widgets;
 
 import android.annotation.SuppressLint;
 import android.appwidget.AppWidgetManager;
@@ -43,7 +44,7 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
     @Override
     public long getItemId(int position) {
         if ((mCursor != null) && !mCursor.isClosed() && mCursor.moveToPosition(position))
-            return mCursor.getLong(mCursor.getColumnIndex(Statuses_styles._ID));
+            return mCursor.getLong(mCursor.getColumnIndex(StatusesStyles._ID));
         return position;
     }
 
@@ -97,7 +98,7 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
             // Set the click intent so that we can handle it and show a toast message
             final Intent fillInIntent = new Intent();
             final Bundle extras = new Bundle();
-            extras.putString(Sonet.Status_links.STATUS_ID, Long.toString(mCursor.getLong(0)));
+            extras.putString(StatusLinks.STATUS_ID, Long.toString(mCursor.getLong(0)));
             fillInIntent.putExtras(extras);
             views.setOnClickFillInIntent(R.id.item, fillInIntent);
 
@@ -163,7 +164,7 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
             Log.d(TAG, "onDataSetChanged: " + mAppWidgetId);
         }
 
-        mCursor = mContext.getContentResolver().query(Uri.withAppendedPath(Statuses_styles.getContentUri(mContext), Integer.toString(mAppWidgetId)), new String[]{Statuses_styles._ID, Statuses_styles.FRIEND, Statuses_styles.PROFILE, Statuses_styles.MESSAGE, Statuses_styles.CREATEDTEXT, Statuses_styles.MESSAGES_COLOR, Statuses_styles.FRIEND_COLOR, Statuses_styles.CREATED_COLOR, Statuses_styles.MESSAGES_TEXTSIZE, Statuses_styles.FRIEND_TEXTSIZE, Statuses_styles.CREATED_TEXTSIZE, Statuses_styles.STATUS_BG, Statuses_styles.ICON, Statuses_styles.PROFILE_BG, Statuses_styles.FRIEND_BG, Statuses_styles.IMAGE_BG, Statuses_styles.IMAGE}, null, null, Statuses_styles.CREATED + " DESC");
+        mCursor = mContext.getContentResolver().query(Uri.withAppendedPath(StatusesStyles.getContentUri(mContext), Integer.toString(mAppWidgetId)), new String[]{StatusesStyles._ID, StatusesStyles.FRIEND, StatusesStyles.PROFILE, StatusesStyles.MESSAGE, StatusesStyles.CREATEDTEXT, StatusesStyles.MESSAGES_COLOR, StatusesStyles.FRIEND_COLOR, StatusesStyles.CREATED_COLOR, StatusesStyles.MESSAGES_TEXTSIZE, StatusesStyles.FRIEND_TEXTSIZE, StatusesStyles.CREATED_TEXTSIZE, StatusesStyles.STATUS_BG, StatusesStyles.ICON, StatusesStyles.PROFILE_BG, StatusesStyles.FRIEND_BG, StatusesStyles.IMAGE_BG, StatusesStyles.IMAGE}, null, null, StatusesStyles.CREATED + " DESC");
     }
 
     @Override

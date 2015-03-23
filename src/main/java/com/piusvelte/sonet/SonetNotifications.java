@@ -31,11 +31,11 @@ import java.util.Locale;
 
 import org.apache.http.client.HttpClient;
 
-import com.piusvelte.sonet.Sonet.Accounts;
-import com.piusvelte.sonet.Sonet.Notifications;
-import com.piusvelte.sonet.Sonet.Widgets;
-import com.piusvelte.sonet.Sonet.Widgets_settings;
-import com.piusvelte.sonet.social.SocialClient;
+import com.piusvelte.sonet.provider.Accounts;
+import com.piusvelte.sonet.provider.Notifications;
+import com.piusvelte.sonet.provider.Widgets;
+import com.piusvelte.sonet.provider.WidgetsSettings;
+import com.piusvelte.sonet.social.Client;
 
 import android.app.ListActivity;
 import android.app.NotificationManager;
@@ -159,7 +159,7 @@ public class SonetNotifications extends ListActivity {
             protected Boolean doInBackground(Integer... arg0) {
                 if (arg0[0] == R.id.menu_notifications_refresh) {
                     // select all accounts with notifications set
-                    Cursor widgets = getContentResolver().query(Widgets_settings.getDistinctContentUri(SonetNotifications.this), new String[]{Widgets.ACCOUNT}, Widgets.ACCOUNT + "!=-1 and (" + Widgets.LIGHTS + "=1 or " + Widgets.VIBRATE + "=1 or " + Widgets.SOUND + "=1)", null, null);
+                    Cursor widgets = getContentResolver().query(WidgetsSettings.getDistinctContentUri(SonetNotifications.this), new String[]{Widgets.ACCOUNT}, Widgets.ACCOUNT + "!=-1 and (" + Widgets.LIGHTS + "=1 or " + Widgets.VIBRATE + "=1 or " + Widgets.SOUND + "=1)", null, null);
                     if (widgets.moveToFirst()) {
                         mSonetCrypto = SonetCrypto.getInstance(getApplicationContext());
                         HttpClient httpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
@@ -177,13 +177,13 @@ public class SonetNotifications extends ListActivity {
                                 String accountEsid = mSonetCrypto.Decrypt(account.getString(3));
 
 
-                                SocialClient socialClient = new SocialClient.Builder(SonetNotifications.this)
+                                Client client = new Client.Builder(SonetNotifications.this)
                                         .setNetwork(service)
                                         .setCredentials(token, secret)
                                         .setAccount(accountEsid)
                                         .build();
 
-                                socialClient.getNotifications(accountId, new String[1]);
+                                client.getNotifications(accountId, new String[1]);
 
                                 // remove old notifications
                                 getContentResolver().delete(Notifications.getContentUri(SonetNotifications.this), Notifications.CLEARED + "=1 and " + Notifications.ACCOUNT + "=? and " + Notifications.CREATED + "<?", new String[]{Long.toString(accountId), Long.toString(System.currentTimeMillis() - 86400000)});

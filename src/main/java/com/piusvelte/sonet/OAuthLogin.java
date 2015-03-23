@@ -21,13 +21,13 @@ package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.*;
 
-import com.piusvelte.sonet.Sonet.Accounts;
-import com.piusvelte.sonet.Sonet.Widget_accounts;
+import com.piusvelte.sonet.provider.Accounts;
+import com.piusvelte.sonet.provider.WidgetAccounts;
 import com.piusvelte.sonet.loader.AddRssLoader;
 import com.piusvelte.sonet.loader.MemberAuthenticationLoader;
 import com.piusvelte.sonet.loader.OAuthLoginLoader;
-import com.piusvelte.sonet.social.GooglePlusClient;
-import com.piusvelte.sonet.social.SocialClient;
+import com.piusvelte.sonet.social.GooglePlus;
+import com.piusvelte.sonet.social.Client;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -205,8 +205,8 @@ public class OAuthLogin extends FragmentActivity implements OnCancelListener, On
             case LOADER_MEMBER_AUTHENTICATION:
                 dismissLoading();
 
-                if (data instanceof SocialClient.MemberAuthentication) {
-                    SocialClient.MemberAuthentication memberAuthentication = (SocialClient.MemberAuthentication) data;
+                if (data instanceof Client.MemberAuthentication) {
+                    Client.MemberAuthentication memberAuthentication = (Client.MemberAuthentication) data;
                     addAccount(memberAuthentication.username, memberAuthentication.token, memberAuthentication.secret, memberAuthentication.expiry, memberAuthentication.network, memberAuthentication.id);
                     finish();
                 }
@@ -247,7 +247,7 @@ public class OAuthLogin extends FragmentActivity implements OnCancelListener, On
             Bundle extras = intent.getExtras();
 
             if (extras != null) {
-                int service = extras.getInt(Sonet.Accounts.SERVICE, Sonet.INVALID_SERVICE);
+                int service = extras.getInt(Accounts.SERVICE, Sonet.INVALID_SERVICE);
                 mServiceName = Sonet.getServiceName(getResources(), service);
                 mWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
                 mAccountId = extras.getLong(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID);
@@ -323,9 +323,9 @@ public class OAuthLogin extends FragmentActivity implements OnCancelListener, On
             // new account
             accountId = getContentResolver().insert(Accounts.getContentUri(this), values).getLastPathSegment();
             values.clear();
-            values.put(Widget_accounts.ACCOUNT, accountId);
-            values.put(Widget_accounts.WIDGET, mWidgetId);
-            getContentResolver().insert(Widget_accounts.getContentUri(this), values);
+            values.put(WidgetAccounts.ACCOUNT, accountId);
+            values.put(WidgetAccounts.WIDGET, mWidgetId);
+            getContentResolver().insert(WidgetAccounts.getContentUri(this), values);
         }
 
         setResult(RESULT_OK);
@@ -346,7 +346,7 @@ public class OAuthLogin extends FragmentActivity implements OnCancelListener, On
                 @Override
                 public void onPageFinished(WebView view, String url) {
                     // just google here
-                    if (url != null && mOAuthLoginLoaderResult.socialClient instanceof GooglePlusClient) {
+                    if (url != null && mOAuthLoginLoaderResult.client instanceof GooglePlus) {
                         Uri uri = Uri.parse(url);
                         UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
                         matcher.addURI("accounts.google.com", "o/oauth2/approval", 1);
@@ -367,7 +367,7 @@ public class OAuthLogin extends FragmentActivity implements OnCancelListener, On
                         Uri uri = Uri.parse(url);
                         String host = uri.getHost();
 
-                        Uri callback = mOAuthLoginLoaderResult.socialClient.getCallback();
+                        Uri callback = mOAuthLoginLoaderResult.client.getCallback();
 
                         if (callback != null && callback.getHost().equals(host)) {
                             showLoading();
