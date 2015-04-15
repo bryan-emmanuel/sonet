@@ -15,8 +15,6 @@ public class MemberAuthenticationLoader extends BaseAsyncTaskLoader {
     OAuthLoginLoader.OAuthLoginLoaderResult mOAuthLoginLoaderResult;
     @NonNull
     String mAuthenticatedUrl;
-    @Nullable
-    Client.MemberAuthentication mMemberAuthentication;
 
     public MemberAuthenticationLoader(@NonNull Context context, @NonNull OAuthLoginLoader.OAuthLoginLoaderResult oAuthLoginLoaderResult, @NonNull String authenticatedUrl) {
         super(context);
@@ -26,7 +24,6 @@ public class MemberAuthenticationLoader extends BaseAsyncTaskLoader {
 
     @Override
     public Object loadInBackground() {
-        mMemberAuthentication = mOAuthLoginLoaderResult.client.getMemberAuthentication(mOAuthLoginLoaderResult.sonetOAuth, mAuthenticatedUrl);
-        return mMemberAuthentication;
+        return mOAuthLoginLoaderResult.client.getMemberAuthentication(mOAuthLoginLoaderResult.sonetOAuth, mAuthenticatedUrl);
     }
 }

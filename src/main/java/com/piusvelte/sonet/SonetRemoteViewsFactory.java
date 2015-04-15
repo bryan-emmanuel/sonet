@@ -35,16 +35,19 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
 
     @Override
     public int getCount() {
-        if (mCursor != null)
+        if (mCursor != null) {
             return mCursor.getCount();
-        else
+        } else {
             return 0;
+        }
     }
 
     @Override
     public long getItemId(int position) {
-        if ((mCursor != null) && !mCursor.isClosed() && mCursor.moveToPosition(position))
+        if ((mCursor != null) && !mCursor.isClosed() && mCursor.moveToPosition(position)) {
             return mCursor.getLong(mCursor.getColumnIndex(StatusesStyles._ID));
+        }
+
         return position;
     }
 
@@ -72,12 +75,12 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
         RemoteViews views;
 
         if ((mCursor != null) && !mCursor.isClosed() && mCursor.moveToPosition(position)) {
-            int friend_color = mCursor.getInt(6),
-                    created_color = mCursor.getInt(7),
-                    friend_textsize = mCursor.getInt(9),
-                    created_textsize = mCursor.getInt(10),
-                    messages_color = mCursor.getInt(5),
-                    messages_textsize = mCursor.getInt(8);
+            int friend_color = mCursor.getInt(6);
+            int created_color = mCursor.getInt(7);
+            int friend_textsize = mCursor.getInt(9);
+            int created_textsize = mCursor.getInt(10);
+            int messages_color = mCursor.getInt(5);
+            int messages_textsize = mCursor.getInt(8);
             views = new RemoteViews(mContext.getPackageName(), mDisplay_profile ? R.layout.widget_item : R.layout.widget_item_noprofile);
             // set icons
             byte[] icon = mCursor.getBlob(12);
@@ -133,8 +136,9 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
 
                 setImageViewBitmap(views, R.id.profile, profile);
             }
-        } else
+        } else {
             views = null;
+        }
 
         return views;
     }
@@ -164,7 +168,11 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
             Log.d(TAG, "onDataSetChanged: " + mAppWidgetId);
         }
 
-        mCursor = mContext.getContentResolver().query(Uri.withAppendedPath(StatusesStyles.getContentUri(mContext), Integer.toString(mAppWidgetId)), new String[]{StatusesStyles._ID, StatusesStyles.FRIEND, StatusesStyles.PROFILE, StatusesStyles.MESSAGE, StatusesStyles.CREATEDTEXT, StatusesStyles.MESSAGES_COLOR, StatusesStyles.FRIEND_COLOR, StatusesStyles.CREATED_COLOR, StatusesStyles.MESSAGES_TEXTSIZE, StatusesStyles.FRIEND_TEXTSIZE, StatusesStyles.CREATED_TEXTSIZE, StatusesStyles.STATUS_BG, StatusesStyles.ICON, StatusesStyles.PROFILE_BG, StatusesStyles.FRIEND_BG, StatusesStyles.IMAGE_BG, StatusesStyles.IMAGE}, null, null, StatusesStyles.CREATED + " DESC");
+        mCursor = mContext.getContentResolver().query(Uri.withAppendedPath(StatusesStyles.getContentUri(mContext), Integer.toString(mAppWidgetId)),
+                new String[]{StatusesStyles._ID, StatusesStyles.FRIEND, StatusesStyles.PROFILE, StatusesStyles.MESSAGE, StatusesStyles.CREATEDTEXT, StatusesStyles.MESSAGES_COLOR, StatusesStyles.FRIEND_COLOR, StatusesStyles.CREATED_COLOR, StatusesStyles.MESSAGES_TEXTSIZE, StatusesStyles.FRIEND_TEXTSIZE, StatusesStyles.CREATED_TEXTSIZE, StatusesStyles.STATUS_BG, StatusesStyles.ICON, StatusesStyles.PROFILE_BG, StatusesStyles.FRIEND_BG, StatusesStyles.IMAGE_BG, StatusesStyles.IMAGE},
+                null,
+                null,
+                StatusesStyles.CREATED + " DESC");
     }
 
     @Override

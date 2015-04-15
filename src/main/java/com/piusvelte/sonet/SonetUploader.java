@@ -32,82 +32,90 @@ import android.provider.MediaStore.MediaColumns;
 import android.util.Log;
 
 public class SonetUploader extends Service {
-	private static final String TAG = "SonetUploader";
-	private ContentObserver mInstantUpload = null;
+    private static final String TAG = "SonetUploader";
+    private ContentObserver mInstantUpload = null;
 
-	@Override
-	public IBinder onBind(Intent intent) {
-		return null;
-	}
-	
-	@Override
-	public void onCreate() {
-		super.onCreate();
-		// check for any instant upload settings
-		(new AsyncTask<Void, Void, Boolean>() {
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
 
-			@Override
-			protected Boolean doInBackground(Void... arg0) {
-				Boolean upload = false;
-				Cursor c = getContentResolver().query(Widgets.getContentUri(SonetUploader.this), new String[]{Widgets._ID}, Widgets.INSTANT_UPLOAD + "=1", null, null);
-				upload = c.moveToFirst();
-				c.close();
-				return upload;
-			}
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        // check for any instant upload settings
+        (new AsyncTask<Void, Void, Boolean>() {
 
-			@Override
-			protected void onPostExecute(Boolean upload) {
-				if (upload && (mInstantUpload == null)) {
-					mInstantUpload = new ContentObserver(null) {
+            @Override
+            protected Boolean doInBackground(Void... arg0) {
+                Boolean upload = false;
+                Cursor c = getContentResolver().query(Widgets.getContentUri(SonetUploader.this), new String[]{Widgets._ID}, Widgets.INSTANT_UPLOAD + "=1", null, null);
+                upload = c.moveToFirst();
+                c.close();
+                return upload;
+            }
 
-						@Override
-						public void onChange(boolean selfChange) {
-							super.onChange(selfChange);
-							(new AsyncTask<Void, Void, String>() {
+            @Override
+            protected void onPostExecute(Boolean upload) {
+                if (upload && (mInstantUpload == null)) {
+                    mInstantUpload = new ContentObserver(null) {
 
-								@Override
-								protected String doInBackground(Void... arg0) {
-									String filepath = null;
-									// limit to those from the past 10 seconds
-									Cursor c = getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, new String[]{MediaColumns.DATA}, MediaColumns.DATE_ADDED + ">?", new String[]{Long.toString(System.currentTimeMillis() / 1000 - 10)}, MediaColumns.DATE_ADDED + " DESC");
-									if (c.moveToFirst())
-										filepath = c.getString(0);
-									c.close();
-									return filepath;
-								}
+                        @Override
+                        public void onChange(boolean selfChange) {
+                            super.onChange(selfChange);
+                            (new AsyncTask<Void, Void, String>() {
 
-								@Override
-								protected void onPostExecute(String filepath) {
-									// launch post activity with filepath
-									if (filepath != null)
-										startActivity(Sonet.getPackageIntent(getApplicationContext(), StatusDialog.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP).putExtra(Widgets.INSTANT_UPLOAD, filepath));
-								}
+                                @Override
+                                protected String doInBackground(Void... arg0) {
+                                    String filepath = null;
+                                    // limit to those from the past 10 seconds
+                                    Cursor c = getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                            new String[]{MediaColumns.DATA},
+                                            MediaColumns.DATE_ADDED + ">?",
+                                            new String[]{Long.toString(System.currentTimeMillis() / 1000 - 10)},
+                                            MediaColumns.DATE_ADDED + " DESC");
 
-							}).execute();
-						}
+                                    if (c.moveToFirst()) {
+                                        filepath = c.getString(0);
+                                    }
 
-					};
-					getContentResolver().registerContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, false, mInstantUpload);
-				} else if (!upload && (mInstantUpload != null)) {
-					Log.d(TAG,"no instant upload");
-					getContentResolver().unregisterContentObserver(mInstantUpload);
-					mInstantUpload = null;
-					stopSelf();
-				}
-			}
+                                    c.close();
+                                    return filepath;
+                                }
 
-		}).execute();
-	}
+                                @Override
+                                protected void onPostExecute(String filepath) {
+                                    // launch post activity with filepath
+                                    if (filepath != null)
+                                        startActivity(Sonet.getPackageIntent(getApplicationContext(), StatusDialog.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP).putExtra(Widgets.INSTANT_UPLOAD, filepath));
+                                }
 
-	@Override
-	public int onStartCommand(Intent intent, int flags, int startId) {
-		return START_STICKY;
-	}
+                            }).execute();
+                        }
 
-	@Override
-	public void onDestroy() {
-		if (mInstantUpload != null)
-			getContentResolver().unregisterContentObserver(mInstantUpload);
-	}
+                    };
+                    getContentResolver().registerContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, false, mInstantUpload);
+                } else if (!upload && (mInstantUpload != null)) {
+                    Log.d(TAG, "no instant upload");
+                    getContentResolver().unregisterContentObserver(mInstantUpload);
+                    mInstantUpload = null;
+                    stopSelf();
+                }
+            }
+
+        }).execute();
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return START_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+        if (mInstantUpload != null) {
+            getContentResolver().unregisterContentObserver(mInstantUpload);
+        }
+    }
 
 }

@@ -27,6 +27,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Set;
 
 import static com.piusvelte.sonet.Sonet.CHATTER_DATE_FORMAT;
@@ -277,6 +278,11 @@ public class Chatter extends Client {
         }
 
         return false;
+    }
+
+    @Override
+    public List<HashMap<String, String>> getFriends() {
+        return null;
     }
 
     @Override

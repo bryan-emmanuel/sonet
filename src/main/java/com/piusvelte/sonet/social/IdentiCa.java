@@ -6,6 +6,9 @@ import android.support.annotation.Nullable;
 
 import com.piusvelte.sonet.BuildConfig;
 
+import java.util.HashMap;
+import java.util.List;
+
 import static com.piusvelte.sonet.Sonet.IDENTICA_BASE_URL;
 import static com.piusvelte.sonet.Sonet.IDENTICA_MENTIONS;
 import static com.piusvelte.sonet.Sonet.IDENTICA_UPDATE;

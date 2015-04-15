@@ -659,6 +659,5 @@ public class AccountSettings extends FragmentActivity implements OnClickListener
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-
     }
 }

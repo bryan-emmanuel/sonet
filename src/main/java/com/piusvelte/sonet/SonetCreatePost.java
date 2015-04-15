@@ -21,33 +21,39 @@ package com.piusvelte.sonet;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-
-import org.apache.http.client.HttpClient;
 
 import com.google.ads.*;
+import com.piusvelte.sonet.fragment.ChooseAccountsDialogFragment;
+import com.piusvelte.sonet.fragment.ChooseLocationDialogFragment;
+import com.piusvelte.sonet.fragment.ConfirmSetLocationDialogFragment;
+import com.piusvelte.sonet.fragment.MultiChoiceDialogFragment;
+import com.piusvelte.sonet.fragment.OnDialogFragmentFinishListener;
+import com.piusvelte.sonet.fragment.LoadingDialogFragment;
+import com.piusvelte.sonet.fragment.ChooseAccountDialogFragment;
+import com.piusvelte.sonet.loader.LocationLoader;
+import com.piusvelte.sonet.loader.SendPostLoader;
 import com.piusvelte.sonet.provider.Accounts;
 import com.piusvelte.sonet.provider.Widgets;
-import com.piusvelte.sonet.social.Client;
 
 import static com.piusvelte.sonet.Sonet.*;
 
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.annotation.Nullable;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -62,25 +68,50 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class SonetCreatePost extends Activity implements OnKeyListener, OnClickListener, TextWatcher {
+public class SonetCreatePost extends FragmentActivity implements OnKeyListener, OnClickListener, TextWatcher, LoaderManager.LoaderCallbacks<Object>, OnDialogFragmentFinishListener, MultiChoiceDialogFragment.OnMultiChoiceClickListener {
     private static final String TAG = "SonetCreatePost";
+
+    private static final int LOADER_ACCOUNT = 0;
+    private static final int LOADER_LOCATION = 1;
+    private static final int LOADER_SEND_POST = 2;
+    private static final int LOADER_PHOTO = 3;
+    private static final int LOADER_ACCOUNT_NAMES = 4;
+    private static final int LOADER_ACCOUNTS_NAMES = 5;
+
+    private static final String DIALOG_LOADING = "dialog:loading";
+    private static final String DIALOG_ACCOUNT = "dialog:account";
+    private static final String DIALOG_LOCATION = "dialog:location";
+    private static final String DIALOG_ACCOUNTS = "dialog:accounts";
+    private static final String DIALOG_SET_LOCATION = "dialog:set_location";
+
+    private static final String LOADER_ARG_ACCOUNT_ID = "account_id";
+    private static final String LOADER_ARG_LATITUDE = "latitude";
+    private static final String LOADER_ARG_LONGITUDE = "longitude";
+    private static final String LOADER_ARG_PHOTO_URI = "photo_uri";
+
+    private static final int REQUEST_LOCATION = 0;
+    private static final int REQUEST_PHOTO = 1;
+    private static final int REQUEST_SEND_POST = 2;
+    private static final int REQUEST_ACCOUNT = 3;
+    private static final int REQUEST_SELECT_LOCATION = 4;
+    private static final int REQUEST_ACCOUNTS = 5;
+    private static final int REQUEST_SET_LOCATION = 6;
+
     private HashMap<Long, String> mAccountsLocation = new HashMap<Long, String>();
     private HashMap<Long, String[]> mAccountsTags = new HashMap<Long, String[]>();
-    private HashMap<Long, Integer> mAccountsService = new HashMap<Long, Integer>();
+    private HashMap<Long, Integer> mAccountsService = new HashMap<>();
     private EditText mMessage;
     private ImageButton mSend;
     private TextView mCount;
     private String mLat = null;
     private String mLong = null;
-    private SonetCrypto mSonetCrypto;
     private static final int PHOTO = 1;
     private static final int TAGS = 2;
     private String mPhotoPath;
-    private HttpClient mHttpClient;
-    private AlertDialog mDialog;
-    private static final List<Integer> sLocationSupported = new ArrayList<Integer>();
-    private static final List<Integer> sPhotoSupported = new ArrayList<Integer>();
-    private static final List<Integer> sTaggingSupported = new ArrayList<Integer>();
+    // TODO move this to Client implementations
+    private static final List<Integer> sLocationSupported = new ArrayList<>();
+    private static final List<Integer> sPhotoSupported = new ArrayList<>();
+    private static final List<Integer> sTaggingSupported = new ArrayList<>();
 
     static {
         sLocationSupported.add(TWITTER);
@@ -107,43 +138,43 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
         mMessage = (EditText) findViewById(R.id.message);
         mSend = (ImageButton) findViewById(R.id.send);
         mCount = (TextView) findViewById(R.id.count);
-        // load secretkey
-        mSonetCrypto = SonetCrypto.getInstance(getApplicationContext());
-        mHttpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
         mMessage.addTextChangedListener(this);
         mMessage.setOnKeyListener(this);
         mSend.setOnClickListener(this);
         setResult(RESULT_OK);
+        handleIntent(getIntent());
     }
 
     @Override
     public void onNewIntent(Intent intent) {
         setIntent(intent);
+        handleIntent(intent);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Intent intent = getIntent();
+    private void handleIntent(@Nullable Intent intent) {
         if (intent != null) {
             String action = intent.getAction();
+
             if ((action != null) && action.equals(Intent.ACTION_SEND)) {
-                if (intent.hasExtra(Intent.EXTRA_STREAM))
+                if (intent.hasExtra(Intent.EXTRA_STREAM)) {
                     getPhoto((Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM));
+                }
+
                 if (intent.hasExtra(Intent.EXTRA_TEXT)) {
                     final String text = intent.getStringExtra(Intent.EXTRA_TEXT);
                     mMessage.setText(text);
                     mCount.setText(Integer.toString(text.length()));
                 }
+
                 chooseAccounts();
             } else {
                 Uri data = intent.getData();
+
                 if ((data != null) && data.toString().contains(Accounts.getContentUri(this).toString())) {
-                    // default to the account passed in, but allow selecting additional accounts
-                    Cursor account = this.getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{data.getLastPathSegment()}, null);
-                    if (account.moveToFirst())
-                        mAccountsService.put(account.getLong(0), account.getInt(1));
-                    account.close();
+                    Bundle args = new Bundle();
+                    args.putString(LOADER_ARG_ACCOUNT_ID, data.getLastPathSegment());
+                    getSupportLoaderManager().restartLoader(LOADER_ACCOUNT, args, this);
+                    LoadingDialogFragment.newInstance(REQUEST_ACCOUNT).show(getSupportFragmentManager(), DIALOG_LOADING);
                 } else if (intent.hasExtra(Widgets.INSTANT_UPLOAD)) {
                     // check if a photo path was passed and prompt user to select the account
                     setPhoto(intent.getStringExtra(Widgets.INSTANT_UPLOAD));
@@ -151,13 +182,6 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
                 }
             }
         }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if ((mDialog != null) && mDialog.isShowing())
-            mDialog.dismiss();
     }
 
     @Override
@@ -170,20 +194,28 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int itemId = item.getItemId();
-        if (itemId == R.id.menu_post_accounts)
+
+        if (itemId == R.id.menu_post_accounts) {
             chooseAccounts();
-        else if (itemId == R.id.menu_post_photo) {
+        } else if (itemId == R.id.menu_post_photo) {
             boolean supported = false;
-            Iterator<Integer> services = mAccountsService.values().iterator();
-            while (services.hasNext() && ((supported = sPhotoSupported.contains(services.next())) == false))
-                ;
+
+            for (Integer service : mAccountsService.values()) {
+                supported = sPhotoSupported.contains(service);
+
+                if (supported) {
+                    break;
+                }
+            }
+
             if (supported) {
                 Intent intent = new Intent();
                 intent.setType("image/*");
                 intent.setAction(Intent.ACTION_GET_CONTENT);
                 startActivityForResult(Intent.createChooser(intent, "Select Picture"), PHOTO);
-            } else
+            } else {
                 unsupportedToast(sPhotoSupported);
+            }
 //		} else if (itemId == R.id.menu_post_tags) {
 //			if (mAccountsService.size() == 1) {
 //				if (sTaggingSupported.contains(mAccountsService.values().iterator().next()))
@@ -234,143 +266,37 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
         } else if (itemId == R.id.menu_post_location) {
             LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
             Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
             if (location != null) {
                 mLat = Double.toString(location.getLatitude());
                 mLong = Double.toString(location.getLongitude());
+
                 if (mAccountsService.size() == 1) {
-                    if (sLocationSupported.contains(mAccountsService.values().iterator().next()))
+                    if (sLocationSupported.contains(mAccountsService.values().iterator().next())) {
                         setLocation(mAccountsService.keySet().iterator().next());
-                    else
+                    } else {
                         unsupportedToast(sLocationSupported);
-                } else {
-                    // dialog to select an account
-                    Iterator<Long> accountIds = mAccountsService.keySet().iterator();
-                    HashMap<Long, String> accountEntries = new HashMap<Long, String>();
-                    while (accountIds.hasNext()) {
-                        Long accountId = accountIds.next();
-                        Cursor account = Accounts.get(this, accountId);
-
-                        if (account.moveToFirst() && sLocationSupported.contains(mAccountsService.get(accountId))) {
-                            accountEntries.put(account.getLong(account.getColumnIndex(Accounts._ID)), account.getString(account.getColumnIndex(Accounts.USERNAME)));
-                        }
-
                     }
-                    int size = accountEntries.size();
-                    if (size != 0) {
-                        final long[] accountIndexes = new long[size];
-                        final String[] accounts = new String[size];
-                        int i = 0;
-                        Iterator<Map.Entry<Long, String>> entries = accountEntries.entrySet().iterator();
-                        while (entries.hasNext()) {
-                            Map.Entry<Long, String> entry = entries.next();
-                            accountIndexes[i] = entry.getKey();
-                            accounts[i++] = entry.getValue();
-                        }
-                        mDialog = (new AlertDialog.Builder(this))
-                                .setTitle(R.string.accounts)
-                                .setSingleChoiceItems(accounts, -1, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        setLocation(accountIndexes[which]);
-                                        dialog.dismiss();
-                                    }
-                                })
-                                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.dismiss();
-                                    }
-                                })
-                                .create();
-                        mDialog.show();
-                    } else
-                        unsupportedToast(sLocationSupported);
+                } else {
+                    getSupportLoaderManager().initLoader(LOADER_ACCOUNT_NAMES, null, this);
+                    LoadingDialogFragment.newInstance(REQUEST_ACCOUNT).show(getSupportFragmentManager(), DIALOG_LOADING);
                 }
-            } else
+            } else {
                 (Toast.makeText(this, getString(R.string.location_unavailable), Toast.LENGTH_LONG)).show();
+            }
         }
+
         return super.onOptionsItemSelected(item);
     }
 
     private void setLocation(final long accountId) {
-        final ProgressDialog loadingDialog = new ProgressDialog(this);
-        final AsyncTask<Void, Void, Void> asyncTask = new AsyncTask<Void, Void, Void>() {
-
-            HashMap<String, String> locations;
-
-            @Override
-            protected Void doInBackground(Void... none) {
-                Cursor account = getContentResolver().query(Accounts.getContentUri(SonetCreatePost.this), new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SERVICE, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
-
-                if (account.moveToFirst()) {
-                    int serviceId = account.getInt(account.getColumnIndex(Accounts.SERVICE));
-                    String token = mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN)));
-                    String secret = mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET)));
-                    Client client = new Client.Builder(SonetCreatePost.this)
-                            .setNetwork(serviceId)
-                            .setCredentials(token, secret)
-                            .build();
-
-                    locations = client.getLocations(mLat, mLong);
-                }
-
-                account.close();
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(Void aVoid) {
-                if (loadingDialog.isShowing()) loadingDialog.dismiss();
-
-                if (locations != null && locations.size() > 0) {
-                    mDialog = (new AlertDialog.Builder(SonetCreatePost.this))
-                            .setSingleChoiceItems(locations.values().toArray(new String[locations.size()]), -1, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    int keyIndex = 0;
-
-                                    for (String key : locations.keySet()) {
-                                        if (keyIndex == which) {
-                                            mAccountsLocation.put(accountId, key);
-                                            break;
-                                        }
-
-                                        keyIndex++;
-                                    }
-
-                                    dialog.dismiss();
-                                }
-                            })
-                            .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.cancel();
-                                }
-                            })
-                            .create();
-                    mDialog.show();
-                } else {
-                    (Toast.makeText(SonetCreatePost.this, getString(R.string.failure), Toast.LENGTH_LONG)).show();
-                }
-            }
-
-        };
-        loadingDialog.setMessage(getString(R.string.loading));
-        loadingDialog.setCancelable(true);
-        loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-            @Override
-            public void onCancel(DialogInterface dialog) {
-                if (!asyncTask.isCancelled()) asyncTask.cancel(true);
-            }
-        });
-        loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
-        });
-        loadingDialog.show();
-        asyncTask.execute();
+        // TODO make sure this works :D how should it resume?
+        Bundle args = new Bundle();
+        args.putLong(LOADER_ARG_ACCOUNT_ID, accountId);
+        args.putString(LOADER_ARG_LATITUDE, mLat);
+        args.putString(LOADER_ARG_LONGITUDE, mLong);
+        getSupportLoaderManager().restartLoader(LOADER_LOCATION, args, this);
+        LoadingDialogFragment.newInstance(REQUEST_LOCATION).show(getSupportFragmentManager(), DIALOG_LOADING);
     }
 
     private void unsupportedToast(List<Integer> supportedServices) {
@@ -396,120 +322,19 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
     public void onClick(View v) {
         if (v == mSend) {
             if (!mAccountsService.isEmpty()) {
-                final ProgressDialog loadingDialog = new ProgressDialog(this);
-                final AsyncTask<Void, String, Void> asyncTask = new AsyncTask<Void, String, Void>() {
-                    @Override
-                    protected Void doInBackground(Void... arg0) {
-                        Iterator<Map.Entry<Long, Integer>> entrySet = mAccountsService.entrySet().iterator();
-
-                        while (entrySet.hasNext()) {
-                            Map.Entry<Long, Integer> entry = entrySet.next();
-                            final long accountId = entry.getKey();
-                            final int service = entry.getValue();
-                            final String placeId = mAccountsLocation.get(accountId);
-                            // post or comment!
-                            Cursor account = getContentResolver().query(Accounts.getContentUri(SonetCreatePost.this), new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
-
-                            if (account.moveToFirst()) {
-                                final String serviceName = Sonet.getServiceName(getResources(), service);
-                                publishProgress(serviceName);
-                                String message = mMessage.getText().toString();
-                                String token = mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN)));
-                                String secret = mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET)));
-                                Client client = new Client.Builder(SonetCreatePost.this)
-                                        .setNetwork(service)
-                                        .setCredentials(token, secret)
-                                        .build();
-                                boolean success = client.createPost(message, placeId, mLat, mLong, mPhotoPath, mAccountsTags.get(accountId));
-                                publishProgress(serviceName, getString(success ? R.string.success : R.string.failure));
-                            }
-
-                            account.close();
-                        }
-
-                        return null;
-                    }
-
-                    @Override
-                    protected void onProgressUpdate(String... params) {
-                        if (params.length == 1) {
-                            loadingDialog.setMessage(String.format(getString(R.string.sending), params[0]));
-                        } else {
-                            (Toast.makeText(SonetCreatePost.this, params[0] + " " + params[1], Toast.LENGTH_LONG)).show();
-                        }
-                    }
-
-                    @Override
-                    protected void onPostExecute(Void result) {
-                        if (loadingDialog.isShowing()) loadingDialog.dismiss();
-                        finish();
-                    }
-
-                };
-                loadingDialog.setMessage(getString(R.string.loading));
-                loadingDialog.setCancelable(true);
-                loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                    @Override
-                    public void onCancel(DialogInterface dialog) {
-                        if (!asyncTask.isCancelled()) asyncTask.cancel(true);
-                    }
-                });
-                loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                });
-                loadingDialog.show();
-                asyncTask.execute();
+                getSupportLoaderManager().initLoader(LOADER_SEND_POST, null, this);
+                LoadingDialogFragment.newInstance(REQUEST_SEND_POST).show(getSupportFragmentManager(), DIALOG_LOADING);
             } else
                 (Toast.makeText(SonetCreatePost.this, "no accounts selected", Toast.LENGTH_LONG)).show();
         }
     }
 
     protected void getPhoto(Uri uri) {
-        final ProgressDialog loadingDialog = new ProgressDialog(this);
-        final AsyncTask<Uri, Void, String> asyncTask = new AsyncTask<Uri, Void, String>() {
-            @Override
-            protected String doInBackground(Uri... imgUri) {
-                String[] projection = new String[]{MediaStore.Images.Media.DATA};
-                String path = null;
-                Cursor c = getContentResolver().query(imgUri[0], projection, null, null, null);
-                if ((c != null) && c.moveToFirst()) {
-                    path = c.getString(c.getColumnIndex(projection[0]));
-                } else {
-                    // some file manages send the path through the uri
-                    path = imgUri[0].getPath();
-                }
-                c.close();
-                return path;
-            }
-
-            @Override
-            protected void onPostExecute(String path) {
-                if (loadingDialog.isShowing()) loadingDialog.dismiss();
-                if (path != null)
-                    setPhoto(path);
-                else
-                    (Toast.makeText(SonetCreatePost.this, "error retrieving the photo path", Toast.LENGTH_LONG)).show();
-            }
-        };
-        loadingDialog.setMessage(getString(R.string.loading));
-        loadingDialog.setCancelable(true);
-        loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-            @Override
-            public void onCancel(DialogInterface dialog) {
-                if (!asyncTask.isCancelled()) asyncTask.cancel(true);
-            }
-        });
-        loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
-        });
-        loadingDialog.show();
-        asyncTask.execute(uri);
+        // TODO some file manages send the path through the uri.getPath()
+        Bundle args = new Bundle();
+        args.putString(LOADER_ARG_PHOTO_URI, uri.toString());
+        getSupportLoaderManager().initLoader(LOADER_PHOTO, args, this);
+        LoadingDialogFragment.newInstance(REQUEST_PHOTO).show(getSupportFragmentManager(), DIALOG_LOADING);
     }
 
     protected void setPhoto(String path) {
@@ -527,82 +352,7 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
 
     protected void chooseAccounts() {
         // don't limit accounts to the widget...
-        Cursor c = Accounts.get(this);
-
-        if (c.moveToFirst()) {
-            int i = 0;
-            int count = c.getCount();
-            final long[] accountIndexes = new long[count];
-            final String[] accounts = new String[count];
-            final boolean[] defaults = new boolean[count];
-            final int[] accountServices = new int[count];
-            while (!c.isAfterLast()) {
-                long id = c.getLong(0);
-                accountIndexes[i] = id;
-                accounts[i] = c.getString(1);
-                accountServices[i] = c.getInt(2);
-                defaults[i++] = mAccountsService.containsKey(id);
-                c.moveToNext();
-            }
-
-            mDialog = (new AlertDialog.Builder(this))
-                    .setTitle(R.string.accounts)
-                    .setMultiChoiceItems(accounts, defaults, new DialogInterface.OnMultiChoiceClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-                            if (isChecked) {
-                                final long accountId = accountIndexes[which];
-                                mAccountsService.put(accountId, accountServices[which]);
-
-                                if (sLocationSupported.contains(accountServices[which])) {
-                                    if (mLat == null) {
-                                        LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
-                                        Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-
-                                        if (location != null) {
-                                            mLat = Double.toString(location.getLatitude());
-                                            mLong = Double.toString(location.getLongitude());
-                                        }
-                                    }
-
-                                    if ((mLat != null) && (mLong != null)) {
-                                        dialog.cancel();
-                                        mDialog = (new AlertDialog.Builder(SonetCreatePost.this))
-                                                .setTitle(R.string.set_location)
-                                                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                                                    @Override
-                                                    public void onClick(DialogInterface dialog, int which) {
-                                                        setLocation(accountId);
-                                                        dialog.dismiss();
-                                                    }
-                                                })
-                                                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                                                    @Override
-                                                    public void onClick(DialogInterface dialog, int which) {
-                                                        dialog.dismiss();
-                                                    }
-                                                })
-                                                .create();
-                                        mDialog.show();
-                                    }
-                                }
-                            } else {
-                                mAccountsService.remove(accountIndexes[which]);
-                                mAccountsLocation.remove(accountIndexes[which]);
-                                mAccountsTags.remove(accountIndexes[which]);
-                            }
-                        }
-                    })
-                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                        }
-                    })
-                    .create();
-            mDialog.show();
-        }
-        c.close();
+        getSupportLoaderManager().initLoader(LOADER_ACCOUNTS_NAMES, null, this);
     }
 
     @Override
@@ -615,8 +365,9 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
                 break;
 
             case TAGS:
-                if ((resultCode == RESULT_OK) && data.hasExtra(Stags) && data.hasExtra(Accounts.SID))
+                if ((resultCode == RESULT_OK) && data.hasExtra(Stags) && data.hasExtra(Accounts.SID)) {
                     mAccountsTags.put(data.getLongExtra(Accounts.SID, Sonet.INVALID_ACCOUNT_ID), data.getStringArrayExtra(Stags));
+                }
                 break;
         }
     }
@@ -640,4 +391,314 @@ public class SonetCreatePost extends Activity implements OnKeyListener, OnClickL
     public void onTextChanged(CharSequence s, int start, int before, int count) {
     }
 
+    @Override
+    public Loader<Object> onCreateLoader(int id, Bundle args) {
+        Loader loader;
+
+        switch (id) {
+            case LOADER_ACCOUNT:
+                loader = new CursorLoader(this,
+                        Accounts.getContentUri(this),
+                        new String[]{Accounts._ID, Accounts.SERVICE},
+                        Accounts._ID + "=?",
+                        new String[]{args.getString(LOADER_ARG_ACCOUNT_ID)},
+                        null);
+                break;
+
+            case LOADER_LOCATION:
+                loader = new LocationLoader(this,
+                        args.getLong(LOADER_ARG_ACCOUNT_ID),
+                        args.getString(LOADER_ARG_LATITUDE),
+                        args.getString(LOADER_ARG_LONGITUDE));
+                break;
+
+            case LOADER_SEND_POST:
+                loader = new SendPostLoader(this,
+                        mAccountsService,
+                        mMessage.getText().toString(),
+                        mAccountsLocation,
+                        mLat,
+                        mLong,
+                        mPhotoPath,
+                        mAccountsTags);
+                break;
+
+            case LOADER_PHOTO:
+                loader = new CursorLoader(this,
+                        Uri.parse(args.getString(LOADER_ARG_PHOTO_URI)),
+                        new String[]{MediaStore.Images.Media.DATA},
+                        null,
+                        null,
+                        null);
+                break;
+
+            case LOADER_ACCOUNT_NAMES:
+                loader = new CursorLoader(this,
+                        Accounts.getContentUri(this),
+                        new String[]{Accounts._ID, Accounts.SERVICE, Accounts.USERNAME},
+                        Accounts._ID + " in (?)",
+                        new String[]{TextUtils.join(",", mAccountsService.keySet())},
+                        null);
+                break;
+
+            case LOADER_ACCOUNTS_NAMES:
+                loader = new CursorLoader(this,
+                        Accounts.getContentUri(this),
+                        new String[]{Accounts._ID, Accounts.SERVICE, Accounts.USERNAME},
+                        null,
+                        null,
+                        null);
+                break;
+
+            default:
+                loader = null;
+        }
+
+        return loader;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Object> loader, Object data) {
+        switch (loader.getId()) {
+            case LOADER_ACCOUNT:
+                dismissLoading();
+                if (data instanceof Cursor) {
+                    Cursor cursor = (Cursor) data;
+
+                    if (cursor.moveToFirst()) {
+                        mAccountsService.put(cursor.getLong(cursor.getColumnIndexOrThrow(Accounts._ID)),
+                                cursor.getInt(cursor.getColumnIndexOrThrow(Accounts.SERVICE)));
+                    }
+                }
+                break;
+
+            case LOADER_LOCATION:
+                dismissLoading();
+
+                if (data instanceof LocationLoader.LocationResult) {
+                    final LocationLoader.LocationResult result = (LocationLoader.LocationResult) data;
+
+                    ChooseLocationDialogFragment.newInstance(result.accountId, result.locations, "Select Location", REQUEST_SELECT_LOCATION)
+                            .show(getSupportFragmentManager(), DIALOG_LOCATION);
+                } else {
+                    (Toast.makeText(SonetCreatePost.this, getString(R.string.failure), Toast.LENGTH_LONG)).show();
+                }
+
+                getSupportLoaderManager().destroyLoader(LOADER_LOCATION);
+                break;
+
+            case LOADER_SEND_POST:
+                dismissLoading();
+
+                if (data instanceof Boolean) {
+                    // TODO determine success
+                    if ((Boolean) data) {
+                        // TODO toast?
+                    }
+                }
+
+                getSupportLoaderManager().destroyLoader(LOADER_SEND_POST);
+                break;
+
+            case LOADER_PHOTO:
+                dismissLoading();
+
+                if (data instanceof Cursor) {
+                    String path = null;
+                    Cursor cursor = (Cursor) data;
+
+                    if (cursor.moveToFirst()) {
+                        path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
+                    } else {
+                        // some file manages send the path through the uri
+                        // TODO
+                        // path = imgUri[0].getPath();
+                    }
+
+                    if (!TextUtils.isEmpty(path)) {
+                        setPhoto(path);
+                    } else {
+                        (Toast.makeText(SonetCreatePost.this, "error retrieving the photo path", Toast.LENGTH_LONG)).show();
+                    }
+                }
+
+                getSupportLoaderManager().destroyLoader(LOADER_PHOTO);
+                break;
+
+            case LOADER_ACCOUNT_NAMES:
+                dismissLoading();
+
+                if (data instanceof Cursor) {
+                    Cursor cursor = (Cursor) data;
+
+                    if (cursor.moveToFirst()) {
+                        final int idIndex = cursor.getColumnIndexOrThrow(Accounts._ID);
+                        final int serviceIndex = cursor.getColumnIndexOrThrow(Accounts.SERVICE);
+                        final int usernameIndex = cursor.getColumnIndexOrThrow(Accounts.USERNAME);
+                        HashMap<Long, String> accounts = new HashMap<>();
+
+                        while (!cursor.isAfterLast()) {
+                            int service = cursor.getInt(serviceIndex);
+
+                            if (sLocationSupported.contains(service)) {
+                                accounts.put(cursor.getLong(idIndex), cursor.getString(usernameIndex));
+                            }
+
+                            cursor.moveToNext();
+                        }
+
+                        if (!accounts.isEmpty()) {
+                            ChooseAccountDialogFragment.newInstance(accounts, getString(R.string.accounts), REQUEST_ACCOUNT)
+                                    .show(getSupportFragmentManager(), DIALOG_ACCOUNT);
+                        } else {
+                            unsupportedToast(sLocationSupported);
+                        }
+                    } else {
+                        unsupportedToast(sLocationSupported);
+                    }
+                } else {
+                    unsupportedToast(sLocationSupported);
+                }
+
+                getSupportLoaderManager().destroyLoader(LOADER_ACCOUNT_NAMES);
+                break;
+
+            case LOADER_ACCOUNTS_NAMES:
+                dismissLoading();
+
+                if (data instanceof Cursor) {
+                    Cursor cursor = (Cursor) data;
+
+                    if (cursor.moveToFirst()) {
+                        final int idIndex = cursor.getColumnIndexOrThrow(Accounts._ID);
+                        final int serviceIndex = cursor.getColumnIndexOrThrow(Accounts.SERVICE);
+                        final int usernameIndex = cursor.getColumnIndexOrThrow(Accounts.USERNAME);
+
+                        List<Accounts.Account> accounts = new ArrayList<>();
+
+                        while (!cursor.isAfterLast()) {
+                            Accounts.Account account = new Accounts.Account();
+                            account.id = cursor.getLong(idIndex);
+                            account.service = cursor.getInt(serviceIndex);
+                            account.username = cursor.getString(usernameIndex);
+
+                            accounts.add(account);
+                            cursor.moveToNext();
+                        }
+
+                        if (!accounts.isEmpty()) {
+                            ChooseAccountsDialogFragment.newInstance(accounts, mAccountsService, getString(R.string.accounts), REQUEST_ACCOUNTS)
+                                    .show(getSupportFragmentManager(), DIALOG_ACCOUNTS);
+                        } // TODO else Toast?
+                    } // TODO else Toast?
+                }
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Object> loader) {
+    }
+
+    private void dismissLoading() {
+        DialogFragment loadingDialog = (DialogFragment) getSupportFragmentManager().findFragmentByTag(DIALOG_LOADING);
+
+        if (loadingDialog != null) {
+            loadingDialog.dismiss();
+        }
+    }
+
+    @Override
+    public void onDialogFragmentResult(int requestCode, int result, Intent data) {
+        switch (requestCode) {
+            case REQUEST_LOCATION:
+                getSupportLoaderManager().destroyLoader(LOADER_LOCATION);
+                break;
+
+            case REQUEST_SEND_POST:
+                getSupportLoaderManager().destroyLoader(LOADER_SEND_POST);
+                break;
+
+            case REQUEST_PHOTO:
+                getSupportLoaderManager().destroyLoader(LOADER_PHOTO);
+                break;
+
+            case REQUEST_ACCOUNT:
+                if (result == RESULT_OK) {
+                    long accountId = ChooseAccountDialogFragment.getSelectedId(data);
+
+                    if (accountId != INVALID_ACCOUNT_ID) {
+                        setLocation(accountId);
+                    }
+                }
+                break;
+
+            case REQUEST_SELECT_LOCATION:
+                if (result == RESULT_OK) {
+                    long accountId = ChooseLocationDialogFragment.getAccount(data);
+
+                    if (accountId != INVALID_ACCOUNT_ID) {
+                        String location = ChooseLocationDialogFragment.getSelectedId(data, null);
+
+                        if (!TextUtils.isEmpty(location)) {
+                            mAccountsLocation.put(accountId, location);
+                        }
+                    }
+                }
+                break;
+
+            case REQUEST_SET_LOCATION:
+                if (result == RESULT_OK) {
+                    long accountId = ConfirmSetLocationDialogFragment.getAccountId(data);
+
+                    if (accountId != INVALID_ACCOUNT_ID) {
+                        setLocation(INVALID_ACCOUNT_ID);
+                    }
+                }
+                break;
+        }
+    }
+
+    @Override
+    public void onClick(MultiChoiceDialogFragment multiChoiceDialogFragment, int requestCode, int which, boolean isChecked) {
+        switch (requestCode) {
+            case REQUEST_ACCOUNTS:
+                long accountId = ChooseAccountsDialogFragment.getAccountId(multiChoiceDialogFragment, which);
+
+                if (accountId != INVALID_ACCOUNT_ID) {
+                    if (isChecked) {
+                        int service = ChooseAccountsDialogFragment.getService(multiChoiceDialogFragment, which);
+
+                        if (service != -1) {
+                            mAccountsService.put(accountId, service);
+
+                            if (sLocationSupported.contains(service)) {
+                                if (mLat == null) {
+                                    LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                                    Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+                                    if (location != null) {
+                                        mLat = Double.toString(location.getLatitude());
+                                        mLong = Double.toString(location.getLongitude());
+                                    }
+                                }
+
+                                if ((mLat != null) && (mLong != null)) {
+                                    ConfirmSetLocationDialogFragment.newInstance(accountId, getString(R.string.set_location), REQUEST_SET_LOCATION)
+                                            .show(getSupportFragmentManager(), DIALOG_SET_LOCATION);
+                                }
+                            }
+                        }
+                    } else {
+                        mAccountsService.remove(accountId);
+                        mAccountsLocation.remove(accountId);
+                        mAccountsTags.remove(accountId);
+                    }
+                }
+                break;
+        }
+    }
 }

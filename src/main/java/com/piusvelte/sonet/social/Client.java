@@ -386,6 +386,8 @@ abstract public class Client {
 
     abstract public boolean sendComment(@NonNull String statusId, @NonNull String message);
 
+    abstract public List<HashMap<String, String>> getFriends();
+
     abstract String getApiKey();
 
     abstract String getApiSecret();

@@ -45,6 +45,7 @@ public class Accounts implements BaseColumns {
         return Uri.parse("content://" + Sonet.getAuthority(context) + "/accounts");
     }
 
+    @Deprecated
     @NonNull
     public static Cursor get(@NonNull Context context, long id) {
         String selection = null;
@@ -62,8 +63,15 @@ public class Accounts implements BaseColumns {
                 null);
     }
 
+    @Deprecated
     @NonNull
     public static Cursor get(@NonNull Context context) {
         return get(context, INVALID_ACCOUNT_ID);
+    }
+
+    public static class Account {
+        public long id;
+        public int service;
+        public String username;
     }
 }

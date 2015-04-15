@@ -16,6 +16,7 @@ import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.SonetOAuth;
 import com.piusvelte.sonet.provider.Entities;
 import com.piusvelte.sonet.provider.Notifications;
+import com.piusvelte.sonet.provider.Statuses;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -463,6 +464,11 @@ public class Twitter extends Client {
         } while (startTweetIndex < message.length());
 
         return success;
+    }
+
+    @Override
+    public List<HashMap<String, String>> getFriends() {
+        return null;
     }
 
     @Nullable

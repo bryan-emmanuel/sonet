@@ -500,6 +500,11 @@ public class GooglePlus extends Client {
     }
 
     @Override
+    public List<HashMap<String, String>> getFriends() {
+        return null;
+    }
+
+    @Override
     String getApiKey() {
         return BuildConfig.GOOGLECLIENT_ID;
     }

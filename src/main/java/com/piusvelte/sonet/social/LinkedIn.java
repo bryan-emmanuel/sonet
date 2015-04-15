@@ -17,6 +17,7 @@ import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.SonetOAuth;
 import com.piusvelte.sonet.provider.Entities;
 import com.piusvelte.sonet.provider.Notifications;
+import com.piusvelte.sonet.provider.Statuses;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -35,6 +36,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Set;
 
 import static com.piusvelte.sonet.Sonet.LINKEDIN_BASE_URL;
@@ -805,6 +807,11 @@ public class LinkedIn extends Client {
         }
 
         return false;
+    }
+
+    @Override
+    public List<HashMap<String, String>> getFriends() {
+        return null;
     }
 
     @Override

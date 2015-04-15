@@ -18,6 +18,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Set;
 
 import static com.piusvelte.sonet.Sonet.PINTEREST_BASE_URL;
@@ -224,6 +225,11 @@ public class Pinterest extends Client {
     @Override
     public boolean sendComment(@NonNull String statusId, @NonNull String message) {
         return false;
+    }
+
+    @Override
+    public List<HashMap<String, String>> getFriends() {
+        return null;
     }
 
     @Override

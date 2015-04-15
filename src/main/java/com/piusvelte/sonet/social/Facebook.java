@@ -43,6 +43,7 @@ import java.util.Set;
 
 import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_COMMENTS;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_FRIENDS;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_HOME;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_LIKES;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_PICTURE;
@@ -688,6 +689,106 @@ public class Facebook extends Client {
         }
 
         return false;
+    }
+
+    @Override
+    public List<HashMap<String, String>> getFriends() {
+        // TODO use Collections.sort with comparator for name
+        List<HashMap<String, String>> friends = new ArrayList<>();
+        String response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FACEBOOK_FRIENDS, FACEBOOK_BASE_URL, Saccess_token, mToken)));
+
+        if (!TextUtils.isEmpty(response)) {
+            try {
+                JSONArray friendsArray = new JSONObject(response).getJSONArray(Sdata);
+
+                for (int i = 0, l = friendsArray.length(); i < l; i++) {
+                    JSONObject f = friendsArray.getJSONObject(i);
+                    HashMap<String, String> newFriend = new HashMap<String, String>();
+                    newFriend.put(Entities.ESID, f.getString(Sid));
+                    newFriend.put(Entities.PROFILE, String.format(FACEBOOK_PICTURE, f.getString(Sid)));
+                    newFriend.put(Entities.FRIEND, f.getString(Sname));
+
+                    // need to alphabetize
+                    if (friends.isEmpty()) {
+                        friends.add(newFriend);
+                    } else {
+                        String fullName = f.getString(Sname);
+                        int spaceIdx = fullName.lastIndexOf(" ");
+                        String newFirstName = null;
+                        String newLastName = null;
+
+                        if (spaceIdx == -1) {
+                            newFirstName = fullName;
+                        } else {
+                            newFirstName = fullName.substring(0, spaceIdx++);
+                            newLastName = fullName.substring(spaceIdx);
+                        }
+
+                        List<HashMap<String, String>> newFriends = new ArrayList<HashMap<String, String>>();
+
+                        for (int i2 = 0, l2 = friends.size(); i2 < l2; i2++) {
+                            HashMap<String, String> oldFriend = friends.get(i2);
+
+                            if (newFriend == null) {
+                                newFriends.add(oldFriend);
+                            } else {
+                                fullName = oldFriend.get(Entities.FRIEND);
+                                spaceIdx = fullName.lastIndexOf(" ");
+                                String oldFirstName = null;
+                                String oldLastName = null;
+
+                                if (spaceIdx == -1) {
+                                    oldFirstName = fullName;
+                                } else {
+                                    oldFirstName = fullName.substring(0, spaceIdx++);
+                                    oldLastName = fullName.substring(spaceIdx);
+                                }
+
+                                if (newFirstName == null) {
+                                    newFriends.add(newFriend);
+                                    newFriend = null;
+                                } else {
+                                    int comparison = oldFirstName.compareToIgnoreCase(newFirstName);
+
+                                    if (comparison == 0) {
+                                        // compare firstnames
+                                        if (newLastName == null) {
+                                            newFriends.add(newFriend);
+                                            newFriend = null;
+                                        } else if (oldLastName != null) {
+                                            comparison = oldLastName.compareToIgnoreCase(newLastName);
+
+                                            if (comparison == 0) {
+                                                newFriends.add(newFriend);
+                                                newFriend = null;
+                                            } else if (comparison > 0) {
+                                                newFriends.add(newFriend);
+                                                newFriend = null;
+                                            }
+                                        }
+                                    } else if (comparison > 0) {
+                                        newFriends.add(newFriend);
+                                        newFriend = null;
+                                    }
+                                }
+
+                                newFriends.add(oldFriend);
+                            }
+                        }
+
+                        if (newFriend != null) {
+                            newFriends.add(newFriend);
+                        }
+
+                        friends = newFriends;
+                    }
+                }
+            } catch (JSONException e) {
+                if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
+            }
+        }
+
+        return friends;
     }
 
     @Override

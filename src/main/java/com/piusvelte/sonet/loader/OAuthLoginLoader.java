@@ -13,7 +13,6 @@ public class OAuthLoginLoader extends BaseAsyncTaskLoader {
 
     Context mContext;
     int mNetwork;
-    OAuthLoginLoaderResult mOAuthLoginLoaderResult;
 
     public OAuthLoginLoader(Context context, int network) {
         super(context);
@@ -23,9 +22,9 @@ public class OAuthLoginLoader extends BaseAsyncTaskLoader {
 
     @Override
     public Object loadInBackground() {
-        mOAuthLoginLoaderResult = new OAuthLoginLoaderResult(mContext, mNetwork);
-        mOAuthLoginLoaderResult.loadAuthUrl();
-        return mOAuthLoginLoaderResult;
+        OAuthLoginLoaderResult oAuthLoginLoaderResult = new OAuthLoginLoaderResult(mContext, mNetwork);
+        oAuthLoginLoaderResult.loadAuthUrl();
+        return oAuthLoginLoaderResult;
     }
 
     public class OAuthLoginLoaderResult {

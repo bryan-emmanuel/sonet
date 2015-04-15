@@ -26,6 +26,7 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -282,6 +283,11 @@ public class Rss extends Client {
     @Override
     public boolean sendComment(@NonNull String statusId, @NonNull String message) {
         return false;
+    }
+
+    @Override
+    public List<HashMap<String, String>> getFriends() {
+        return null;
     }
 
     @Override
