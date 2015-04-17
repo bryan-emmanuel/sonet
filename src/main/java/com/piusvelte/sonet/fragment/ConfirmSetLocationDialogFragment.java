@@ -1,8 +1,8 @@
 package com.piusvelte.sonet.fragment;
 
 import android.content.Intent;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.StringRes;
 
 import static com.piusvelte.sonet.Sonet.INVALID_ACCOUNT_ID;
 
@@ -13,8 +13,8 @@ public class ConfirmSetLocationDialogFragment {
 
     private static final String ARG_ID = "id";
 
-    public static ConfirmActionDialogFragment newInstance(long accountId, @NonNull String title, int requestCode) {
-        ConfirmActionDialogFragment dialogFragment = ConfirmActionDialogFragment.newInstance(title, requestCode);
+    public static ConfirmationDialogFragment newInstance(long accountId, @StringRes int title, int requestCode) {
+        ConfirmationDialogFragment dialogFragment = ConfirmationDialogFragment.newInstance(title, requestCode);
         dialogFragment.getArguments().putLong(ARG_ID, accountId);
         return dialogFragment;
     }

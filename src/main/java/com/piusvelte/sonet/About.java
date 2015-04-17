@@ -25,18 +25,18 @@ import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 
 
 import com.google.ads.*;
+import com.piusvelte.sonet.fragment.ConfirmationDialogFragment;
+import com.piusvelte.sonet.fragment.ItemsDialogFragment;
+import com.piusvelte.sonet.fragment.OnDialogFragmentFinishListener;
 import com.piusvelte.sonet.provider.Accounts;
 import com.piusvelte.sonet.provider.WidgetAccounts;
 import com.piusvelte.sonet.provider.Widgets;
 import com.piusvelte.sonet.provider.WidgetsSettings;
 
-import android.app.AlertDialog;
 import android.app.WallpaperManager;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ContentValues;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
@@ -51,7 +51,7 @@ import android.view.MenuItem;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-public class About extends FragmentActivity implements OnClickListener, LoaderManager.LoaderCallbacks<Cursor> {
+public class About extends FragmentActivity implements LoaderManager.LoaderCallbacks<Cursor>, OnDialogFragmentFinishListener {
     private int[] mAppWidgetIds;
     private AppWidgetManager mAppWidgetManager;
     private boolean mUpdateWidget = false;
@@ -59,6 +59,11 @@ public class About extends FragmentActivity implements OnClickListener, LoaderMa
 
     private static final int LOADER_ACCOUNTS = 0;
     private static final int LOADER_DEFAULT_WIDGET = 1;
+
+    private static final String DIALOG_ABOUT = "dialog:about";
+    private static final String DIALOG_WIDGETS = "dialog:widgets";
+
+    private static final int REQUEST_WIDGET = 0;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -109,27 +114,14 @@ public class About extends FragmentActivity implements OnClickListener, LoaderMa
                     widgets[i] = Integer.toString(mAppWidgetIds[i]) + " (" + providerName + ")";
                 }
 
-                (new AlertDialog.Builder(this))
-                        .setItems(widgets, this)
-                        .setCancelable(true)
-                        .show();
+                new ItemsDialogFragment().newInstance(widgets, REQUEST_WIDGET)
+                        .show(getSupportFragmentManager(), DIALOG_WIDGETS);
             } else {
                 Toast.makeText(this, getString(R.string.nowidgets), Toast.LENGTH_LONG).show();
             }
         } else if (itemId == R.id.menu_about_about) {
-            AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-            dialog.setTitle(R.string.about_title);
-            dialog.setMessage(R.string.about);
-            dialog.setPositiveButton(android.R.string.ok, new OnClickListener() {
-
-                @Override
-                public void onClick(DialogInterface arg0, int arg1) {
-                    arg0.cancel();
-                }
-
-            });
-            dialog.setCancelable(true);
-            dialog.show();
+            ConfirmationDialogFragment.newInstance(R.string.about_title, R.string.about, -1)
+                    .show(getSupportFragmentManager(), DIALOG_ABOUT);
         }
         return super.onOptionsItemSelected(item);
     }
@@ -159,9 +151,13 @@ public class About extends FragmentActivity implements OnClickListener, LoaderMa
     }
 
     @Override
-    public void onClick(DialogInterface dialog, int which) {
-        startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[which]));
-        dialog.cancel();
+    public void onDialogFragmentResult(int requestCode, int result, Intent data) {
+        switch (requestCode) {
+            case REQUEST_WIDGET:
+                startActivity(Sonet.getPackageIntent(this, ManageAccounts.class)
+                        .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[ItemsDialogFragment.getWhich(data, 0)]));
+                break;
+        }
     }
 
     @Override
@@ -176,7 +172,7 @@ public class About extends FragmentActivity implements OnClickListener, LoaderMa
                         null);
 
             case LOADER_DEFAULT_WIDGET:
-                return new CursorLoader(this,WidgetsSettings.getContentUri(this),
+                return new CursorLoader(this, WidgetsSettings.getContentUri(this),
                         new String[]{Widgets.DISPLAY_PROFILE},
                         Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
                         new String[]{String.valueOf(AppWidgetManager.INVALID_APPWIDGET_ID), String.valueOf(Accounts.INVALID_ACCOUNT_ID)},
@@ -194,20 +190,8 @@ public class About extends FragmentActivity implements OnClickListener, LoaderMa
                 if (cursor != null && cursor.getCount() > 0) {
                     getSupportLoaderManager().initLoader(LOADER_DEFAULT_WIDGET, null, this);
                 } else {
-                    // TODO DialogFragment
-                    AlertDialog.Builder dialog = new AlertDialog.Builder(About.this);
-                    dialog.setTitle(R.string.about_title);
-                    dialog.setMessage(R.string.about);
-                    dialog.setPositiveButton(android.R.string.ok, new OnClickListener() {
-
-                        @Override
-                        public void onClick(DialogInterface arg0, int arg1) {
-                            arg0.cancel();
-                        }
-
-                    });
-                    dialog.setCancelable(true);
-                    dialog.show();
+                    ConfirmationDialogFragment.newInstance(R.string.about_title, R.string.about, -1)
+                            .show(getSupportFragmentManager(), DIALOG_ABOUT);
                 }
                 break;
 

@@ -687,7 +687,7 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
                                 }
 
                                 if ((mLat != null) && (mLong != null)) {
-                                    ConfirmSetLocationDialogFragment.newInstance(accountId, getString(R.string.set_location), REQUEST_SET_LOCATION)
+                                    ConfirmSetLocationDialogFragment.newInstance(accountId, R.string.set_location, REQUEST_SET_LOCATION)
                                             .show(getSupportFragmentManager(), DIALOG_SET_LOCATION);
                                 }
                             }
