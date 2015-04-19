@@ -60,8 +60,8 @@ public class ItemsDialogFragment extends DialogFragment implements DialogInterfa
             } else {
                 Activity activity = getActivity();
 
-                if (activity instanceof OnDialogFragmentFinishListener) {
-                    ((OnDialogFragmentFinishListener) activity).onDialogFragmentResult(requestCode, Activity.RESULT_OK, intent);
+                if (activity instanceof BaseDialogFragment.OnResultListener) {
+                    ((BaseDialogFragment.OnResultListener) activity).onResult(requestCode, Activity.RESULT_OK, intent);
                 }
             }
         }

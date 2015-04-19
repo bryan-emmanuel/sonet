@@ -16,23 +16,24 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *  
- *  Bryan Emmanuel piusvelte@gmail.com
+ *  Bryan Emmanuel piusvelte@gmail.com
+
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:layout_margin="16dip" >
 
     <RelativeLayout
         android:id="@+id/buttons"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true" >
 
         <TextView
             android:id="@+id/buttons_bg_clear"
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
             android:layout_alignParentTop="true"
@@ -42,7 +43,7 @@
 
         <TextView
             android:id="@+id/bg_clear"
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
             android:layout_below="@id/buttons_bg_clear"
@@ -51,8 +52,8 @@
 
         <ImageView
             android:id="@+id/buttons_bg"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:layout_above="@id/bg_clear"
             android:scaleType="fitXY" />
 
@@ -114,14 +115,14 @@
 
     <LinearLayout
         android:id="@+id/messages"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_below="@id/buttons"
         android:orientation="vertical" >
 
         <RelativeLayout
             android:id="@+id/item0"
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal" >
 
@@ -141,7 +142,7 @@
 
             <TextView
                 android:id="@+id/message_bg_clear0"
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_alignParentLeft="true"
                 android:layout_below="@id/friend_bg_clear0"
@@ -153,7 +154,7 @@
 
             <TextView
                 android:id="@+id/bg_clear0"
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_alignParentLeft="true"
                 android:layout_below="@id/message_bg_clear0"
@@ -163,23 +164,23 @@
             <ImageView
                 android:id="@+id/profile_bg0"
                 android:layout_width="48dip"
-                android:layout_height="fill_parent"
+                android:layout_height="match_parent"
                 android:layout_above="@id/bg_clear0"
                 android:layout_alignParentLeft="true"
                 android:scaleType="fitXY" />
 
             <ImageView
                 android:id="@+id/friend_bg0"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:layout_above="@id/message_bg_clear0"
                 android:layout_toRightOf="@id/profile_bg0"
                 android:scaleType="fitXY" />
 
             <ImageView
                 android:id="@+id/status_bg0"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:layout_above="@id/bg_clear0"
                 android:layout_below="@id/friend_bg0"
                 android:layout_toRightOf="@id/profile_bg0"
@@ -207,7 +208,7 @@
 
             <TextView
                 android:id="@+id/created0"
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
                 android:layout_alignParentTop="true"
@@ -219,7 +220,7 @@
 
             <TextView
                 android:id="@+id/message0"
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/friend0"
                 android:layout_toRightOf="@id/profile0"

@@ -25,9 +25,9 @@ import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 
 
 import com.google.ads.*;
+import com.piusvelte.sonet.fragment.BaseDialogFragment;
 import com.piusvelte.sonet.fragment.ConfirmationDialogFragment;
 import com.piusvelte.sonet.fragment.ItemsDialogFragment;
-import com.piusvelte.sonet.fragment.OnDialogFragmentFinishListener;
 import com.piusvelte.sonet.provider.Accounts;
 import com.piusvelte.sonet.provider.WidgetAccounts;
 import com.piusvelte.sonet.provider.Widgets;
@@ -51,7 +51,7 @@ import android.view.MenuItem;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-public class About extends FragmentActivity implements LoaderManager.LoaderCallbacks<Cursor>, OnDialogFragmentFinishListener {
+public class About extends FragmentActivity implements LoaderManager.LoaderCallbacks<Cursor>, BaseDialogFragment.OnResultListener {
     private int[] mAppWidgetIds;
     private AppWidgetManager mAppWidgetManager;
     private boolean mUpdateWidget = false;
@@ -151,7 +151,7 @@ public class About extends FragmentActivity implements LoaderManager.LoaderCallb
     }
 
     @Override
-    public void onDialogFragmentResult(int requestCode, int result, Intent data) {
+    public void onResult(int requestCode, int result, Intent data) {
         switch (requestCode) {
             case REQUEST_WIDGET:
                 startActivity(Sonet.getPackageIntent(this, ManageAccounts.class)

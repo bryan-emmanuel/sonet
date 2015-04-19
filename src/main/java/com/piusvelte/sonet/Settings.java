@@ -477,7 +477,7 @@ public class Settings extends Activity implements View.OnClickListener {
 			mDialog.setTitle(R.string.settings_name);
 			mDialog.setContentView(R.layout.settings_name);
 
-			Button btn_friend_bg_color = (Button) mDialog.findViewById(R.id.friend_bg_color);
+			Button btn_friend_bg_color = (Button) mDialog.findViewById(R.id.background);
 			btn_friend_bg_color.setOnClickListener(new OnClickListener() {
 
 				@Override
@@ -500,7 +500,7 @@ public class Settings extends Activity implements View.OnClickListener {
 
 			});
 
-			Button btn_friend_color = (Button) mDialog.findViewById(R.id.friend_color);
+			Button btn_friend_color = (Button) mDialog.findViewById(R.id.color);
 				btn_friend_color.setOnClickListener(new OnClickListener() {
 
 					@Override
@@ -527,7 +527,7 @@ public class Settings extends Activity implements View.OnClickListener {
 
 				});
 
-			Button btn_friend_textsize = (Button) mDialog.findViewById(R.id.friend_textsize);
+			Button btn_friend_textsize = (Button) mDialog.findViewById(R.id.size);
 				btn_friend_textsize.setOnClickListener(new OnClickListener() {
 
 					@Override
@@ -571,7 +571,7 @@ public class Settings extends Activity implements View.OnClickListener {
 			mDialog.setTitle(R.string.settings_time);
 			mDialog.setContentView(R.layout.settings_time);
 
-			Button btn_created_color = (Button) mDialog.findViewById(R.id.created_color);
+			Button btn_created_color = (Button) mDialog.findViewById(R.id.color);
 				btn_created_color.setOnClickListener(new OnClickListener() {
 
 					@Override
@@ -598,7 +598,7 @@ public class Settings extends Activity implements View.OnClickListener {
 
 				});
 
-			Button btn_created_textsize = (Button) mDialog.findViewById(R.id.created_textsize);
+			Button btn_created_textsize = (Button) mDialog.findViewById(R.id.size);
 				btn_created_textsize.setOnClickListener(new OnClickListener() {
 
 					@Override
@@ -666,7 +666,7 @@ public class Settings extends Activity implements View.OnClickListener {
 
 			});
 
-			Button btn_profile_color = (Button) mDialog.findViewById(R.id.profile_bg_color);
+			Button btn_profile_color = (Button) mDialog.findViewById(R.id.background);
 			btn_profile_color.setOnClickListener(new OnClickListener() {
 
 				@Override
@@ -698,7 +698,7 @@ public class Settings extends Activity implements View.OnClickListener {
 			mDialog.setTitle(R.string.settings_message);
 			mDialog.setContentView(R.layout.settings_message);
 
-			Button btn_messages_bg_color = (Button) mDialog.findViewById(R.id.messages_bg_color);
+			Button btn_messages_bg_color = (Button) mDialog.findViewById(R.id.background);
 			btn_messages_bg_color.setOnClickListener(new OnClickListener() {
 
 				@Override
@@ -720,7 +720,7 @@ public class Settings extends Activity implements View.OnClickListener {
 
 			});
 
-			Button btn_messages_color = (Button) mDialog.findViewById(R.id.messages_color);
+			Button btn_messages_color = (Button) mDialog.findViewById(R.id.color);
 				btn_messages_color.setOnClickListener(new OnClickListener() {
 
 					@Override
@@ -747,7 +747,7 @@ public class Settings extends Activity implements View.OnClickListener {
 
 				});
 
-			Button btn_messages_textsize = (Button) mDialog.findViewById(R.id.messages_textsize);
+			Button btn_messages_textsize = (Button) mDialog.findViewById(R.id.size);
 				btn_messages_textsize.setOnClickListener(new OnClickListener() {
 
 					@Override

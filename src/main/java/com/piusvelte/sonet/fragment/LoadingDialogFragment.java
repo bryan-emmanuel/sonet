@@ -51,8 +51,8 @@ public class LoadingDialogFragment extends DialogFragment {
             } else {
                 Activity activity = getActivity();
 
-                if (activity instanceof OnDialogFragmentFinishListener) {
-                    ((OnDialogFragmentFinishListener) activity).onDialogFragmentResult(requestCode, Activity.RESULT_CANCELED, null);
+                if (activity instanceof BaseDialogFragment.OnResultListener) {
+                    ((BaseDialogFragment.OnResultListener) activity).onResult(requestCode, Activity.RESULT_CANCELED, null);
                 }
             }
         }

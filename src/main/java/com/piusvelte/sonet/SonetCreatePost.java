@@ -24,11 +24,11 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.google.ads.*;
+import com.piusvelte.sonet.fragment.BaseDialogFragment;
 import com.piusvelte.sonet.fragment.ChooseAccountsDialogFragment;
 import com.piusvelte.sonet.fragment.ChooseLocationDialogFragment;
 import com.piusvelte.sonet.fragment.ConfirmSetLocationDialogFragment;
 import com.piusvelte.sonet.fragment.MultiChoiceDialogFragment;
-import com.piusvelte.sonet.fragment.OnDialogFragmentFinishListener;
 import com.piusvelte.sonet.fragment.LoadingDialogFragment;
 import com.piusvelte.sonet.fragment.ChooseAccountDialogFragment;
 import com.piusvelte.sonet.loader.LocationLoader;
@@ -68,7 +68,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class SonetCreatePost extends FragmentActivity implements OnKeyListener, OnClickListener, TextWatcher, LoaderManager.LoaderCallbacks<Object>, OnDialogFragmentFinishListener, MultiChoiceDialogFragment.OnMultiChoiceClickListener {
+public class SonetCreatePost extends FragmentActivity implements OnKeyListener, OnClickListener, TextWatcher, LoaderManager.LoaderCallbacks<Object>, BaseDialogFragment.OnResultListener, MultiChoiceDialogFragment.OnMultiChoiceClickListener {
     private static final String TAG = "SonetCreatePost";
 
     private static final int LOADER_ACCOUNT = 0;
@@ -612,7 +612,7 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
     }
 
     @Override
-    public void onDialogFragmentResult(int requestCode, int result, Intent data) {
+    public void onResult(int requestCode, int result, Intent data) {
         switch (requestCode) {
             case REQUEST_LOCATION:
                 getSupportLoaderManager().destroyLoader(LOADER_LOCATION);

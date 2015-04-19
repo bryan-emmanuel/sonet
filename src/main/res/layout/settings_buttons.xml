@@ -19,14 +19,14 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="fill_parent" android:layout_height="fill_parent"
+	android:layout_width="match_parent" android:layout_height="match_parent"
 	android:orientation="vertical">
 	<CheckBox android:id="@+id/hasbuttons" android:text="@string/hasbuttons"
-		android:layout_width="fill_parent" android:layout_height="wrap_content" android:checked="false" />
+		android:layout_width="match_parent" android:layout_height="wrap_content" android:checked="false" />
 	<Button android:id="@+id/buttons_bg_color" android:text="@string/buttons_bg_color"
-		android:layout_width="fill_parent" android:layout_height="wrap_content" />
+		android:layout_width="match_parent" android:layout_height="wrap_content" />
 	<Button android:id="@+id/buttons_color" android:text="@string/buttons_color"
-		android:layout_width="fill_parent" android:layout_height="wrap_content" />
+		android:layout_width="match_parent" android:layout_height="wrap_content" />
 	<Button android:id="@+id/buttons_textsize" android:text="@string/buttons_textsize"
-		android:layout_width="fill_parent" android:layout_height="wrap_content" />
+		android:layout_width="match_parent" android:layout_height="wrap_content" />
 </LinearLayout>

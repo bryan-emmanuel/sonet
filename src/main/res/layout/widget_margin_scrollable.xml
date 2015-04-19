@@ -19,22 +19,22 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:id="@+id/widget" android:layout_width="fill_parent"
-	android:layout_height="fill_parent" android:layout_margin="16dip">
+	android:id="@+id/widget" android:layout_width="match_parent"
+	android:layout_height="match_parent" android:layout_margin="16dip">
 	<RelativeLayout android:id="@+id/buttons"
-		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:layout_width="match_parent" android:layout_height="wrap_content"
 		android:layout_alignParentTop="true">
 		<TextView android:id="@+id/buttons_bg_clear"
-			android:layout_width="fill_parent" android:padding="4dip"
+			android:layout_width="match_parent" android:padding="4dip"
 			android:layout_alignParentTop="true" android:layout_alignParentLeft="true"
 			android:layout_height="wrap_content" android:text="@string/buttons_bg_clear"
 			android:textColor="#00000000" />
-		<TextView android:id="@+id/bg_clear" android:layout_width="fill_parent"
+		<TextView android:id="@+id/bg_clear" android:layout_width="match_parent"
 			android:layout_alignParentLeft="true" android:height="0dip"
 			android:layout_height="wrap_content" android:layout_below="@id/buttons_bg_clear"
 			android:textColor="#00000000" />
 		<ImageView android:id="@+id/buttons_bg"
-			android:layout_width="fill_parent" android:layout_height="fill_parent"
+			android:layout_width="match_parent" android:layout_height="match_parent"
 			android:scaleType="fitXY" android:layout_above="@id/bg_clear" />
 		<TextView android:id="@+id/button_post" android:layout_width="wrap_content"
 			android:layout_height="wrap_content" android:text="@string/button_post"

@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
  * Sonet - Android Social Networking Widget
  * Copyright (C) 2009 Bryan Emmanuel
  * 
@@ -19,33 +18,71 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="fill_parent" android:layout_height="fill_parent">
-	<LinearLayout android:id="@+id/ad" android:layout_width="fill_parent"
-		android:layout_height="wrap_content" />
-	<Button android:id="@+id/statuses_per_account" android:layout_height="wrap_content"
-	    android:layout_width="fill_parent" android:text="@string/statuses_per_account"
-	    android:layout_below="@id/ad" />
-	<Button android:id="@+id/settings_notification" android:layout_height="wrap_content"
-	    android:layout_width="fill_parent" android:text="@string/settings_notification"
-	    android:layout_below="@id/statuses_per_account" />
-	<LinearLayout android:id="@+id/settings_name_and_time" android:layout_height="wrap_content"
-	    android:layout_width="fill_parent" android:orientation="horizontal" android:weightSum="1"
-	    android:layout_below="@id/settings_notification" >
-	    <Button android:id="@+id/settings_name" android:layout_height="wrap_content"
-	        android:layout_width="0dp" android:layout_weight=".5" android:text="@string/settings_name"
-	        android:gravity="left|center_vertical" />
-	    <Button android:id="@+id/settings_time" android:layout_height="wrap_content"
-	        android:layout_width="0dp" android:layout_weight=".5" android:text="@string/settings_time"
-	        android:gravity="right|center_vertical" />
-	</LinearLayout>
-	<ImageButton android:id="@+id/settings_profile" android:layout_height="fill_parent"
-	    android:layout_width="48dip" android:layout_alignParentLeft="true"
-	    android:scaleType="fitStart" android:layout_below="@id/settings_name_and_time"
-	    android:src="@drawable/ic_contact_picture" />
-	<Button android:id="@+id/settings_message" android:layout_height="fill_parent"
-	    android:layout_width="fill_parent" android:layout_alignParentRight="true"
-	    android:layout_toRightOf="@id/settings_profile" android:layout_below="@id/settings_name_and_time"
-	    android:text="@string/settings_message_extended" />
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/ad"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/statuses_per_account"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:text="@string/statuses_per_account"
+        android:layout_below="@id/ad" />
+
+    <Button
+        android:id="@+id/settings_notification"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:text="@string/settings_notification"
+        android:layout_below="@id/statuses_per_account" />
+
+    <LinearLayout
+        android:id="@+id/settings_name_and_time"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:orientation="horizontal"
+        android:weightSum="1"
+        android:layout_below="@id/settings_notification">
+
+        <Button
+            android:id="@+id/settings_name"
+            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight=".5"
+            android:text="@string/settings_name"
+            android:gravity="left|center_vertical" />
+
+        <Button
+            android:id="@+id/settings_time"
+            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight=".5"
+            android:text="@string/settings_time"
+            android:gravity="right|center_vertical" />
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/settings_profile"
+        android:layout_height="match_parent"
+        android:layout_width="48dip"
+        android:layout_alignParentLeft="true"
+        android:scaleType="fitStart"
+        android:layout_below="@id/settings_name_and_time"
+        android:src="@drawable/ic_contact_picture" />
+
+    <Button
+        android:id="@+id/settings_message"
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:layout_alignParentRight="true"
+        android:layout_toRightOf="@id/settings_profile"
+        android:layout_below="@id/settings_name_and_time"
+        android:text="@string/settings_message_extended" />
+
     <ImageView
         android:id="@+id/icon"
         android:layout_width="16dip"

@@ -19,10 +19,10 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:orientation="horizontal" android:layout_width="fill_parent"
+	android:orientation="horizontal" android:layout_width="match_parent"
 	android:layout_height="wrap_content">
 	<TextView android:id="@+id/notification"
-		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:layout_width="match_parent" android:layout_height="wrap_content"
 		android:padding="12dip" android:textSize="16dip"
 		android:layout_alignParentLeft="true" />
 </RelativeLayout>

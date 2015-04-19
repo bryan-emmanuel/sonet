@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
  * Sonet - Android Social Networking Widget
  * Copyright (C) 2009 Bryan Emmanuel
  * 
@@ -19,12 +18,25 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="fill_parent" android:layout_height="fill_parent"
-	android:orientation="vertical">
-	<Button android:id="@+id/friend_color" android:text="@string/friend_color"
-		android:layout_width="fill_parent" android:layout_height="wrap_content" />
-	<Button android:id="@+id/friend_textsize" android:text="@string/friend_textsize"
-		android:layout_width="fill_parent" android:layout_height="wrap_content" />
-	<Button android:id="@+id/friend_bg_color" android:text="@string/friend_bg_color"
-		android:layout_width="fill_parent" android:layout_height="wrap_content" />
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <Button
+        android:id="@+id/color"
+        android:text="@string/friend_color"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/size"
+        android:text="@string/friend_textsize"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/background"
+        android:text="@string/friend_bg_color"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 </LinearLayout>
