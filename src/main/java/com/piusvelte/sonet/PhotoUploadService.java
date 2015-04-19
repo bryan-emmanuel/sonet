@@ -54,90 +54,91 @@ import android.os.IBinder;
 import android.util.Log;
 
 public class PhotoUploadService extends Service {
-	private static final String TAG = "PhotoUploadService";
-	private int mStartId = Sonet.INVALID_SERVICE;
+    private static final String TAG = "PhotoUploadService";
+    private int mStartId = Sonet.INVALID_SERVICE;
 
-	@Override
-	public int onStartCommand(Intent intent, int flags, int startId) {
-		mStartId = startId;
-		start(intent);
-		return START_REDELIVER_INTENT;
-	}
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        mStartId = startId;
+        start(intent);
+        return START_REDELIVER_INTENT;
+    }
 
-	@Override
-	public void onStart(Intent intent, int startId) {
-		mStartId = startId;
-		start(intent);
-	}
-		
-	private void start(Intent intent) {
-		if (intent != null) {
-			String action = intent.getAction();
-			if (Sonet.ACTION_UPLOAD.equals(action)) {
-				if (intent.hasExtra(Accounts.TOKEN) && intent.hasExtra(Statuses.MESSAGE) && intent.hasExtra(Widgets.INSTANT_UPLOAD)) {
-					String place = null;
+    @Override
+    public void onStart(Intent intent, int startId) {
+        mStartId = startId;
+        start(intent);
+    }
 
-					if (intent.hasExtra(Splace)) {
+    private void start(Intent intent) {
+        if (intent != null) {
+            String action = intent.getAction();
+
+            if (Sonet.ACTION_UPLOAD.equals(action)) {
+                if (intent.hasExtra(Accounts.TOKEN) && intent.hasExtra(Statuses.MESSAGE) && intent.hasExtra(Widgets.INSTANT_UPLOAD)) {
+                    String place = null;
+
+                    if (intent.hasExtra(Splace)) {
                         place = intent.getStringExtra(Splace);
                     }
 
-					String tags = null;
+                    String tags = null;
 
-					if (intent.hasExtra(Stags)) {
+                    if (intent.hasExtra(Stags)) {
                         tags = intent.getStringExtra(Stags);
                     }
 
-					// upload a photo
-					Notification notification = new Notification(R.drawable.notification, "uploading photo", System.currentTimeMillis());
-					notification.setLatestEventInfo(getBaseContext(), "photo upload", "uploading", PendingIntent.getActivity(PhotoUploadService.this, 0, (Sonet.getPackageIntent(PhotoUploadService.this, About.class)), 0));
-					((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
-					(new AsyncTask<String, Void, String>() {
+                    // upload a photo
+                    Notification notification = new Notification(R.drawable.notification, "uploading photo", System.currentTimeMillis());
+                    notification.setLatestEventInfo(getBaseContext(), "photo upload", "uploading", PendingIntent.getActivity(PhotoUploadService.this, 0, (Sonet.getPackageIntent(PhotoUploadService.this, About.class)), 0));
+                    ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
+                    (new AsyncTask<String, Void, String>() {
 
-						@Override
-						protected String doInBackground(String... params) {
-							String response = null;
-							if (params.length > 2) {
-								Log.d(TAG, "upload file: " + params[2]);
-								HttpPost httpPost = new HttpPost(String.format(FACEBOOK_PHOTOS, FACEBOOK_BASE_URL, Saccess_token, params[0]));
-								MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
-								File file = new File(params[2]);
-								ContentBody fileBody = new FileBody(file);
-								entity.addPart(Ssource, fileBody);
-								HttpClient httpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
-								try {
-									entity.addPart(Smessage, new StringBody(params[1]));
-									if (params[3] != null)
-										entity.addPart(Splace, new StringBody(params[3]));
-									if (params[4] != null)
-										entity.addPart(Stags, new StringBody(params[4]));
-									httpPost.setEntity(entity);
-									response = SonetHttpClient.httpResponse(httpClient, httpPost);
-								} catch (UnsupportedEncodingException e) {
-									Log.e(TAG,e.toString());
-								}
-							}
-							return response;
-						}
+                        @Override
+                        protected String doInBackground(String... params) {
+                            String response = null;
+                            if (params.length > 2) {
+                                Log.d(TAG, "upload file: " + params[2]);
+                                HttpPost httpPost = new HttpPost(String.format(FACEBOOK_PHOTOS, FACEBOOK_BASE_URL, Saccess_token, params[0]));
+                                MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
+                                File file = new File(params[2]);
+                                ContentBody fileBody = new FileBody(file);
+                                entity.addPart(Ssource, fileBody);
+                                HttpClient httpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
+                                try {
+                                    entity.addPart(Smessage, new StringBody(params[1]));
+                                    if (params[3] != null)
+                                        entity.addPart(Splace, new StringBody(params[3]));
+                                    if (params[4] != null)
+                                        entity.addPart(Stags, new StringBody(params[4]));
+                                    httpPost.setEntity(entity);
+                                    response = SonetHttpClient.httpResponse(httpClient, httpPost);
+                                } catch (UnsupportedEncodingException e) {
+                                    Log.e(TAG, e.toString());
+                                }
+                            }
+                            return response;
+                        }
 
-						@Override
-						protected void onPostExecute(String response) {
-							// notify photo success
-							String message = getString(response != null ? R.string.success : R.string.failure);
-							Notification notification = new Notification(R.drawable.notification, "photo upload " + message, System.currentTimeMillis());
-							notification.setLatestEventInfo(getBaseContext(), "photo upload", message, PendingIntent.getActivity(PhotoUploadService.this, 0, (Sonet.getPackageIntent(PhotoUploadService.this, About.class)), 0));
-							((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
-							stopSelfResult(mStartId);
-						}
+                        @Override
+                        protected void onPostExecute(String response) {
+                            // notify photo success
+                            String message = getString(response != null ? R.string.success : R.string.failure);
+                            Notification notification = new Notification(R.drawable.notification, "photo upload " + message, System.currentTimeMillis());
+                            notification.setLatestEventInfo(getBaseContext(), "photo upload", message, PendingIntent.getActivity(PhotoUploadService.this, 0, (Sonet.getPackageIntent(PhotoUploadService.this, About.class)), 0));
+                            ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
+                            stopSelfResult(mStartId);
+                        }
 
-					}).execute(intent.getStringExtra(Accounts.TOKEN), intent.getStringExtra(Statuses.MESSAGE), intent.getStringExtra(Widgets.INSTANT_UPLOAD), place, tags);
-				}
-			}
-		}
-	}
+                    }).execute(intent.getStringExtra(Accounts.TOKEN), intent.getStringExtra(Statuses.MESSAGE), intent.getStringExtra(Widgets.INSTANT_UPLOAD), place, tags);
+                }
+            }
+        }
+    }
 
-	@Override
-	public IBinder onBind(Intent arg0) {
-		return null;
-	}
+    @Override
+    public IBinder onBind(Intent arg0) {
+        return null;
+    }
 
 }

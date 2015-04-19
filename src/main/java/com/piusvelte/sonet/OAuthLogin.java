@@ -21,6 +21,10 @@ package com.piusvelte.sonet;
 
 import static com.piusvelte.sonet.Sonet.*;
 
+import com.piusvelte.sonet.fragment.BaseDialogFragment;
+import com.piusvelte.sonet.fragment.LoadingDialogFragment;
+import com.piusvelte.sonet.fragment.RssNameDialogFragment;
+import com.piusvelte.sonet.fragment.RssUrlDialogFragment;
 import com.piusvelte.sonet.provider.Accounts;
 import com.piusvelte.sonet.provider.WidgetAccounts;
 import com.piusvelte.sonet.loader.AddRssLoader;
@@ -29,19 +33,15 @@ import com.piusvelte.sonet.loader.OAuthLoginLoader;
 import com.piusvelte.sonet.social.GooglePlus;
 import com.piusvelte.sonet.social.Client;
 
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.appwidget.AppWidgetManager;
 import android.content.ContentValues;
-import android.content.DialogInterface;
 import android.content.UriMatcher;
-import android.content.DialogInterface.OnCancelListener;
-import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -50,12 +50,19 @@ import android.text.TextUtils;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.EditText;
 import android.widget.Toast;
 
-public class OAuthLogin extends FragmentActivity implements OnCancelListener, OnClickListener, LoaderManager.LoaderCallbacks<Object> {
+public class OAuthLogin extends FragmentActivity implements LoaderManager.LoaderCallbacks<Object>, BaseDialogFragment.OnResultListener {
     private static final String TAG = "OAuthLogin";
-    private ProgressDialog mLoadingDialog;
+
+    private static final String DIALOG_LOADING = "dialog:loading";
+    private static final String DIALOG_RSS_URL = "dialog:rss_url";
+    private static final String DIALOG_RSS_NAME = "dialog:rss_name";
+
+    private static final int REQUEST_LOADING = 0;
+    private static final int REQUEST_RSS_URL = 1;
+    private static final int REQUEST_RSS_NAME = 2;
+
     private int mWidgetId;
     private long mAccountId;
     private String mServiceName = "unknown";
@@ -150,29 +157,9 @@ public class OAuthLogin extends FragmentActivity implements OnCancelListener, On
 
                 if (data instanceof String) {
                     final String rssUrl = (String) data;
-                    final EditText rssName = new EditText(this);
-                    rssName.setSingleLine();
 
-                    // TODO DialogFragment
-                    new AlertDialog.Builder(OAuthLogin.this)
-                            .setTitle(R.string.rss_channel)
-                            .setView(rssName)
-                            .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    addAccount(rssName.getText().toString(), null, null, 0, RSS, rssUrl);
-                                    dialog.dismiss();
-                                    finish();
-                                }
-                            })
-                            .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                    finish();
-                                }
-                            })
-                            .show();
+                    RssNameDialogFragment.newInstance(REQUEST_RSS_NAME, rssUrl)
+                            .show(getSupportFragmentManager(), DIALOG_RSS_NAME);
                 }
 
                 getSupportLoaderManager().destroyLoader(LOADER_RSS);
@@ -220,27 +207,23 @@ public class OAuthLogin extends FragmentActivity implements OnCancelListener, On
         // NO-OP
     }
 
-    private void setupLoading() {
-        mLoadingDialog = new ProgressDialog(this);
-        mLoadingDialog.setMessage(getString(R.string.loading));
-        mLoadingDialog.setCancelable(true);
-        mLoadingDialog.setOnCancelListener(this);
-        mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), this);
-    }
-
     private void showLoading() {
-        mLoadingDialog.show();
+        LoadingDialogFragment.newInstance(REQUEST_LOADING)
+                .show(getSupportFragmentManager(), DIALOG_LOADING);
     }
 
     private void dismissLoading() {
-        if (mLoadingDialog.isShowing()) mLoadingDialog.dismiss();
+        DialogFragment dialogFragment = (DialogFragment) getSupportFragmentManager().findFragmentByTag(DIALOG_LOADING);
+
+        if (dialogFragment != null) {
+            dialogFragment.dismiss();
+        }
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setResult(RESULT_CANCELED);
-        setupLoading();
         Intent intent = getIntent();
 
         if (intent != null) {
@@ -260,31 +243,8 @@ public class OAuthLogin extends FragmentActivity implements OnCancelListener, On
                         break;
 
                     case RSS:
-                        // prompt for RSS url
-                        final EditText rssUrl = new EditText(this);
-                        rssUrl.setSingleLine();
-                        // TODO DialogFragment
-                        new AlertDialog.Builder(this)
-                                .setTitle(R.string.rss_url)
-                                .setView(rssUrl)
-                                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(final DialogInterface dialog, int which) {
-                                        // test the url and add if valid, else Toast error
-                                        showLoading();
-                                        Bundle args = new Bundle();
-                                        args.putString(LOADER_ARG_RSS_URL, rssUrl.getText().toString());
-                                        getSupportLoaderManager().initLoader(LOADER_RSS, args, OAuthLogin.this);
-                                    }
-                                })
-                                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.dismiss();
-                                        finish();
-                                    }
-                                })
-                                .show();
+                        RssUrlDialogFragment.newInstance(REQUEST_RSS_URL)
+                                .show(getSupportFragmentManager(), DIALOG_RSS_URL);
                         break;
 
                     case PINTEREST:
@@ -330,6 +290,41 @@ public class OAuthLogin extends FragmentActivity implements OnCancelListener, On
 
         setResult(RESULT_OK);
         return accountId;
+    }
+
+    @Override
+    public void onResult(int requestCode, int result, Intent data) {
+        switch (requestCode) {
+            case REQUEST_LOADING:
+                LoaderManager loaderManager = getSupportLoaderManager();
+                if (loaderManager.hasRunningLoaders()) {
+                    // destroy loaders
+                }
+
+                finish();
+                break;
+
+            case REQUEST_RSS_URL:
+                if (result == RESULT_OK) {
+                    showLoading();
+                    Bundle args = new Bundle();
+                    args.putString(LOADER_ARG_RSS_URL, RssUrlDialogFragment.getUrl(data, null));
+                    getSupportLoaderManager().initLoader(LOADER_RSS, args, OAuthLogin.this);
+                } else {
+                    finish();
+                }
+                break;
+
+            case REQUEST_RSS_NAME:
+                if (result == RESULT_OK) {
+                    String url = RssNameDialogFragment.getUrl(data, null);
+                    String name = RssNameDialogFragment.getName(data, null);
+                    addAccount(name, null, null, 0, RSS, url);
+                }
+
+                finish();
+                break;
+        }
     }
 
     private class SonetWebView {
@@ -389,26 +384,11 @@ public class OAuthLogin extends FragmentActivity implements OnCancelListener, On
         }
 
         public void open(String url) {
-            if (url != null)
+            if (url != null) {
                 mWebView.loadUrl(url);
-            else
+            } else {
                 mOAuthLogin.finish();
+            }
         }
-
     }
-
-    @Override
-    public void onClick(DialogInterface arg0, int arg1) {
-        finish();
-    }
-
-    @Override
-    public void onCancel(DialogInterface dialog) {
-        if (getSupportLoaderManager().hasRunningLoaders()) {
-            // TODO destroy loaders
-        }
-
-        finish();
-    }
-
 }

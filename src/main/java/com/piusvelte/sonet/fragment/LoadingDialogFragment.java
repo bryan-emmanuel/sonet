@@ -14,7 +14,7 @@ import com.piusvelte.sonet.R;
 /**
  * Created by bemmanuel on 4/7/15.
  */
-public class LoadingDialogFragment extends DialogFragment {
+public class LoadingDialogFragment extends BaseDialogFragment {
 
     private static final String ARG_REQUEST_CODE = "request_code";
 
@@ -31,30 +31,11 @@ public class LoadingDialogFragment extends DialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         ProgressDialog loadingDialog = new ProgressDialog(getActivity());
         loadingDialog.setMessage(getString(R.string.loading));
-        loadingDialog.setCancelable(true);
-        loadingDialog.setOnCancelListener(this);
         return loadingDialog;
     }
 
     @Override
     public void onCancel(DialogInterface dialog) {
-        int requestCode = getArguments().getInt(ARG_REQUEST_CODE);
-        Fragment target = getTargetFragment();
-
-        if (target != null) {
-            target.onActivityResult(requestCode, Activity.RESULT_CANCELED, null);
-        } else {
-            Fragment parent = getParentFragment();
-
-            if (parent != null) {
-                parent.onActivityResult(requestCode, Activity.RESULT_CANCELED, null);
-            } else {
-                Activity activity = getActivity();
-
-                if (activity instanceof BaseDialogFragment.OnResultListener) {
-                    ((BaseDialogFragment.OnResultListener) activity).onResult(requestCode, Activity.RESULT_CANCELED, null);
-                }
-            }
-        }
+        deliverResult(Activity.RESULT_CANCELED);
     }
 }

@@ -38,8 +38,7 @@ public class ConfirmationDialogFragment extends BaseDialogFragment implements Di
         Bundle args = getArguments();
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
                 .setTitle(args.getInt(ARG_TITLE))
-                .setPositiveButton(android.R.string.ok, this)
-                .setOnCancelListener(this);
+                .setPositiveButton(android.R.string.ok, this);
 
         if (args.containsKey(ARG_MESSAGE)) {
             builder.setMessage(args.getInt(ARG_MESSAGE));

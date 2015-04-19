@@ -70,6 +70,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
+// TODO ActionBarActivity with ListFragment
 public class ManageAccounts extends ActionBarListActivity implements DialogInterface.OnClickListener {
     private static final int REAUTH_ID = Menu.FIRST;
     private static final int SETTINGS_ID = Menu.FIRST + 1;
@@ -95,11 +96,12 @@ public class ManageAccounts extends ActionBarListActivity implements DialogInter
         Intent intent = getIntent();
         if (intent != null) {
             Bundle extras = intent.getExtras();
-            if (extras != null)
+            if (extras != null) {
                 mAppWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
                 // if called from widget, the id is set in the action, as pendingintents must have a unique action
-            else if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH)) && (!intent.getAction().equals(Intent.ACTION_VIEW)))
+            } else if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH)) && (!intent.getAction().equals(Intent.ACTION_VIEW))) {
                 mAppWidgetId = Integer.parseInt(intent.getAction());
+            }
         }
 
         Intent resultValue = new Intent();
@@ -109,8 +111,9 @@ public class ManageAccounts extends ActionBarListActivity implements DialogInter
         registerForContextMenu(getListView());
 
         Drawable wp = WallpaperManager.getInstance(getApplicationContext()).getDrawable();
-        if (wp != null)
+        if (wp != null) {
             findViewById(R.id.ad).getRootView().setBackgroundDrawable(wp);
+        }
     }
 
     @Override

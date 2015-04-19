@@ -146,8 +146,17 @@ public class About extends FragmentActivity implements LoaderManager.LoaderCallb
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if ((requestCode == RESULT_REFRESH) && (resultCode == RESULT_OK)) mUpdateWidget = true;
+        switch (requestCode) {
+            case RESULT_REFRESH:
+                if (resultCode == RESULT_OK) {
+                    mUpdateWidget = true;
+                }
+                break;
+
+            default:
+            super.onActivityResult(requestCode, resultCode, data);
+            break;
+        }
     }
 
     @Override
