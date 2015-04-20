@@ -14,19 +14,18 @@ import android.support.v4.app.Fragment;
 /**
  * Created by bemmanuel on 4/11/15.
  */
-public class ItemsDialogFragment extends DialogFragment implements DialogInterface.OnClickListener {
+public class ItemsDialogFragment extends BaseDialogFragment implements DialogInterface.OnClickListener {
 
     private static final String ARG_REQUEST_CODE = "request_code";
     private static final String ARG_ITEMS = "items";
     private static final String ARG_WHICH = "which";
 
     public static ItemsDialogFragment newInstance(@NonNull CharSequence[] items, int requestCode) {
-        Bundle args = new Bundle();
+        ItemsDialogFragment chooseAccountDialogFragment = new ItemsDialogFragment();
+        chooseAccountDialogFragment.setRequestCode(requestCode);
+        Bundle args = chooseAccountDialogFragment.getArguments();
         args.putInt(ARG_REQUEST_CODE, requestCode);
         args.putCharSequenceArray(ARG_ITEMS, items);
-
-        ItemsDialogFragment chooseAccountDialogFragment = new ItemsDialogFragment();
-        chooseAccountDialogFragment.setArguments(args);
         return chooseAccountDialogFragment;
     }
 
@@ -44,28 +43,7 @@ public class ItemsDialogFragment extends DialogFragment implements DialogInterfa
     public void onClick(DialogInterface dialog, int which) {
         Bundle args = getArguments();
         args.putInt(ARG_WHICH, which);
-        int requestCode = args.getInt(ARG_REQUEST_CODE);
-
-        Intent intent = new Intent()
-                .putExtras(args);
-        Fragment target = getTargetFragment();
-
-        if (target != null) {
-            target.onActivityResult(requestCode, Activity.RESULT_OK, intent);
-        } else {
-            Fragment parent = getParentFragment();
-
-            if (parent != null) {
-                parent.onActivityResult(requestCode, Activity.RESULT_OK, intent);
-            } else {
-                Activity activity = getActivity();
-
-                if (activity instanceof BaseDialogFragment.OnResultListener) {
-                    ((BaseDialogFragment.OnResultListener) activity).onResult(requestCode, Activity.RESULT_OK, intent);
-                }
-            }
-        }
-
+        deliverResult(Activity.RESULT_OK);
         dismiss();
     }
 

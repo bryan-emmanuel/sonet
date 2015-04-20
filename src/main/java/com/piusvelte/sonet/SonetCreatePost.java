@@ -21,7 +21,9 @@ package com.piusvelte.sonet;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.google.ads.*;
 import com.piusvelte.sonet.fragment.BaseDialogFragment;
@@ -46,6 +48,7 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
@@ -68,7 +71,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class SonetCreatePost extends FragmentActivity implements OnKeyListener, OnClickListener, TextWatcher, LoaderManager.LoaderCallbacks<Object>, BaseDialogFragment.OnResultListener, MultiChoiceDialogFragment.OnMultiChoiceClickListener {
+public class SonetCreatePost extends FragmentActivity implements OnKeyListener, OnClickListener, TextWatcher, LoaderManager.LoaderCallbacks, BaseDialogFragment.OnResultListener, MultiChoiceDialogFragment.OnMultiChoiceClickListener {
     private static final String TAG = "SonetCreatePost";
 
     private static final int LOADER_ACCOUNT = 0;
@@ -97,8 +100,10 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
     private static final int REQUEST_ACCOUNTS = 5;
     private static final int REQUEST_SET_LOCATION = 6;
 
-    private HashMap<Long, String> mAccountsLocation = new HashMap<Long, String>();
-    private HashMap<Long, String[]> mAccountsTags = new HashMap<Long, String[]>();
+    private static final String STATE_PENDING_LOADERS = "state:pending_loaders";
+
+    private HashMap<Long, String> mAccountsLocation = new HashMap<>();
+    private HashMap<Long, String[]> mAccountsTags = new HashMap<>();
     private HashMap<Long, Integer> mAccountsService = new HashMap<>();
     private EditText mMessage;
     private ImageButton mSend;
@@ -108,6 +113,10 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
     private static final int PHOTO = 1;
     private static final int TAGS = 2;
     private String mPhotoPath;
+
+    @NonNull
+    private Set<Integer> mPendingLoaders = new HashSet<>();
+
     // TODO move this to Client implementations
     private static final List<Integer> sLocationSupported = new ArrayList<>();
     private static final List<Integer> sPhotoSupported = new ArrayList<>();
@@ -143,6 +152,34 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
         mSend.setOnClickListener(this);
         setResult(RESULT_OK);
         handleIntent(getIntent());
+
+        LoaderManager loaderManager = getSupportLoaderManager();
+
+        if (loaderManager.hasRunningLoaders() && savedInstanceState != null) {
+            int[] loaders = savedInstanceState.getIntArray(STATE_PENDING_LOADERS);
+
+            if (loaders != null) {
+                for (int loader : loaders) {
+                    mPendingLoaders.add(loader);
+                    loaderManager.initLoader(loader, null, this);
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        int loaderIndex = 0;
+        int[] loaders = new int[mPendingLoaders.size()];
+
+        for (Integer loader : mPendingLoaders) {
+            loaders[loaderIndex] = loader;
+            loaderIndex++;
+        }
+
+        outState.putIntArray(STATE_PENDING_LOADERS, loaders);
     }
 
     @Override
@@ -278,7 +315,7 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
                         unsupportedToast(sLocationSupported);
                     }
                 } else {
-                    getSupportLoaderManager().initLoader(LOADER_ACCOUNT_NAMES, null, this);
+                    getSupportLoaderManager().restartLoader(LOADER_ACCOUNT_NAMES, null, this);
                     LoadingDialogFragment.newInstance(REQUEST_ACCOUNT).show(getSupportFragmentManager(), DIALOG_LOADING);
                 }
             } else {
@@ -322,7 +359,7 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
     public void onClick(View v) {
         if (v == mSend) {
             if (!mAccountsService.isEmpty()) {
-                getSupportLoaderManager().initLoader(LOADER_SEND_POST, null, this);
+                getSupportLoaderManager().restartLoader(LOADER_SEND_POST, null, this);
                 LoadingDialogFragment.newInstance(REQUEST_SEND_POST).show(getSupportFragmentManager(), DIALOG_LOADING);
             } else
                 (Toast.makeText(SonetCreatePost.this, "no accounts selected", Toast.LENGTH_LONG)).show();
@@ -333,8 +370,9 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
         // TODO some file manages send the path through the uri.getPath()
         Bundle args = new Bundle();
         args.putString(LOADER_ARG_PHOTO_URI, uri.toString());
-        getSupportLoaderManager().initLoader(LOADER_PHOTO, args, this);
-        LoadingDialogFragment.newInstance(REQUEST_PHOTO).show(getSupportFragmentManager(), DIALOG_LOADING);
+        getSupportLoaderManager().restartLoader(LOADER_PHOTO, args, this);
+        LoadingDialogFragment.newInstance(REQUEST_PHOTO)
+                .show(getSupportFragmentManager(), DIALOG_LOADING);
     }
 
     protected void setPhoto(String path) {
@@ -352,7 +390,7 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
 
     protected void chooseAccounts() {
         // don't limit accounts to the widget...
-        getSupportLoaderManager().initLoader(LOADER_ACCOUNTS_NAMES, null, this);
+        getSupportLoaderManager().restartLoader(LOADER_ACCOUNTS_NAMES, null, this);
     }
 
     @Override
@@ -392,28 +430,26 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
     }
 
     @Override
-    public Loader<Object> onCreateLoader(int id, Bundle args) {
-        Loader loader;
+    public Loader onCreateLoader(int id, Bundle args) {
+        mPendingLoaders.add(id);
 
         switch (id) {
             case LOADER_ACCOUNT:
-                loader = new CursorLoader(this,
+                return new CursorLoader(this,
                         Accounts.getContentUri(this),
                         new String[]{Accounts._ID, Accounts.SERVICE},
                         Accounts._ID + "=?",
                         new String[]{args.getString(LOADER_ARG_ACCOUNT_ID)},
                         null);
-                break;
 
             case LOADER_LOCATION:
-                loader = new LocationLoader(this,
+                return new LocationLoader(this,
                         args.getLong(LOADER_ARG_ACCOUNT_ID),
                         args.getString(LOADER_ARG_LATITUDE),
                         args.getString(LOADER_ARG_LONGITUDE));
-                break;
 
             case LOADER_SEND_POST:
-                loader = new SendPostLoader(this,
+                return new SendPostLoader(this,
                         mAccountsService,
                         mMessage.getText().toString(),
                         mAccountsLocation,
@@ -421,44 +457,40 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
                         mLong,
                         mPhotoPath,
                         mAccountsTags);
-                break;
 
             case LOADER_PHOTO:
-                loader = new CursorLoader(this,
+                return new CursorLoader(this,
                         Uri.parse(args.getString(LOADER_ARG_PHOTO_URI)),
                         new String[]{MediaStore.Images.Media.DATA},
                         null,
                         null,
                         null);
-                break;
 
             case LOADER_ACCOUNT_NAMES:
-                loader = new CursorLoader(this,
+                return new CursorLoader(this,
                         Accounts.getContentUri(this),
                         new String[]{Accounts._ID, Accounts.SERVICE, Accounts.USERNAME},
                         Accounts._ID + " in (?)",
                         new String[]{TextUtils.join(",", mAccountsService.keySet())},
                         null);
-                break;
 
             case LOADER_ACCOUNTS_NAMES:
-                loader = new CursorLoader(this,
+                return new CursorLoader(this,
                         Accounts.getContentUri(this),
                         new String[]{Accounts._ID, Accounts.SERVICE, Accounts.USERNAME},
                         null,
                         null,
                         null);
-                break;
 
             default:
-                loader = null;
+                return null;
         }
-
-        return loader;
     }
 
     @Override
-    public void onLoadFinished(Loader<Object> loader, Object data) {
+    public void onLoadFinished(Loader loader, Object data) {
+        mPendingLoaders.remove(loader.getId());
+
         switch (loader.getId()) {
             case LOADER_ACCOUNT:
                 dismissLoading();
@@ -483,8 +515,6 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
                 } else {
                     (Toast.makeText(SonetCreatePost.this, getString(R.string.failure), Toast.LENGTH_LONG)).show();
                 }
-
-                getSupportLoaderManager().destroyLoader(LOADER_LOCATION);
                 break;
 
             case LOADER_SEND_POST:
@@ -496,8 +526,6 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
                         // TODO toast?
                     }
                 }
-
-                getSupportLoaderManager().destroyLoader(LOADER_SEND_POST);
                 break;
 
             case LOADER_PHOTO:
@@ -521,8 +549,6 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
                         (Toast.makeText(SonetCreatePost.this, "error retrieving the photo path", Toast.LENGTH_LONG)).show();
                     }
                 }
-
-                getSupportLoaderManager().destroyLoader(LOADER_PHOTO);
                 break;
 
             case LOADER_ACCOUNT_NAMES:
@@ -559,8 +585,6 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
                 } else {
                     unsupportedToast(sLocationSupported);
                 }
-
-                getSupportLoaderManager().destroyLoader(LOADER_ACCOUNT_NAMES);
                 break;
 
             case LOADER_ACCOUNTS_NAMES:
@@ -600,7 +624,8 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
     }
 
     @Override
-    public void onLoaderReset(Loader<Object> loader) {
+    public void onLoaderReset(Loader loader) {
+        mPendingLoaders.remove(loader.getId());
     }
 
     private void dismissLoading() {
@@ -615,15 +640,21 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
     public void onResult(int requestCode, int result, Intent data) {
         switch (requestCode) {
             case REQUEST_LOCATION:
-                getSupportLoaderManager().destroyLoader(LOADER_LOCATION);
+                if (result == RESULT_CANCELED) {
+                    getSupportLoaderManager().destroyLoader(LOADER_LOCATION);
+                }
                 break;
 
             case REQUEST_SEND_POST:
-                getSupportLoaderManager().destroyLoader(LOADER_SEND_POST);
+                if (result == RESULT_CANCELED) {
+                    getSupportLoaderManager().destroyLoader(LOADER_SEND_POST);
+                }
                 break;
 
             case REQUEST_PHOTO:
-                getSupportLoaderManager().destroyLoader(LOADER_PHOTO);
+                if (result == RESULT_CANCELED) {
+                    getSupportLoaderManager().destroyLoader(LOADER_PHOTO);
+                }
                 break;
 
             case REQUEST_ACCOUNT:

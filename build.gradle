@@ -3,7 +3,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.0.1'
+        classpath 'com.android.tools.build:gradle:1.1.0'
     }
 }
 
@@ -21,14 +21,14 @@ allprojects {
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 21
+    compileSdkVersion 22
     buildToolsVersion "22.0.0"
 
     defaultConfig {
         versionCode 326
         versionName '3.2.6'
         minSdkVersion 11
-        targetSdkVersion 21
+        targetSdkVersion 22
         // keys
         buildConfigField "String", "TWITTER_KEY", '"' + project.property('twitter.key') + '"'
         buildConfigField "String", "TWITTER_SECRET", '"' + project.property('twitter.secret') + '"'
@@ -90,7 +90,8 @@ android {
 
 dependencies {
     compile 'com.android.support:support-annotations:+'
-    compile 'com.android.support:support-v4:21.+'
+    compile 'com.android.support:support-v4:22.+'
+    compile "com.android.support:appcompat-v7:22.+"
 
     compile project(':Eidos')
 

@@ -13,7 +13,9 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SimpleCursorAdapter;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -38,6 +40,11 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
     private static final int LOADER_WIDGETS = 0;
 
     private SimpleCursorAdapter mAdapter;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.widgets, container, false);
+    }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
@@ -139,7 +146,11 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-        mAdapter.changeCursor(null);
+        switch (loader.getId()) {
+            case LOADER_WIDGETS:
+                mAdapter.changeCursor(null);
+                break;
+        }
     }
 
     private static class WidgetsViewBinder implements SimpleCursorAdapter.ViewBinder {

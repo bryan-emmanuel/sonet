@@ -52,7 +52,10 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
-public class OAuthLogin extends FragmentActivity implements LoaderManager.LoaderCallbacks<Object>, BaseDialogFragment.OnResultListener {
+import java.util.HashSet;
+import java.util.Set;
+
+public class OAuthLogin extends FragmentActivity implements LoaderManager.LoaderCallbacks, BaseDialogFragment.OnResultListener {
     private static final String TAG = "OAuthLogin";
 
     private static final String DIALOG_LOADING = "dialog:loading";
@@ -63,10 +66,14 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
     private static final int REQUEST_RSS_URL = 1;
     private static final int REQUEST_RSS_NAME = 2;
 
+    private static final String STATE_PENDING_LOADERS = "state:pending_loaders";
+
     private int mWidgetId;
     private long mAccountId;
     private String mServiceName = "unknown";
     private SonetWebView mSonetWebView;
+
+    private Set<Integer> mPendingLoaders = new HashSet<>();
 
     @Nullable
     private OAuthLoginLoader.OAuthLoginLoaderResult mOAuthLoginLoaderResult;
@@ -82,40 +89,34 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
     private static final String LOADER_ARG_AUTHENTICATED_URL = "authenticated_url";
 
     @Override
-    public Loader<Object> onCreateLoader(int id, Bundle args) {
-        Loader loader;
+    public Loader onCreateLoader(int id, Bundle args) {
+        mPendingLoaders.add(id);
 
         switch (id) {
             case LOADER_OAUTH_LOGIN:
-                loader = new OAuthLoginLoader(this, args.getInt(LOADER_ARG_NETWORK));
-                break;
+                return new OAuthLoginLoader(this, args.getInt(LOADER_ARG_NETWORK));
 
             case LOADER_SMS:
-                loader = new CursorLoader(this, Accounts.getContentUri(this), new String[]{Accounts._ID}, Accounts.SERVICE + "=?", new String[]{Integer.toString(SMS)}, null);
-                break;
+                return new CursorLoader(this, Accounts.getContentUri(this), new String[]{Accounts._ID}, Accounts.SERVICE + "=?", new String[]{Integer.toString(SMS)}, null);
 
             case LOADER_RSS:
-                loader = new AddRssLoader(this, args.getString(LOADER_ARG_RSS_URL));
-                break;
+                return new AddRssLoader(this, args.getString(LOADER_ARG_RSS_URL));
 
             case LOADER_PINTEREST:
-                loader = new CursorLoader(this, Accounts.getContentUri(this), new String[]{Accounts._ID}, Accounts.SERVICE + "=?", new String[]{Integer.toString(PINTEREST)}, null);
-                break;
+                return new CursorLoader(this, Accounts.getContentUri(this), new String[]{Accounts._ID}, Accounts.SERVICE + "=?", new String[]{Integer.toString(PINTEREST)}, null);
 
             case LOADER_MEMBER_AUTHENTICATION:
-                loader = new MemberAuthenticationLoader(this, mOAuthLoginLoaderResult, args.getString(LOADER_ARG_AUTHENTICATED_URL));
-                break;
+                return new MemberAuthenticationLoader(this, mOAuthLoginLoaderResult, args.getString(LOADER_ARG_AUTHENTICATED_URL));
 
             default:
-                loader = null;
-                break;
+                return null;
         }
-
-        return loader;
     }
 
     @Override
-    public void onLoadFinished(Loader<Object> loader, Object data) {
+    public void onLoadFinished(Loader loader, Object data) {
+        mPendingLoaders.remove(loader.getId());
+
         switch (loader.getId()) {
             case LOADER_OAUTH_LOGIN:
                 dismissLoading();
@@ -203,13 +204,15 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
     }
 
     @Override
-    public void onLoaderReset(Loader<Object> loader) {
-        // NO-OP
+    public void onLoaderReset(Loader loader) {
+        mPendingLoaders.remove(loader.getId());
     }
 
     private void showLoading() {
-        LoadingDialogFragment.newInstance(REQUEST_LOADING)
-                .show(getSupportFragmentManager(), DIALOG_LOADING);
+        if (getSupportFragmentManager().findFragmentByTag(DIALOG_LOADING) == null) {
+            LoadingDialogFragment.newInstance(REQUEST_LOADING)
+                    .show(getSupportFragmentManager(), DIALOG_LOADING);
+        }
     }
 
     private void dismissLoading() {
@@ -224,6 +227,20 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setResult(RESULT_CANCELED);
+
+        LoaderManager loaderManager = getSupportLoaderManager();
+
+        if (loaderManager.hasRunningLoaders() && savedInstanceState != null) {
+            int[] loaders = savedInstanceState.getIntArray(STATE_PENDING_LOADERS);
+
+            if (loaders != null) {
+                for (int loader : loaders) {
+                    mPendingLoaders.add(loader);
+                    loaderManager.initLoader(loader, null, this);
+                }
+            }
+        }
+
         Intent intent = getIntent();
 
         if (intent != null) {
@@ -236,6 +253,7 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
                 mAccountId = extras.getLong(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID);
                 mSonetWebView = new SonetWebView(this);
 
+                // TODO this needs updating if we're recreated after rotation
                 switch (service) {
                     case SMS:
                         showLoading();

@@ -56,10 +56,10 @@ public class Sonet {
     public static final String ACTION_ON_CLICK = "com.piusvelte.sonet.Sonet.ON_CLICK";
     public static final String ACTION_UPLOAD = "com.piusvelte.sonet.Sonet.UPLOAD";
     protected static final String SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED";
-    protected static final String EXTRA_ACCOUNT_ID = "com.piusvelte.sonet.Sonet.ACCOUNT_ID";
+    public static final String EXTRA_ACCOUNT_ID = "com.piusvelte.sonet.Sonet.ACCOUNT_ID";
     public static final String EXTRA_SCROLLABLE_VERSION = "com.piusvelte.sonet.Sonet.SCROLLABLE_VERSION";
     public static final long INVALID_ACCOUNT_ID = -1;
-    protected static final int RESULT_REFRESH = 1;
+    public static final int RESULT_REFRESH = 1;
     protected static int NOTIFY_ID = 1;
 
     public static final int TWITTER = 0;
@@ -139,7 +139,7 @@ public class Sonet {
     public static final String LINKEDIN_COMMENT_BODY = "<?xml version='1.0' encoding='UTF-8'?><update-comment><comment>%s</comment></update-comment>";
     public static final String LINKEDIN_LIKE_BODY = "<?xml version='1.0' encoding='UTF-8'?><is-liked>%s</is-liked>";
 
-    protected static final int SMS = 6;
+    public static final int SMS = 6;
     public static final int RSS = 7;
 
     public static final int IDENTICA = 8;
@@ -311,13 +311,13 @@ public class Sonet {
     protected static final int default_buttons_bg_color = 0x88000000;
     protected static final int default_buttons_color = 0xFFFFFFFF;
     public static final int default_message_bg_color = 0x88FFFFFF;
-    protected static final int default_message_color = 0xFF000000;
-    protected static final int default_friend_color = 0xFFFFFFFF;
-    protected static final int default_created_color = 0xFFFFFFFF;
+    public static final int default_message_color = 0xFF000000;
+    public static final int default_friend_color = 0xFFFFFFFF;
+    public static final int default_created_color = 0xFFFFFFFF;
     protected static final int default_buttons_textsize = 14;
-    protected static final int default_messages_textsize = 14;
-    protected static final int default_friend_textsize = 14;
-    protected static final int default_created_textsize = 14;
+    public static final int default_messages_textsize = 14;
+    public static final int default_friend_textsize = 14;
+    public static final int default_created_textsize = 14;
     protected static final int default_statuses_per_account = 10;
     protected static final boolean default_include_profile = true;
     protected static final int default_margin = 0;
