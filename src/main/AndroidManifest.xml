@@ -197,6 +197,7 @@
         <service android:name=".SonetService" />
         <service android:name=".SonetUploader" />
         <service android:name=".PhotoUploadService" />
+        <service android:name=".service.AccountUpdateService" android:exported="false" />
 
         <receiver android:name=".SonetSMSReceiver">
             <intent-filter>

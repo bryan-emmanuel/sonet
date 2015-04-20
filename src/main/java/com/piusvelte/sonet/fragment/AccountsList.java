@@ -2,8 +2,6 @@ package com.piusvelte.sonet.fragment;
 
 import android.app.Activity;
 import android.appwidget.AppWidgetManager;
-import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -39,13 +37,10 @@ import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetService;
 import com.piusvelte.sonet.provider.Accounts;
 import com.piusvelte.sonet.provider.AccountsStyles;
-import com.piusvelte.sonet.provider.Notifications;
-import com.piusvelte.sonet.provider.StatusImages;
-import com.piusvelte.sonet.provider.StatusLinks;
-import com.piusvelte.sonet.provider.Statuses;
 import com.piusvelte.sonet.provider.StatusesStyles;
 import com.piusvelte.sonet.provider.WidgetAccounts;
 import com.piusvelte.sonet.provider.Widgets;
+import com.piusvelte.sonet.service.AccountUpdateService;
 import com.piusvelte.sonet.social.Client;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
@@ -196,43 +191,10 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
     public boolean onContextItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case DELETE_ID:
-                // TODO service should do this
-                mUpdateWidget = true;
-                String accountId = Long.toString(((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).id);
-                ContentResolver resolver = getActivity().getContentResolver();
-                resolver.delete(Accounts.getContentUri(getActivity()),
-                        Accounts._ID + "=?",
-                        new String[]{accountId});
-                // need to delete the statuses and settings for all accounts
-                resolver.delete(Widgets.getContentUri(getActivity()),
-                        Widgets.ACCOUNT + "=?",
-                        new String[]{accountId});
-                Cursor statuses = resolver.query(Statuses.getContentUri(getActivity()),
-                        new String[]{Statuses._ID},
-                        Statuses.ACCOUNT + "=?",
-                        new String[]{accountId},
-                        null);
-                if (statuses.moveToFirst()) {
-                    while (!statuses.isAfterLast()) {
-                        resolver.delete(StatusLinks.getContentUri(getActivity()),
-                                StatusLinks.STATUS_ID + "=?",
-                                new String[]{Long.toString(statuses.getLong(0))});
-                        resolver.delete(StatusImages.getContentUri(getActivity()),
-                                StatusImages.STATUS_ID + "=?",
-                                new String[]{Long.toString(statuses.getLong(0))});
-                        statuses.moveToNext();
-                    }
-                }
-                statuses.close();
-                resolver.delete(Statuses.getContentUri(getActivity()),
-                        Statuses.ACCOUNT + "=?",
-                        new String[]{accountId});
-                resolver.delete(WidgetAccounts.getContentUri(getActivity()),
-                        WidgetAccounts.ACCOUNT + "=?",
-                        new String[]{accountId});
-                resolver.delete(Notifications.getContentUri(getActivity()),
-                        Notifications.ACCOUNT + "=?",
-                        new String[]{accountId});
+                getActivity().startService(AccountUpdateService.obtainIntent(getActivity(),
+                        AccountUpdateService.ACTION_DELETE,
+                        ((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).id,
+                        AppWidgetManager.INVALID_APPWIDGET_ID));
                 return true;
 
             default:
@@ -377,8 +339,11 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
 
                         if ((service != SMS) && (service != RSS)) {
                             mAddingAccount = true;
-                            // TODO start through Activity instead?
-                            startActivityForResult(Sonet.getPackageIntent(getActivity(), OAuthLogin.class).putExtra(Accounts.SERVICE, service).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id), RESULT_REFRESH);
+                            startActivityForResult(Sonet.getPackageIntent(getActivity(), OAuthLogin.class)
+                                            .putExtra(Accounts.SERVICE, service)
+                                            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId)
+                                            .putExtra(Sonet.EXTRA_ACCOUNT_ID, id),
+                                    RESULT_REFRESH);
                         }
                     }
 
@@ -431,35 +396,16 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
                             break;
                         case SETTINGS_ID:
                             mAddingAccount = true;
-                            // TODO start through Activity instead?
                             startActivityForResult(Sonet.getPackageIntent(getActivity(), AccountSettings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id), RESULT_REFRESH);
                             break;
                         case ENABLE_ID:
                             boolean isEnabled = AccountOptionsDialogFragment.getIsEnabled(data, true);
 
                             if (isEnabled) {
-                                // TODO loader
-                                // disable the account, remove settings and statuses
-                                getActivity().getContentResolver().delete(Widgets.getContentUri(getActivity()), Widgets.ACCOUNT + "=? and " + Widgets.WIDGET + "=?", new String[]{Long.toString(id), Integer.toString(mAppWidgetId)});
-                                getActivity().getContentResolver().delete(WidgetAccounts.getContentUri(getActivity()), WidgetAccounts.ACCOUNT + "=? and " + WidgetAccounts.WIDGET + "=?", new String[]{Long.toString(id), Integer.toString(mAppWidgetId)});
-                                Cursor statuses = getActivity().getContentResolver().query(Statuses.getContentUri(getActivity()), new String[]{Statuses._ID}, Statuses.ACCOUNT + "=? and " + Statuses.WIDGET + "=?", new String[]{Long.toString(id), Integer.toString(mAppWidgetId)}, null);
-
-                                if (statuses.moveToFirst()) {
-                                    while (!statuses.isAfterLast()) {
-                                        getActivity().getContentResolver().delete(StatusLinks.getContentUri(getActivity()), StatusLinks.STATUS_ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
-                                        getActivity().getContentResolver().delete(StatusImages.getContentUri(getActivity()), StatusImages.STATUS_ID + "=?", new String[]{Long.toString(statuses.getLong(0))});
-                                        statuses.moveToNext();
-                                    }
-                                }
-
-                                statuses.close();
-                                getActivity().getContentResolver().delete(Statuses.getContentUri(getActivity()), Statuses.ACCOUNT + "=? and " + Statuses.WIDGET + "=?", new String[]{Long.toString(id), Integer.toString(mAppWidgetId)});
+                                getActivity().startService(AccountUpdateService.obtainIntent(getActivity(), AccountUpdateService.ACTION_DISABLE, id, mAppWidgetId));
                             } else {
                                 // enable the account
-                                ContentValues values = new ContentValues();
-                                values.put(WidgetAccounts.ACCOUNT, id);
-                                values.put(WidgetAccounts.WIDGET, mAppWidgetId);
-                                getActivity().getContentResolver().insert(WidgetAccounts.getContentUri(getActivity()), values);
+                                getActivity().startService(AccountUpdateService.obtainIntent(getActivity(), AccountUpdateService.ACTION_ENABLE, id, mAppWidgetId));
                             }
 
                             mUpdateWidget = true;
