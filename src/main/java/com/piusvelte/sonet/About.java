@@ -94,16 +94,22 @@ public class About extends FragmentActivity implements LoaderManager.LoaderCallb
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int itemId = item.getItemId();
+
         if (itemId == R.id.menu_about_refresh) {
             startService(Sonet.getPackageIntent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID).setAction(ACTION_REFRESH));
+            return true;
         } else if (itemId == R.id.menu_about_accounts_and_settings) {
             startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
+            return true;
         } else if (itemId == R.id.menu_about_default_settings) {
             startActivityForResult(Sonet.getPackageIntent(this, Settings.class), RESULT_REFRESH);
+            return true;
         } else if (itemId == R.id.menu_about_refresh_widgets) {
             startService(Sonet.getPackageIntent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
+            return true;
         } else if (itemId == R.id.menu_about_notifications) {
             startActivity(Sonet.getPackageIntent(this, SonetNotifications.class));
+            return true;
         } else if (itemId == R.id.menu_about_widget_settings) {
             if (mAppWidgetIds.length > 0) {
                 String[] widgets = new String[mAppWidgetIds.length];
@@ -114,16 +120,20 @@ public class About extends FragmentActivity implements LoaderManager.LoaderCallb
                     widgets[i] = Integer.toString(mAppWidgetIds[i]) + " (" + providerName + ")";
                 }
 
-                new ItemsDialogFragment().newInstance(widgets, REQUEST_WIDGET)
+                ItemsDialogFragment.newInstance(widgets, REQUEST_WIDGET)
                         .show(getSupportFragmentManager(), DIALOG_WIDGETS);
             } else {
                 Toast.makeText(this, getString(R.string.nowidgets), Toast.LENGTH_LONG).show();
             }
+
+            return true;
         } else if (itemId == R.id.menu_about_about) {
             ConfirmationDialogFragment.newInstance(R.string.about_title, R.string.about, -1)
                     .show(getSupportFragmentManager(), DIALOG_ABOUT);
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
         }
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -137,11 +147,12 @@ public class About extends FragmentActivity implements LoaderManager.LoaderCallb
 
     @Override
     protected void onPause() {
-        super.onPause();
         if (mUpdateWidget) {
             (Toast.makeText(getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
             startService(Sonet.getPackageIntent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
         }
+
+        super.onPause();
     }
 
     @Override
@@ -154,8 +165,8 @@ public class About extends FragmentActivity implements LoaderManager.LoaderCallb
                 break;
 
             default:
-            super.onActivityResult(requestCode, resultCode, data);
-            break;
+                super.onActivityResult(requestCode, resultCode, data);
+                break;
         }
     }
 

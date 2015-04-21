@@ -24,6 +24,7 @@ import static com.piusvelte.sonet.Sonet.initAccountSettings;
 
 import com.google.ads.*;
 import com.piusvelte.sonet.fragment.BaseDialogFragment;
+import com.piusvelte.sonet.fragment.LoadingDialogFragment;
 import com.piusvelte.sonet.fragment.MessageSettingsDialogFragment;
 import com.piusvelte.sonet.fragment.NameSettingsDialogFragment;
 import com.piusvelte.sonet.fragment.NotificationSettingsDialogFragment;
@@ -41,6 +42,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -61,6 +63,7 @@ public class AccountSettings extends FragmentActivity implements OnClickListener
     private static final String DIALOG_TIME_SETTINGS = "dialog:time_settings";
     private static final String DIALOG_PROFILE_SETTINGS = "dialog:profile_settings";
     private static final String DIALOG_MESSAGE_SETTINGS = "dialog:message_settings";
+    private static final String DIALOG_LOADING_SETTINGS = "dialog:loading_settings";
 
     private static final int REQUEST_COUNTS = 0;
     private static final int REQUEST_NOTIFICATION_SETTINGS = 1;
@@ -68,6 +71,7 @@ public class AccountSettings extends FragmentActivity implements OnClickListener
     private static final int REQUEST_TIME_SETTINGS = 3;
     private static final int REQUEST_PROFILE_SETTINGS = 4;
     private static final int REQUEST_MESSAGE_SETTINGS = 5;
+    private static final int REQUEST_LOADING_SETTINGS = 6;
 
     private int mMessages_bg_color_value = Sonet.default_message_bg_color;
     private int mMessages_color_value = Sonet.default_message_color;
@@ -153,7 +157,8 @@ public class AccountSettings extends FragmentActivity implements OnClickListener
         mBtn_message.setTextSize(mMessages_textsize_value);
         mBtn_message.setOnClickListener(this);
 
-        // TODO indicate loading to the user
+        LoadingDialogFragment.newInstance(REQUEST_LOADING_SETTINGS)
+                .show(getSupportFragmentManager(), DIALOG_LOADING_SETTINGS);
         getSupportLoaderManager().initLoader(LOADER_WIDGET_SETTINGS, null, this);
     }
 
@@ -249,6 +254,12 @@ public class AccountSettings extends FragmentActivity implements OnClickListener
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         switch (loader.getId()) {
             case LOADER_WIDGET_SETTINGS:
+                DialogFragment dialogFragment = (DialogFragment) getSupportFragmentManager().findFragmentByTag(DIALOG_LOADING_SETTINGS);
+
+                if (dialogFragment != null) {
+                    dialogFragment.dismiss();
+                }
+
                 if (cursor != null) {
                     if (cursor.moveToFirst()) {
                         // insert rows for settings records that are missing

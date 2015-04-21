@@ -53,8 +53,10 @@ public class ManageAccounts extends ActionBarActivity {
         int appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 
         Intent intent = getIntent();
+
         if (intent != null) {
             Bundle extras = intent.getExtras();
+
             if (extras != null) {
                 appWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
                 // if called from widget, the id is set in the action, as pendingintents must have a unique action
