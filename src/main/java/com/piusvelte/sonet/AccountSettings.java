@@ -135,28 +135,6 @@ public class AccountSettings extends FragmentActivity implements OnClickListener
             findViewById(R.id.ad).getRootView().setBackgroundDrawable(wp);
         }
 
-        mStatuses_per_account.setOnClickListener(this);
-
-        mBtn_notification.setOnClickListener(this);
-
-        mBtn_name.setBackgroundColor(mFriend_bg_color_value);
-        mBtn_name.setTextColor(mFriend_color_value);
-        mBtn_name.setTextSize(mFriend_textsize_value);
-        mBtn_name.setOnClickListener(this);
-
-        mBtn_time.setBackgroundColor(mFriend_bg_color_value);
-        mBtn_time.setTextColor(mCreated_color_value);
-        mBtn_time.setTextSize(mCreated_textsize_value);
-        mBtn_time.setOnClickListener(this);
-
-        mBtn_profile.setBackgroundColor(mProfiles_bg_color_value);
-        mBtn_profile.setOnClickListener(this);
-
-        mBtn_message.setBackgroundColor(mMessages_bg_color_value);
-        mBtn_message.setTextColor(mMessages_color_value);
-        mBtn_message.setTextSize(mMessages_textsize_value);
-        mBtn_message.setOnClickListener(this);
-
         LoadingDialogFragment.newInstance(REQUEST_LOADING_SETTINGS)
                 .show(getSupportFragmentManager(), DIALOG_LOADING_SETTINGS);
         getSupportLoaderManager().initLoader(LOADER_WIDGET_SETTINGS, null, this);
@@ -295,8 +273,31 @@ public class AccountSettings extends FragmentActivity implements OnClickListener
                         mLights_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.LIGHTS)) == 1;
                         mProfiles_bg_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.PROFILES_BG_COLOR));
                         mFriend_bg_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.FRIEND_BG_COLOR));
+
+
+                        mStatuses_per_account.setOnClickListener(this);
+
+                        mBtn_notification.setOnClickListener(this);
+
+                        mBtn_name.setBackgroundColor(mFriend_bg_color_value);
+                        mBtn_name.setTextColor(mFriend_color_value);
+                        mBtn_name.setTextSize(mFriend_textsize_value);
+                        mBtn_name.setOnClickListener(this);
+
+                        mBtn_time.setBackgroundColor(mFriend_bg_color_value);
+                        mBtn_time.setTextColor(mCreated_color_value);
+                        mBtn_time.setTextSize(mCreated_textsize_value);
+                        mBtn_time.setOnClickListener(this);
+
+                        mBtn_profile.setBackgroundColor(mProfiles_bg_color_value);
+                        mBtn_profile.setOnClickListener(this);
+
+                        mBtn_message.setBackgroundColor(mMessages_bg_color_value);
+                        mBtn_message.setTextColor(mMessages_color_value);
+                        mBtn_message.setTextSize(mMessages_textsize_value);
+                        mBtn_message.setOnClickListener(this);
                     } else {
-                        // got nothing, init all
+                        // got nothing, init all, the Loader should requery
                         initAccountSettings(this, AppWidgetManager.INVALID_APPWIDGET_ID, Sonet.INVALID_ACCOUNT_ID);
 
                         if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {

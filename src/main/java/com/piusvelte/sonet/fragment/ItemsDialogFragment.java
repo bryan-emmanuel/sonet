@@ -47,6 +47,14 @@ public class ItemsDialogFragment extends BaseDialogFragment implements DialogInt
         dismiss();
     }
 
+    public static String[] getItems(@Nullable Intent intent) {
+        if (intent == null) {
+            return null;
+        }
+
+        return (String[]) intent.getCharSequenceArrayExtra(ARG_ITEMS);
+    }
+
     public static int getWhich(@Nullable Intent intent, int defaultValue) {
         if (intent == null) {
             return defaultValue;

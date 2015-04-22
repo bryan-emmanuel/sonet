@@ -25,6 +25,7 @@ import static com.piusvelte.sonet.Sonet.initAccountSettings;
 import com.google.ads.*;
 import com.piusvelte.sonet.fragment.BaseDialogFragment;
 import com.piusvelte.sonet.fragment.ButtonSettingsDialogFragment;
+import com.piusvelte.sonet.fragment.LoadingDialogFragment;
 import com.piusvelte.sonet.fragment.MessageSettingsDialogFragment;
 import com.piusvelte.sonet.fragment.NameSettingsDialogFragment;
 import com.piusvelte.sonet.fragment.NotificationSettingsDialogFragment;
@@ -42,7 +43,11 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -52,7 +57,9 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 
-public class Settings extends FragmentActivity implements View.OnClickListener, BaseDialogFragment.OnResultListener {
+public class Settings extends FragmentActivity implements View.OnClickListener, BaseDialogFragment.OnResultListener, LoaderManager.LoaderCallbacks<Cursor> {
+
+    private static final int LOADER_SETTINGS = 0;
 
     private static final int REQUEST_UPDATE_SETTINGS = 0;
     private static final int REQUEST_NOTIFICATIONS = 1;
@@ -62,6 +69,7 @@ public class Settings extends FragmentActivity implements View.OnClickListener, 
     private static final int REQUEST_TIME_SETTINGS = 5;
     private static final int REQUEST_PROFILE_SETTINGS = 6;
     private static final int REQUEST_MESSAGE_SETTINGS = 7;
+    private static final int REQUEST_LOADING_SETTINGS = 8;
 
     private static final String DIALOG_UPDATE_SETTINGS = "dialog:update_settings";
     private static final String DIALOG_NOTIFICATIONS = "dialog:notifications";
@@ -71,6 +79,7 @@ public class Settings extends FragmentActivity implements View.OnClickListener, 
     private static final String DIALOG_TIME_SETTINGS = "dialog:time_settings";
     private static final String DIALOG_PROFILE_SETTINGS = "dialog:profile_settings";
     private static final String DIALOG_MESSAGE_SETTINGS = "dialog:message_settings";
+    private static final String DIALOG_LOADING_SETTINGS = "dialog:loading_settings";
 
     private int mInterval_value = Sonet.default_interval;
     private int mButtons_bg_color_value = Sonet.default_buttons_bg_color;
@@ -143,99 +152,9 @@ public class Settings extends FragmentActivity implements View.OnClickListener, 
             findViewById(R.id.ad).getRootView().setBackgroundDrawable(wp);
         }
 
-        Cursor c = this.getContentResolver().query(WidgetsSettings.getContentUri(this), new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.BACKGROUND_UPDATE, Widgets.SCROLLABLE, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.DISPLAY_PROFILE, Widgets.INSTANT_UPLOAD, Widgets.MARGIN, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(mAppWidgetId), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
-
-        if (!c.moveToFirst()) {
-            c.close();
-            c = this.getContentResolver().query(WidgetsSettings.getContentUri(this), new String[]{Widgets._ID, Widgets.INTERVAL, Widgets.BUTTONS_BG_COLOR, Widgets.BUTTONS_COLOR, Widgets.BUTTONS_TEXTSIZE, Widgets.MESSAGES_BG_COLOR, Widgets.MESSAGES_COLOR, Widgets.MESSAGES_TEXTSIZE, Widgets.FRIEND_COLOR, Widgets.FRIEND_TEXTSIZE, Widgets.CREATED_COLOR, Widgets.CREATED_TEXTSIZE, Widgets.HASBUTTONS, Widgets.TIME24HR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.BACKGROUND_UPDATE, Widgets.SCROLLABLE, Widgets.SOUND, Widgets.VIBRATE, Widgets.LIGHTS, Widgets.DISPLAY_PROFILE, Widgets.INSTANT_UPLOAD, Widgets.MARGIN, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
-
-            if (!c.moveToFirst()) {
-                mWidgetSettingsId = initAccountSettings(this, AppWidgetManager.INVALID_APPWIDGET_ID, Sonet.INVALID_ACCOUNT_ID);
-            }
-
-            if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-                mWidgetSettingsId = initAccountSettings(this, mAppWidgetId, Sonet.INVALID_ACCOUNT_ID);
-            }
-        }
-
-        if (c.moveToFirst()) {
-            // if settings were initialized, then use that mWidgetSettingsId
-            if (mWidgetSettingsId == null) {
-                mWidgetSettingsId = Integer.toString(c.getInt(0));
-            }
-
-            mInterval_value = c.getInt(1);
-            mButtons_bg_color_value = c.getInt(2);
-            mButtons_color_value = c.getInt(3);
-            mButtons_textsize_value = c.getInt(4);
-            mMessages_bg_color_value = c.getInt(5);
-            mMessages_color_value = c.getInt(6);
-            mMessages_textsize_value = c.getInt(7);
-            mFriend_color_value = c.getInt(8);
-            mFriend_textsize_value = c.getInt(9);
-            mCreated_color_value = c.getInt(10);
-            mCreated_textsize_value = c.getInt(11);
-            mHasButtons_value = c.getInt(12) == 1;
-            mTime24hr_value = c.getInt(13) == 1;
-            mIcon_value = c.getInt(14) == 1;
-            mStatuses_per_account_value = c.getInt(15);
-            mBackgroundUpdate_value = c.getInt(16) == 1;
-            mScrollable_version = c.getInt(17);
-            mSound_value = c.getInt(18) == 1;
-            mVibrate_value = c.getInt(19) == 1;
-            mLights_value = c.getInt(20) == 1;
-            mDisplay_profile_value = c.getInt(21) == 1;
-            mInstantUpload_value = c.getInt(22) == 1;
-            mMargin_value = c.getInt(23);
-            mProfiles_bg_color_value = c.getInt(24);
-            mFriend_bg_color_value = c.getInt(25);
-        }
-
-        c.close();
-
-        mBtn_update.setOnClickListener(this);
-        mBtn_notification.setOnClickListener(this);
-
-        mChk_instantUpload.setChecked(mInstantUpload_value);
-        mChk_instantUpload.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView,
-                                         boolean isChecked) {
-                // facebook only
-                if (isChecked) {
-                    (Toast.makeText(Settings.this, "Currently, the photo will only be uploaded Facebook accounts.", Toast.LENGTH_LONG)).show();
-                }
-                updateDatabase(Widgets.INSTANT_UPLOAD, isChecked ? 1 : 0);
-            }
-
-        });
-
-        mBtn_margin.setOnClickListener(this);
-
-        mBtn_buttons.setBackgroundColor(mButtons_bg_color_value);
-        mBtn_buttons.setTextColor(mButtons_color_value);
-        mBtn_buttons.setTextSize(mButtons_textsize_value);
-        mBtn_buttons.setOnClickListener(this);
-
-        mBtn_name.setBackgroundColor(mFriend_bg_color_value);
-        mBtn_name.setTextColor(mFriend_color_value);
-        mBtn_name.setTextSize(mFriend_textsize_value);
-        mBtn_name.setOnClickListener(this);
-
-        mBtn_time.setBackgroundColor(mFriend_bg_color_value);
-        mBtn_time.setTextColor(mCreated_color_value);
-        mBtn_time.setTextSize(mCreated_textsize_value);
-        mBtn_time.setOnClickListener(this);
-
-        mBtn_profile.setBackgroundColor(mProfiles_bg_color_value);
-        mBtn_profile.setOnClickListener(this);
-
-        mBtn_message.setBackgroundColor(mMessages_bg_color_value);
-        mBtn_message.setTextColor(mMessages_color_value);
-        mBtn_message.setTextSize(mMessages_textsize_value);
-        mBtn_message.setOnClickListener(this);
-
+        LoadingDialogFragment.newInstance(REQUEST_LOADING_SETTINGS)
+                .show(getSupportFragmentManager(), DIALOG_LOADING_SETTINGS);
+        getSupportLoaderManager().initLoader(LOADER_SETTINGS, null, this);
     }
 
     private void updateDatabase(String column, int value) {
@@ -245,6 +164,156 @@ public class Settings extends FragmentActivity implements View.OnClickListener, 
         setResult(RESULT_OK);
     }
 
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        switch (id) {
+            case LOADER_SETTINGS:
+                return new CursorLoader(this,
+                        WidgetsSettings.getContentUri(this),
+                        new String[]{Widgets._ID,
+                                Widgets.WIDGET,
+                                Widgets.INTERVAL,
+                                Widgets.BUTTONS_BG_COLOR,
+                                Widgets.BUTTONS_COLOR,
+                                Widgets.BUTTONS_TEXTSIZE,
+                                Widgets.MESSAGES_BG_COLOR,
+                                Widgets.MESSAGES_COLOR,
+                                Widgets.MESSAGES_TEXTSIZE,
+                                Widgets.FRIEND_COLOR,
+                                Widgets.FRIEND_TEXTSIZE,
+                                Widgets.CREATED_COLOR,
+                                Widgets.CREATED_TEXTSIZE,
+                                Widgets.HASBUTTONS,
+                                Widgets.TIME24HR,
+                                Widgets.ICON,
+                                Widgets.STATUSES_PER_ACCOUNT,
+                                Widgets.BACKGROUND_UPDATE,
+                                Widgets.SCROLLABLE,
+                                Widgets.SOUND,
+                                Widgets.VIBRATE,
+                                Widgets.LIGHTS,
+                                Widgets.DISPLAY_PROFILE,
+                                Widgets.INSTANT_UPLOAD,
+                                Widgets.MARGIN,
+                                Widgets.PROFILES_BG_COLOR,
+                                Widgets.FRIEND_BG_COLOR},
+                        "(" + Widgets.WIDGET + "=? or " + Widgets.WIDGET + "=?) and " + Widgets.ACCOUNT + "=?",
+                        new String[]{Integer.toString(mAppWidgetId), Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)},
+                        Widgets.WIDGET + " DESC, " + Widgets.ACCOUNT + " DESC");
+
+            default:
+                return null;
+        }
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+        switch (loader.getId()) {
+            case LOADER_SETTINGS:
+                DialogFragment dialogFragment = (DialogFragment) getSupportFragmentManager().findFragmentByTag(DIALOG_LOADING_SETTINGS);
+
+                if (dialogFragment != null) {
+                    dialogFragment.dismiss();
+                }
+
+                // determine if we have settings or need to initialize them
+                if (cursor != null) {
+                    if (cursor.moveToFirst()) {
+                        // insert rows for settings records that are missing
+                        mWidgetSettingsId = String.valueOf(cursor.getInt(cursor.getColumnIndexOrThrow(Widgets._ID)));
+                        int widget = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.WIDGET));
+
+                        if (widget == AppWidgetManager.INVALID_APPWIDGET_ID && mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                            // the first row is the generic non-widget, non-account, the cursor should only have this record
+                            // we need one specific for this widget
+                            mWidgetSettingsId = initAccountSettings(this, mAppWidgetId, Sonet.INVALID_ACCOUNT_ID);
+                        }
+
+                        // get the settings
+                        mInterval_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.INTERVAL));
+                        mButtons_bg_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.BUTTONS_BG_COLOR));
+                        mButtons_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.BUTTONS_COLOR));
+                        mButtons_textsize_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.BUTTONS_TEXTSIZE));
+                        mMessages_bg_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.MESSAGES_BG_COLOR));
+                        mMessages_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.MESSAGES_COLOR));
+                        mMessages_textsize_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.MESSAGES_TEXTSIZE));
+                        mFriend_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.FRIEND_COLOR));
+                        mFriend_textsize_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.FRIEND_TEXTSIZE));
+                        mCreated_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.CREATED_COLOR));
+                        mCreated_textsize_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.CREATED_TEXTSIZE));
+                        mHasButtons_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.HASBUTTONS)) == 1;
+                        mTime24hr_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.TIME24HR)) == 1;
+                        mIcon_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.ICON)) == 1;
+                        mStatuses_per_account_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.STATUSES_PER_ACCOUNT));
+                        mBackgroundUpdate_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.BACKGROUND_UPDATE)) == 1;
+                        mScrollable_version = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.SCROLLABLE));
+                        mSound_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.SOUND)) == 1;
+                        mVibrate_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.VIBRATE)) == 1;
+                        mLights_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.LIGHTS)) == 1;
+                        mDisplay_profile_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.DISPLAY_PROFILE)) == 1;
+                        mInstantUpload_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.INSTANT_UPLOAD)) == 1;
+                        mMargin_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.MARGIN));
+                        mProfiles_bg_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.PROFILES_BG_COLOR));
+                        mFriend_bg_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.FRIEND_BG_COLOR));
+
+                        mBtn_update.setOnClickListener(this);
+                        mBtn_notification.setOnClickListener(this);
+
+                        mChk_instantUpload.setChecked(mInstantUpload_value);
+                        mChk_instantUpload.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView,
+                                                         boolean isChecked) {
+                                // facebook only
+                                if (isChecked) {
+                                    (Toast.makeText(Settings.this, "Currently, the photo will only be uploaded Facebook accounts.", Toast.LENGTH_LONG)).show();
+                                }
+                                updateDatabase(Widgets.INSTANT_UPLOAD, isChecked ? 1 : 0);
+                            }
+
+                        });
+
+                        mBtn_margin.setOnClickListener(this);
+
+                        mBtn_buttons.setBackgroundColor(mButtons_bg_color_value);
+                        mBtn_buttons.setTextColor(mButtons_color_value);
+                        mBtn_buttons.setTextSize(mButtons_textsize_value);
+                        mBtn_buttons.setOnClickListener(this);
+
+                        mBtn_name.setBackgroundColor(mFriend_bg_color_value);
+                        mBtn_name.setTextColor(mFriend_color_value);
+                        mBtn_name.setTextSize(mFriend_textsize_value);
+                        mBtn_name.setOnClickListener(this);
+
+                        mBtn_time.setBackgroundColor(mFriend_bg_color_value);
+                        mBtn_time.setTextColor(mCreated_color_value);
+                        mBtn_time.setTextSize(mCreated_textsize_value);
+                        mBtn_time.setOnClickListener(this);
+
+                        mBtn_profile.setBackgroundColor(mProfiles_bg_color_value);
+                        mBtn_profile.setOnClickListener(this);
+
+                        mBtn_message.setBackgroundColor(mMessages_bg_color_value);
+                        mBtn_message.setTextColor(mMessages_color_value);
+                        mBtn_message.setTextSize(mMessages_textsize_value);
+                        mBtn_message.setOnClickListener(this);
+                    } else {
+                        // got nothing, init all, Loader should requery
+                        initAccountSettings(this, AppWidgetManager.INVALID_APPWIDGET_ID, Sonet.INVALID_ACCOUNT_ID);
+
+                        if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                            mWidgetSettingsId = initAccountSettings(this, mAppWidgetId, Sonet.INVALID_ACCOUNT_ID);
+                        }
+                    }
+                }
+                break;
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+    }
 
     @Override
     public void onClick(View v) {

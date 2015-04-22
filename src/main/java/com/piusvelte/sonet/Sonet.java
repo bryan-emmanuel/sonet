@@ -305,7 +305,7 @@ public class Sonet {
         }
     }
 
-    protected static final int INVALID_SERVICE = -1;
+    public static final int INVALID_SERVICE = -1;
 
     protected static final int default_interval = 3600000;
     protected static final int default_buttons_bg_color = 0x88000000;
