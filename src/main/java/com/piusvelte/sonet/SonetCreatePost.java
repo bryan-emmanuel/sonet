@@ -101,6 +101,7 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
     private static final int REQUEST_SET_LOCATION = 6;
 
     private static final String STATE_PENDING_LOADERS = "state:pending_loaders";
+    private static final String STATE_MESSAGE = "state:message";
 
     private HashMap<Long, String> mAccountsLocation = new HashMap<>();
     private HashMap<Long, String[]> mAccountsTags = new HashMap<>();
@@ -155,13 +156,17 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
 
         LoaderManager loaderManager = getSupportLoaderManager();
 
-        if (loaderManager.hasRunningLoaders() && savedInstanceState != null) {
-            int[] loaders = savedInstanceState.getIntArray(STATE_PENDING_LOADERS);
+        if (savedInstanceState != null) {
+            mMessage.setText(savedInstanceState.getString(STATE_MESSAGE));
 
-            if (loaders != null) {
-                for (int loader : loaders) {
-                    mPendingLoaders.add(loader);
-                    loaderManager.initLoader(loader, null, this);
+            if (loaderManager.hasRunningLoaders()) {
+                int[] loaders = savedInstanceState.getIntArray(STATE_PENDING_LOADERS);
+
+                if (loaders != null) {
+                    for (int loader : loaders) {
+                        mPendingLoaders.add(loader);
+                        loaderManager.initLoader(loader, null, this);
+                    }
                 }
             }
         }
@@ -180,6 +185,7 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
         }
 
         outState.putIntArray(STATE_PENDING_LOADERS, loaders);
+        outState.putString(STATE_MESSAGE, mMessage.getText().toString());
     }
 
     @Override

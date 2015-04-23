@@ -69,6 +69,7 @@ public class CommentsList extends ListFragment implements TextWatcher, View.OnKe
     private static final String ARG_DO_LIKE = "do_like";
 
     private static final String STATE_PENDING_LOADERS = "state:pending_loaders";
+    private static final String STATE_MESSAGE = "state:message";
 
     private int mService = Sonet.INVALID_SERVICE;
     private String mSid = null;
@@ -140,6 +141,8 @@ public class CommentsList extends ListFragment implements TextWatcher, View.OnKe
         getLoaderManager().initLoader(LOADER_COMMENTS, null, this);
 
         if (savedInstanceState != null) {
+            mMessage.setText(savedInstanceState.getString(STATE_MESSAGE));
+
             if (loaderManager.hasRunningLoaders()) {
                 int[] loaders = savedInstanceState.getIntArray(STATE_PENDING_LOADERS);
 
@@ -178,6 +181,7 @@ public class CommentsList extends ListFragment implements TextWatcher, View.OnKe
         }
 
         outState.putIntArray(STATE_PENDING_LOADERS, loaders);
+        outState.putString(STATE_MESSAGE, mMessage.getText().toString());
     }
 
     @Override
