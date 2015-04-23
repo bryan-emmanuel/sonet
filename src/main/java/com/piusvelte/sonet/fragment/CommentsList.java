@@ -82,6 +82,8 @@ public class CommentsList extends ListFragment implements TextWatcher, View.OnKe
     private ImageButton mSend;
     private TextView mCount;
 
+    private SimpleAdapter mAdapter;
+
     @NonNull
     private Set<Integer> mPendingLoaders = new HashSet<>();
 
@@ -97,7 +99,7 @@ public class CommentsList extends ListFragment implements TextWatcher, View.OnKe
         getArguments().putString(ARG_DATA, data.toString());
 
         if (isResumed()) {
-            loadComments();
+            refresh();
         }
     }
 
@@ -117,7 +119,25 @@ public class CommentsList extends ListFragment implements TextWatcher, View.OnKe
         mMessage.setOnKeyListener(this);
         mSend.setOnClickListener(this);
 
+        mAdapter = new SimpleAdapter(getActivity(),
+                mComments,
+                R.layout.comment,
+                new String[]{Entities.FRIEND,
+                        Statuses.MESSAGE,
+                        Statuses.CREATEDTEXT,
+                        getString(R.string.like)},
+                new int[]{R.id.friend,
+                        R.id.message,
+                        R.id.created,
+                        R.id.like});
+
+        setListAdapter(mAdapter);
+
         LoaderManager loaderManager = getLoaderManager();
+
+        LoadingDialogFragment.newInstance(REQUEST_LOADING_COMMENTS)
+                .show(getChildFragmentManager(), DIALOG_LOADING_COMMENTS);
+        getLoaderManager().initLoader(LOADER_COMMENTS, null, this);
 
         if (savedInstanceState != null) {
             if (loaderManager.hasRunningLoaders()) {
@@ -130,8 +150,6 @@ public class CommentsList extends ListFragment implements TextWatcher, View.OnKe
                     }
                 }
             }
-
-            // TODO restore state!!!
         }
     }
 
@@ -160,8 +178,6 @@ public class CommentsList extends ListFragment implements TextWatcher, View.OnKe
         }
 
         outState.putIntArray(STATE_PENDING_LOADERS, loaders);
-
-        // TODO save state!!!
     }
 
     @Override
@@ -169,7 +185,7 @@ public class CommentsList extends ListFragment implements TextWatcher, View.OnKe
         int itemId = item.getItemId();
 
         if (itemId == R.id.menu_comments_refresh) {
-            loadComments();
+            refresh();
         }
 
         return super.onOptionsItemSelected(item);
@@ -188,15 +204,12 @@ public class CommentsList extends ListFragment implements TextWatcher, View.OnKe
             HashMap<String, String> comment = mComments.get(position);
             comment.put(getString(R.string.like), status);
             mComments.set(position, comment);
-            setListAdapter(new SimpleAdapter(getActivity(), mComments, R.layout.comment, new String[]{Entities.FRIEND, Statuses.MESSAGE, Statuses.CREATEDTEXT, getString(R.string.like)}, new int[]{R.id.friend, R.id.message, R.id.created, R.id.like}));
+            mAdapter.notifyDataSetChanged();
         }
     }
 
-    private void loadComments() {
-        mComments.clear();
-        setListAdapter(new SimpleAdapter(getActivity(), mComments, R.layout.comment, new String[]{Entities.FRIEND, Statuses.MESSAGE, Statuses.CREATEDTEXT, getString(R.string.like)}, new int[]{R.id.friend, R.id.message, R.id.created, R.id.like}));
+    private void refresh() {
         mMessage.setEnabled(false);
-        mMessage.setText(R.string.loading);
         LoadingDialogFragment.newInstance(REQUEST_LOADING_COMMENTS)
                 .show(getChildFragmentManager(), DIALOG_LOADING_COMMENTS);
         getLoaderManager().restartLoader(LOADER_COMMENTS, null, this);
@@ -275,17 +288,20 @@ public class CommentsList extends ListFragment implements TextWatcher, View.OnKe
 
     @Override
     public Loader onCreateLoader(int id, Bundle args) {
-        mPendingLoaders.add(id);
-
         switch (id) {
             case LOADER_COMMENTS:
                 return new CommentsLoader(getActivity(), Uri.parse(getArguments().getString(ARG_DATA)));
 
             case LOADER_SEND:
+                mPendingLoaders.add(id);
                 return new SendCommentLoader(getActivity(), mClient, mSid, mMessage.getText().toString());
 
-            default:
+            case LOADER_LIKE:
+                mPendingLoaders.add(id);
                 return new LikeCommentLoader(getActivity(), mClient, args.getString(ARG_SID), mEsid, args.getBoolean(ARG_DO_LIKE));
+
+            default:
+                return null;
         }
     }
 
@@ -331,23 +347,13 @@ public class CommentsList extends ListFragment implements TextWatcher, View.OnKe
 
                     mMessage.setEnabled(true);
 
+                    mComments.clear();
+
                     if (result.socialClientComments != null && result.socialClientComments.size() > 0) {
-                        mComments = result.socialClientComments;
-                    } else {
-                        noComments();
+                        mComments.addAll(result.socialClientComments);
                     }
 
-                    setListAdapter(new SimpleAdapter(getActivity(),
-                            mComments,
-                            R.layout.comment,
-                            new String[]{Entities.FRIEND,
-                                    Statuses.MESSAGE,
-                                    Statuses.CREATEDTEXT,
-                                    getString(R.string.like)},
-                            new int[]{R.id.friend,
-                                    R.id.message,
-                                    R.id.created,
-                                    R.id.like}));
+                    mAdapter.notifyDataSetChanged();
                 }
                 break;
 
@@ -390,16 +396,6 @@ public class CommentsList extends ListFragment implements TextWatcher, View.OnKe
     @Override
     public void onLoaderReset(Loader loader) {
         mPendingLoaders.remove(loader.getId());
-    }
-
-    private void noComments() {
-        HashMap<String, String> commentMap = new HashMap<>();
-        commentMap.put(Statuses.SID, "");
-        commentMap.put(Entities.FRIEND, "");
-        commentMap.put(Statuses.MESSAGE, getString(R.string.no_comments));
-        commentMap.put(Statuses.CREATEDTEXT, "");
-        commentMap.put(getString(R.string.like), "");
-        mComments.add(commentMap);
     }
 
     @Override
