@@ -44,6 +44,7 @@ import static com.piusvelte.sonet.Sonet.FOURSQUARE_GET_CHECKIN;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_SEARCH;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_ME;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_PROFILE;
 import static com.piusvelte.sonet.Sonet.SNearby;
 import static com.piusvelte.sonet.Sonet.Saccess_token;
 import static com.piusvelte.sonet.Sonet.Scheckin;
@@ -70,6 +71,12 @@ public class Foursquare extends Client {
 
     public Foursquare(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
+    }
+
+    @Nullable
+    @Override
+    public String getProfileUrl(@NonNull String esid) {
+        return String.format(FOURSQUARE_URL_PROFILE, esid);
     }
 
     @Nullable

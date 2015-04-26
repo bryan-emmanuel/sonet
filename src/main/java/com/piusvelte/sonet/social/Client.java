@@ -299,6 +299,9 @@ abstract public class Client {
     }
 
     @Nullable
+    abstract public String getProfileUrl(@NonNull String esid);
+
+    @Nullable
     abstract public Set<String> getNotificationStatusIds(long account, String[] notificationMessage);
 
     @Nullable

@@ -51,6 +51,7 @@ import static com.piusvelte.sonet.Sonet.FACEBOOK_POST;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_SEARCH;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_ME;
+import static com.piusvelte.sonet.Sonet.FACEBOOK_USER;
 import static com.piusvelte.sonet.Sonet.Saccess_token;
 import static com.piusvelte.sonet.Sonet.Scomments;
 import static com.piusvelte.sonet.Sonet.Screated_time;
@@ -79,6 +80,24 @@ public class Facebook extends Client {
 
     public Facebook(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
+    }
+
+    @Nullable
+    @Override
+    public String getProfileUrl(@NonNull String esid) {
+        String response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FACEBOOK_USER, FACEBOOK_BASE_URL, esid, Saccess_token, mToken)));
+
+        if (!TextUtils.isEmpty(response)) {
+            try {
+                return new JSONObject(response).getString("link");
+            } catch (JSONException e) {
+                if (BuildConfig.DEBUG) {
+                    Log.e(mTag, "Error parsing: " + response, e);
+                }
+            }
+        }
+
+        return null;
     }
 
     @Nullable

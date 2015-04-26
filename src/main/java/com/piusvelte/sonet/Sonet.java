@@ -89,7 +89,7 @@ public class Sonet {
     public static final String FACEBOOK_COMMENTS = "%s%s/comments?date_format=U&format=json&sdk=android&%s=%s";
     public static final String FACEBOOK_SEARCH = "%ssearch?type=place&center=%s,%s&distance=1000&format=json&sdk=android&%s=%s";
     //	protected static final String FACEBOOK_COORDINATES = "{\"latitude\":\"%s\",\"longitude\":\"%s\"}";
-    protected static final String FACEBOOK_USER = "%s%s?format=json&sdk=android&%s=%s";
+    public static final String FACEBOOK_USER = "%s%s?format=json&sdk=android&%s=%s";
     protected static final String FACEBOOK_PHOTOS = "%sme/photos?format=json&sdk=android&%s=%s";
     public static final String FACEBOOK_FRIENDS = "%sme/friends?format=json&sdk=android&%s=%s";
     public static final String FACEBOOK_PICTURE = "http://graph.facebook.com/%s/picture";
@@ -106,14 +106,14 @@ public class Sonet {
     public static final String MYSPACE_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
     public static final String MYSPACE_STATUSMOOD_BODY = "{\"status\":\"%s\"}";
     public static final String MYSPACE_STATUSMOODCOMMENTS_BODY = "{\"body\":\"%s\"}";
-    protected static final String MYSPACE_USER = "%speople/%s/@self";
+    public static final String MYSPACE_USER = "%speople/%s/@self";
 
     public static final int FOURSQUARE = 4;
     public static final String FOURSQUARE_BASE_URL = "https://api.foursquare.com/v2/";
     public static final String FOURSQUARE_URL_AUTHORIZE = "https://foursquare.com/oauth2/authorize?client_id=%s&response_type=token&redirect_uri=%s&display=touch";
     public static final String FOURSQUARE_URL_ME = "%susers/self?oauth_token=%s";
     protected static final String FOURSQUARE_URL_USER = "%susers/%s?oauth_token=%s";
-    protected static final String FOURSQUARE_URL_PROFILE = "https://foursquare.com/user/%s";
+    public static final String FOURSQUARE_URL_PROFILE = "https://foursquare.com/user/%s";
     public static final String FOURSQUARE_CHECKINS = "%scheckins/recent?oauth_token=%s";
     public static final String FOURSQUARE_CHECKIN = "%scheckins/add?venueId=%s&shout=%s&ll=%s,%s&broadcast=public&oauth_token=%s";
     public static final String FOURSQUARE_CHECKIN_NO_VENUE = "%scheckins/add?shout=%s&broadcast=public&oauth_token=%s";
@@ -128,7 +128,7 @@ public class Sonet {
     public static final String LINKEDIN_URL_AUTHORIZE = "https://www.linkedin.com/uas/oauth/authorize";
     public static final String LINKEDIN_URL_ACCESS = "https://api.linkedin.com/uas/oauth/accessToken";
     public static final String LINKEDIN_URL_ME = "%s:(id,first-name,last-name)";
-    protected static final String LINKEDIN_URL_USER = "https://api.linkedin.com/v1/people/id=%s";
+    public static final String LINKEDIN_URL_USER = "https://api.linkedin.com/v1/people/id=%s";
     public static final String LINKEDIN_UPDATES = "%s/network/updates?type=APPS&type=CMPY&type=CONN&type=JOBS&type=JGRP&type=PICT&type=PRFU&type=RECU&type=PRFX&type=ANSW&type=QSTN&type=SHAR&type=VIRL";
     public static final String[][] LINKEDIN_HEADERS = new String[][]{{"x-li-format", "json"}};
     public static final String LINKEDIN_IS_LIKED = "%s/network/updates/key=%s/is-liked";
@@ -163,14 +163,14 @@ public class Sonet {
     public static final String GOOGLEPLUS_URL_ME = "%speople/me?fields=displayName,id&access_token=%s";
     public static final String GOOGLEPLUS_ACTIVITIES = "%speople/%s/activities/%s?maxResults=%s&access_token=%s";
     public static final String GOOGLEPLUS_ACTIVITY = "%sactivities/%s?access_token=%s";
-    protected static final String GOOGLEPLUS_PROFILE = "https://plus.google.com/%s";
+    public static final String GOOGLEPLUS_PROFILE = "https://plus.google.com/%s";
     public static final String GOOGLEPLUS_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
     public static final int PINTEREST = 10;
     public static final String PINTEREST_BASE_URL = "https://api.pinterest.com/v2/";
     public static final String PINTEREST_URL_FEED = "%spopular/";
     protected static final String PINTEREST_PIN = "https://pinterest.com/pin/%s/";
-    protected static final String PINTEREST_PROFILE = "https://pinterest.com/%s/";
+    public static final String PINTEREST_PROFILE = "https://pinterest.com/%s/";
     public static final String PINTEREST_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
 
     public static final int CHATTER = 11;

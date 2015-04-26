@@ -44,6 +44,7 @@ import static com.piusvelte.sonet.Sonet.MYSPACE_STATUSMOOD_BODY;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_ME;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOOD;
 import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOODCOMMENTS;
+import static com.piusvelte.sonet.Sonet.MYSPACE_USER;
 import static com.piusvelte.sonet.Sonet.Sauthor;
 import static com.piusvelte.sonet.Sonet.Sbody;
 import static com.piusvelte.sonet.Sonet.ScommentId;
@@ -66,6 +67,25 @@ public class MySpace extends Client {
 
     public MySpace(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
+    }
+
+    @Nullable
+    @Override
+    public String getProfileUrl(@NonNull String esid) {
+        String response = SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(MYSPACE_USER, MYSPACE_BASE_URL, esid))));
+
+        if (!TextUtils.isEmpty(response)) {
+
+            try {
+                return new JSONObject(response).getJSONObject("person").getString("profileUrl");
+            } catch (JSONException e) {
+                if (BuildConfig.DEBUG) {
+                    Log.e(mTag, "Error parsing: " + response, e);
+                }
+            }
+        }
+
+        return null;
     }
 
     @Nullable

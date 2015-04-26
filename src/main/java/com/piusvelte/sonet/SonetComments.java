@@ -70,8 +70,6 @@ public class SonetComments extends FragmentActivity {
                     getSupportFragmentManager().beginTransaction()
                             .add(R.id.comments_list_container, new CommentsList(), FRAGMENT_COMMENTS_LIST)
                             .commit();
-                } else {
-                    fragment.setData(data);
                 }
             }
         }

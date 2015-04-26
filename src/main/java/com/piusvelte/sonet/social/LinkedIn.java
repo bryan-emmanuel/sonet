@@ -50,6 +50,7 @@ import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATE;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATES;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATE_COMMENTS;
 import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_ME;
+import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_USER;
 import static com.piusvelte.sonet.Sonet.S_total;
 import static com.piusvelte.sonet.Sonet.Sbody;
 import static com.piusvelte.sonet.Sonet.Scomment;
@@ -127,6 +128,24 @@ public class LinkedIn extends Client {
 
     public LinkedIn(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
+    }
+
+    @Nullable
+    @Override
+    public String getProfileUrl(@NonNull String esid) {
+        String response = SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(addHeaders(new HttpGet(String.format(LINKEDIN_URL_USER, esid)))));
+
+        if (!TextUtils.isEmpty(response)) {
+            try {
+                return new JSONObject(response).getJSONObject("siteStandardProfileRequest").getString("url").replaceAll("\\\\", "");
+            } catch (JSONException e) {
+                if (BuildConfig.DEBUG) {
+                    Log.e(mTag, "Error parsing: " + response, e);
+                }
+            }
+        }
+
+        return null;
     }
 
     @Nullable

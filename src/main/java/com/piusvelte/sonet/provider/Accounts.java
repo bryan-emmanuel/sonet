@@ -26,7 +26,7 @@ public class Accounts implements BaseColumns {
     // service id for posting and linking
     public static final String SID = "sid";
 
-    protected static String ACCOUNTS_QUERY;
+    public static String ACCOUNTS_QUERY;
 
     static {
         ACCOUNTS_QUERY = "(case";

@@ -52,6 +52,12 @@ public class Rss extends Client {
 
     @Nullable
     @Override
+    public String getProfileUrl(@NonNull String esid) {
+        return null;
+    }
+
+    @Nullable
+    @Override
     public Uri getCallback() {
         return null;
     }

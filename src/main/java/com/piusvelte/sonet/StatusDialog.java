@@ -23,203 +23,215 @@ import static com.piusvelte.sonet.Sonet.*;
 
 import mobi.intuitit.android.content.LauncherIntent;
 
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.json.JSONException;
-import org.json.JSONObject;
-
+import com.piusvelte.sonet.fragment.BaseDialogFragment;
+import com.piusvelte.sonet.fragment.ChooseAccountDialogFragment;
+import com.piusvelte.sonet.fragment.ChooseWidgetDialogFragment;
+import com.piusvelte.sonet.fragment.ConfirmationDialogFragment;
+import com.piusvelte.sonet.fragment.ItemsDialogFragment;
+import com.piusvelte.sonet.fragment.LoadingDialogFragment;
+import com.piusvelte.sonet.loader.StatusLoader;
 import com.piusvelte.sonet.provider.Accounts;
-import com.piusvelte.sonet.provider.StatusLinks;
-import com.piusvelte.sonet.provider.StatusesStyles;
 import com.piusvelte.sonet.provider.WidgetAccounts;
 import com.piusvelte.sonet.provider.Widgets;
 
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnCancelListener;
-import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Rect;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.QuickContact;
+import android.support.annotation.IntDef;
+import android.support.annotation.StringDef;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
-public class StatusDialog extends Activity implements OnClickListener {
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.util.HashMap;
+
+public class StatusDialog extends FragmentActivity implements LoaderManager.LoaderCallbacks, BaseDialogFragment.OnResultListener {
     private static final String TAG = "StatusDialog";
-    private int mAppWidgetId = -1;
-    private long mAccount = Sonet.INVALID_ACCOUNT_ID;
-    private Uri mData;
-    private static final int COMMENT = 0;
-    private static final int POST = 1;
-    private static final int SETTINGS = 2;
-    private static final int NOTIFICATIONS = 3;
-    private static final int REFRESH = 4;
-    private static final int PROFILE = 5;
+
+    private static final int LOADER_STATUS = 0;
+    private static final int LOADER_ACCOUNTS = 1;
+    private static final int LOADER_PROFILE = 2;
+
+    private static final int REQUEST_LOADING_STATUS = 0;
+    private static final int REQUEST_CONFIRM_UPLOAD = 1;
+    private static final int REQUEST_ITEMS = 2;
+    private static final int REQUEST_CHOOSE_ACCOUNT = 3;
+    private static final int REQUEST_LOADING_ACCOUNTS = 4;
+    private static final int REQUEST_CHOOSE_WIDGET = 5;
+    private static final int REQUEST_REFRESH_WIDGET = 6;
+    private static final int REQUEST_LOADING_PROFILE = 7;
+
+    @IntDef({REQUEST_LOADING_STATUS, REQUEST_CONFIRM_UPLOAD, REQUEST_ITEMS, REQUEST_CHOOSE_ACCOUNT, REQUEST_LOADING_ACCOUNTS, REQUEST_CHOOSE_WIDGET, REQUEST_REFRESH_WIDGET, REQUEST_LOADING_PROFILE})
+    @Retention(RetentionPolicy.SOURCE)
+    private @interface RequestCode {
+    }
+
+    private static final String DIALOG_LOADING_STATUS = "dialog:loading_status";
+    private static final String DIALOG_CONFIRM_UPLOAD = "dialog:confirm_upload";
+    private static final String DIALOG_ITEMS = "dialog:items";
+    private static final String DIALOG_CHOOSE_ACCOUNT = "dialog:choose_account";
+    private static final String DIALOG_LOADING_ACCOUNTS = "dialog:loading_accounts";
+    private static final String DIALOG_CHOOSE_WIDGET = "dialog:choose_widget";
+    private static final String DIALOG_REFRESH_WIDGET = "dialog:refresh_widget";
+    private static final String DIALOG_LOADING_PROFILE = "dialog:loading_profile";
+
+    @StringDef({DIALOG_LOADING_STATUS, DIALOG_CONFIRM_UPLOAD, DIALOG_ITEMS, DIALOG_CHOOSE_ACCOUNT, DIALOG_LOADING_ACCOUNTS, DIALOG_CHOOSE_WIDGET, DIALOG_REFRESH_WIDGET, DIALOG_LOADING_PROFILE})
+    @Retention(RetentionPolicy.SOURCE)
+    private @interface DialogTag {
+    }
+
+    private static final String ARG_DATA = "data";
+    private static final String ARG_RECT = "rect";
+    private static final String ARG_ACCOUNT_ID = "account_id";
+    private static final String ARG_ESID = "esid";
+
+    private StatusLoader.Result mStatusLoaderResult;
+
+    @Deprecated
     private int[] mAppWidgetIds;
-    private String[] items = null;
-    private String[] itemsData = null;
-    private String mSid = null;
-    private String mEsid = null;
-    private int mService;
-    private String mServiceName = null;
-    private ProgressDialog mLoadingDialog;
-    private StatusLoader mStatusLoader;
-    private Rect mRect;
-    private SonetCrypto mSonetCrypto;
     private boolean mFinish = false;
     private String mFilePath = null;
-    private AlertDialog mDialog;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // load secretkey
-        mSonetCrypto = SonetCrypto.getInstance(getApplicationContext());
+
+        Intent intent = getIntent();
+
+        if (intent.hasExtra(Widgets.INSTANT_UPLOAD)) {
+            mFilePath = intent.getStringExtra(Widgets.INSTANT_UPLOAD);
+
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "upload photo?" + mFilePath);
+            }
+
+            if (getSupportFragmentManager().findFragmentByTag(DIALOG_CONFIRM_UPLOAD) == null) {
+                ConfirmationDialogFragment.newInstance(R.string.uploadprompt, REQUEST_CONFIRM_UPLOAD)
+                        .show(getSupportFragmentManager(), DIALOG_CONFIRM_UPLOAD);
+            }
+        } else {
+            Rect rect;
+
+            if (intent.hasExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS)) {
+                rect = intent.getParcelableExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS);
+            } else {
+                rect = intent.getSourceBounds();
+            }
+
+            if (getSupportFragmentManager().findFragmentByTag(DIALOG_LOADING_STATUS) == null) {
+                LoadingDialogFragment.newInstance(REQUEST_LOADING_STATUS)
+                        .show(getSupportFragmentManager(), DIALOG_LOADING_STATUS);
+            }
+
+            Bundle args = new Bundle();
+            args.putString(ARG_DATA, getIntent().getData().toString());
+            args.putParcelable(ARG_RECT, rect);
+            getSupportLoaderManager().initLoader(LOADER_STATUS, args, this);
+        }
     }
 
     @Override
     public void onNewIntent(Intent intent) {
         setIntent(intent);
+
+        if (intent.hasExtra(Widgets.INSTANT_UPLOAD)) {
+            mFilePath = intent.getStringExtra(Widgets.INSTANT_UPLOAD);
+
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "upload photo?" + mFilePath);
+            }
+
+            if (getSupportFragmentManager().findFragmentByTag(DIALOG_CONFIRM_UPLOAD) == null) {
+                ConfirmationDialogFragment.newInstance(R.string.uploadprompt, REQUEST_CONFIRM_UPLOAD)
+                        .show(getSupportFragmentManager(), DIALOG_CONFIRM_UPLOAD);
+            }
+        } else {
+            Rect rect;
+
+            if (intent.hasExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS)) {
+                rect = intent.getParcelableExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS);
+            } else {
+                rect = intent.getSourceBounds();
+            }
+
+            if (getSupportFragmentManager().findFragmentByTag(DIALOG_LOADING_STATUS) == null) {
+                LoadingDialogFragment.newInstance(REQUEST_LOADING_STATUS)
+                        .show(getSupportFragmentManager(), DIALOG_LOADING_STATUS);
+            }
+
+            Bundle args = new Bundle();
+            args.putString(ARG_DATA, getIntent().getData().toString());
+            args.putParcelable(ARG_RECT, rect);
+            getSupportLoaderManager().restartLoader(LOADER_STATUS, args, this);
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        Intent intent = getIntent();
-        if (intent != null) {
-            if (intent.hasExtra(Widgets.INSTANT_UPLOAD)) {
-                mFilePath = intent.getStringExtra(Widgets.INSTANT_UPLOAD);
-                Log.d(TAG, "upload photo?" + mFilePath);
-            } else {
-                mData = intent.getData();
-                if (mData != null) {
-                    mData = intent.getData();
-                    if (intent.hasExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS))
-                        mRect = intent.getParcelableExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS);
-                    else
-                        mRect = intent.getSourceBounds();
-                    Log.d(TAG, "data:" + mData.toString());
-                    // need to use a thread here to avoid anr
-                    mLoadingDialog = new ProgressDialog(this);
-                    mLoadingDialog.setMessage(getString(R.string.status_loading));
-                    mLoadingDialog.setCancelable(true);
-                    mLoadingDialog.setOnCancelListener(new OnCancelListener() {
-                        @Override
-                        public void onCancel(DialogInterface arg0) {
-                            if (mStatusLoader != null)
-                                mStatusLoader.cancel(true);
-                            finish();
-                        }
-                    });
-                    mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.cancel();
-                            finish();
-                        }
-                    });
-                    mLoadingDialog.show();
-                    mStatusLoader = new StatusLoader();
-                    mStatusLoader.execute();
-                }
-            }
-        }
-        if (mFilePath != null) {
-            mDialog = (new AlertDialog.Builder(this))
-                    .setTitle(R.string.uploadprompt)
-                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            startActivityForResult(Sonet.getPackageIntent(getApplicationContext(), SonetCreatePost.class).putExtra(Widgets.INSTANT_UPLOAD, mFilePath), RESULT_REFRESH);
-                            dialog.dismiss();
-                        }
-                    })
-                    .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                            StatusDialog.this.finish();
-                        }
-                    }).create();
-            mDialog.show();
-        } else {
-            // check if the dialog is still loading
-            if (mFinish)
-                finish();
-            else if ((mLoadingDialog == null) || !mLoadingDialog.isShowing())
-                showDialog();
-        }
-    }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if ((mLoadingDialog != null) && mLoadingDialog.isShowing()) {
-            mLoadingDialog.dismiss();
-        }
-        if (mStatusLoader != null) {
-            mStatusLoader.cancel(true);
-        }
-        if ((mDialog != null) && mDialog.isShowing()) {
-            mDialog.dismiss();
+        // TODO is this still needed? read through what mFinish does...
+        if (TextUtils.isEmpty(mFilePath)) {
+            // check if the dialog is still loading
+            if (mFinish) {
+                finish();
+            }
         }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if ((requestCode == RESULT_REFRESH) && (resultCode == RESULT_OK)) {
-            finish();
+        switch (requestCode) {
+            case RESULT_REFRESH:
+                if (resultCode == RESULT_OK) {
+                    finish();
+                }
+                break;
+
+            default:
+                super.onActivityResult(requestCode, resultCode, data);
         }
     }
 
     private void showDialog() {
-        if (mService == SMS) {
+        if (mStatusLoaderResult.service == SMS) {
             // if mRect go straight to message app...
-            if (mRect != null)
-                QuickContact.showQuickContact(this, mRect, Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, mEsid), QuickContact.MODE_LARGE, null);
-            else {
-                startActivity(new Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + mEsid)));
+            if (mStatusLoaderResult.rect != null) {
+                QuickContact.showQuickContact(this, mStatusLoaderResult.rect, Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, mStatusLoaderResult.esid), QuickContact.MODE_LARGE, null);
+            } else {
+                startActivity(new Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + mStatusLoaderResult.esid)));
                 finish();
             }
-        } else if (mService == RSS) {
-            if (mEsid != null) {
-                startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(mEsid)));
+        } else if (mStatusLoaderResult.service == RSS) {
+            if (mStatusLoaderResult.esid != null) {
+                startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(mStatusLoaderResult.esid)));
                 finish();
             } else {
                 (Toast.makeText(StatusDialog.this, "RSS item has no link", Toast.LENGTH_LONG)).show();
                 finish();
             }
-        } else if (items != null) {
+        } else if (mStatusLoaderResult.items != null) {
             // offer options for Comment, Post, Settings and Refresh
-            // loading the likes/retweet and other options takes too long, so load them in the SonetCreatePost.class
-            mDialog = (new AlertDialog.Builder(this))
-                    .setItems(items, this)
-                    .setCancelable(true)
-                    .setOnCancelListener(new OnCancelListener() {
-
-                        @Override
-                        public void onCancel(DialogInterface arg0) {
-                            finish();
-                        }
-
-                    })
-                    .create();
-            mDialog.show();
+            ItemsDialogFragment.newInstance(mStatusLoaderResult.items, REQUEST_ITEMS)
+                    .show(getSupportFragmentManager(), DIALOG_ITEMS);
         } else {
-            if (mAppWidgetId != Sonet.INVALID_ACCOUNT_ID) {
+            if (mStatusLoaderResult.appwidgetId != Sonet.INVALID_ACCOUNT_ID) {
                 // informational messages go to settings
                 mFinish = true;
-                startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
+                startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mStatusLoaderResult.appwidgetId));
                 finish();
             } else {
                 (Toast.makeText(StatusDialog.this, R.string.widget_loading, Toast.LENGTH_LONG)).show();
@@ -230,619 +242,296 @@ public class StatusDialog extends Activity implements OnClickListener {
         }
     }
 
-    private void onErrorExit(String serviceName) {
-        (Toast.makeText(StatusDialog.this, serviceName + " " + getString(R.string.failure), Toast.LENGTH_LONG)).show();
-        finish();
-    }
-
-    @Override
-    public void onClick(final DialogInterface dialog, int which) {
-        switch (which) {
-            case COMMENT:
-                if (mAppWidgetId != -1) {
-                    if (mService == GOOGLEPLUS)
-                        startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://plus.google.com")));
-                    else if (mService == PINTEREST) {
-                        if (mSid != null)
-                            startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(PINTEREST_PIN, mSid))));
-                        else
-                            startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
-                    } else
-                        startActivity(Sonet.getPackageIntent(this, SonetComments.class).setData(mData));
-                } else
-                    (Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-                dialog.cancel();
-                finish();
-                break;
-            case POST:
-                if (mAppWidgetId != -1) {
-                    if (mService == GOOGLEPLUS) {
-                        startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://plus.google.com")));
-                    } else if (mService == PINTEREST) {
-                        startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
-                    } else {
-                        startActivity(Sonet.getPackageIntent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(mAccount))));
-                    }
-
-                    dialog.cancel();
-                    finish();
-                } else {
-                    // no widget sent in, dialog to select one
-                    String[] widgets = getAllWidgets();
-                    if (widgets.length > 0) {
-                        mDialog = (new AlertDialog.Builder(this))
-                                .setItems(widgets, new OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface arg0, int arg1) {
-                                        // no account, dialog to select one
-                                        // don't limit accounts to the widget
-                                        Cursor c = Accounts.get(StatusDialog.this);
-                                        if (c.moveToFirst()) {
-                                            int iid = c.getColumnIndex(Accounts._ID),
-                                                    iusername = c.getColumnIndex(Accounts.USERNAME),
-                                                    i = 0;
-                                            final long[] accountIndexes = new long[c.getCount()];
-                                            final String[] accounts = new String[c.getCount()];
-                                            while (!c.isAfterLast()) {
-                                                long id = c.getLong(iid);
-                                                accountIndexes[i] = id;
-                                                accounts[i++] = c.getString(iusername);
-                                                c.moveToNext();
-                                            }
-                                            arg0.cancel();
-                                            mDialog = (new AlertDialog.Builder(StatusDialog.this))
-                                                    .setTitle(R.string.accounts)
-                                                    .setSingleChoiceItems(accounts, -1, new OnClickListener() {
-                                                        @Override
-                                                        public void onClick(DialogInterface arg0, int which) {
-                                                            startActivity(Sonet.getPackageIntent(StatusDialog.this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(accountIndexes[which]))));
-                                                            arg0.cancel();
-                                                        }
-                                                    })
-                                                    .setCancelable(true)
-                                                    .setOnCancelListener(new OnCancelListener() {
-                                                        @Override
-                                                        public void onCancel(DialogInterface arg0) {
-                                                            dialog.cancel();
-                                                        }
-                                                    })
-                                                    .create();
-                                            mDialog.show();
-                                        } else {
-                                            (Toast.makeText(StatusDialog.this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-                                            dialog.cancel();
-                                        }
-                                        c.close();
-                                        finish();
-                                    }
-                                })
-                                .setCancelable(true)
-                                .setOnCancelListener(new OnCancelListener() {
-                                    @Override
-                                    public void onCancel(DialogInterface arg0) {
-                                        dialog.cancel();
-                                        finish();
-                                    }
-                                }).create();
-                        mDialog.show();
-                    } else {
-                        (Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-                        dialog.cancel();
-                        finish();
-                    }
-                }
-                break;
-            case SETTINGS:
-                if (mAppWidgetId != -1) {
-                    startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId));
-                    dialog.cancel();
-                    finish();
-                } else {
-                    // no widget sent in, dialog to select one
-                    String[] widgets = getAllWidgets();
-                    if (widgets.length > 0) {
-                        mDialog = (new AlertDialog.Builder(this))
-                                .setItems(widgets, new OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface arg0, int arg1) {
-                                        startActivity(Sonet.getPackageIntent(StatusDialog.this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[arg1]));
-                                        arg0.cancel();
-                                        finish();
-                                    }
-                                })
-                                .setCancelable(true)
-                                .setOnCancelListener(new OnCancelListener() {
-                                    @Override
-                                    public void onCancel(DialogInterface arg0) {
-                                        dialog.cancel();
-                                        finish();
-                                    }
-                                })
-                                .create();
-                        mDialog.show();
-                    } else {
-                        (Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-                        dialog.cancel();
-                        finish();
-                    }
-                }
-                break;
-            case NOTIFICATIONS:
-                startActivity(Sonet.getPackageIntent(this, SonetNotifications.class));
-                dialog.cancel();
-                finish();
-                break;
-            case REFRESH:
-                if (mAppWidgetId != -1) {
-                    (Toast.makeText(getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
-                    startService(Sonet.getPackageIntent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
-                    dialog.cancel();
-                } else {
-                    // no widget sent in, dialog to select one
-                    String[] widgets = getAllWidgets();
-                    if (widgets.length > 0) {
-                        mDialog = (new AlertDialog.Builder(this))
-                                .setItems(widgets, new OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface arg0, int arg1) {
-                                        (Toast.makeText(StatusDialog.this.getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
-                                        startService(Sonet.getPackageIntent(StatusDialog.this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetIds[arg1]}));
-                                        arg0.cancel();
-                                        finish();
-                                    }
-                                })
-                                .setPositiveButton(R.string.refreshallwidgets, new OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface arg0, int which) {
-                                        // refresh all
-                                        (Toast.makeText(StatusDialog.this.getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
-                                        startService(Sonet.getPackageIntent(StatusDialog.this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
-                                        arg0.cancel();
-                                        finish();
-                                    }
-                                })
-                                .setCancelable(true)
-                                .setOnCancelListener(new OnCancelListener() {
-                                    @Override
-                                    public void onCancel(DialogInterface arg0) {
-                                        dialog.cancel();
-                                        finish();
-                                    }
-                                })
-                                .create();
-                        mDialog.show();
-                    } else {
-                        dialog.cancel();
-                        finish();
-                    }
-                }
-                break;
-            case PROFILE:
-                Cursor account;
-                final AsyncTask<String, Void, String> asyncTask;
-                // get the resources
-                switch (mService) {
-                    case TWITTER:
-                        account = this.getContentResolver().query(Accounts.getContentUri(StatusDialog.this), new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-                        if (account.moveToFirst()) {
-                            final ProgressDialog loadingDialog = new ProgressDialog(this);
-                            asyncTask = new AsyncTask<String, Void, String>() {
-                                @Override
-                                protected String doInBackground(String... arg0) {
-                                    SonetOAuth sonetOAuth = new SonetOAuth(BuildConfig.TWITTER_KEY, BuildConfig.TWITTER_SECRET, arg0[0], arg0[1]);
-                                    return SonetHttpClient.httpResponse(SonetHttpClient.getThreadSafeClient(getApplicationContext()), sonetOAuth.getSignedRequest(new HttpGet(String.format(TWITTER_USER, TWITTER_BASE_URL, mEsid))));
-                                }
-
-                                @Override
-                                protected void onPostExecute(String response) {
-                                    if (loadingDialog.isShowing()) loadingDialog.dismiss();
-                                    if (response != null) {
-                                        try {
-                                            JSONObject user = new JSONObject(response);
-                                            startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(TWITTER_PROFILE, user.getString("screen_name")))));
-                                        } catch (JSONException e) {
-                                            Log.e(TAG, e.toString());
-                                            onErrorExit(mServiceName);
-                                        }
-                                    } else {
-                                        onErrorExit(mServiceName);
-                                    }
-                                    finish();
-                                }
-                            };
-                            loadingDialog.setMessage(getString(R.string.loading));
-                            loadingDialog.setCancelable(true);
-                            loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                                @Override
-                                public void onCancel(DialogInterface dialog) {
-                                    if (!asyncTask.isCancelled())
-                                        asyncTask.cancel(true);
-                                }
-                            });
-                            loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.cancel();
-                                    finish();
-                                }
-                            });
-                            loadingDialog.show();
-                            asyncTask.execute(mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))), mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET))));
-                        }
-                        account.close();
-                        break;
-                    case FACEBOOK:
-                        account = this.getContentResolver().query(Accounts.getContentUri(StatusDialog.this), new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-                        if (account.moveToFirst()) {
-                            final ProgressDialog loadingDialog = new ProgressDialog(this);
-                            asyncTask = new AsyncTask<String, Void, String>() {
-                                @Override
-                                protected String doInBackground(String... arg0) {
-                                    return SonetHttpClient.httpResponse(SonetHttpClient.getThreadSafeClient(getApplicationContext()), new HttpGet(String.format(FACEBOOK_USER, FACEBOOK_BASE_URL, mEsid, Saccess_token, arg0[0])));
-                                }
-
-                                @Override
-                                protected void onPostExecute(String response) {
-                                    if (loadingDialog.isShowing()) loadingDialog.dismiss();
-                                    if (response != null) {
-                                        try {
-                                            startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getString("link"))));
-                                        } catch (JSONException e) {
-                                            Log.e(TAG, e.toString());
-                                            onErrorExit(mServiceName);
-                                        }
-                                    } else {
-                                        onErrorExit(mServiceName);
-                                    }
-                                    finish();
-                                }
-                            };
-                            loadingDialog.setMessage(getString(R.string.loading));
-                            loadingDialog.setCancelable(true);
-                            loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                                @Override
-                                public void onCancel(DialogInterface dialog) {
-                                    if (!asyncTask.isCancelled()) asyncTask.cancel(true);
-                                }
-                            });
-                            loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.cancel();
-                                    finish();
-                                }
-                            });
-                            loadingDialog.show();
-                            asyncTask.execute(mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))));
-                        }
-                        account.close();
-                        break;
-                    case MYSPACE:
-                        account = this.getContentResolver().query(Accounts.getContentUri(StatusDialog.this), new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-                        if (account.moveToFirst()) {
-                            final ProgressDialog loadingDialog = new ProgressDialog(this);
-                            asyncTask = new AsyncTask<String, Void, String>() {
-                                @Override
-                                protected String doInBackground(String... arg0) {
-                                    SonetOAuth sonetOAuth = new SonetOAuth(BuildConfig.MYSPACE_KEY, BuildConfig.MYSPACE_SECRET, arg0[0], arg0[1]);
-                                    return SonetHttpClient.httpResponse(SonetHttpClient.getThreadSafeClient(getApplicationContext()), sonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_USER, MYSPACE_BASE_URL, mEsid))));
-                                }
-
-                                @Override
-                                protected void onPostExecute(String response) {
-                                    if (loadingDialog.isShowing()) loadingDialog.dismiss();
-                                    if (response != null) {
-                                        try {
-                                            startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getJSONObject("person").getString("profileUrl"))));
-                                        } catch (JSONException e) {
-                                            Log.e(TAG, e.toString());
-                                            onErrorExit(mServiceName);
-                                        }
-                                    } else {
-                                        onErrorExit(mServiceName);
-                                    }
-                                    finish();
-                                }
-                            };
-                            loadingDialog.setMessage(getString(R.string.loading));
-                            loadingDialog.setCancelable(true);
-                            loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                                @Override
-                                public void onCancel(DialogInterface dialog) {
-                                    if (!asyncTask.isCancelled()) asyncTask.cancel(true);
-                                }
-                            });
-                            loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.cancel();
-                                    finish();
-                                }
-                            });
-                            loadingDialog.show();
-                            asyncTask.execute(mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))), mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET))));
-                        }
-                        account.close();
-                        break;
-                    case FOURSQUARE:
-                        startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(FOURSQUARE_URL_PROFILE, mEsid))));
-                        finish();
-                        break;
-                    case LINKEDIN:
-                        account = this.getContentResolver().query(Accounts.getContentUri(StatusDialog.this), new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-                        if (account.moveToFirst()) {
-                            final ProgressDialog loadingDialog = new ProgressDialog(this);
-                            asyncTask = new AsyncTask<String, Void, String>() {
-                                @Override
-                                protected String doInBackground(String... arg0) {
-                                    SonetOAuth sonetOAuth = new SonetOAuth(BuildConfig.LINKEDIN_KEY, BuildConfig.LINKEDIN_SECRET, arg0[0], arg0[1]);
-                                    HttpGet httpGet = new HttpGet(String.format(LINKEDIN_URL_USER, mEsid));
-                                    for (String[] header : LINKEDIN_HEADERS)
-                                        httpGet.setHeader(header[0], header[1]);
-                                    return SonetHttpClient.httpResponse(SonetHttpClient.getThreadSafeClient(getApplicationContext()), sonetOAuth.getSignedRequest(httpGet));
-                                }
-
-                                @Override
-                                protected void onPostExecute(String response) {
-                                    if (loadingDialog.isShowing()) loadingDialog.dismiss();
-                                    if (response != null) {
-                                        try {
-                                            startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse((new JSONObject(response)).getJSONObject("siteStandardProfileRequest").getString("url").replaceAll("\\\\", ""))));
-                                        } catch (JSONException e) {
-                                            Log.e(TAG, e.toString());
-                                            onErrorExit(mServiceName);
-                                        }
-                                    } else {
-                                        onErrorExit(mServiceName);
-                                    }
-                                    finish();
-                                }
-                            };
-                            loadingDialog.setMessage(getString(R.string.loading));
-                            loadingDialog.setCancelable(true);
-                            loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                                @Override
-                                public void onCancel(DialogInterface dialog) {
-                                    if (!asyncTask.isCancelled()) asyncTask.cancel(true);
-                                }
-                            });
-                            loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.cancel();
-                                    finish();
-                                }
-                            });
-                            loadingDialog.show();
-                            asyncTask.execute(mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))), mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET))));
-                        }
-                        account.close();
-                        break;
-                    case IDENTICA:
-                        account = this.getContentResolver().query(Accounts.getContentUri(StatusDialog.this), new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-                        if (account.moveToFirst()) {
-                            final ProgressDialog loadingDialog = new ProgressDialog(this);
-                            asyncTask = new AsyncTask<String, Void, String>() {
-                                @Override
-                                protected String doInBackground(String... arg0) {
-                                    SonetOAuth sonetOAuth = new SonetOAuth(BuildConfig.IDENTICA_KEY, BuildConfig.IDENTICA_SECRET, arg0[0], arg0[1]);
-                                    return SonetHttpClient.httpResponse(SonetHttpClient.getThreadSafeClient(getApplicationContext()), sonetOAuth.getSignedRequest(new HttpGet(String.format(IDENTICA_USER, IDENTICA_BASE_URL, mEsid))));
-                                }
-
-                                @Override
-                                protected void onPostExecute(String response) {
-                                    if (loadingDialog.isShowing()) loadingDialog.dismiss();
-                                    if (response != null) {
-                                        try {
-                                            JSONObject user = new JSONObject(response);
-                                            startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(IDENTICA_PROFILE, user.getString("screen_name")))));
-                                        } catch (JSONException e) {
-                                            Log.e(TAG, e.toString());
-                                            onErrorExit(mServiceName);
-                                        }
-                                    } else {
-                                        onErrorExit(mServiceName);
-                                    }
-                                    finish();
-                                }
-                            };
-                            loadingDialog.setMessage(getString(R.string.loading));
-                            loadingDialog.setCancelable(true);
-                            loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                                @Override
-                                public void onCancel(DialogInterface dialog) {
-                                    if (!asyncTask.isCancelled()) asyncTask.cancel(true);
-                                }
-                            });
-                            loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.cancel();
-                                    finish();
-                                }
-                            });
-                            loadingDialog.show();
-                            asyncTask.execute(mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))), mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.SECRET))));
-                        }
-                        account.close();
-                        break;
-                    case GOOGLEPLUS:
-                        startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(GOOGLEPLUS_PROFILE, mEsid))));
-                        finish();
-                        break;
-                    case PINTEREST:
-                        if (mEsid != null)
-                            startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(PINTEREST_PROFILE, mEsid))));
-                        else
-                            startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
-                        finish();
-                        break;
-                    case CHATTER:
-                        account = this.getContentResolver().query(Accounts.getContentUri(StatusDialog.this), new String[]{Accounts._ID, Accounts.TOKEN}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
-                        if (account.moveToFirst()) {
-                            final ProgressDialog loadingDialog = new ProgressDialog(this);
-                            asyncTask = new AsyncTask<String, Void, String>() {
-                                @Override
-                                protected String doInBackground(String... arg0) {
-                                    // need to get an instance
-                                    return SonetHttpClient.httpResponse(SonetHttpClient.getThreadSafeClient(getApplicationContext()), new HttpPost(String.format(CHATTER_URL_ACCESS, BuildConfig.CHATTER_KEY, arg0[0])));
-                                }
-
-                                @Override
-                                protected void onPostExecute(String response) {
-                                    if (loadingDialog.isShowing()) loadingDialog.dismiss();
-                                    if (response != null) {
-                                        try {
-                                            JSONObject jobj = new JSONObject(response);
-                                            if (jobj.has("instance_url")) {
-                                                startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(jobj.getString("instance_url") + "/" + mEsid)));
-                                            }
-                                        } catch (JSONException e) {
-                                            Log.e(TAG, e.toString());
-                                            onErrorExit(mServiceName);
-                                        }
-                                    } else {
-                                        onErrorExit(mServiceName);
-                                    }
-                                    finish();
-                                }
-                            };
-                            loadingDialog.setMessage(getString(R.string.loading));
-                            loadingDialog.setCancelable(true);
-                            loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                                @Override
-                                public void onCancel(DialogInterface dialog) {
-                                    if (!asyncTask.isCancelled()) asyncTask.cancel(true);
-                                }
-                            });
-                            loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.cancel();
-                                    finish();
-                                }
-                            });
-                            loadingDialog.show();
-                            asyncTask.execute(mSonetCrypto.Decrypt(account.getString(account.getColumnIndex(Accounts.TOKEN))));
-                        }
-                        account.close();
-                        break;
-                }
-                break;
-            default:
-                if ((itemsData != null) && (which < itemsData.length) && (itemsData[which] != null))
-                    // open link
-                    startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(itemsData[which])));
-                else
-                    (Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
-                finish();
-                break;
-        }
-    }
-
     private String[] getAllWidgets() {
-        mAppWidgetIds = new int[0];
         // validate appwidgetids with appwidgetmanager
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
         mAppWidgetIds = Sonet.getWidgets(getApplicationContext(), appWidgetManager);
 
         // older versions had a null widget, remove them
-        this.getContentResolver().delete(Widgets.getContentUri(StatusDialog.this), Widgets.WIDGET + "=?", new String[]{""});
-        this.getContentResolver().delete(WidgetAccounts.getContentUri(StatusDialog.this), WidgetAccounts.WIDGET + "=?", new String[]{""});
+        getContentResolver().delete(Widgets.getContentUri(StatusDialog.this), Widgets.WIDGET + "=?", new String[]{""});
+        getContentResolver().delete(WidgetAccounts.getContentUri(StatusDialog.this), WidgetAccounts.WIDGET + "=?", new String[]{""});
 
         String[] widgetsOptions = new String[mAppWidgetIds.length];
+
         for (int i = 0; i < mAppWidgetIds.length; i++) {
             AppWidgetProviderInfo info = appWidgetManager.getAppWidgetInfo(mAppWidgetIds[i]);
             String providerName = info.provider.getClassName();
             widgetsOptions[i] = Integer.toString(mAppWidgetIds[i]) + " (" + providerName + ")";
         }
+
         return widgetsOptions;
     }
 
-    class StatusLoader extends AsyncTask<Void, Void, Void> {
+    private boolean dismissDialog(@DialogTag String tag) {
+        DialogFragment dialogFragment = (DialogFragment) getSupportFragmentManager().findFragmentByTag(tag);
 
-        @Override
-        protected Void doInBackground(Void... params) {
-            Log.d(TAG, "get status: " + mData.getLastPathSegment());
-            Cursor c = getContentResolver().query(StatusesStyles.getContentUri(StatusDialog.this), new String[]{StatusesStyles._ID, StatusesStyles.WIDGET, StatusesStyles.ACCOUNT, StatusesStyles.ESID, StatusesStyles.MESSAGE, StatusesStyles.FRIEND, StatusesStyles.SERVICE, StatusesStyles.SID}, StatusesStyles._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
-            if (c.moveToFirst()) {
-                mAppWidgetId = c.getInt(1);
-                mAccount = c.getLong(2);
-                Log.d(TAG, "account: " + mAccount);
-                // informational messages go directly to settings, otherwise, load up the options
-                if (mAccount != Sonet.INVALID_ACCOUNT_ID) {
-                    mService = c.getInt(6);
-                    Log.d(TAG, "service: " + mService);
-                    if (mService == PINTEREST)
-                        // pinterest uses the username for the profile page
-                        mEsid = c.getString(5);
-                    else
-                        mEsid = mSonetCrypto.Decrypt(c.getString(3));
-                    mSid = mSonetCrypto.Decrypt(c.getString(7));
-                    if (mService == SMS) {
-                        // lookup the contact, else null mRect
-                        Cursor phones = getContentResolver().query(Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(mEsid)), new String[]{ContactsContract.PhoneLookup.LOOKUP_KEY}, null, null, null);
-                        if (phones.moveToFirst())
-                            mEsid = phones.getString(0);
-                        else
-                            mRect = null;
-                        phones.close();
-                    } else if (mService != RSS) {
-                        mServiceName = Sonet.getServiceName(getResources(), mService);
-                        // get links from table
-                        Cursor links = getContentResolver().query(StatusLinks.getContentUri(StatusDialog.this), new String[]{StatusLinks.LINK_URI, StatusLinks.LINK_TYPE}, StatusLinks.STATUS_ID + "=?", new String[]{Long.toString(c.getLong(0))}, null);
-                        //						count += links.getCount();
-                        int count = links.getCount();
-                        items = new String[PROFILE + count + 1];
-                        itemsData = new String[items.length];
-                        // for facebook wall posts, remove everything after the " > "
-                        String friend = c.getString(5);
-                        if (friend.indexOf(">") > 0)
-                            friend = friend.substring(0, friend.indexOf(">") - 1);
-                        if (mService == TWITTER) {
-                            items[COMMENT] = getString(R.string.reply) + " @" + friend;
-                            items[POST] = getString(R.string.tweet);
-                        } else if (mService == IDENTICA) {
-                            items[COMMENT] = getString(R.string.reply) + " @" + friend;
-                            items[POST] = String.format(getString(R.string.update_status), mServiceName);
-                        } else {
-                            items[COMMENT] = String.format(getString(R.string.comment_status), friend);
-                            items[POST] = String.format(getString(R.string.update_status), mServiceName);
-                        }
-                        items[SETTINGS] = getString(R.string.accounts_and_settings);
-                        items[NOTIFICATIONS] = getString(R.string.notifications);
-                        items[REFRESH] = getString(R.string.button_refresh);
-                        items[PROFILE] = String.format(getString(R.string.userProfile), friend);
-                        count = PROFILE + 1;
-                        // links
-                        if (links.moveToFirst()) {
-                            while (!links.isAfterLast()) {
-                                itemsData[count] = links.getString(0);
-                                String host = Uri.parse(links.getString(0)).getHost();
-                                String type = links.getString(1);
-                                if (type.equals(Sonet.Spicture))
-                                    items[count] = String.format(getString(R.string.open_picture), host);
-                                else if (type.equals(Sonet.Sphoto))
-                                    items[count] = String.format(getString(R.string.open_page), host);
-                                else
-                                    items[count] = String.format(getString(R.string.open_link), host);
-                                count++;
-                                links.moveToNext();
-                            }
-                        }
-                        links.close();
-                    }
-                }
-            }
-            c.close();
-            return null;
+        if (dialogFragment != null) {
+            dialogFragment.dismiss();
+            return true;
         }
 
-        @Override
-        protected void onPostExecute(Void result) {
-            mLoadingDialog.dismiss();
-            showDialog();
+        return false;
+    }
+
+    private void chooseWidget(@RequestCode int requestCode, @DialogTag String tag) {
+        // no widget sent in, dialog to select one
+        // TODO change the way this HashMap is populated, drop mAppWidgetIds
+        String[] widgets = getAllWidgets();
+
+        if (widgets.length > 0) {
+            HashMap<Integer, String> widgetItems = new HashMap<>();
+            int index = 0;
+
+            for (int id : mAppWidgetIds) {
+                widgetItems.put(id, widgets[index]);
+                index++;
+            }
+
+            ChooseWidgetDialogFragment.newInstance(widgetItems, requestCode)
+                    .show(getSupportFragmentManager(), tag);
+        } else {
+            Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG).show();
+            finish();
         }
     }
 
+    @Override
+    public Loader onCreateLoader(int id, Bundle args) {
+        switch (id) {
+            case LOADER_STATUS:
+                return new StatusLoader(this, Uri.parse(args.getString(ARG_DATA)), args.<Rect>getParcelable(ARG_RECT));
+
+            case LOADER_ACCOUNTS:
+                return new CursorLoader(this,
+                        Accounts.getContentUri(this),
+                        new String[]{Accounts._ID, Accounts.ACCOUNTS_QUERY},
+                        null,
+                        null,
+                        null);
+
+            default:
+                return null;
+        }
+    }
+
+    @Override
+    public void onLoadFinished(Loader loader, Object data) {
+
+        switch (loader.getId()) {
+            case LOADER_STATUS:
+                dismissDialog(DIALOG_LOADING_STATUS);
+
+                if (data instanceof StatusLoader.Result) {
+                    mStatusLoaderResult = (StatusLoader.Result) data;
+                }
+
+                showDialog();
+                break;
+
+            case LOADER_ACCOUNTS:
+                dismissDialog(DIALOG_LOADING_ACCOUNTS);
+
+                if (data instanceof Cursor) {
+                    Cursor cursor = (Cursor) data;
+
+                    if (cursor.moveToFirst()) {
+                        int indexId = cursor.getColumnIndex(Accounts._ID);
+                        int indexUsername = cursor.getColumnIndex(Accounts.USERNAME);
+
+                        HashMap<Long, String> accounts = new HashMap<>();
+
+                        while (!cursor.isAfterLast()) {
+                            accounts.put(cursor.getLong(indexId), cursor.getString(indexUsername));
+                            cursor.moveToNext();
+                        }
+
+                        ChooseAccountDialogFragment.newInstance(accounts, getString(R.string.accounts), REQUEST_CHOOSE_ACCOUNT)
+                                .show(getSupportFragmentManager(), DIALOG_CHOOSE_ACCOUNT);
+                    } else {
+                        Toast.makeText(StatusDialog.this, getString(R.string.error_status), Toast.LENGTH_LONG).show();
+                        finish();
+                    }
+                }
+                break;
+
+            case LOADER_PROFILE:
+                dismissDialog(DIALOG_LOADING_PROFILE);
+
+                if (data instanceof String) {
+                    String url = (String) data;
+                    startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(url)));
+                } else {
+                    Toast.makeText(this, mStatusLoaderResult.serviceName + " " + getString(R.string.failure), Toast.LENGTH_LONG).show();
+                }
+
+                finish();
+                break;
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader loader) {
+        switch (loader.getId()) {
+            case LOADER_STATUS:
+                DialogFragment dialogFragment = (DialogFragment) getSupportFragmentManager().findFragmentByTag(DIALOG_LOADING_STATUS);
+
+                if (dialogFragment != null) {
+                    dialogFragment.dismiss();
+                }
+                break;
+        }
+    }
+
+    @Override
+    public void onResult(int requestCode, int result, Intent data) {
+        switch (requestCode) {
+            case REQUEST_LOADING_STATUS:
+                finish();
+                break;
+
+            case REQUEST_CONFIRM_UPLOAD:
+                if (result == RESULT_OK) {
+                    startActivityForResult(Sonet.getPackageIntent(getApplicationContext(), SonetCreatePost.class)
+                                    .putExtra(Widgets.INSTANT_UPLOAD, mFilePath),
+                            RESULT_REFRESH);
+                } else {
+                    finish();
+                }
+                break;
+
+            case REQUEST_ITEMS:
+                if (result == RESULT_OK) {
+                    int which = ItemsDialogFragment.getWhich(data, 0);
+
+                    switch (which) {
+                        case StatusLoader.Result.COMMENT:
+                            if (mStatusLoaderResult.appwidgetId != -1) {
+                                if (mStatusLoaderResult.service == GOOGLEPLUS) {
+                                    startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://plus.google.com")));
+                                } else if (mStatusLoaderResult.service == PINTEREST) {
+                                    if (mStatusLoaderResult.sid != null) {
+                                        startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(PINTEREST_PIN, mStatusLoaderResult.sid))));
+                                    } else {
+                                        startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
+                                    }
+                                } else {
+                                    startActivity(Sonet.getPackageIntent(this, SonetComments.class).setData(mStatusLoaderResult.data));
+                                }
+                            } else {
+                                (Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
+                            }
+
+                            finish();
+                            break;
+
+                        case StatusLoader.Result.POST:
+                            if (mStatusLoaderResult.appwidgetId != -1) {
+                                if (mStatusLoaderResult.service == GOOGLEPLUS) {
+                                    startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://plus.google.com")));
+                                } else if (mStatusLoaderResult.service == PINTEREST) {
+                                    startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
+                                } else {
+                                    startActivity(Sonet.getPackageIntent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(mStatusLoaderResult.accountId))));
+                                }
+
+                                finish();
+                            } else {
+                                // no widget sent in, load accounts to select
+                                LoadingDialogFragment.newInstance(REQUEST_LOADING_ACCOUNTS)
+                                        .show(getSupportFragmentManager(), DIALOG_LOADING_ACCOUNTS);
+                                getSupportLoaderManager().restartLoader(LOADER_ACCOUNTS, null, this);
+                            }
+                            break;
+
+                        case StatusLoader.Result.SETTINGS:
+                            if (mStatusLoaderResult.appwidgetId != -1) {
+                                startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mStatusLoaderResult.appwidgetId));
+                                finish();
+                            } else {
+                                chooseWidget(REQUEST_CHOOSE_WIDGET, DIALOG_CHOOSE_WIDGET);
+                            }
+                            break;
+
+                        case StatusLoader.Result.NOTIFICATIONS:
+                            startActivity(Sonet.getPackageIntent(this, SonetNotifications.class));
+                            finish();
+                            break;
+
+                        case StatusLoader.Result.REFRESH:
+                            if (mStatusLoaderResult.appwidgetId != -1) {
+                                Toast.makeText(getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG).show();
+                                startService(Sonet.getPackageIntent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mStatusLoaderResult.appwidgetId}));
+                            } else {
+                                chooseWidget(REQUEST_REFRESH_WIDGET, DIALOG_REFRESH_WIDGET);
+                            }
+                            break;
+
+                        case StatusLoader.Result.PROFILE:
+                            LoadingDialogFragment.newInstance(REQUEST_LOADING_PROFILE)
+                                    .show(getSupportFragmentManager(), DIALOG_LOADING_PROFILE);
+                            Bundle args = new Bundle();
+                            args.putLong(ARG_ACCOUNT_ID, mStatusLoaderResult.accountId);
+                            args.putString(ARG_ESID, mStatusLoaderResult.esid);
+                            getSupportLoaderManager().restartLoader(LOADER_PROFILE, args, this);
+                            break;
+
+                        default:
+                            if (mStatusLoaderResult.itemsData != null && which < mStatusLoaderResult.itemsData.length && mStatusLoaderResult.itemsData[which] != null) {
+                                // open link
+                                startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(mStatusLoaderResult.itemsData[which])));
+                            } else {
+                                Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG).show();
+                            }
+
+                            finish();
+                            break;
+                    }
+                }
+                break;
+
+            case REQUEST_CHOOSE_ACCOUNT:
+                if (result == RESULT_OK) {
+                    long id = ChooseAccountDialogFragment.getSelectedId(data);
+                    startActivity(Sonet.getPackageIntent(StatusDialog.this, SonetCreatePost.class)
+                            .setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(id))));
+                }
+
+                finish();
+                break;
+
+            case REQUEST_LOADING_ACCOUNTS:
+                if (result != RESULT_OK) {
+                    finish();
+                }
+                break;
+
+            case REQUEST_CHOOSE_WIDGET:
+                if (result == RESULT_OK) {
+                    int id = ChooseWidgetDialogFragment.getSelectedId(data);
+                    startActivity(Sonet.getPackageIntent(StatusDialog.this, ManageAccounts.class)
+                            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id));
+                }
+
+                finish();
+                break;
+
+            case REQUEST_REFRESH_WIDGET:
+                if (result == RESULT_OK) {
+                    int id = ChooseWidgetDialogFragment.getSelectedId(data);
+                    Toast.makeText(this, getString(R.string.refreshing), Toast.LENGTH_LONG).show();
+                    startService(Sonet.getPackageIntent(StatusDialog.this, SonetService.class)
+                            .setAction(ACTION_REFRESH)
+                            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{id}));
+                }
+
+                finish();
+                break;
+
+            case REQUEST_LOADING_PROFILE:
+                if (result != RESULT_OK) {
+                    finish();
+                }
+                break;
+        }
+    }
 }

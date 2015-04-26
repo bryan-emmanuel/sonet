@@ -38,6 +38,7 @@ import static com.piusvelte.sonet.Sonet.GOOGLEPLUS_ACTIVITY;
 import static com.piusvelte.sonet.Sonet.GOOGLEPLUS_AUTHORIZE;
 import static com.piusvelte.sonet.Sonet.GOOGLEPLUS_BASE_URL;
 import static com.piusvelte.sonet.Sonet.GOOGLEPLUS_DATE_FORMAT;
+import static com.piusvelte.sonet.Sonet.GOOGLEPLUS_PROFILE;
 import static com.piusvelte.sonet.Sonet.GOOGLEPLUS_URL_ME;
 import static com.piusvelte.sonet.Sonet.GOOGLE_ACCESS;
 import static com.piusvelte.sonet.Sonet.Saccess_token;
@@ -61,6 +62,12 @@ public class GooglePlus extends Client {
 
     public GooglePlus(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
+    }
+
+    @Nullable
+    @Override
+    public String getProfileUrl(@NonNull String esid) {
+        return String.format(GOOGLEPLUS_PROFILE, esid);
     }
 
     @Nullable

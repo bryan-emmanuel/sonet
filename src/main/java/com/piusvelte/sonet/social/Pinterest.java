@@ -23,6 +23,7 @@ import java.util.Set;
 
 import static com.piusvelte.sonet.Sonet.PINTEREST_BASE_URL;
 import static com.piusvelte.sonet.Sonet.PINTEREST_DATE_FORMAT;
+import static com.piusvelte.sonet.Sonet.PINTEREST_PROFILE;
 import static com.piusvelte.sonet.Sonet.PINTEREST_URL_FEED;
 import static com.piusvelte.sonet.Sonet.Sboard;
 import static com.piusvelte.sonet.Sonet.Scomments;
@@ -44,6 +45,16 @@ public class Pinterest extends Client {
 
     public Pinterest(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
+    }
+
+    @Nullable
+    @Override
+    public String getProfileUrl(@NonNull String esid) {
+        if (esid != null) {
+            return String.format(PINTEREST_PROFILE, esid);
+        } else {
+            return "https://pinterest.com";
+        }
     }
 
     @Nullable

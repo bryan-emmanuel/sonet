@@ -367,8 +367,9 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
             if (!mAccountsService.isEmpty()) {
                 getSupportLoaderManager().restartLoader(LOADER_SEND_POST, null, this);
                 LoadingDialogFragment.newInstance(REQUEST_SEND_POST).show(getSupportFragmentManager(), DIALOG_LOADING);
-            } else
-                (Toast.makeText(SonetCreatePost.this, "no accounts selected", Toast.LENGTH_LONG)).show();
+            } else {
+                Toast.makeText(SonetCreatePost.this, "no accounts selected", Toast.LENGTH_LONG).show();
+            }
         }
     }
 
@@ -475,7 +476,7 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
             case LOADER_ACCOUNT_NAMES:
                 return new CursorLoader(this,
                         Accounts.getContentUri(this),
-                        new String[]{Accounts._ID, Accounts.SERVICE, Accounts.USERNAME},
+                        new String[]{Accounts._ID, Accounts.SERVICE, Accounts.ACCOUNTS_QUERY},
                         Accounts._ID + " in (?)",
                         new String[]{TextUtils.join(",", mAccountsService.keySet())},
                         null);

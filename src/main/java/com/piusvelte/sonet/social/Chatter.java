@@ -67,6 +67,16 @@ public class Chatter extends Client {
         super(context, token, secret, accountEsid, network);
     }
 
+    @Nullable
+    @Override
+    public String getProfileUrl(@NonNull String esid) {
+        if (getChatterInstance()) {
+            return mChatterInstance + "/" + esid;
+        }
+
+        return null;
+    }
+
     private boolean hasChatterInstance() {
         return !TextUtils.isEmpty(mChatterInstance) && !TextUtils.isEmpty(mChatterToken);
     }

@@ -73,6 +73,26 @@ public class Twitter extends Client {
 
     @Nullable
     @Override
+    public String getProfileUrl(@NonNull String esid) {
+        String response = SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(getUserUrl(), getBaseUrl(), esid))));
+
+        if (!TextUtils.isEmpty(response)) {
+
+            try {
+                JSONObject user = new JSONObject(response);
+                return String.format(getUserUrl(), user.getString("screen_name"));
+            } catch (JSONException e) {
+                if (BuildConfig.DEBUG) {
+                    Log.e(mTag, "Error parsing: " + response, e);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    @Nullable
+    @Override
     public Uri getCallback() {
         return Uri.parse("sonet://twitter");
     }
