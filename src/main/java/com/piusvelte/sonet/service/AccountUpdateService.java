@@ -30,7 +30,7 @@ public class AccountUpdateService extends IntentService {
     public static final String ACTION_DISABLE = "ACTION_DISABLE";
     public static final String ACTION_DELETE = "ACTION_DELETE";
 
-    @StringDef({ACTION_ENABLE, ACTION_DISABLE, ACTION_DELETE})
+    @StringDef({ ACTION_ENABLE, ACTION_DISABLE, ACTION_DELETE })
     @Retention(RetentionPolicy.SOURCE)
     public @interface Action {
     }
@@ -68,14 +68,14 @@ public class AccountUpdateService extends IntentService {
                     // disable the account, remove settings and statuses
                     getContentResolver().delete(Widgets.getContentUri(this),
                             Widgets.ACCOUNT + "=? and " + Widgets.WIDGET + "=?",
-                            new String[]{Long.toString(accountId), Integer.toString(appwidgetId)});
+                            new String[] { Long.toString(accountId), Integer.toString(appwidgetId) });
                     getContentResolver().delete(WidgetAccounts.getContentUri(this),
                             WidgetAccounts.ACCOUNT + "=? and " + WidgetAccounts.WIDGET + "=?",
-                            new String[]{Long.toString(accountId), Integer.toString(appwidgetId)});
+                            new String[] { Long.toString(accountId), Integer.toString(appwidgetId) });
                     statuses = getContentResolver().query(Statuses.getContentUri(this),
-                            new String[]{Statuses._ID},
+                            new String[] { Statuses._ID },
                             Statuses.ACCOUNT + "=? and " + Statuses.WIDGET + "=?",
-                            new String[]{Long.toString(accountId), Integer.toString(appwidgetId)},
+                            new String[] { Long.toString(accountId), Integer.toString(appwidgetId) },
                             null);
 
                     if (statuses.moveToFirst()) {
@@ -83,7 +83,7 @@ public class AccountUpdateService extends IntentService {
 
                         while (!statuses.isAfterLast()) {
                             long statusId = statuses.getLong(statusIdIndex);
-                            String[] statusQueryArgs = new String[]{String.valueOf(statusId)};
+                            String[] statusQueryArgs = new String[] { String.valueOf(statusId) };
                             getContentResolver().delete(StatusLinks.getContentUri(this),
                                     StatusLinks.STATUS_ID + "=?",
                                     statusQueryArgs);
@@ -97,11 +97,11 @@ public class AccountUpdateService extends IntentService {
                     statuses.close();
                     getContentResolver().delete(Statuses.getContentUri(this),
                             Statuses.ACCOUNT + "=? and " + Statuses.WIDGET + "=?",
-                            new String[]{Long.toString(accountId), Integer.toString(appwidgetId)});
+                            new String[] { Long.toString(accountId), Integer.toString(appwidgetId) });
                     break;
 
                 case ACTION_DELETE:
-                    String[] queryArgs = new String[]{String.valueOf(accountId)};
+                    String[] queryArgs = new String[] { String.valueOf(accountId) };
                     getContentResolver().delete(Accounts.getContentUri(this),
                             Accounts._ID + "=?",
                             queryArgs);
@@ -110,7 +110,7 @@ public class AccountUpdateService extends IntentService {
                             Widgets.ACCOUNT + "=?",
                             queryArgs);
                     statuses = getContentResolver().query(Statuses.getContentUri(this),
-                            new String[]{Statuses._ID},
+                            new String[] { Statuses._ID },
                             Statuses.ACCOUNT + "=?",
                             queryArgs,
                             null);
@@ -120,7 +120,7 @@ public class AccountUpdateService extends IntentService {
 
                         while (!statuses.isAfterLast()) {
                             long statusId = statuses.getLong(statusIdIndex);
-                            String[] statusQueryArgs = new String[]{String.valueOf(statusId)};
+                            String[] statusQueryArgs = new String[] { String.valueOf(statusId) };
 
                             getContentResolver().delete(StatusLinks.getContentUri(this),
                                     StatusLinks.STATUS_ID + "=?",

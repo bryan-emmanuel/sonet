@@ -19,23 +19,6 @@
  */
 package com.piusvelte.sonet;
 
-import static com.piusvelte.sonet.Sonet.PRO;
-import static com.piusvelte.sonet.Sonet.initAccountSettings;
-
-import com.google.ads.*;
-import com.piusvelte.sonet.fragment.BaseDialogFragment;
-import com.piusvelte.sonet.fragment.ButtonSettingsDialogFragment;
-import com.piusvelte.sonet.fragment.LoadingDialogFragment;
-import com.piusvelte.sonet.fragment.MessageSettingsDialogFragment;
-import com.piusvelte.sonet.fragment.NameSettingsDialogFragment;
-import com.piusvelte.sonet.fragment.NotificationSettingsDialogFragment;
-import com.piusvelte.sonet.fragment.ProfileSettingsDialogFragment;
-import com.piusvelte.sonet.fragment.SingleChoiceDialogFragment;
-import com.piusvelte.sonet.fragment.TimeSettingsDialogFragment;
-import com.piusvelte.sonet.fragment.UpdateSettingsDialogFragment;
-import com.piusvelte.sonet.provider.Widgets;
-import com.piusvelte.sonet.provider.WidgetsSettings;
-
 import android.app.WallpaperManager;
 import android.appwidget.AppWidgetManager;
 import android.content.ContentValues;
@@ -52,12 +35,32 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 
-public class Settings extends FragmentActivity implements View.OnClickListener, BaseDialogFragment.OnResultListener, LoaderManager.LoaderCallbacks<Cursor> {
+import com.google.ads.AdRequest;
+import com.google.ads.AdSize;
+import com.google.ads.AdView;
+import com.piusvelte.sonet.fragment.BaseDialogFragment;
+import com.piusvelte.sonet.fragment.ButtonSettingsDialogFragment;
+import com.piusvelte.sonet.fragment.LoadingDialogFragment;
+import com.piusvelte.sonet.fragment.MessageSettingsDialogFragment;
+import com.piusvelte.sonet.fragment.NameSettingsDialogFragment;
+import com.piusvelte.sonet.fragment.NotificationSettingsDialogFragment;
+import com.piusvelte.sonet.fragment.ProfileSettingsDialogFragment;
+import com.piusvelte.sonet.fragment.SingleChoiceDialogFragment;
+import com.piusvelte.sonet.fragment.TimeSettingsDialogFragment;
+import com.piusvelte.sonet.fragment.UpdateSettingsDialogFragment;
+import com.piusvelte.sonet.provider.Widgets;
+import com.piusvelte.sonet.provider.WidgetsSettings;
+
+import static com.piusvelte.sonet.Sonet.PRO;
+import static com.piusvelte.sonet.Sonet.initAccountSettings;
+
+public class Settings extends FragmentActivity
+        implements View.OnClickListener, BaseDialogFragment.OnResultListener, LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final int LOADER_SETTINGS = 0;
 
@@ -160,7 +163,7 @@ public class Settings extends FragmentActivity implements View.OnClickListener, 
     private void updateDatabase(String column, int value) {
         ContentValues values = new ContentValues();
         values.put(column, value);
-        getContentResolver().update(Widgets.getContentUri(this), values, Widgets._ID + "=?", new String[]{mWidgetSettingsId});
+        getContentResolver().update(Widgets.getContentUri(this), values, Widgets._ID + "=?", new String[] { mWidgetSettingsId });
         setResult(RESULT_OK);
     }
 
@@ -170,7 +173,7 @@ public class Settings extends FragmentActivity implements View.OnClickListener, 
             case LOADER_SETTINGS:
                 return new CursorLoader(this,
                         WidgetsSettings.getContentUri(this),
-                        new String[]{Widgets._ID,
+                        new String[] { Widgets._ID,
                                 Widgets.WIDGET,
                                 Widgets.INTERVAL,
                                 Widgets.BUTTONS_BG_COLOR,
@@ -196,9 +199,10 @@ public class Settings extends FragmentActivity implements View.OnClickListener, 
                                 Widgets.INSTANT_UPLOAD,
                                 Widgets.MARGIN,
                                 Widgets.PROFILES_BG_COLOR,
-                                Widgets.FRIEND_BG_COLOR},
+                                Widgets.FRIEND_BG_COLOR },
                         "(" + Widgets.WIDGET + "=? or " + Widgets.WIDGET + "=?) and " + Widgets.ACCOUNT + "=?",
-                        new String[]{Integer.toString(mAppWidgetId), Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)},
+                        new String[] { Integer.toString(mAppWidgetId), Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long
+                                .toString(Sonet.INVALID_ACCOUNT_ID) },
                         Widgets.WIDGET + " DESC, " + Widgets.ACCOUNT + " DESC");
 
             default:
@@ -264,14 +268,14 @@ public class Settings extends FragmentActivity implements View.OnClickListener, 
 
                             @Override
                             public void onCheckedChanged(CompoundButton buttonView,
-                                                         boolean isChecked) {
+                                    boolean isChecked) {
                                 // facebook only
                                 if (isChecked) {
-                                    (Toast.makeText(Settings.this, "Currently, the photo will only be uploaded Facebook accounts.", Toast.LENGTH_LONG)).show();
+                                    (Toast.makeText(Settings.this, "Currently, the photo will only be uploaded Facebook accounts.",
+                                            Toast.LENGTH_LONG)).show();
                                 }
                                 updateDatabase(Widgets.INSTANT_UPLOAD, isChecked ? 1 : 0);
                             }
-
                         });
 
                         mBtn_margin.setOnClickListener(this);
@@ -347,7 +351,8 @@ public class Settings extends FragmentActivity implements View.OnClickListener, 
             // bg color
             // color
             // textsize
-            ButtonSettingsDialogFragment.newInstance(REQUEST_BUTTON_SETTINGS, mButtons_color_value, mButtons_textsize_value, mButtons_bg_color_value, mHasButtons_value)
+            ButtonSettingsDialogFragment
+                    .newInstance(REQUEST_BUTTON_SETTINGS, mButtons_color_value, mButtons_textsize_value, mButtons_bg_color_value, mHasButtons_value)
                     .show(getSupportFragmentManager(), DIALOG_BUTTON_SETTINGS);
         } else if (v == mBtn_name) {
             // bg color
@@ -370,7 +375,8 @@ public class Settings extends FragmentActivity implements View.OnClickListener, 
             // bg color
             // text size
             // icon enabled
-            MessageSettingsDialogFragment.newInstance(REQUEST_MESSAGE_SETTINGS, mMessages_color_value, mMessages_textsize_value, mMessages_bg_color_value, mIcon_value)
+            MessageSettingsDialogFragment
+                    .newInstance(REQUEST_MESSAGE_SETTINGS, mMessages_color_value, mMessages_textsize_value, mMessages_bg_color_value, mIcon_value)
                     .show(getSupportFragmentManager(), DIALOG_MESSAGE_SETTINGS);
         }
     }

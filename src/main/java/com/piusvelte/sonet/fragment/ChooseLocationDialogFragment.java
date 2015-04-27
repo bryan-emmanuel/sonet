@@ -17,7 +17,10 @@ public class ChooseLocationDialogFragment {
     private static final String ARG_ACCOUNT = "account";
     private static final String ARG_IDS = "ids";
 
-    public static SingleChoiceDialogFragment newInstance(long account, @NonNull HashMap<String, String> locations, @NonNull String title, int requestCode) {
+    public static SingleChoiceDialogFragment newInstance(long account,
+            @NonNull HashMap<String, String> locations,
+            @NonNull String title,
+            int requestCode) {
         CharSequence[] items = locations.values().toArray(new String[locations.size()]);
         String[] ids = locations.keySet().toArray(new String[locations.size()]);
         SingleChoiceDialogFragment singleChoiceDialogFragment = SingleChoiceDialogFragment.newInstance(items, -1, title, requestCode);

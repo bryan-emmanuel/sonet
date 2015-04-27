@@ -19,12 +19,6 @@
  */
 package com.piusvelte.sonet;
 
-import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
-import static com.piusvelte.sonet.Sonet.PRO;
-
-import com.google.ads.*;
-import com.piusvelte.sonet.fragment.AccountsList;
-
 import android.app.WallpaperManager;
 import android.appwidget.AppWidgetManager;
 import android.content.Intent;
@@ -33,6 +27,14 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
 import android.widget.LinearLayout;
+
+import com.google.ads.AdRequest;
+import com.google.ads.AdSize;
+import com.google.ads.AdView;
+import com.piusvelte.sonet.fragment.AccountsList;
+
+import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
+import static com.piusvelte.sonet.Sonet.PRO;
 
 public class ManageAccounts extends ActionBarActivity {
     private static final String TAG = "ManageAccounts";
@@ -60,7 +62,8 @@ public class ManageAccounts extends ActionBarActivity {
             if (extras != null) {
                 appWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
                 // if called from widget, the id is set in the action, as pendingintents must have a unique action
-            } else if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH)) && (!intent.getAction().equals(Intent.ACTION_VIEW))) {
+            } else if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH)) && (!intent.getAction()
+                    .equals(Intent.ACTION_VIEW))) {
                 appWidgetId = Integer.parseInt(intent.getAction());
             }
         }

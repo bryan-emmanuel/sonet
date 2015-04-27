@@ -61,16 +61,16 @@ public class CommentsLoader extends BaseAsyncTaskLoader {
         switch (um.match(mData)) {
             case SonetProvider.STATUSES_STYLES:
                 status = mContext.getContentResolver().query(StatusesStyles.getContentUri(mContext),
-                        new String[]{StatusesStyles.ACCOUNT,
+                        new String[] { StatusesStyles.ACCOUNT,
                                 StatusesStyles.SID,
                                 StatusesStyles.ESID,
                                 StatusesStyles.WIDGET,
                                 StatusesStyles.SERVICE,
                                 StatusesStyles.FRIEND,
                                 StatusesStyles.MESSAGE,
-                                StatusesStyles.CREATED},
+                                StatusesStyles.CREATED },
                         StatusesStyles._ID + "=?",
-                        new String[]{mData.getLastPathSegment()},
+                        new String[] { mData.getLastPathSegment() },
                         null);
 
                 if (status.moveToFirst()) {
@@ -79,17 +79,24 @@ public class CommentsLoader extends BaseAsyncTaskLoader {
                     mAccount = status.getLong(0);
                     result.sid = sonetCrypto.Decrypt(status.getString(1));
                     result.esid = sonetCrypto.Decrypt(status.getString(2));
-                    Cursor widget = mContext.getContentResolver().query(WidgetsSettings.getContentUri(mContext), new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(status.getInt(3)), Long.toString(mAccount)}, null);
+                    Cursor widget = mContext.getContentResolver().query(WidgetsSettings.getContentUri(mContext), new String[] { Widgets.TIME24HR },
+                            Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
+                            new String[] { Integer.toString(status.getInt(3)), Long.toString(mAccount) }, null);
 
                     if (widget.moveToFirst()) {
                         mTime24hr = widget.getInt(0) == 1;
                     } else {
-                        Cursor b = mContext.getContentResolver().query(WidgetsSettings.getContentUri(mContext), new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(status.getInt(3)), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+                        Cursor b = mContext.getContentResolver().query(WidgetsSettings.getContentUri(mContext), new String[] { Widgets.TIME24HR },
+                                Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
+                                new String[] { Integer.toString(status.getInt(3)), Long.toString(Sonet.INVALID_ACCOUNT_ID) }, null);
 
                         if (b.moveToFirst()) {
                             mTime24hr = b.getInt(0) == 1;
                         } else {
-                            Cursor c = mContext.getContentResolver().query(WidgetsSettings.getContentUri(mContext), new String[]{Widgets.TIME24HR}, Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID)}, null);
+                            Cursor c = mContext.getContentResolver().query(WidgetsSettings.getContentUri(mContext), new String[] { Widgets.TIME24HR },
+                                    Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
+                                    new String[] { Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID) },
+                                    null);
 
                             if (c.moveToFirst()) {
                                 mTime24hr = c.getInt(0) == 1;
@@ -109,10 +116,14 @@ public class CommentsLoader extends BaseAsyncTaskLoader {
                     commentMap.put(Entities.FRIEND, status.getString(5));
                     commentMap.put(Statuses.MESSAGE, status.getString(6));
                     commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(status.getLong(7), mTime24hr));
-                    commentMap.put(mContext.getString(R.string.like), result.service == TWITTER ? mContext.getString(R.string.retweet) : result.service == IDENTICA ? mContext.getString(R.string.repeat) : "");
+                    commentMap.put(mContext.getString(R.string.like), result.service == TWITTER
+                            ? mContext.getString(R.string.retweet)
+                            : result.service == IDENTICA ? mContext.getString(R.string.repeat) : "");
                     result.socialClientComments.add(commentMap);
                     // load the session
-                    Cursor account = mContext.getContentResolver().query(Accounts.getContentUri(mContext), new String[]{Accounts.TOKEN, Accounts.SECRET, Accounts.SID}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+                    Cursor account = mContext.getContentResolver()
+                            .query(Accounts.getContentUri(mContext), new String[] { Accounts.TOKEN, Accounts.SECRET, Accounts.SID },
+                                    Accounts._ID + "=?", new String[] { Long.toString(mAccount) }, null);
 
                     if (account.moveToFirst()) {
                         mToken = sonetCrypto.Decrypt(account.getString(0));
@@ -127,19 +138,25 @@ public class CommentsLoader extends BaseAsyncTaskLoader {
                 break;
 
             case SonetProvider.NOTIFICATIONS:
-                Cursor notification = mContext.getContentResolver().query(Notifications.getContentUri(mContext), new String[]{Notifications.ACCOUNT, Notifications.SID, Notifications.ESID, Notifications.FRIEND, Notifications.MESSAGE, Notifications.CREATED}, Notifications._ID + "=?", new String[]{mData.getLastPathSegment()}, null);
+                Cursor notification = mContext.getContentResolver().query(Notifications.getContentUri(mContext),
+                        new String[] { Notifications.ACCOUNT, Notifications.SID, Notifications.ESID, Notifications.FRIEND, Notifications.MESSAGE,
+                                Notifications.CREATED },
+                        Notifications._ID + "=?", new String[] { mData.getLastPathSegment() }, null);
 
                 if (notification.moveToFirst()) {
                     // clear notification
                     ContentValues values = new ContentValues();
                     values.put(Notifications.CLEARED, 1);
-                    mContext.getContentResolver().update(Notifications.getContentUri(mContext), values, Notifications._ID + "=?", new String[]{mData.getLastPathSegment()});
+                    mContext.getContentResolver().update(Notifications.getContentUri(mContext), values, Notifications._ID + "=?",
+                            new String[] { mData.getLastPathSegment() });
                     mAccount = notification.getLong(0);
                     result.sid = sonetCrypto.Decrypt(notification.getString(1));
                     result.esid = sonetCrypto.Decrypt(notification.getString(2));
                     mTime24hr = false;
                     // load the session
-                    Cursor account = mContext.getContentResolver().query(Accounts.getContentUri(mContext), new String[]{Accounts.TOKEN, Accounts.SECRET, Accounts.SID, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(mAccount)}, null);
+                    Cursor account = mContext.getContentResolver()
+                            .query(Accounts.getContentUri(mContext), new String[] { Accounts.TOKEN, Accounts.SECRET, Accounts.SID, Accounts.SERVICE },
+                                    Accounts._ID + "=?", new String[] { Long.toString(mAccount) }, null);
 
                     if (account.moveToFirst()) {
                         mToken = sonetCrypto.Decrypt(account.getString(0));
@@ -154,7 +171,8 @@ public class CommentsLoader extends BaseAsyncTaskLoader {
                     commentMap.put(Entities.FRIEND, notification.getString(3));
                     commentMap.put(Statuses.MESSAGE, notification.getString(4));
                     commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(notification.getLong(5), mTime24hr));
-                    commentMap.put(mContext.getString(R.string.like), result.service == TWITTER ? mContext.getString(R.string.retweet) : mContext.getString(R.string.repeat));
+                    commentMap.put(mContext.getString(R.string.like),
+                            result.service == TWITTER ? mContext.getString(R.string.retweet) : mContext.getString(R.string.repeat));
                     result.socialClientComments.add(commentMap);
                     result.serviceName = mContext.getResources().getStringArray(R.array.service_entries)[result.service];
                 }

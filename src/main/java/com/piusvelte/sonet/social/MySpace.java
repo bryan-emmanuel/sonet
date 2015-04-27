@@ -36,15 +36,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-import static com.piusvelte.sonet.Sonet.MYSPACE_BASE_URL;
-import static com.piusvelte.sonet.Sonet.MYSPACE_DATE_FORMAT;
-import static com.piusvelte.sonet.Sonet.MYSPACE_HISTORY;
-import static com.piusvelte.sonet.Sonet.MYSPACE_STATUSMOODCOMMENTS_BODY;
-import static com.piusvelte.sonet.Sonet.MYSPACE_STATUSMOOD_BODY;
-import static com.piusvelte.sonet.Sonet.MYSPACE_URL_ME;
-import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOOD;
-import static com.piusvelte.sonet.Sonet.MYSPACE_URL_STATUSMOODCOMMENTS;
-import static com.piusvelte.sonet.Sonet.MYSPACE_USER;
 import static com.piusvelte.sonet.Sonet.Sauthor;
 import static com.piusvelte.sonet.Sonet.Sbody;
 import static com.piusvelte.sonet.Sonet.ScommentId;
@@ -65,6 +56,19 @@ import static oauth.signpost.OAuth.OAUTH_VERIFIER;
  */
 public class MySpace extends Client {
 
+    private static final String MYSPACE_BASE_URL = "http://api.myspace.com/1.0/";
+    private static final String MYSPACE_URL_REQUEST = "http://api.myspace.com/request_token";
+    private static final String MYSPACE_URL_AUTHORIZE = "http://api.myspace.com/authorize";
+    private static final String MYSPACE_URL_ACCESS = "http://api.myspace.com/access_token";
+    private static final String MYSPACE_URL_ME = "%speople/@me/@self";
+    private static final String MYSPACE_HISTORY = "%sstatusmood/@me/@friends/history?includeself=true&fields=author,source,recentComments";
+    private static final String MYSPACE_URL_STATUSMOOD = "%sstatusmood/@me/@self";
+    private static final String MYSPACE_URL_STATUSMOODCOMMENTS = "%sstatusmoodcomments/%s/@self/%s?format=json&includeself=true&fields=author";
+    private static final String MYSPACE_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
+    private static final String MYSPACE_STATUSMOOD_BODY = "{\"status\":\"%s\"}";
+    private static final String MYSPACE_STATUSMOODCOMMENTS_BODY = "{\"body\":\"%s\"}";
+    private static final String MYSPACE_USER = "%speople/%s/@self";
+
     public MySpace(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
     }
@@ -72,7 +76,8 @@ public class MySpace extends Client {
     @Nullable
     @Override
     public String getProfileUrl(@NonNull String esid) {
-        String response = SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(MYSPACE_USER, MYSPACE_BASE_URL, esid))));
+        String response = SonetHttpClient
+                .httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(MYSPACE_USER, MYSPACE_BASE_URL, esid))));
 
         if (!TextUtils.isEmpty(response)) {
 
@@ -96,17 +101,17 @@ public class MySpace extends Client {
 
     @Override
     String getRequestUrl() {
-        return Sonet.MYSPACE_URL_REQUEST;
+        return MYSPACE_URL_REQUEST;
     }
 
     @Override
     String getAccessUrl() {
-        return Sonet.MYSPACE_URL_ACCESS;
+        return MYSPACE_URL_ACCESS;
     }
 
     @Override
     String getAuthorizeUrl() {
-        return Sonet.MYSPACE_URL_AUTHORIZE;
+        return MYSPACE_URL_AUTHORIZE;
     }
 
     @Override
@@ -126,7 +131,8 @@ public class MySpace extends Client {
 
         if (!TextUtils.isEmpty(verifier)) {
             if (sonetOAuth.retrieveAccessToken(verifier)) {
-                String httpResponse = SonetHttpClient.httpResponse(mContext, sonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_URL_ME, MYSPACE_BASE_URL))));
+                String httpResponse = SonetHttpClient
+                        .httpResponse(mContext, sonetOAuth.getSignedRequest(new HttpGet(String.format(MYSPACE_URL_ME, MYSPACE_BASE_URL))));
 
                 if (!TextUtils.isEmpty(httpResponse)) {
                     try {
@@ -159,7 +165,9 @@ public class MySpace extends Client {
     @Override
     public Set<String> getNotificationStatusIds(long account, String[] notificationMessage) {
         Set<String> notificationSids = new HashSet<>();
-        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext), new String[]{Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext),
+                new String[] { Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID },
+                Notifications.ACCOUNT + "=?", new String[] { Long.toString(account) }, null);
 
         // loop over notifications
         if (currentNotifications.moveToFirst()) {
@@ -174,7 +182,8 @@ public class MySpace extends Client {
                 notificationSids.add(sid);
 
                 // get comments for current notifications
-                String response = SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, esid, sid))));
+                String response = SonetHttpClient.httpResponse(mContext,
+                        getOAuth().getSignedRequest(new HttpGet(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, esid, sid))));
 
                 if (!TextUtils.isEmpty(response)) {
                     // check for a newer post, if it's the user's own, then set CLEARED=0
@@ -190,7 +199,8 @@ public class MySpace extends Client {
                                 if (created_time > updated) {
                                     JSONObject friendObj = commentObj.getJSONObject(Sauthor);
                                     updateNotificationMessage(notificationMessage,
-                                            updateNotification(notificationId, created_time, mAccountEsid, friendObj.getString(Sid), friendObj.getString(SdisplayName), cleared));
+                                            updateNotification(notificationId, created_time, mAccountEsid, friendObj.getString(Sid),
+                                                    friendObj.getString(SdisplayName), cleared));
                                 }
                             }
                         }
@@ -221,7 +231,15 @@ public class MySpace extends Client {
 
     @Nullable
     @Override
-    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+    public void addFeedItem(@NonNull JSONObject item,
+            boolean display_profile,
+            boolean time24hr,
+            int appWidgetId,
+            long account,
+            HttpClient httpClient,
+            Set<String> notificationSids,
+            String[] notificationMessage,
+            boolean doNotify) throws JSONException {
         JSONObject friendObj = item.getJSONObject(Sauthor);
         long date = parseDate(item.getString(SmoodStatusLastUpdated), MYSPACE_DATE_FORMAT);
         String esid = item.getString(SuserId);
@@ -292,7 +310,9 @@ public class MySpace extends Client {
 
     @Override
     public void getNotifications(long account, String[] notificationMessage) {
-        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext), new String[]{Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext),
+                new String[] { Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID },
+                Notifications.ACCOUNT + "=?", new String[] { Long.toString(account) }, null);
 
         if (currentNotifications.moveToFirst()) {
             Set<String> notificationSids = new HashSet<>();
@@ -309,7 +329,8 @@ public class MySpace extends Client {
                 notificationSids.add(sid);
 
                 // get comments for current notifications
-                String response = SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, esid, sid))));
+                String response = SonetHttpClient.httpResponse(mContext,
+                        getOAuth().getSignedRequest(new HttpGet(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, esid, sid))));
 
                 if (!TextUtils.isEmpty(response)) {
                     // check for a newer post, if it's the user's own, then set CLEARED=0
@@ -329,12 +350,15 @@ public class MySpace extends Client {
                                         // user's own comment, clear the notification
                                         values.put(Notifications.CLEARED, 1);
                                     } else if (cleared) {
-                                        values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), comment.getString(SdisplayName)));
+                                        values.put(Notifications.NOTIFICATION,
+                                                String.format(getString(R.string.friendcommented), comment.getString(SdisplayName)));
                                         values.put(Notifications.CLEARED, 0);
                                     } else {
-                                        values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), comment.getString(SdisplayName) + " and others"));
+                                        values.put(Notifications.NOTIFICATION,
+                                                String.format(getString(R.string.friendcommented), comment.getString(SdisplayName) + " and others"));
                                     }
-                                    getContentResolver().update(Notifications.getContentUri(mContext), values, Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
+                                    getContentResolver().update(Notifications.getContentUri(mContext), values, Notifications._ID + "=?",
+                                            new String[] { Long.toString(notificationId) });
                                 }
                             }
                         }
@@ -347,7 +371,8 @@ public class MySpace extends Client {
             }
 
             // check the latest feed
-            String response = SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(MYSPACE_HISTORY, MYSPACE_BASE_URL))));
+            String response = SonetHttpClient
+                    .httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(MYSPACE_HISTORY, MYSPACE_BASE_URL))));
 
             if (!TextUtils.isEmpty(response)) {
                 try {
@@ -401,7 +426,8 @@ public class MySpace extends Client {
                                         }
                                         if (notification != null) {
                                             // new notification
-                                            addNotification(sid, esid, friend, o.getString(Sstatus), parseDate(o.getString("moodStatusLastUpdated"), MYSPACE_DATE_FORMAT), account, notification);
+                                            addNotification(sid, esid, friend, o.getString(Sstatus),
+                                                    parseDate(o.getString("moodStatusLastUpdated"), MYSPACE_DATE_FORMAT), account, notification);
                                         }
                                     }
                                 }
@@ -461,7 +487,8 @@ public class MySpace extends Client {
     @Nullable
     @Override
     public String getCommentsResponse(String statusId) {
-        return SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mAccountEsid, statusId))));
+        return SonetHttpClient.httpResponse(mContext,
+                getOAuth().getSignedRequest(new HttpGet(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mAccountEsid, statusId))));
     }
 
     @Nullable

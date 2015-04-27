@@ -39,18 +39,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-import static com.piusvelte.sonet.Sonet.LINKEDIN_BASE_URL;
-import static com.piusvelte.sonet.Sonet.LINKEDIN_COMMENT_BODY;
-import static com.piusvelte.sonet.Sonet.LINKEDIN_HEADERS;
-import static com.piusvelte.sonet.Sonet.LINKEDIN_IS_LIKED;
-import static com.piusvelte.sonet.Sonet.LINKEDIN_LIKE_BODY;
-import static com.piusvelte.sonet.Sonet.LINKEDIN_POST;
-import static com.piusvelte.sonet.Sonet.LINKEDIN_POST_BODY;
-import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATE;
-import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATES;
-import static com.piusvelte.sonet.Sonet.LINKEDIN_UPDATE_COMMENTS;
-import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_ME;
-import static com.piusvelte.sonet.Sonet.LINKEDIN_URL_USER;
 import static com.piusvelte.sonet.Sonet.S_total;
 import static com.piusvelte.sonet.Sonet.Sbody;
 import static com.piusvelte.sonet.Sonet.Scomment;
@@ -84,6 +72,23 @@ import static oauth.signpost.OAuth.OAUTH_VERIFIER;
  */
 public class LinkedIn extends Client {
 
+    private static final String LINKEDIN_BASE_URL = "https://api.linkedin.com/v1/people/~";
+    private static final String LINKEDIN_URL_REQUEST = "https://api.linkedin.com/uas/oauth/requestToken";
+    private static final String LINKEDIN_URL_AUTHORIZE = "https://www.linkedin.com/uas/oauth/authorize";
+    private static final String LINKEDIN_URL_ACCESS = "https://api.linkedin.com/uas/oauth/accessToken";
+    private static final String LINKEDIN_URL_ME = "%s:(id,first-name,last-name)";
+    private static final String LINKEDIN_URL_USER = "https://api.linkedin.com/v1/people/id=%s";
+    private static final String LINKEDIN_UPDATES = "%s/network/updates?type=APPS&type=CMPY&type=CONN&type=JOBS&type=JGRP&type=PICT&type=PRFU&type" +
+            "=RECU&type=PRFX&type=ANSW&type=QSTN&type=SHAR&type=VIRL";
+    private static final String[][] LINKEDIN_HEADERS = new String[][] { { "x-li-format", "json" } };
+    private static final String LINKEDIN_IS_LIKED = "%s/network/updates/key=%s/is-liked";
+    private static final String LINKEDIN_UPDATE = "%s/network/updates/key=%s";
+    private static final String LINKEDIN_UPDATE_COMMENTS = "%s/network/updates/key=%s/update-comments";
+    private static final String LINKEDIN_POST = "%s/person-activities";
+    private static final String LINKEDIN_POST_BODY = "<?xml version='1.0' encoding='UTF-8'?><activity " +
+            "locale=\"%s\"><content-type>linkedin-html</content-type><body>%s</body></activity>";
+    private static final String LINKEDIN_COMMENT_BODY = "<?xml version='1.0' encoding='UTF-8'?><update-comment><comment>%s</comment></update-comment>";
+    private static final String LINKEDIN_LIKE_BODY = "<?xml version='1.0' encoding='UTF-8'?><is-liked>%s</is-liked>";
     private static final String IS_LIKABLE = "isLikable";
     private static final String IS_LIKED = "isLiked";
     private static final String IS_COMMENTABLE = "isCommentable";
@@ -111,16 +116,18 @@ public class LinkedIn extends Client {
 
         public static boolean contains(String type) {
             for (LinkedIn_UpdateTypes t : LinkedIn_UpdateTypes.values()) {
-                if (t.name().equals(type))
+                if (t.name().equals(type)) {
                     return true;
+                }
             }
             return false;
         }
 
         public static String getMessage(String type) {
             for (LinkedIn_UpdateTypes t : LinkedIn_UpdateTypes.values()) {
-                if (t.name().equals(type))
+                if (t.name().equals(type)) {
                     return t.message;
+                }
             }
             return null;
         }
@@ -133,7 +140,8 @@ public class LinkedIn extends Client {
     @Nullable
     @Override
     public String getProfileUrl(@NonNull String esid) {
-        String response = SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(addHeaders(new HttpGet(String.format(LINKEDIN_URL_USER, esid)))));
+        String response = SonetHttpClient
+                .httpResponse(mContext, getOAuth().getSignedRequest(addHeaders(new HttpGet(String.format(LINKEDIN_URL_USER, esid)))));
 
         if (!TextUtils.isEmpty(response)) {
             try {
@@ -156,17 +164,17 @@ public class LinkedIn extends Client {
 
     @Override
     String getRequestUrl() {
-        return Sonet.LINKEDIN_URL_REQUEST;
+        return LINKEDIN_URL_REQUEST;
     }
 
     @Override
     String getAccessUrl() {
-        return Sonet.LINKEDIN_URL_ACCESS;
+        return LINKEDIN_URL_ACCESS;
     }
 
     @Override
     String getAuthorizeUrl() {
-        return Sonet.LINKEDIN_URL_AUTHORIZE;
+        return LINKEDIN_URL_AUTHORIZE;
     }
 
     @Override
@@ -226,7 +234,9 @@ public class LinkedIn extends Client {
     @Override
     public Set<String> getNotificationStatusIds(long account, String[] notificationMessage) {
         Set<String> notificationSids = new HashSet<>();
-        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext), new String[]{Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext),
+                new String[] { Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID },
+                Notifications.ACCOUNT + "=?", new String[] { Long.toString(account) }, null);
 
         // loop over notifications
         if (currentNotifications.moveToFirst()) {
@@ -260,7 +270,8 @@ public class LinkedIn extends Client {
                                     if (created_time > updated) {
                                         JSONObject friendObj = commentObj.getJSONObject(Sperson);
                                         updateNotificationMessage(notificationMessage,
-                                                updateNotification(notificationId, created_time, mAccountEsid, friendObj.getString(Sid), friendObj.getString(SfirstName) + " " + friendObj.getString(SlastName), cleared));
+                                                updateNotification(notificationId, created_time, mAccountEsid, friendObj.getString(Sid),
+                                                        friendObj.getString(SfirstName) + " " + friendObj.getString(SlastName), cleared));
                                     }
                                 }
                             }
@@ -293,7 +304,15 @@ public class LinkedIn extends Client {
 
     @Nullable
     @Override
-    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+    public void addFeedItem(@NonNull JSONObject item,
+            boolean display_profile,
+            boolean time24hr,
+            int appWidgetId,
+            long account,
+            HttpClient httpClient,
+            Set<String> notificationSids,
+            String[] notificationMessage,
+            boolean doNotify) throws JSONException {
         String updateType = item.getString(SupdateType);
         JSONObject updateContent = item.getJSONObject(SupdateContent);
         String update = LinkedIn_UpdateTypes.getMessage(updateType);
@@ -310,8 +329,9 @@ public class LinkedIn extends Client {
 
                         for (int u = 0, u2 = updates.length(); u < u2; u++) {
                             update += updates.getJSONObject(u).getString(Sbody);
-                            if (u < (updates.length() - 1))
+                            if (u < (updates.length() - 1)) {
                                 update += ", ";
+                            }
                         }
                     }
                 }
@@ -332,7 +352,8 @@ public class LinkedIn extends Client {
                     }
                 }
             } else if (LinkedIn_UpdateTypes.JOBP.name().equals(updateType)) {
-                if (updateContent.has(Sjob) && updateContent.getJSONObject(Sjob).has(Sposition) && updateContent.getJSONObject(Sjob).getJSONObject(Sposition).has(Stitle)) {
+                if (updateContent.has(Sjob) && updateContent.getJSONObject(Sjob).has(Sposition) && updateContent.getJSONObject(Sjob)
+                        .getJSONObject(Sposition).has(Stitle)) {
                     update += updateContent.getJSONObject(Sjob).getJSONObject(Sposition).getString(Stitle);
                 }
             } else if (LinkedIn_UpdateTypes.JGRP.name().equals(updateType)) {
@@ -360,12 +381,15 @@ public class LinkedIn extends Client {
                         for (int u = 0, u2 = updates.length(); u < u2; u++) {
                             JSONObject recommendation = updates.getJSONObject(u);
                             JSONObject recommendee = recommendation.getJSONObject(Srecommendee);
-                            if (recommendee.has(SfirstName))
+                            if (recommendee.has(SfirstName)) {
                                 update += recommendee.getString(SfirstName);
-                            if (recommendee.has(SlastName))
+                            }
+                            if (recommendee.has(SlastName)) {
                                 update += recommendee.getString(SlastName);
-                            if (recommendation.has(SrecommendationSnippet))
+                            }
+                            if (recommendation.has(SrecommendationSnippet)) {
                                 update += ":" + recommendation.getString(SrecommendationSnippet);
+                            }
 
                             if (u < (updates.length() - 1)) {
                                 update += ", ";
@@ -418,7 +442,8 @@ public class LinkedIn extends Client {
                                 } else if (hasCommented) {
                                     // don't notify about user's own comments
                                     // send the parent comment sid
-                                    notification = String.format(getString(R.string.friendcommented), c4.getString(SfirstName) + " " + c4.getString(SlastName));
+                                    notification = String
+                                            .format(getString(R.string.friendcommented), c4.getString(SfirstName) + " " + c4.getString(SlastName));
                                 }
                             }
                         }
@@ -435,7 +460,8 @@ public class LinkedIn extends Client {
             addStatusItem(date,
                     friend,
                     display_profile && friendObj.has(SpictureUrl) ? friendObj.getString(SpictureUrl) : null,
-                    (item.has(SisCommentable) && item.getBoolean(SisCommentable) ? String.format(getString(R.string.messageWithCommentCount), update, commentCount) : update),
+                    (item.has(SisCommentable) && item.getBoolean(SisCommentable) ? String
+                            .format(getString(R.string.messageWithCommentCount), update, commentCount) : update),
                     time24hr,
                     appWidgetId,
                     account,
@@ -454,7 +480,9 @@ public class LinkedIn extends Client {
 
     @Override
     public void getNotifications(long account, String[] notificationMessage) {
-        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext), new String[]{Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext),
+                new String[] { Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID },
+                Notifications.ACCOUNT + "=?", new String[] { Long.toString(account) }, null);
 
         if (currentNotifications.moveToFirst()) {
             Set<String> notificationSids = new HashSet<>();
@@ -491,12 +519,15 @@ public class LinkedIn extends Client {
                                             // user's own comment, clear the notification
                                             values.put(Notifications.CLEARED, 1);
                                         } else if (cleared) {
-                                            values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), person.getString(SfirstName) + " " + person.getString(SlastName)));
+                                            values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented),
+                                                    person.getString(SfirstName) + " " + person.getString(SlastName)));
                                             values.put(Notifications.CLEARED, 0);
                                         } else {
-                                            values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), person.getString(SfirstName) + " " + person.getString(SlastName) + " and others"));
+                                            values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented),
+                                                    person.getString(SfirstName) + " " + person.getString(SlastName) + " and others"));
                                         }
-                                        getContentResolver().update(Notifications.getContentUri(mContext), values, Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
+                                        getContentResolver().update(Notifications.getContentUri(mContext), values, Notifications._ID + "=?",
+                                                new String[] { Long.toString(notificationId) });
                                     }
                                 }
                             }
@@ -563,7 +594,8 @@ public class LinkedIn extends Client {
                                                         } else if (hasCommented) {
                                                             // don't notify about user's own comments
                                                             // send the parent comment sid
-                                                            notification = String.format(getString(R.string.friendcommented), c4.getString(SfirstName) + " " + c4.getString(SlastName));
+                                                            notification = String.format(getString(R.string.friendcommented),
+                                                                    c4.getString(SfirstName) + " " + c4.getString(SlastName));
                                                         }
                                                     }
                                                 }
@@ -596,7 +628,8 @@ public class LinkedIn extends Client {
                                                             JSONArray updates = connections.getJSONArray(Svalues);
 
                                                             for (int u = 0, u2 = updates.length(); u < u2; u++) {
-                                                                update += updates.getJSONObject(u).getString(SfirstName) + " " + updates.getJSONObject(u).getString(SlastName);
+                                                                update += updates.getJSONObject(u).getString(SfirstName) + " " + updates
+                                                                        .getJSONObject(u).getString(SlastName);
 
                                                                 if (u < (updates.length() - 1)) {
                                                                     update += ", ";
@@ -605,7 +638,8 @@ public class LinkedIn extends Client {
                                                         }
                                                     }
                                                 } else if (LinkedIn_UpdateTypes.JOBP.name().equals(updateType)) {
-                                                    if (updateContent.has(Sjob) && updateContent.getJSONObject(Sjob).has(Sposition) && updateContent.getJSONObject(Sjob).getJSONObject(Sposition).has(Stitle)) {
+                                                    if (updateContent.has(Sjob) && updateContent.getJSONObject(Sjob).has(Sposition) && updateContent
+                                                            .getJSONObject(Sjob).getJSONObject(Sposition).has(Stitle)) {
                                                         update += updateContent.getJSONObject(Sjob).getJSONObject(Sposition).getString(Stitle);
                                                     }
                                                 } else if (LinkedIn_UpdateTypes.JGRP.name().equals(updateType)) {
@@ -662,7 +696,8 @@ public class LinkedIn extends Client {
                                                 }
 
                                                 // new notification
-                                                addNotification(sid, esid, f.getString(SfirstName) + " " + f.getString(SlastName), update, o.getLong(Stimestamp), account, notification);
+                                                addNotification(sid, esid, f.getString(SfirstName) + " " + f.getString(SlastName), update,
+                                                        o.getLong(Stimestamp), account, notification);
                                             }
                                         }
                                     }
@@ -781,7 +816,8 @@ public class LinkedIn extends Client {
     @Nullable
     @Override
     public String getCommentsResponse(String statusId) {
-        return SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(addHeaders(new HttpGet(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, statusId)))));
+        return SonetHttpClient.httpResponse(mContext,
+                getOAuth().getSignedRequest(addHeaders(new HttpGet(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, statusId)))));
     }
 
     @Nullable

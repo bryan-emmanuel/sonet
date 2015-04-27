@@ -41,17 +41,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_COMMENTS;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_FRIENDS;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_HOME;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_LIKES;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_PICTURE;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_POST;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_SEARCH;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_AUTHORIZE;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_URL_ME;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_USER;
 import static com.piusvelte.sonet.Sonet.Saccess_token;
 import static com.piusvelte.sonet.Sonet.Scomments;
 import static com.piusvelte.sonet.Sonet.Screated_time;
@@ -78,6 +67,23 @@ import static com.piusvelte.sonet.Sonet.Suser_likes;
  */
 public class Facebook extends Client {
 
+    public static final String FACEBOOK_BASE_URL = "https://graph.facebook.com/";
+    private static final String FACEBOOK_URL_AUTHORIZE = "%soauth/authorize?client_id=%s&scope=offline_access,read_stream,publish_stream," +
+            "publish_checkins&type=user_agent&redirect_uri=%s&display=touch&sdk=android";
+    private static final String FACEBOOK_URL_ME = "%sv2.3/me?format=json&sdk=android&%s=%s";
+    private static final String FACEBOOK_HOME = "%sv2.3/me/home?date_format=U&format=json&sdk=android&%s=%s&fields=actions,link,type,from,message," +
+            "created_time,to,comments,story,source,picture";
+    private static final String FACEBOOK_POST = "%sv2.3/me/feed?format=json&sdk=android&%s=%s";
+    //	protected static final String FACEBOOK_CHECKIN = "%sme/checkins?format=json&sdk=android&%s=%s";
+    private static final String FACEBOOK_LIKES = "%sv2.3/%s/likes?format=json&sdk=android&%s=%s";
+    private static final String FACEBOOK_COMMENTS = "%sv2.3/%s/comments?date_format=U&format=json&sdk=android&%s=%s";
+    private static final String FACEBOOK_SEARCH = "%sv2.3/search?type=place&center=%s,%s&distance=1000&format=json&sdk=android&%s=%s";
+    //	protected static final String FACEBOOK_COORDINATES = "{\"latitude\":\"%s\",\"longitude\":\"%s\"}";
+    private static final String FACEBOOK_USER = "%sv2.3/%s?format=json&sdk=android&%s=%s";
+    public static final String FACEBOOK_PHOTOS = "%sv2.3/me/photos?format=json&sdk=android&%s=%s";
+    public static final String FACEBOOK_FRIENDS = "%sv2.3/me/friends?format=json&sdk=android&%s=%s";
+    public static final String FACEBOOK_PICTURE = "http://graph.facebook.com/%s/picture";
+
     public Facebook(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
     }
@@ -85,7 +91,8 @@ public class Facebook extends Client {
     @Nullable
     @Override
     public String getProfileUrl(@NonNull String esid) {
-        String response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FACEBOOK_USER, FACEBOOK_BASE_URL, esid, Saccess_token, mToken)));
+        String response = SonetHttpClient
+                .httpResponse(mContext, new HttpGet(String.format(FACEBOOK_USER, FACEBOOK_BASE_URL, esid, Saccess_token, mToken)));
 
         if (!TextUtils.isEmpty(response)) {
             try {
@@ -144,7 +151,8 @@ public class Facebook extends Client {
                 expiry = (int) System.currentTimeMillis() + Integer.parseInt(expiryValue) * 1000;
             }
 
-            String httpResponse = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FACEBOOK_URL_ME, FACEBOOK_BASE_URL, Saccess_token, token)));
+            String httpResponse = SonetHttpClient
+                    .httpResponse(mContext, new HttpGet(String.format(FACEBOOK_URL_ME, FACEBOOK_BASE_URL, Saccess_token, token)));
 
             if (!TextUtils.isEmpty(httpResponse)) {
                 try {
@@ -207,7 +215,9 @@ public class Facebook extends Client {
     }
 
     private void getNotifications(long account, @NonNull Set<String> notificationSids, @Nullable String[] notificationMessage) {
-        Cursor currentNotifications = mContext.getContentResolver().query(Notifications.getContentUri(mContext), new String[]{Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+        Cursor currentNotifications = mContext.getContentResolver().query(Notifications.getContentUri(mContext),
+                new String[] { Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID },
+                Notifications.ACCOUNT + "=?", new String[] { Long.toString(account) }, null);
 
         // loop over notifications
         if (currentNotifications.moveToFirst()) {
@@ -226,7 +236,8 @@ public class Facebook extends Client {
                 notificationSids.add(sid);
 
                 // get comments for current notifications
-                String response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, sid, Saccess_token, mToken)));
+                String response = SonetHttpClient
+                        .httpResponse(mContext, new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, sid, Saccess_token, mToken)));
 
                 if (!TextUtils.isEmpty(response)) {
                     JSONArray commentsArray;
@@ -244,13 +255,15 @@ public class Facebook extends Client {
                                 if (created_time > updated) {
                                     final JSONObject from = commentObj.getJSONObject(Sfrom);
                                     updateNotificationMessage(notificationMessage,
-                                            updateNotification(notificationId, created_time, mAccountEsid, from.getString(Sid), from.getString(Sname), cleared));
+                                            updateNotification(notificationId, created_time, mAccountEsid, from.getString(Sid), from.getString(Sname),
+                                                    cleared));
                                 }
                             }
                         }
                     } catch (JSONException e) {
-                        if (BuildConfig.DEBUG)
+                        if (BuildConfig.DEBUG) {
                             Log.e(mTag, "error parsing notifications: " + response, e);
+                        }
                     }
                 }
 
@@ -283,7 +296,15 @@ public class Facebook extends Client {
 
     @Nullable
     @Override
-    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+    public void addFeedItem(@NonNull JSONObject item,
+            boolean display_profile,
+            boolean time24hr,
+            int appWidgetId,
+            long account,
+            HttpClient httpClient,
+            Set<String> notificationSids,
+            String[] notificationMessage,
+            boolean doNotify) throws JSONException {
         ArrayList<String[]> links = new ArrayList<>();
 
         // only parse status types, not photo, video or link
@@ -303,11 +324,11 @@ public class Facebook extends Client {
                 }
 
                 if (item.has(Spicture)) {
-                    links.add(new String[]{Spicture, item.getString(Spicture)});
+                    links.add(new String[] { Spicture, item.getString(Spicture) });
                 }
 
                 if (item.has(Slink)) {
-                    links.add(new String[]{item.getString(Stype), item.getString(Slink)});
+                    links.add(new String[] { item.getString(Stype), item.getString(Slink) });
 
                     if (!item.has(Spicture) || !item.getString(Stype).equals(Sphoto)) {
                         message.append("(");
@@ -319,7 +340,7 @@ public class Facebook extends Client {
                 }
 
                 if (item.has(Ssource)) {
-                    links.add(new String[]{item.getString(Stype), item.getString(Ssource)});
+                    links.add(new String[] { item.getString(Stype), item.getString(Ssource) });
 
                     if (!item.has(Spicture) || !item.getString(Stype).equals(Sphoto)) {
                         message.append("(");
@@ -424,7 +445,8 @@ public class Facebook extends Client {
 
         if (!notificationSids.isEmpty()) {
             // check the latest feed
-            String response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FACEBOOK_HOME, FACEBOOK_BASE_URL, Saccess_token, mToken)));
+            String response = SonetHttpClient
+                    .httpResponse(mContext, new HttpGet(String.format(FACEBOOK_HOME, FACEBOOK_BASE_URL, Saccess_token, mToken)));
 
             if (!TextUtils.isEmpty(response)) {
                 try {
@@ -495,7 +517,8 @@ public class Facebook extends Client {
                                                             } else if (hasCommented) {
                                                                 // don't notify about user's own comments
                                                                 // send the parent comment sid
-                                                                notification = String.format(getString(R.string.friendcommented), c4.getString(Sname));
+                                                                notification = String
+                                                                        .format(getString(R.string.friendcommented), c4.getString(Sname));
                                                             }
                                                         }
                                                     }
@@ -554,7 +577,7 @@ public class Facebook extends Client {
         if (!TextUtils.isEmpty(photoPath)) {
             // upload photo
             // uploading a photo takes a long time, have the service handle it
-            Intent i = Sonet.getPackageIntent(mContext, PhotoUploadService.class);
+            Intent i = new Intent(mContext, PhotoUploadService.class);
             i.setAction(Sonet.ACTION_UPLOAD);
             i.putExtra(Accounts.TOKEN, mToken);
             i.putExtra(Widgets.INSTANT_UPLOAD, photoPath);
@@ -599,7 +622,8 @@ public class Facebook extends Client {
 
     @Override
     public boolean isLiked(String statusId, String accountId) {
-        String response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken)));
+        String response = SonetHttpClient
+                .httpResponse(mContext, new HttpGet(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken)));
 
         if (!TextUtils.isEmpty(response)) {
             try {
@@ -623,7 +647,8 @@ public class Facebook extends Client {
     @Override
     public boolean likeStatus(String statusId, String accountId, boolean doLike) {
         if (doLike) {
-            return SonetHttpClient.httpResponse(mContext, new HttpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken))) != null;
+            return SonetHttpClient
+                    .httpResponse(mContext, new HttpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken))) != null;
         } else {
             HttpDelete httpDelete = new HttpDelete(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken));
             httpDelete.setHeader("Content-Length", "0");
@@ -649,7 +674,8 @@ public class Facebook extends Client {
     @Nullable
     @Override
     public String getCommentsResponse(String statusId) {
-        return SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken)));
+        return SonetHttpClient
+                .httpResponse(mContext, new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken)));
     }
 
     @Nullable
@@ -672,7 +698,8 @@ public class Facebook extends Client {
 
     @Override
     public LinkedHashMap<String, String> getLocations(String latitude, String longitude) {
-        String response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FACEBOOK_SEARCH, FACEBOOK_BASE_URL, latitude, longitude, Saccess_token, mToken)));
+        String response = SonetHttpClient
+                .httpResponse(mContext, new HttpGet(String.format(FACEBOOK_SEARCH, FACEBOOK_BASE_URL, latitude, longitude, Saccess_token, mToken)));
 
         if (response != null) {
             LinkedHashMap<String, String> locations = new LinkedHashMap<String, String>();
@@ -714,7 +741,8 @@ public class Facebook extends Client {
     public List<HashMap<String, String>> getFriends() {
         // TODO use Collections.sort with comparator for name
         List<HashMap<String, String>> friends = new ArrayList<>();
-        String response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FACEBOOK_FRIENDS, FACEBOOK_BASE_URL, Saccess_token, mToken)));
+        String response = SonetHttpClient
+                .httpResponse(mContext, new HttpGet(String.format(FACEBOOK_FRIENDS, FACEBOOK_BASE_URL, Saccess_token, mToken)));
 
         if (!TextUtils.isEmpty(response)) {
             try {

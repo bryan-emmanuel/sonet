@@ -1,12 +1,5 @@
 package com.piusvelte.sonet;
 
-import static com.piusvelte.sonet.Sonet.getBlob;
-import static com.piusvelte.sonet.Sonet.sBFOptions;
-
-import com.piusvelte.sonet.provider.StatusLinks;
-import com.piusvelte.sonet.provider.StatusesStyles;
-import com.piusvelte.sonet.provider.Widgets;
-
 import android.annotation.SuppressLint;
 import android.appwidget.AppWidgetManager;
 import android.content.Context;
@@ -18,6 +11,13 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.RemoteViews;
+
+import com.piusvelte.sonet.provider.StatusLinks;
+import com.piusvelte.sonet.provider.StatusesStyles;
+import com.piusvelte.sonet.provider.Widgets;
+
+import static com.piusvelte.sonet.Sonet.getBlob;
+import static com.piusvelte.sonet.Sonet.sBFOptions;
 
 @SuppressLint("NewApi")
 public class SonetRemoteViewsFactory implements android.widget.RemoteViewsService.RemoteViewsFactory {
@@ -169,7 +169,10 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
         }
 
         mCursor = mContext.getContentResolver().query(Uri.withAppendedPath(StatusesStyles.getContentUri(mContext), Integer.toString(mAppWidgetId)),
-                new String[]{StatusesStyles._ID, StatusesStyles.FRIEND, StatusesStyles.PROFILE, StatusesStyles.MESSAGE, StatusesStyles.CREATEDTEXT, StatusesStyles.MESSAGES_COLOR, StatusesStyles.FRIEND_COLOR, StatusesStyles.CREATED_COLOR, StatusesStyles.MESSAGES_TEXTSIZE, StatusesStyles.FRIEND_TEXTSIZE, StatusesStyles.CREATED_TEXTSIZE, StatusesStyles.STATUS_BG, StatusesStyles.ICON, StatusesStyles.PROFILE_BG, StatusesStyles.FRIEND_BG, StatusesStyles.IMAGE_BG, StatusesStyles.IMAGE},
+                new String[] { StatusesStyles._ID, StatusesStyles.FRIEND, StatusesStyles.PROFILE, StatusesStyles.MESSAGE, StatusesStyles
+                        .CREATEDTEXT, StatusesStyles.MESSAGES_COLOR, StatusesStyles.FRIEND_COLOR, StatusesStyles.CREATED_COLOR, StatusesStyles
+                        .MESSAGES_TEXTSIZE, StatusesStyles.FRIEND_TEXTSIZE, StatusesStyles.CREATED_TEXTSIZE, StatusesStyles.STATUS_BG,
+                        StatusesStyles.ICON, StatusesStyles.PROFILE_BG, StatusesStyles.FRIEND_BG, StatusesStyles.IMAGE_BG, StatusesStyles.IMAGE },
                 null,
                 null,
                 StatusesStyles.CREATED + " DESC");
@@ -181,5 +184,4 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
             mCursor.close();
         }
     }
-
 }

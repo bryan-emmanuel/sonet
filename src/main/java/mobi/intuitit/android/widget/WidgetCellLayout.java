@@ -1,6 +1,5 @@
 package mobi.intuitit.android.widget;
 
-import mobi.intuitit.android.content.LauncherIntent;
 import android.appwidget.AppWidgetHostView;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
@@ -12,10 +11,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import mobi.intuitit.android.content.LauncherIntent;
+
 /**
- * 
  * @author Bo
- * 
  */
 public abstract class WidgetCellLayout extends ViewGroup {
 
@@ -61,7 +60,6 @@ public abstract class WidgetCellLayout extends ViewGroup {
                 // LauncherApplication.reportExceptionStack(e);
             }
         }
-
     }
 
     /**

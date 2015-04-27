@@ -24,5 +24,4 @@ public final class Entities implements BaseColumns {
     public static final String FRIEND = "friend";
     public static final String PROFILE = "profile";
     public static final String ACCOUNT = "account";
-
 }

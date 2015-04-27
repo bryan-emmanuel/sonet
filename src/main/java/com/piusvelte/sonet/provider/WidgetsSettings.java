@@ -23,5 +23,4 @@ public final class WidgetsSettings implements BaseColumns {
     }
 
     public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.widgets_settings";
-
 }

@@ -19,27 +19,6 @@
  */
 package com.piusvelte.sonet;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import com.google.ads.*;
-import com.piusvelte.sonet.fragment.BaseDialogFragment;
-import com.piusvelte.sonet.fragment.ChooseAccountsDialogFragment;
-import com.piusvelte.sonet.fragment.ChooseLocationDialogFragment;
-import com.piusvelte.sonet.fragment.ConfirmSetLocationDialogFragment;
-import com.piusvelte.sonet.fragment.MultiChoiceDialogFragment;
-import com.piusvelte.sonet.fragment.LoadingDialogFragment;
-import com.piusvelte.sonet.fragment.ChooseAccountDialogFragment;
-import com.piusvelte.sonet.loader.LocationLoader;
-import com.piusvelte.sonet.loader.SendPostLoader;
-import com.piusvelte.sonet.provider.Accounts;
-import com.piusvelte.sonet.provider.Widgets;
-
-import static com.piusvelte.sonet.Sonet.*;
-
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -71,7 +50,37 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class SonetCreatePost extends FragmentActivity implements OnKeyListener, OnClickListener, TextWatcher, LoaderManager.LoaderCallbacks, BaseDialogFragment.OnResultListener, MultiChoiceDialogFragment.OnMultiChoiceClickListener {
+import com.google.ads.AdRequest;
+import com.google.ads.AdSize;
+import com.google.ads.AdView;
+import com.piusvelte.sonet.fragment.BaseDialogFragment;
+import com.piusvelte.sonet.fragment.ChooseAccountDialogFragment;
+import com.piusvelte.sonet.fragment.ChooseAccountsDialogFragment;
+import com.piusvelte.sonet.fragment.ChooseLocationDialogFragment;
+import com.piusvelte.sonet.fragment.ConfirmSetLocationDialogFragment;
+import com.piusvelte.sonet.fragment.LoadingDialogFragment;
+import com.piusvelte.sonet.fragment.MultiChoiceDialogFragment;
+import com.piusvelte.sonet.loader.LocationLoader;
+import com.piusvelte.sonet.loader.SendPostLoader;
+import com.piusvelte.sonet.provider.Accounts;
+import com.piusvelte.sonet.provider.Widgets;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static com.piusvelte.sonet.Sonet.FACEBOOK;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE;
+import static com.piusvelte.sonet.Sonet.INVALID_ACCOUNT_ID;
+import static com.piusvelte.sonet.Sonet.PRO;
+import static com.piusvelte.sonet.Sonet.Stags;
+import static com.piusvelte.sonet.Sonet.TWITTER;
+
+public class SonetCreatePost extends FragmentActivity
+        implements OnKeyListener, OnClickListener, TextWatcher, LoaderManager.LoaderCallbacks, BaseDialogFragment.OnResultListener,
+        MultiChoiceDialogFragment.OnMultiChoiceClickListener {
     private static final String TAG = "SonetCreatePost";
 
     private static final int LOADER_ACCOUNT = 0;
@@ -271,7 +280,8 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
 //				HashMap<Long, String> accountEntries = new HashMap<Long, String>();
 //				while (accountIds.hasNext()) {
 //					Long accountId = accountIds.next();
-//					Cursor account = this.getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID, ACCOUNTS_QUERY}, Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
+//					Cursor account = this.getContentResolver().query(Accounts.getContentUri(this), new String[]{Accounts._ID, ACCOUNTS_QUERY},
+// Accounts._ID + "=?", new String[]{Long.toString(accountId)}, null);
 //					if (account.moveToFirst() && sTaggingSupported.contains(mAccountsService.get(accountId)))
 //						accountEntries.put(account.getLong(0), account.getString(1));
 //				}
@@ -388,10 +398,13 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
     }
 
     protected void selectFriends(long accountId) {
-        if ((mAccountsService.get(accountId) == FACEBOOK) && (!mAccountsLocation.containsKey(accountId) || (mAccountsLocation.get(accountId) == null))) {
+        if ((mAccountsService.get(accountId) == FACEBOOK) && (!mAccountsLocation.containsKey(accountId) || (mAccountsLocation
+                .get(accountId) == null))) {
             (Toast.makeText(SonetCreatePost.this, "To tag friends, Facebook requires a location to be included.", Toast.LENGTH_LONG)).show();
         } else {
-            startActivityForResult(Sonet.getPackageIntent(this, SelectFriends.class).putExtra(Accounts.SID, accountId).putExtra(Stags, mAccountsTags.get(accountId)), TAGS);
+            startActivityForResult(
+                    new Intent(this, SelectFriends.class).putExtra(Accounts.SID, accountId).putExtra(Stags, mAccountsTags.get(accountId)),
+                    TAGS);
         }
     }
 
@@ -444,9 +457,9 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
             case LOADER_ACCOUNT:
                 return new CursorLoader(this,
                         Accounts.getContentUri(this),
-                        new String[]{Accounts._ID, Accounts.SERVICE},
+                        new String[] { Accounts._ID, Accounts.SERVICE },
                         Accounts._ID + "=?",
-                        new String[]{args.getString(LOADER_ARG_ACCOUNT_ID)},
+                        new String[] { args.getString(LOADER_ARG_ACCOUNT_ID) },
                         null);
 
             case LOADER_LOCATION:
@@ -468,7 +481,7 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
             case LOADER_PHOTO:
                 return new CursorLoader(this,
                         Uri.parse(args.getString(LOADER_ARG_PHOTO_URI)),
-                        new String[]{MediaStore.Images.Media.DATA},
+                        new String[] { MediaStore.Images.Media.DATA },
                         null,
                         null,
                         null);
@@ -476,15 +489,15 @@ public class SonetCreatePost extends FragmentActivity implements OnKeyListener, 
             case LOADER_ACCOUNT_NAMES:
                 return new CursorLoader(this,
                         Accounts.getContentUri(this),
-                        new String[]{Accounts._ID, Accounts.SERVICE, Accounts.ACCOUNTS_QUERY},
+                        new String[] { Accounts._ID, Accounts.SERVICE, Accounts.ACCOUNTS_QUERY },
                         Accounts._ID + " in (?)",
-                        new String[]{TextUtils.join(",", mAccountsService.keySet())},
+                        new String[] { TextUtils.join(",", mAccountsService.keySet()) },
                         null);
 
             case LOADER_ACCOUNTS_NAMES:
                 return new CursorLoader(this,
                         Accounts.getContentUri(this),
-                        new String[]{Accounts._ID, Accounts.SERVICE, Accounts.USERNAME},
+                        new String[] { Accounts._ID, Accounts.SERVICE, Accounts.USERNAME },
                         null,
                         null,
                         null);

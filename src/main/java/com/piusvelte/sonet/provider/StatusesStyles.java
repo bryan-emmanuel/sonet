@@ -48,5 +48,4 @@ public final class StatusesStyles implements BaseColumns {
     public static final String FRIEND_BG = "friend_bg";
     public static final String IMAGE_BG = "image_bg";
     public static final String IMAGE = "image";
-
 }

@@ -30,12 +30,12 @@ public class ProfileUrlLoader extends BaseAsyncTaskLoader {
     public Object loadInBackground() {
         String url = null;
         Cursor cursor = mContext.getContentResolver().query(Accounts.getContentUri(mContext),
-                new String[]{Accounts._ID,
+                new String[] { Accounts._ID,
                         Accounts.TOKEN,
                         Accounts.SECRET,
-                        Accounts.SERVICE},
+                        Accounts.SERVICE },
                 Accounts._ID + "=?",
-                new String[]{Long.toString(mAccountId)},
+                new String[] { Long.toString(mAccountId) },
                 null);
 
         if (cursor.moveToFirst()) {

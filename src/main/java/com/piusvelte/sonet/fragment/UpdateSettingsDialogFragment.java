@@ -18,7 +18,8 @@ import com.piusvelte.sonet.R;
 /**
  * Created by bemmanuel on 4/20/15.
  */
-public class UpdateSettingsDialogFragment extends BaseDialogFragment implements View.OnClickListener, CompoundButton.OnCheckedChangeListener, BaseDialogFragment.OnResultListener {
+public class UpdateSettingsDialogFragment extends BaseDialogFragment
+        implements View.OnClickListener, CompoundButton.OnCheckedChangeListener, BaseDialogFragment.OnResultListener {
 
     private static final String ARG_UPDATE_INTERVAL = "update_interval";
     private static final String ARG_STATUS_COUNT = "status_count";

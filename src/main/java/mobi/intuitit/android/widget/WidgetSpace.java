@@ -1,9 +1,5 @@
 package mobi.intuitit.android.widget;
 
-import java.util.HashMap;
-
-import mobi.intuitit.android.content.LauncherIntent;
-import mobi.intuitit.android.widget.WidgetListAdapter.ViewHolder;
 import android.app.Activity;
 import android.appwidget.AppWidgetHostView;
 import android.appwidget.AppWidgetManager;
@@ -25,20 +21,23 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.view.animation.Animation.AnimationListener;
+import android.view.animation.AnimationUtils;
 import android.widget.AbsListView;
+import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.AbsListView.OnScrollListener;
-import android.widget.AdapterView.OnItemClickListener;
+
+import java.util.HashMap;
+
+import mobi.intuitit.android.content.LauncherIntent;
+import mobi.intuitit.android.widget.WidgetListAdapter.ViewHolder;
 
 /**
- * 
  * @author Bo & Koxx
- * 
  */
 public abstract class WidgetSpace extends ViewGroup {
 
@@ -74,7 +73,7 @@ public abstract class WidgetSpace extends ViewGroup {
     public abstract Activity getLauncherActivity();
 
     /**
-     * 
+     *
      */
     BroadcastReceiver mAnimationProvider = new BroadcastReceiver() {
 
@@ -84,8 +83,9 @@ public abstract class WidgetSpace extends ViewGroup {
             Log.i("AnimationProvider", "" + intent);
 
             int widgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1);
-            if (widgetId < 0)
+            if (widgetId < 0) {
                 widgetId = intent.getIntExtra(LauncherIntent.Extra.EXTRA_APPWIDGET_ID, -1);
+            }
             if (widgetId < 0) {
                 Log.e(TAG, "Scroll Provider cannot get a legal widget id");
                 return;
@@ -110,15 +110,17 @@ public abstract class WidgetSpace extends ViewGroup {
                 }
             } catch (FrameAnimationException ae) {
                 // Reset the action and broadcast
-                if (widgetView != null)
+                if (widgetView != null) {
                     intent.setComponent(widgetView.getAppWidgetInfo().provider);
+                }
                 getContext().sendBroadcast(
                         intent.setAction(ae.mAction).putExtra(
                                 LauncherIntent.Extra.EXTRA_ERROR_MESSAGE, ae.getMessage()));
             } catch (TweenAnimationException ae) {
                 // Reset the action and broadcast
-                if (widgetView != null)
+                if (widgetView != null) {
                     intent.setComponent(widgetView.getAppWidgetInfo().provider);
+                }
                 getContext().sendBroadcast(
                         intent.setAction(ae.mAction).putExtra(
                                 LauncherIntent.Extra.EXTRA_ERROR_MESSAGE, ae.getMessage()));
@@ -130,7 +132,7 @@ public abstract class WidgetSpace extends ViewGroup {
         }
 
         /**
-         * 
+         *
          * @param widgetView
          * @param imgViewId
          * @param intent
@@ -141,18 +143,20 @@ public abstract class WidgetSpace extends ViewGroup {
         void actFrameAnimation(AppWidgetHostView widgetView, int imgViewId, Intent intent,
                 boolean start) throws FrameAnimationException {
 
-            if (widgetView == null)
+            if (widgetView == null) {
                 throw new FrameAnimationException("Cannot find queried widget "
                         + intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
                         + " in the current screen.");
+            }
 
             // Start animation
             try {
                 ImageView imgView = (ImageView) widgetView.findViewById(imgViewId);
                 AnimationDrawable ad = (AnimationDrawable) ((ImageView) imgView).getDrawable();
 
-                if (ad == null)
+                if (ad == null) {
                     return;
+                }
 
                 if (start) {
                     // Start the animation
@@ -177,11 +181,10 @@ public abstract class WidgetSpace extends ViewGroup {
                 throw new FrameAnimationException(
                         "Fail to start frame animation on queried ImageView: " + imgViewId);
             }
-
         }
 
         /**
-         * 
+         *
          * @param widgetView
          * @param viewId
          * @param intent
@@ -193,10 +196,11 @@ public abstract class WidgetSpace extends ViewGroup {
         void startTweenAnimation(AppWidgetHostView widgetView, int viewId, Intent intent)
                 throws Exception, TweenAnimationException {
 
-            if (widgetView == null)
+            if (widgetView == null) {
                 throw new NullPointerException("Cannot find queried widget "
                         + intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
                         + " in the current screen.");
+            }
 
             int animId = intent.getIntExtra(LauncherIntent.Extra.EXTRA_ANIMATION_ID, -1);
 
@@ -221,14 +225,15 @@ public abstract class WidgetSpace extends ViewGroup {
                 }
 
                 // Check and verify
-                if (a.getRepeatCount() == Animation.INFINITE)
+                if (a.getRepeatCount() == Animation.INFINITE) {
                     a.setRepeatCount(0);
-                if (a.getRepeatCount() > 10)
+                }
+                if (a.getRepeatCount() > 10) {
                     a.setRepeatCount(10);
+                }
 
                 // Start the animation
                 widgetView.findViewById(viewId).startAnimation(a);
-
             } catch (NameNotFoundException e) {
                 throw new TweenAnimationException("Cannot load resources");
             } catch (Exception e) {
@@ -238,9 +243,9 @@ public abstract class WidgetSpace extends ViewGroup {
         }
 
         /**
-         * 
+         *
          * @author bo
-         * 
+         *
          */
         class TweenAnimListener implements AnimationListener {
 
@@ -272,14 +277,12 @@ public abstract class WidgetSpace extends ViewGroup {
                                 mIntent
                                         .setAction(LauncherIntent.Notification.NOTIFICATION_TWEEN_ANIMATION_STARTED));
             }
-
         }
-
     };
 
     /**
      * Look for a widget in all screens
-     * 
+     *
      * @param appWidgetId
      * @return
      */
@@ -287,38 +290,43 @@ public abstract class WidgetSpace extends ViewGroup {
         AppWidgetHostView wv;
         for (int i = getChildCount() - 1; i >= 0; i--) {
             wv = findWidget(i, appWidgetId);
-            if (wv != null)
+            if (wv != null) {
                 return wv;
+            }
         }
         return null;
     }
 
     /**
      * Find widget in a given screen
-     * 
+     *
      * @param screen
      * @param appWidgetId
      * @return
      */
     final AppWidgetHostView findWidget(int screen, int appWidgetId) {
-        if (appWidgetId < 0)
+        if (appWidgetId < 0) {
             return null;
+        }
 
         View child = getChildAt(screen);
-        if (child == null)
+        if (child == null) {
             return null;
+        }
 
         if (child instanceof AppWidgetHostView) {
             AppWidgetHostView widgetView = (AppWidgetHostView) child;
-            if (widgetView.getAppWidgetId() == appWidgetId)
+            if (widgetView.getAppWidgetId() == appWidgetId) {
                 return widgetView;
+            }
         } else if (child instanceof ViewGroup) {
             ViewGroup cells = (ViewGroup) getChildAt(screen);
             for (int i = cells.getChildCount() - 1; i >= 0; i--) {
                 View widgetView = cells.getChildAt(i);
                 if (widgetView instanceof AppWidgetHostView) {
-                    if (((AppWidgetHostView) widgetView).getAppWidgetId() == appWidgetId)
+                    if (((AppWidgetHostView) widgetView).getAppWidgetId() == appWidgetId) {
                         return (AppWidgetHostView) widgetView;
+                    }
                 }
             }
         }
@@ -342,8 +350,9 @@ public abstract class WidgetSpace extends ViewGroup {
     // Test if this widget is scrollable
     public synchronized boolean isWidgetScrollable(int widgetId) {
         for (ScrollViewInfos item : mScrollViewCursorInfos.values()) {
-            if (item.widgetId == widgetId)
+            if (item.widgetId == widgetId) {
                 return true;
+            }
         }
         return false;
     }
@@ -353,8 +362,9 @@ public abstract class WidgetSpace extends ViewGroup {
         for (ScrollViewInfos item : mScrollViewCursorInfos.values()) {
             if (item.lv != null) {
                 if (CLEAR_DATA_CACHE) {
-                    if (item.lv.getAdapter() != null)
+                    if (item.lv.getAdapter() != null) {
                         ((WidgetListAdapter) item.lv.getAdapter()).clearDataCache();
+                    }
                 }
                 item.lv.setAdapter(null);
             }
@@ -382,8 +392,9 @@ public abstract class WidgetSpace extends ViewGroup {
 
             // Try to get the widget view
             int widgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1);
-            if (widgetId < 0)
+            if (widgetId < 0) {
                 widgetId = intent.getIntExtra(LauncherIntent.Extra.EXTRA_APPWIDGET_ID, -1);
+            }
             if (widgetId < 0) {
                 Log.e(TAG, "Scroll Provider cannot get a legal widget id");
                 return;
@@ -404,7 +415,6 @@ public abstract class WidgetSpace extends ViewGroup {
             String error = "unknow action";
             if (TextUtils.equals(action, LauncherIntent.Action.ACTION_SCROLL_WIDGET_START)) {
                 error = makeScrollable(context, intent, widgetView);
-
             } else if (TextUtils.equals(action,
                     LauncherIntent.Action.ACTION_SCROLL_WIDGET_SELECT_ITEM)) {
                 error = setSelection(context, intent, widgetView);
@@ -431,8 +441,9 @@ public abstract class WidgetSpace extends ViewGroup {
 
             // get the dummy view to replace
             final int dummyViewId = intent.getIntExtra(LauncherIntent.Extra.EXTRA_VIEW_ID, -1);
-            if (dummyViewId <= 0)
+            if (dummyViewId <= 0) {
                 return "Dummy view id needed.";
+            }
 
             final ComponentName appWidgetProvider = widgetView.getAppWidgetInfo().provider;
             final int appWidgetId = widgetView.getAppWidgetId();
@@ -446,22 +457,25 @@ public abstract class WidgetSpace extends ViewGroup {
                 AbsListView lv = null;
 
                 View dummyView = widgetView.findViewById(dummyViewId);
-                if (dummyView == null)
+                if (dummyView == null) {
                     return "Dummy view needed.";
+                }
 
-                if (dummyView instanceof AbsListView)
+                if (dummyView instanceof AbsListView) {
                     lv = (AbsListView) dummyView;
-                else {
+                } else {
                     dummyView = null;
                     if (intent.hasExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_REMOTEVIEWS)) {
-                        SimpleRemoteViews rvs = (SimpleRemoteViews)intent.getParcelableExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_REMOTEVIEWS);
+                        SimpleRemoteViews rvs = (SimpleRemoteViews) intent.getParcelableExtra(LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_REMOTEVIEWS);
                         dummyView = rvs.apply(remoteContext, null);
                         if (dummyView instanceof AbsListView) {
                             lv = (AbsListView) dummyView;
-                            if (!replaceView(widgetView, dummyViewId, lv))
+                            if (!replaceView(widgetView, dummyViewId, lv)) {
                                 return "Cannot replace the dummy with the list view inflated from the passed RemoteViews.";
-                        } else
+                            }
+                        } else {
                             return "could not create AbsListView from the passed RemoteViews";
+                        }
                     } else {
                         // inflate listview
                         final int listViewResId = intent.getIntExtra(
@@ -469,18 +483,21 @@ public abstract class WidgetSpace extends ViewGroup {
                         if (listViewResId <= 0) {
                             // try to post the newly created listview to the widget
                             lv = postListView(widgetView, dummyViewId);
-                            if (lv == null)
+                            if (lv == null) {
                                 return "Cannot create the default list view.";
+                            }
                         } else {
                             // Inflate it
                             LayoutInflater inflater = LayoutInflater.from(remoteContext);
                             dummyView = inflater.inflate(listViewResId, null);
                             if (dummyView instanceof AbsListView) {
                                 lv = (AbsListView) dummyView;
-                                if (!replaceView(widgetView, dummyViewId, lv))
+                                if (!replaceView(widgetView, dummyViewId, lv)) {
                                     return "Cannot replace the dummy with the list view inflated from the passed layout resource id.";
-                            } else
+                                }
+                            } else {
                                 return "Cannot inflate a list view from the passed layout resource id.";
+                            }
                         }
                     }
                 }
@@ -494,21 +511,23 @@ public abstract class WidgetSpace extends ViewGroup {
                     listViewInfos = new ScrollViewInfos();
 
                     final BaseAdapter lvAdapter;
-                    if (intent.hasExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_REMOTEVIEWS))
-                        lvAdapter = new WidgetRemoteViewsListAdapter(remoteContext, intent, 
-                            appWidgetProvider, appWidgetId, dummyViewId);
-                    else
+                    if (intent.hasExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_REMOTEVIEWS)) {
+                        lvAdapter = new WidgetRemoteViewsListAdapter(remoteContext, intent,
+                                appWidgetProvider, appWidgetId, dummyViewId);
+                    } else {
                         lvAdapter = new WidgetListAdapter(remoteContext,
-                            intent, appWidgetProvider, appWidgetId, dummyViewId);
+                                intent, appWidgetProvider, appWidgetId, dummyViewId);
+                    }
 
                     // create listener for content Provider data modification
                     WidgetDataChangeListener widgetDataChangeListener = new WidgetDataChangeListener() {
                         @Override
                         public void onChange() {
-                             if (lvAdapter instanceof WidgetListAdapter)
-                                 ((WidgetListAdapter)lvAdapter).notifyToRegenerate();
-                             else if (lvAdapter instanceof WidgetRemoteViewsListAdapter)
-                            	 ((WidgetRemoteViewsListAdapter)lvAdapter).notifyToRegenerate();
+                            if (lvAdapter instanceof WidgetListAdapter) {
+                                ((WidgetListAdapter) lvAdapter).notifyToRegenerate();
+                            } else if (lvAdapter instanceof WidgetRemoteViewsListAdapter) {
+                                ((WidgetRemoteViewsListAdapter) lvAdapter).notifyToRegenerate();
+                            }
                         }
                     };
 
@@ -523,8 +542,9 @@ public abstract class WidgetSpace extends ViewGroup {
                     // store new adapter
                     listViewInfos.lvAdapter = lvAdapter;
 
-                    if (LOGD)
+                    if (LOGD) {
                         Log.d(TAG, "makeScrollable : recreate listview adapter");
+                    }
                 } else if (LOGD) {
                     Log.d(TAG, "makeScrollable : restore listview adapter");
                 }
@@ -533,9 +553,10 @@ public abstract class WidgetSpace extends ViewGroup {
 
                 // finish listview configuration
                 if ((listViewInfos.lvAdapter instanceof WidgetListAdapter) &&
-                    !((WidgetListAdapter)listViewInfos.lvAdapter).mItemChildrenClickable)
+                        !((WidgetListAdapter) listViewInfos.lvAdapter).mItemChildrenClickable) {
                     lv.setOnItemClickListener(new WidgetItemListener(appWidgetProvider,
                             appWidgetId, dummyViewId));
+                }
                 lv.setFocusableInTouchMode(false);
                 lv.setOnScrollListener(this);
 
@@ -547,14 +568,16 @@ public abstract class WidgetSpace extends ViewGroup {
                 // force listview position if asked
                 int position = intent.getIntExtra(
                         LauncherIntent.Extra.Scroll.EXTRA_LISTVIEW_POSITION, -1);
-                if (position >= 0)
+                if (position >= 0) {
                     lv.setSelection(position);
+                }
 
                 if (CLEAR_DATA_CACHE) {
-                    if (listViewInfos.lvAdapter instanceof WidgetListAdapter)
-                        ((WidgetListAdapter)listViewInfos.lvAdapter).notifyToRegenerate();
-                    else if (listViewInfos.lvAdapter instanceof WidgetRemoteViewsListAdapter)
-                    	((WidgetRemoteViewsListAdapter)listViewInfos.lvAdapter).notifyToRegenerate();
+                    if (listViewInfos.lvAdapter instanceof WidgetListAdapter) {
+                        ((WidgetListAdapter) listViewInfos.lvAdapter).notifyToRegenerate();
+                    } else if (listViewInfos.lvAdapter instanceof WidgetRemoteViewsListAdapter) {
+                        ((WidgetRemoteViewsListAdapter) listViewInfos.lvAdapter).notifyToRegenerate();
+                    }
                 }
 
                 if (FORCE_FREE_MEMORY) {
@@ -608,8 +631,6 @@ public abstract class WidgetSpace extends ViewGroup {
                 return e.getMessage();
             }
         }
-        
-    
 
         class WidgetItemListener implements OnItemClickListener {
 
@@ -655,11 +676,9 @@ public abstract class WidgetSpace extends ViewGroup {
                     e.printStackTrace();
                 }
             }
-
         }
 
         /**
-         * 
          * @param widgetView
          * @param dummyViewId
          * @return whether the dummy view is replaced by listview
@@ -668,14 +687,14 @@ public abstract class WidgetSpace extends ViewGroup {
             ListView lv = new ListView(getContext());
             lv.setCacheColorHint(0);
 
-            if (replaceView(widgetView, dummyViewId, lv))
+            if (replaceView(widgetView, dummyViewId, lv)) {
                 return lv;
-            else
+            } else {
                 return null;
+            }
         }
 
         /**
-         * 
          * @param vg
          * @param id
          * @param replacement
@@ -694,8 +713,9 @@ public abstract class WidgetSpace extends ViewGroup {
                     // Put the replacement in
                     vg.addView(replacement, i, child.getLayoutParams());
                     return true;
-                } else if (child instanceof ViewGroup)
+                } else if (child instanceof ViewGroup) {
                     result |= replaceView((ViewGroup) child, id, replacement);
+                }
             }
             return result;
         }
@@ -739,7 +759,7 @@ public abstract class WidgetSpace extends ViewGroup {
 
     /**
      * So en exception in unregistering last receiver will not bypass the second one
-     * 
+     *
      * @param context
      * @param receiver
      */
@@ -752,9 +772,7 @@ public abstract class WidgetSpace extends ViewGroup {
     }
 
     /**
-     * 
      * @author bo
-     * 
      */
     class AnimationException extends Exception {
 
@@ -763,7 +781,6 @@ public abstract class WidgetSpace extends ViewGroup {
         AnimationException(String action, String msg) {
             super(msg);
             mAction = action;
-
         }
     }
 
@@ -771,7 +788,6 @@ public abstract class WidgetSpace extends ViewGroup {
         public FrameAnimationException(String msg) {
             super(LauncherIntent.Error.ERROR_FRAME_ANIMATION, msg);
         }
-
     }
 
     class TweenAnimationException extends AnimationException {
@@ -779,7 +795,5 @@ public abstract class WidgetSpace extends ViewGroup {
         public TweenAnimationException(String msg) {
             super(LauncherIntent.Error.ERROR_TWEEN_ANIMATION, msg);
         }
-
     }
-
 }

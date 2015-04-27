@@ -35,13 +35,13 @@ public class SendPostLoader extends BaseAsyncTaskLoader {
     private HashMap<Long, String[]> mTags;
 
     public SendPostLoader(@NonNull Context context,
-                          @NonNull HashMap<Long, Integer> accounts,
-                          @NonNull String message,
-                          @NonNull HashMap<Long, String> locations,
-                          @Nullable String latitude,
-                          @Nullable String longitude,
-                          @Nullable String photo,
-                          @NonNull HashMap<Long, String[]> tags) {
+            @NonNull HashMap<Long, Integer> accounts,
+            @NonNull String message,
+            @NonNull HashMap<Long, String> locations,
+            @Nullable String latitude,
+            @Nullable String longitude,
+            @Nullable String photo,
+            @NonNull HashMap<Long, String[]> tags) {
         super(context);
         mContext = context.getApplicationContext();
         mAccounts = accounts;
@@ -63,9 +63,9 @@ public class SendPostLoader extends BaseAsyncTaskLoader {
             SonetCrypto sonetCrypto = SonetCrypto.getInstance(mContext);
             // post or comment!
             Cursor cursor = mContext.getContentResolver().query(Accounts.getContentUri(mContext),
-                    new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SECRET},
+                    new String[] { Accounts._ID, Accounts.TOKEN, Accounts.SECRET },
                     Accounts._ID + "=?",
-                    new String[]{Long.toString(accountId)},
+                    new String[] { Long.toString(accountId) },
                     null);
 
             if (cursor.moveToFirst()) {

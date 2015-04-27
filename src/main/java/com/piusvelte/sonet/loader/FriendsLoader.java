@@ -27,8 +27,8 @@ public class FriendsLoader extends BaseAsyncTaskLoader {
         SonetCrypto sonetCrypto = SonetCrypto.getInstance(mContext);
         // load the session
         Cursor account = mContext.getContentResolver().query(Accounts.getContentUri(mContext),
-                new String[]{Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE}, Accounts._ID + "=?",
-                new String[]{Long.toString(mAccountId)},
+                new String[] { Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE }, Accounts._ID + "=?",
+                new String[] { Long.toString(mAccountId) },
                 null);
 
         if (account.moveToFirst()) {

@@ -31,7 +31,6 @@ import mobi.intuitit.android.content.LauncherIntent;
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.sBFOptions;
 
-
 /**
  * Created by bemmanuel on 3/21/15.
  */
@@ -52,7 +51,7 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
         mAdapter = new SimpleCursorAdapter(getActivity(),
                 R.layout.widget_item,
                 null,
-                new String[]{StatusesStyles.FRIEND,
+                new String[] { StatusesStyles.FRIEND,
                         StatusesStyles.FRIEND + "2",
                         StatusesStyles.MESSAGE,
                         StatusesStyles.MESSAGE + "2",
@@ -63,8 +62,8 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
                         StatusesStyles.PROFILE_BG,
                         StatusesStyles.FRIEND_BG,
                         StatusesStyles.IMAGE_BG,
-                        StatusesStyles.IMAGE},
-                new int[]{R.id.friend_bg_clear,
+                        StatusesStyles.IMAGE },
+                new int[] { R.id.friend_bg_clear,
                         R.id.friend,
                         R.id.message_bg_clear,
                         R.id.message,
@@ -75,7 +74,7 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
                         R.id.profile_bg,
                         R.id.friend_bg,
                         R.id.image_clear,
-                        R.id.image},
+                        R.id.image },
                 0);
         mAdapter.setViewBinder(new WidgetsViewBinder());
         setListAdapter(mAdapter);
@@ -88,7 +87,7 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
             case LOADER_WIDGETS:
                 return new CursorLoader(getActivity(),
                         StatusesStyles.getContentUri(getActivity()),
-                        new String[]{StatusesStyles._ID,
+                        new String[] { StatusesStyles._ID,
                                 StatusesStyles.FRIEND,
                                 StatusesStyles.FRIEND + " as " + StatusesStyles.FRIEND + "2",
                                 StatusesStyles.PROFILE,
@@ -106,9 +105,9 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
                                 StatusesStyles.PROFILE_BG,
                                 StatusesStyles.FRIEND_BG,
                                 StatusesStyles.IMAGE_BG,
-                                StatusesStyles.IMAGE},
+                                StatusesStyles.IMAGE },
                         StatusesStyles.WIDGET + "=?",
-                        new String[]{Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)},
+                        new String[] { Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID) },
                         StatusesStyles.CREATED + " desc");
 
             default:
@@ -121,7 +120,7 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
         super.onListItemClick(l, v, position, id);
         Rect r = new Rect();
         v.getHitRect(r);
-        startActivity(Sonet.getPackageIntent(getActivity(), StatusDialog.class)
+        startActivity(new Intent(getActivity(), StatusDialog.class)
                 .setData(Uri.withAppendedPath(StatusesStyles.getContentUri(getActivity()), Long.toString(id)))
                 .putExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS, r)
                 .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
@@ -134,14 +133,13 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
                 mAdapter.changeCursor(cursor);
                 // if no statuses, trigger a refresh
                 if (cursor.getCount() == 0 && isAdded() && isResumed()) {
-                    getActivity().startService(Sonet.getPackageIntent(getActivity(),
+                    getActivity().startService(new Intent(getActivity(),
                             SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,
                             AppWidgetManager.INVALID_APPWIDGET_ID)
                             .setAction(ACTION_REFRESH));
                 }
                 break;
         }
-
     }
 
     @Override

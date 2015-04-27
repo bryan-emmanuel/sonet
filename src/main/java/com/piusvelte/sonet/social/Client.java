@@ -224,7 +224,14 @@ abstract public class Client {
         }
     }
 
-    public String getFeed(int appWidgetId, String widget, long account, int status_count, boolean time24hr, boolean display_profile, int notifications, HttpClient httpClient) {
+    public String getFeed(int appWidgetId,
+            String widget,
+            long account,
+            int status_count,
+            boolean time24hr,
+            boolean display_profile,
+            int notifications,
+            HttpClient httpClient) {
         String[] notificationMessage = new String[1];
         Set<String> notificationSids = null;
         boolean doNotify = notifications != 0;
@@ -252,7 +259,8 @@ abstract public class Client {
                             JSONObject item = feedItems.getJSONObject(itemIdx);
 
                             if (item != null) {
-                                addFeedItem(item, display_profile, time24hr, appWidgetId, account, httpClient, notificationSids, notificationMessage, doNotify);
+                                addFeedItem(item, display_profile, time24hr, appWidgetId, account, httpClient, notificationSids, notificationMessage,
+                                        doNotify);
                             }
                         }
                     } else if (this instanceof MySpace) {
@@ -311,7 +319,15 @@ abstract public class Client {
     abstract public JSONArray parseFeed(@NonNull String response) throws JSONException;
 
     @Nullable
-    abstract public void addFeedItem(@NonNull JSONObject item, boolean display_profile, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException;
+    abstract public void addFeedItem(@NonNull JSONObject item,
+            boolean display_profile,
+            boolean time24hr,
+            int appWidgetId,
+            long account,
+            HttpClient httpClient,
+            Set<String> notificationSids,
+            String[] notificationMessage,
+            boolean doNotify) throws JSONException;
 
     @Nullable
     abstract public void getNotificationMessage(long account, String[] notificationMessage);
@@ -383,7 +399,8 @@ abstract public class Client {
     abstract public JSONArray parseComments(@NonNull String response) throws JSONException;
 
     @Nullable
-    abstract public HashMap<String, String> parseComment(@NonNull String statusId, @NonNull JSONObject jsonComment, boolean time24hr) throws JSONException;
+    abstract public HashMap<String, String> parseComment(@NonNull String statusId, @NonNull JSONObject jsonComment, boolean time24hr)
+            throws JSONException;
 
     abstract public LinkedHashMap<String, String> getLocations(String latitude, String longitude);
 
@@ -476,11 +493,30 @@ abstract public class Client {
         matcher.appendReplacement(stringBuffer, "(" + Slink + ": " + Uri.parse(link).getHost() + ")");
     }
 
-    void addStatusItem(long created, String friend, String url, String message, boolean time24hr, int appWidgetId, long accountId, String sid, String esid, HttpClient httpClient) {
+    void addStatusItem(long created,
+            String friend,
+            String url,
+            String message,
+            boolean time24hr,
+            int appWidgetId,
+            long accountId,
+            String sid,
+            String esid,
+            HttpClient httpClient) {
         addStatusItem(created, friend, url, message, time24hr, appWidgetId, accountId, sid, esid, new ArrayList<String[]>(), httpClient);
     }
 
-    void addStatusItem(long created, String friend, String url, String message, boolean time24hr, int appWidgetId, long accountId, String sid, String esid, ArrayList<String[]> links, HttpClient httpClient) {
+    void addStatusItem(long created,
+            String friend,
+            String url,
+            String message,
+            boolean time24hr,
+            int appWidgetId,
+            long accountId,
+            String sid,
+            String esid,
+            ArrayList<String[]> links,
+            HttpClient httpClient) {
         long id;
         byte[] profile = null;
 
@@ -496,7 +532,9 @@ abstract public class Client {
         String friend_override = getPostFriendOverride(friend);
         friend = getPostFriend(friend);
 
-        Cursor entity = getContentResolver().query(Entities.getContentUri(mContext), new String[]{Entities._ID}, Entities.ACCOUNT + "=? and " + Entities.ESID + "=?", new String[]{Long.toString(accountId), SonetCrypto.getInstance(mContext).Encrypt(esid)}, null);
+        Cursor entity = getContentResolver()
+                .query(Entities.getContentUri(mContext), new String[] { Entities._ID }, Entities.ACCOUNT + "=? and " + Entities.ESID + "=?",
+                        new String[] { Long.toString(accountId), SonetCrypto.getInstance(mContext).Encrypt(esid) }, null);
 
         if (entity.moveToFirst()) {
             id = entity.getLong(0);
@@ -536,7 +574,7 @@ abstract public class Client {
             }
 
             if (!exists) {
-                links.add(new String[]{Slink, link});
+                links.add(new String[] { Slink, link });
                 formatLink(m, sb, link);
             }
         }
@@ -655,27 +693,33 @@ abstract public class Client {
     }
 
     void removeOldStatuses(String widgetId, String accountId) {
-        Cursor statuses = getContentResolver().query(Statuses.getContentUri(mContext), new String[]{Statuses._ID}, Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widgetId, accountId}, null);
+        Cursor statuses = getContentResolver()
+                .query(Statuses.getContentUri(mContext), new String[] { Statuses._ID }, Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?",
+                        new String[] { widgetId, accountId }, null);
 
         if (statuses.moveToFirst()) {
             while (!statuses.isAfterLast()) {
                 String id = Long.toString(statuses.getLong(0));
-                getContentResolver().delete(StatusLinks.getContentUri(mContext), StatusLinks.STATUS_ID + "=?", new String[]{id});
-                getContentResolver().delete(StatusImages.getContentUri(mContext), StatusImages.STATUS_ID + "=?", new String[]{id});
+                getContentResolver().delete(StatusLinks.getContentUri(mContext), StatusLinks.STATUS_ID + "=?", new String[] { id });
+                getContentResolver().delete(StatusImages.getContentUri(mContext), StatusImages.STATUS_ID + "=?", new String[] { id });
                 statuses.moveToNext();
             }
         }
 
         statuses.close();
-        getContentResolver().delete(Statuses.getContentUri(mContext), Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?", new String[]{widgetId, accountId});
-        Cursor entities = getContentResolver().query(Entities.getContentUri(mContext), new String[]{Entities._ID}, Entities.ACCOUNT + "=?", new String[]{accountId}, null);
+        getContentResolver().delete(Statuses.getContentUri(mContext), Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?",
+                new String[] { widgetId, accountId });
+        Cursor entities = getContentResolver()
+                .query(Entities.getContentUri(mContext), new String[] { Entities._ID }, Entities.ACCOUNT + "=?", new String[] { accountId }, null);
 
         if (entities.moveToFirst()) {
             while (!entities.isAfterLast()) {
-                Cursor s = getContentResolver().query(Statuses.getContentUri(mContext), new String[]{Statuses._ID}, Statuses.ACCOUNT + "=? and " + Statuses.WIDGET + " !=?", new String[]{accountId, widgetId}, null);
+                Cursor s = getContentResolver().query(Statuses.getContentUri(mContext), new String[] { Statuses._ID },
+                        Statuses.ACCOUNT + "=? and " + Statuses.WIDGET + " !=?", new String[] { accountId, widgetId }, null);
                 if (!s.moveToFirst()) {
                     // not in use, remove it
-                    getContentResolver().delete(Entities.getContentUri(mContext), Entities._ID + "=?", new String[]{Long.toString(entities.getLong(0))});
+                    getContentResolver()
+                            .delete(Entities.getContentUri(mContext), Entities._ID + "=?", new String[] { Long.toString(entities.getLong(0)) });
                 }
                 s.close();
                 entities.moveToNext();
@@ -717,7 +761,8 @@ abstract public class Client {
             message = String.format(getString(R.string.friendcommented), name + " and others");
         }
 
-        getContentResolver().update(Notifications.getContentUri(mContext), values, Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
+        getContentResolver()
+                .update(Notifications.getContentUri(mContext), values, Notifications._ID + "=?", new String[] { Long.toString(notificationId) });
         return message;
     }
 
@@ -788,6 +833,5 @@ abstract public class Client {
         public int expiry;
         public int network;
         public String id;
-
     }
 }

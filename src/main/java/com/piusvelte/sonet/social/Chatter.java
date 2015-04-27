@@ -30,16 +30,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-import static com.piusvelte.sonet.Sonet.CHATTER_DATE_FORMAT;
-import static com.piusvelte.sonet.Sonet.CHATTER_URL_ACCESS;
-import static com.piusvelte.sonet.Sonet.CHATTER_URL_AUTHORIZE;
-import static com.piusvelte.sonet.Sonet.CHATTER_URL_COMMENT;
-import static com.piusvelte.sonet.Sonet.CHATTER_URL_COMMENTS;
-import static com.piusvelte.sonet.Sonet.CHATTER_URL_FEED;
-import static com.piusvelte.sonet.Sonet.CHATTER_URL_LIKE;
-import static com.piusvelte.sonet.Sonet.CHATTER_URL_LIKES;
-import static com.piusvelte.sonet.Sonet.CHATTER_URL_ME;
-import static com.piusvelte.sonet.Sonet.CHATTER_URL_POST;
 import static com.piusvelte.sonet.Sonet.Saccess_token;
 import static com.piusvelte.sonet.Sonet.Sbody;
 import static com.piusvelte.sonet.Sonet.Scomments;
@@ -58,6 +48,18 @@ import static com.piusvelte.sonet.Sonet.Suser;
  */
 public class Chatter extends Client {
 
+    private static final String CHATTER_URL_AUTHORIZE = "https://login.salesforce" +
+            ".com/services/oauth2/authorize?response_type=token&display=touch&client_id=%s&redirect_uri=%s";
+    private static final String CHATTER_URL_ACCESS = "https://login.salesforce" +
+            ".com/services/oauth2/token?grant_type=refresh_token&client_id=%s&refresh_token=%s";
+    private static final String CHATTER_URL_ME = "%s/services/data/v22.0/chatter/users/me";
+    private static final String CHATTER_URL_POST = "%s/services/data/v22.0/chatter/feeds/news/me/feed-items?text=%s";
+    private static final String CHATTER_URL_COMMENT = "%s/services/data/v22.0/chatter/feed-items/%s/comments?text=%s";
+    private static final String CHATTER_URL_FEED = "%s/services/data/v22.0/chatter/feeds/news/me/feed-items";
+    private static final String CHATTER_URL_LIKES = "%s/services/data/v22.0/chatter/feed-items/%s/likes";
+    private static final String CHATTER_URL_LIKE = "%s/services/data/v22.0/chatter/likes/%s";
+    private static final String CHATTER_URL_COMMENTS = "%s/services/data/v22.0/chatter/feed-items/%s/comments";
+    private static final String CHATTER_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
     private static final String INSTANCE_URL = "instance_url";
 
     private String mChatterInstance = null;
@@ -83,7 +85,8 @@ public class Chatter extends Client {
 
     private boolean getChatterInstance() {
         if (!hasChatterInstance()) {
-            String response = SonetHttpClient.httpResponse(mContext, new HttpPost(String.format(CHATTER_URL_ACCESS, BuildConfig.CHATTER_KEY, mToken)));
+            String response = SonetHttpClient
+                    .httpResponse(mContext, new HttpPost(String.format(CHATTER_URL_ACCESS, BuildConfig.CHATTER_KEY, mToken)));
 
             if (!TextUtils.isEmpty(response)) {
                 try {
@@ -129,7 +132,15 @@ public class Chatter extends Client {
 
     @Nullable
     @Override
-    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+    public void addFeedItem(@NonNull JSONObject item,
+            boolean display_profile,
+            boolean time24hr,
+            int appWidgetId,
+            long account,
+            HttpClient httpClient,
+            Set<String> notificationSids,
+            String[] notificationMessage,
+            boolean doNotify) throws JSONException {
         ArrayList<String[]> links = new ArrayList<>();
         JSONObject friendObj = item.getJSONObject(Suser);
         JSONObject photo = friendObj.getJSONObject(Sphoto);
@@ -215,7 +226,8 @@ public class Chatter extends Client {
         if (doLike) {
             httpRequest = new HttpPost(String.format(CHATTER_URL_LIKES, mChatterInstance, statusId));
         } else {
-            httpRequest = new HttpDelete(String.format(CHATTER_URL_LIKE, mChatterInstance, "" /* TODO replace this string with the like id from isLiked */));
+            httpRequest = new HttpDelete(
+                    String.format(CHATTER_URL_LIKE, mChatterInstance, "" /* TODO replace this string with the like id from isLiked */));
         }
 
         httpRequest.setHeader("Authorization", "OAuth " + mChatterToken);
@@ -343,7 +355,6 @@ public class Chatter extends Client {
         String token = uri.getQueryParameter(Saccess_token);
         String refresh_token = uri.getQueryParameter("refresh_token");
         String instance_url = uri.getQueryParameter("instance_url");
-
 
         HttpGet httpGet = new HttpGet(String.format(CHATTER_URL_ME, instance_url));
         httpGet.setHeader("Authorization", "OAuth " + token);

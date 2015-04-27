@@ -19,8 +19,6 @@
  */
 package com.piusvelte.sonet;
 
-import com.piusvelte.sonet.provider.Widgets;
-
 import android.app.Service;
 import android.content.Intent;
 import android.database.ContentObserver;
@@ -30,6 +28,8 @@ import android.os.IBinder;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.util.Log;
+
+import com.piusvelte.sonet.provider.Widgets;
 
 public class SonetUploader extends Service {
     private static final String TAG = "SonetUploader";
@@ -49,7 +49,8 @@ public class SonetUploader extends Service {
             @Override
             protected Boolean doInBackground(Void... arg0) {
                 Boolean upload = false;
-                Cursor c = getContentResolver().query(Widgets.getContentUri(SonetUploader.this), new String[]{Widgets._ID}, Widgets.INSTANT_UPLOAD + "=1", null, null);
+                Cursor c = getContentResolver()
+                        .query(Widgets.getContentUri(SonetUploader.this), new String[] { Widgets._ID }, Widgets.INSTANT_UPLOAD + "=1", null, null);
                 upload = c.moveToFirst();
                 c.close();
                 return upload;
@@ -70,9 +71,9 @@ public class SonetUploader extends Service {
                                     String filepath = null;
                                     // limit to those from the past 10 seconds
                                     Cursor c = getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                                            new String[]{MediaColumns.DATA},
+                                            new String[] { MediaColumns.DATA },
                                             MediaColumns.DATE_ADDED + ">?",
-                                            new String[]{Long.toString(System.currentTimeMillis() / 1000 - 10)},
+                                            new String[] { Long.toString(System.currentTimeMillis() / 1000 - 10) },
                                             MediaColumns.DATE_ADDED + " DESC");
 
                                     if (c.moveToFirst()) {
@@ -86,13 +87,14 @@ public class SonetUploader extends Service {
                                 @Override
                                 protected void onPostExecute(String filepath) {
                                     // launch post activity with filepath
-                                    if (filepath != null)
-                                        startActivity(Sonet.getPackageIntent(getApplicationContext(), StatusDialog.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP).putExtra(Widgets.INSTANT_UPLOAD, filepath));
+                                    if (filepath != null) {
+                                        startActivity(new Intent(SonetUploader.this, StatusDialog.class)
+                                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                                                .putExtra(Widgets.INSTANT_UPLOAD, filepath));
+                                    }
                                 }
-
                             }).execute();
                         }
-
                     };
                     getContentResolver().registerContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, false, mInstantUpload);
                 } else if (!upload && (mInstantUpload != null)) {
@@ -102,7 +104,6 @@ public class SonetUploader extends Service {
                     stopSelf();
                 }
             }
-
         }).execute();
     }
 
@@ -117,5 +118,4 @@ public class SonetUploader extends Service {
             getContentResolver().unregisterContentObserver(mInstantUpload);
         }
     }
-
 }

@@ -43,6 +43,5 @@ public class OAuthLoginLoader extends BaseAsyncTaskLoader {
         public Client client;
         public SonetOAuth sonetOAuth;
         public String authUrl;
-
     }
 }

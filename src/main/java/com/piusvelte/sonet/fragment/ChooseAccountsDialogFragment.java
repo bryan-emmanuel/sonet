@@ -3,7 +3,6 @@ package com.piusvelte.sonet.fragment;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 
-import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.provider.Accounts;
 
 import java.util.List;
@@ -19,7 +18,10 @@ public class ChooseAccountsDialogFragment {
     private static final String ARG_IDS = "ids";
     private static final String ARG_SERVICES = "services";
 
-    public static MultiChoiceDialogFragment newInstance(@NonNull List<Accounts.Account> accounts, @NonNull Map<Long, Integer> selectedAccounts, @NonNull String title, int requestCode) {
+    public static MultiChoiceDialogFragment newInstance(@NonNull List<Accounts.Account> accounts,
+            @NonNull Map<Long, Integer> selectedAccounts,
+            @NonNull String title,
+            int requestCode) {
         int i = 0;
         CharSequence[] items = new CharSequence[accounts.size()];
         boolean[] which = new boolean[items.length];

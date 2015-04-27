@@ -7,8 +7,6 @@ import android.support.annotation.Nullable;
 
 import java.util.HashMap;
 
-import static com.piusvelte.sonet.Sonet.INVALID_ACCOUNT_ID;
-
 /**
  * Created by bemmanuel on 4/11/15.
  */

@@ -19,24 +19,10 @@
  */
 package com.piusvelte.sonet;
 
-import static com.piusvelte.sonet.Sonet.*;
-
-import com.piusvelte.sonet.fragment.BaseDialogFragment;
-import com.piusvelte.sonet.fragment.LoadingDialogFragment;
-import com.piusvelte.sonet.fragment.RssNameDialogFragment;
-import com.piusvelte.sonet.fragment.RssUrlDialogFragment;
-import com.piusvelte.sonet.provider.Accounts;
-import com.piusvelte.sonet.provider.WidgetAccounts;
-import com.piusvelte.sonet.loader.AddRssLoader;
-import com.piusvelte.sonet.loader.MemberAuthenticationLoader;
-import com.piusvelte.sonet.loader.OAuthLoginLoader;
-import com.piusvelte.sonet.social.GooglePlus;
-import com.piusvelte.sonet.social.Client;
-
 import android.appwidget.AppWidgetManager;
 import android.content.ContentValues;
-import android.content.UriMatcher;
 import android.content.Intent;
+import android.content.UriMatcher;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -52,8 +38,24 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
+import com.piusvelte.sonet.fragment.BaseDialogFragment;
+import com.piusvelte.sonet.fragment.LoadingDialogFragment;
+import com.piusvelte.sonet.fragment.RssNameDialogFragment;
+import com.piusvelte.sonet.fragment.RssUrlDialogFragment;
+import com.piusvelte.sonet.loader.AddRssLoader;
+import com.piusvelte.sonet.loader.MemberAuthenticationLoader;
+import com.piusvelte.sonet.loader.OAuthLoginLoader;
+import com.piusvelte.sonet.provider.Accounts;
+import com.piusvelte.sonet.provider.WidgetAccounts;
+import com.piusvelte.sonet.social.Client;
+import com.piusvelte.sonet.social.GooglePlus;
+
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.piusvelte.sonet.Sonet.PINTEREST;
+import static com.piusvelte.sonet.Sonet.RSS;
+import static com.piusvelte.sonet.Sonet.SMS;
 
 public class OAuthLogin extends FragmentActivity implements LoaderManager.LoaderCallbacks, BaseDialogFragment.OnResultListener {
     private static final String TAG = "OAuthLogin";
@@ -97,13 +99,15 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
                 return new OAuthLoginLoader(this, args.getInt(LOADER_ARG_NETWORK));
 
             case LOADER_SMS:
-                return new CursorLoader(this, Accounts.getContentUri(this), new String[]{Accounts._ID}, Accounts.SERVICE + "=?", new String[]{Integer.toString(SMS)}, null);
+                return new CursorLoader(this, Accounts.getContentUri(this), new String[] { Accounts._ID }, Accounts.SERVICE + "=?",
+                        new String[] { Integer.toString(SMS) }, null);
 
             case LOADER_RSS:
                 return new AddRssLoader(this, args.getString(LOADER_ARG_RSS_URL));
 
             case LOADER_PINTEREST:
-                return new CursorLoader(this, Accounts.getContentUri(this), new String[]{Accounts._ID}, Accounts.SERVICE + "=?", new String[]{Integer.toString(PINTEREST)}, null);
+                return new CursorLoader(this, Accounts.getContentUri(this), new String[] { Accounts._ID }, Accounts.SERVICE + "=?",
+                        new String[] { Integer.toString(PINTEREST) }, null);
 
             case LOADER_MEMBER_AUTHENTICATION:
                 return new MemberAuthenticationLoader(this, mOAuthLoginLoaderResult, args.getString(LOADER_ARG_AUTHENTICATED_URL));
@@ -173,7 +177,8 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
                     if (((Cursor) data).moveToFirst()) {
                         (Toast.makeText(OAuthLogin.this, "Pinterest has already been added.", Toast.LENGTH_LONG)).show();
                     } else {
-                        Toast.makeText(OAuthLogin.this, "Pinterest currently allows only public, non-authenticated viewing.", Toast.LENGTH_LONG).show();
+                        Toast.makeText(OAuthLogin.this, "Pinterest currently allows only public, non-authenticated viewing.", Toast.LENGTH_LONG)
+                                .show();
                         String[] values = getResources().getStringArray(R.array.service_values);
                         String[] entries = getResources().getStringArray(R.array.service_entries);
 
@@ -195,7 +200,8 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
 
                 if (data instanceof Client.MemberAuthentication) {
                     Client.MemberAuthentication memberAuthentication = (Client.MemberAuthentication) data;
-                    addAccount(memberAuthentication.username, memberAuthentication.token, memberAuthentication.secret, memberAuthentication.expiry, memberAuthentication.network, memberAuthentication.id);
+                    addAccount(memberAuthentication.username, memberAuthentication.token, memberAuthentication.secret, memberAuthentication.expiry,
+                            memberAuthentication.network, memberAuthentication.id);
                     finish();
                 }
 
@@ -277,7 +283,6 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
                         getSupportLoaderManager().initLoader(LOADER_OAUTH_LOGIN, args, this);
                     }
                     break;
-
                 }
             }
         }
@@ -296,7 +301,7 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
         if (mAccountId != Sonet.INVALID_ACCOUNT_ID) {
             // re-authenticating
             accountId = Long.toString(mAccountId);
-            getContentResolver().update(Accounts.getContentUri(this), values, Accounts._ID + "=?", new String[]{Long.toString(mAccountId)});
+            getContentResolver().update(Accounts.getContentUri(this), values, Accounts._ID + "=?", new String[] { Long.toString(mAccountId) });
         } else {
             // new account
             accountId = getContentResolver().insert(Accounts.getContentUri(this), values).getLastPathSegment();
@@ -394,7 +399,6 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
 
                     return true;
                 }
-
             });
             WebSettings webSettings = mWebView.getSettings();
             webSettings.setJavaScriptEnabled(true);

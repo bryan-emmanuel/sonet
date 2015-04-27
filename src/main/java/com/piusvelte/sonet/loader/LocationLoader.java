@@ -31,9 +31,9 @@ public class LocationLoader extends BaseAsyncTaskLoader {
     public Object loadInBackground() {
         LocationResult result = null;
         Cursor account = mContext.getContentResolver().query(Accounts.getContentUri(mContext),
-                new String[]{Accounts._ID, Accounts.TOKEN, Accounts.SERVICE, Accounts.SECRET},
+                new String[] { Accounts._ID, Accounts.TOKEN, Accounts.SERVICE, Accounts.SECRET },
                 Accounts._ID + "=?",
-                new String[]{Long.toString(mAccountId)}, null);
+                new String[] { Long.toString(mAccountId) }, null);
 
         if (account.moveToFirst()) {
             SonetCrypto sonetCrypto = SonetCrypto.getInstance(mContext);

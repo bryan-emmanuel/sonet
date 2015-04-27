@@ -19,29 +19,27 @@
  */
 package com.piusvelte.sonet;
 
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
+
+import com.piusvelte.sonet.provider.StatusImages;
+import com.piusvelte.sonet.provider.Widgets;
+
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import android.appwidget.AppWidgetManager;
-import android.content.ComponentName;
-import android.content.ContentValues;
-import android.content.Context;
-import android.content.Intent;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Bitmap.Config;
-import android.os.PowerManager;
-import android.os.PowerManager.WakeLock;
-import android.util.Log;
-
-import com.piusvelte.sonet.provider.StatusImages;
-import com.piusvelte.sonet.provider.Widgets;
 
 public class Sonet {
 
@@ -63,131 +61,20 @@ public class Sonet {
     protected static int NOTIFY_ID = 1;
 
     public static final int TWITTER = 0;
-    public static final String TWITTER_BASE_URL = "https://api.twitter.com/";
-    public static final String TWITTER_URL_REQUEST = "%soauth/request_token";
-    public static final String TWITTER_URL_AUTHORIZE = "%soauth/authorize";
-    public static final String TWITTER_URL_ACCESS = "%soauth/access_token";
-    public static final String TWITTER_URL_FEED = "%s1.1/statuses/home_timeline.json?count=%s";
-    public static final String TWITTER_RETWEET = "%s1.1/statuses/retweets/%s.json";
-    public static final String TWITTER_USER = "%s1.1/users/show.json?user_id=%s";
-    public static final String TWITTER_UPDATE = "%s1.1/statuses/update.json";
-    public static final String TWITTER_SEARCH = "%s1.1/geo/search.json?lat=%s&long=%s";
-    protected static final String TWITTER_PROFILE = "http://twitter.com/%s";
-    public static final String TWITTER_DATE_FORMAT = "EEE MMM dd HH:mm:ss Z yyyy";
-    public static final String TWITTER_MENTIONS = "%s1.1/statuses/mentions_timeline.json%s";
-    public static final String TWITTER_SINCE_ID = "?since_id=%s";
-    public static final String TWITTER_VERIFY_CREDENTIALS = "%s1.1/account/verify_credentials.json";
-
     public static final int FACEBOOK = 1;
-    public static final String FACEBOOK_BASE_URL = "https://graph.facebook.com/";
-    public static final String FACEBOOK_URL_AUTHORIZE = "%soauth/authorize?client_id=%s&scope=offline_access,read_stream,publish_stream,publish_checkins&type=user_agent&redirect_uri=%s&display=touch&sdk=android";
-    public static final String FACEBOOK_URL_ME = "%sme?format=json&sdk=android&%s=%s";
-    public static final String FACEBOOK_HOME = "%sme/home?date_format=U&format=json&sdk=android&%s=%s&fields=actions,link,type,from,message,created_time,to,comments,story,source,picture";
-    public static final String FACEBOOK_POST = "%sme/feed?format=json&sdk=android&%s=%s";
-    //	protected static final String FACEBOOK_CHECKIN = "%sme/checkins?format=json&sdk=android&%s=%s";
-    public static final String FACEBOOK_LIKES = "%s%s/likes?format=json&sdk=android&%s=%s";
-    public static final String FACEBOOK_COMMENTS = "%s%s/comments?date_format=U&format=json&sdk=android&%s=%s";
-    public static final String FACEBOOK_SEARCH = "%ssearch?type=place&center=%s,%s&distance=1000&format=json&sdk=android&%s=%s";
-    //	protected static final String FACEBOOK_COORDINATES = "{\"latitude\":\"%s\",\"longitude\":\"%s\"}";
-    public static final String FACEBOOK_USER = "%s%s?format=json&sdk=android&%s=%s";
-    protected static final String FACEBOOK_PHOTOS = "%sme/photos?format=json&sdk=android&%s=%s";
-    public static final String FACEBOOK_FRIENDS = "%sme/friends?format=json&sdk=android&%s=%s";
-    public static final String FACEBOOK_PICTURE = "http://graph.facebook.com/%s/picture";
-
     public static final int MYSPACE = 2;
-    public static final String MYSPACE_BASE_URL = "http://api.myspace.com/1.0/";
-    public static final String MYSPACE_URL_REQUEST = "http://api.myspace.com/request_token";
-    public static final String MYSPACE_URL_AUTHORIZE = "http://api.myspace.com/authorize";
-    public static final String MYSPACE_URL_ACCESS = "http://api.myspace.com/access_token";
-    public static final String MYSPACE_URL_ME = "%speople/@me/@self";
-    public static final String MYSPACE_HISTORY = "%sstatusmood/@me/@friends/history?includeself=true&fields=author,source,recentComments";
-    public static final String MYSPACE_URL_STATUSMOOD = "%sstatusmood/@me/@self";
-    public static final String MYSPACE_URL_STATUSMOODCOMMENTS = "%sstatusmoodcomments/%s/@self/%s?format=json&includeself=true&fields=author";
-    public static final String MYSPACE_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
-    public static final String MYSPACE_STATUSMOOD_BODY = "{\"status\":\"%s\"}";
-    public static final String MYSPACE_STATUSMOODCOMMENTS_BODY = "{\"body\":\"%s\"}";
-    public static final String MYSPACE_USER = "%speople/%s/@self";
-
     public static final int FOURSQUARE = 4;
-    public static final String FOURSQUARE_BASE_URL = "https://api.foursquare.com/v2/";
-    public static final String FOURSQUARE_URL_AUTHORIZE = "https://foursquare.com/oauth2/authorize?client_id=%s&response_type=token&redirect_uri=%s&display=touch";
-    public static final String FOURSQUARE_URL_ME = "%susers/self?oauth_token=%s";
-    protected static final String FOURSQUARE_URL_USER = "%susers/%s?oauth_token=%s";
-    public static final String FOURSQUARE_URL_PROFILE = "https://foursquare.com/user/%s";
-    public static final String FOURSQUARE_CHECKINS = "%scheckins/recent?oauth_token=%s";
-    public static final String FOURSQUARE_CHECKIN = "%scheckins/add?venueId=%s&shout=%s&ll=%s,%s&broadcast=public&oauth_token=%s";
-    public static final String FOURSQUARE_CHECKIN_NO_VENUE = "%scheckins/add?shout=%s&broadcast=public&oauth_token=%s";
-    public static final String FOURSQUARE_CHECKIN_NO_SHOUT = "%scheckins/add?venueId=%s&ll=%s,%s&broadcast=public&oauth_token=%s";
-    public static final String FOURSQUARE_ADDCOMMENT = "%scheckins/%s/addcomment?text=%s&oauth_token=%s";
-    public static final String FOURSQUARE_SEARCH = "%svenues/search?ll=%s,%s&intent=checkin&oauth_token=%s";
-    public static final String FOURSQUARE_GET_CHECKIN = "%scheckins/%s?oauth_token=%s";
-
     public static final int LINKEDIN = 5;
-    public static final String LINKEDIN_BASE_URL = "https://api.linkedin.com/v1/people/~";
-    public static final String LINKEDIN_URL_REQUEST = "https://api.linkedin.com/uas/oauth/requestToken";
-    public static final String LINKEDIN_URL_AUTHORIZE = "https://www.linkedin.com/uas/oauth/authorize";
-    public static final String LINKEDIN_URL_ACCESS = "https://api.linkedin.com/uas/oauth/accessToken";
-    public static final String LINKEDIN_URL_ME = "%s:(id,first-name,last-name)";
-    public static final String LINKEDIN_URL_USER = "https://api.linkedin.com/v1/people/id=%s";
-    public static final String LINKEDIN_UPDATES = "%s/network/updates?type=APPS&type=CMPY&type=CONN&type=JOBS&type=JGRP&type=PICT&type=PRFU&type=RECU&type=PRFX&type=ANSW&type=QSTN&type=SHAR&type=VIRL";
-    public static final String[][] LINKEDIN_HEADERS = new String[][]{{"x-li-format", "json"}};
-    public static final String LINKEDIN_IS_LIKED = "%s/network/updates/key=%s/is-liked";
-    public static final String LINKEDIN_UPDATE = "%s/network/updates/key=%s";
-    public static final String LINKEDIN_UPDATE_COMMENTS = "%s/network/updates/key=%s/update-comments";
-    public static final String LINKEDIN_POST = "%s/person-activities";
-    public static final String LINKEDIN_POST_BODY = "<?xml version='1.0' encoding='UTF-8'?><activity locale=\"%s\"><content-type>linkedin-html</content-type><body>%s</body></activity>";
-    public static final String LINKEDIN_COMMENT_BODY = "<?xml version='1.0' encoding='UTF-8'?><update-comment><comment>%s</comment></update-comment>";
-    public static final String LINKEDIN_LIKE_BODY = "<?xml version='1.0' encoding='UTF-8'?><is-liked>%s</is-liked>";
-
     public static final int SMS = 6;
     public static final int RSS = 7;
-
     public static final int IDENTICA = 8;
-    public static final String IDENTICA_BASE_URL = "https://identi.ca/api/";
-    public static final String IDENTICA_URL_REQUEST = "%soauth/request_token";
-    public static final String IDENTICA_URL_AUTHORIZE = "%soauth/authorize";
-    public static final String IDENTICA_URL_ACCESS = "%soauth/access_token";
-    public static final String IDENTICA_URL_FEED = "%sstatuses/home_timeline.json?count=%s";
-    public static final String IDENTICA_RETWEET = "%sstatuses/retweet/%s.json";
-    protected static final String IDENTICA_USER = "%susers/show.json?user_id=%s";
-    public static final String IDENTICA_UPDATE = "%sstatuses/update.json";
-    protected static final String IDENTICA_PROFILE = "http://identi.ca/%s";
-    protected static final String IDENTICA_DATE_FORMAT = "EEE MMM dd HH:mm:ss Z yyyy";
-    public static final String IDENTICA_MENTIONS = "%sstatuses/mentions.json%s";
-    public static final String IDENTICA_SINCE_ID = "?since_id=%s";
-
     public static final int GOOGLEPLUS = 9;
-    public static final String GOOGLEPLUS_AUTHORIZE = "https://accounts.google.com/o/oauth2/auth?client_id=%s&redirect_uri=%s&scope=https://www.googleapis.com/auth/plus.me&response_type=code";
-    public static final String GOOGLE_ACCESS = "https://accounts.google.com/o/oauth2/token";
-    public static final String GOOGLEPLUS_BASE_URL = "https://www.googleapis.com/plus/v1/";
-    public static final String GOOGLEPLUS_URL_ME = "%speople/me?fields=displayName,id&access_token=%s";
-    public static final String GOOGLEPLUS_ACTIVITIES = "%speople/%s/activities/%s?maxResults=%s&access_token=%s";
-    public static final String GOOGLEPLUS_ACTIVITY = "%sactivities/%s?access_token=%s";
-    public static final String GOOGLEPLUS_PROFILE = "https://plus.google.com/%s";
-    public static final String GOOGLEPLUS_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
-
     public static final int PINTEREST = 10;
-    public static final String PINTEREST_BASE_URL = "https://api.pinterest.com/v2/";
-    public static final String PINTEREST_URL_FEED = "%spopular/";
-    protected static final String PINTEREST_PIN = "https://pinterest.com/pin/%s/";
-    public static final String PINTEREST_PROFILE = "https://pinterest.com/%s/";
-    public static final String PINTEREST_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
-
     public static final int CHATTER = 11;
-    public static final String CHATTER_URL_AUTHORIZE = "https://login.salesforce.com/services/oauth2/authorize?response_type=token&display=touch&client_id=%s&redirect_uri=%s";
-    public static final String CHATTER_URL_ACCESS = "https://login.salesforce.com/services/oauth2/token?grant_type=refresh_token&client_id=%s&refresh_token=%s";
-    public static final String CHATTER_URL_ME = "%s/services/data/v22.0/chatter/users/me";
-    public static final String CHATTER_URL_POST = "%s/services/data/v22.0/chatter/feeds/news/me/feed-items?text=%s";
-    public static final String CHATTER_URL_COMMENT = "%s/services/data/v22.0/chatter/feed-items/%s/comments?text=%s";
-    public static final String CHATTER_URL_FEED = "%s/services/data/v22.0/chatter/feeds/news/me/feed-items";
-    public static final String CHATTER_URL_LIKES = "%s/services/data/v22.0/chatter/feed-items/%s/likes";
-    public static final String CHATTER_URL_LIKE = "%s/services/data/v22.0/chatter/likes/%s";
-    public static final String CHATTER_URL_COMMENTS = "%s/services/data/v22.0/chatter/feed-items/%s/comments";
-    public static final String CHATTER_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
     protected static final String AM = "a.m.";
     protected static final String PM = "p.m.";
-    protected static final String[] MONTHS = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+    protected static final String[] MONTHS = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 
     public static final String Sid = "id";
     public static final String Sname = "name";
@@ -331,16 +218,18 @@ public class Sonet {
     protected static final boolean default_lights = false;
     protected static final boolean default_instantUpload = false;
 
-    public Sonet() {
+    private Sonet() {
+        // not instantiable
     }
 
-    public static String getAuthority(Context context) {
+    public static final String getAuthority(Context context) {
         return !context.getPackageName().toLowerCase().contains(PRO) ? SonetProvider.AUTHORITY : SonetProvider.PRO_AUTHORITY;
     }
 
     public static final TimeZone sTimeZone = TimeZone.getTimeZone("GMT");
 
-    public static final String[] sRFC822 = {"EEE, d MMM yy HH:mm:ss z", "EEE, d MMM yy HH:mm z", "EEE, d MMM yyyy HH:mm:ss z", "EEE, d MMM yyyy HH:mm z", "d MMM yy HH:mm z", "d MMM yy HH:mm:ss z", "d MMM yyyy HH:mm z", "d MMM yyyy HH:mm:ss z"};
+    public static final String[] sRFC822 = { "EEE, d MMM yy HH:mm:ss z", "EEE, d MMM yy HH:mm z", "EEE, d MMM yyyy HH:mm:ss z", "EEE, d MMM yyyy " +
+            "HH:mm z", "d MMM yy HH:mm z", "d MMM yy HH:mm:ss z", "d MMM yyyy HH:mm z", "d MMM yyyy HH:mm:ss z" };
 
     public static String getCreatedText(long epoch, boolean time24hr) {
         Calendar calendar = Calendar.getInstance();
@@ -349,7 +238,8 @@ public class Sonet {
         todayCal.setTimeInMillis(System.currentTimeMillis());
         int hours = calendar.get(Calendar.HOUR_OF_DAY);
         // check if the date is from the same day
-        if ((calendar.get(Calendar.ERA) == todayCal.get(Calendar.ERA)) && (calendar.get(Calendar.YEAR) == todayCal.get(Calendar.YEAR)) && (calendar.get(Calendar.DAY_OF_YEAR) == todayCal.get(Calendar.DAY_OF_YEAR))) {
+        if ((calendar.get(Calendar.ERA) == todayCal.get(Calendar.ERA)) && (calendar.get(Calendar.YEAR) == todayCal.get(Calendar.YEAR)) && (calendar
+                .get(Calendar.DAY_OF_YEAR) == todayCal.get(Calendar.DAY_OF_YEAR))) {
             if (time24hr) {
                 return String.format("%d:%02d", hours, calendar.get(Calendar.MINUTE));
             } else {
@@ -369,42 +259,29 @@ public class Sonet {
         }
     }
 
-    public static Class getPackageClass(Context context, Class cls) {
-        try {
-            return Class.forName(context.getPackageName() + "." + cls.getSimpleName());
-        } catch (ClassNotFoundException e) {
-            Log.e(TAG, e.getMessage());
-        }
-        return cls;
-    }
-
-    public static Intent getPackageIntent(Context context, Class cls) {
-        return new Intent(context, getPackageClass(context, cls));
-    }
-
     public static int[] getWidgets(Context context, AppWidgetManager awm) {
         int[] widgets = new int[0];
-        Class[] clazzes = new Class[]{SonetWidget_2x2.class, SonetWidget_2x3.class, SonetWidget_2x4.class, SonetWidget_4x2.class, SonetWidget_4x3.class, SonetWidget_4x4.class};
+        Class[] clazzes = new Class[] { SonetWidget_2x2.class, SonetWidget_2x3.class, SonetWidget_2x4.class, SonetWidget_4x2.class, SonetWidget_4x3
+                .class, SonetWidget_4x4.class };
 
         for (Class clazz : clazzes) {
-            widgets = Sonet.arrayCat(widgets, awm.getAppWidgetIds(new ComponentName(context, getPackageClass(context, clazz))));
+            widgets = Sonet.arrayCat(widgets, awm.getAppWidgetIds(new ComponentName(context, clazz)));
         }
 
         return widgets;
     }
 
     public static String getServiceName(Resources r, int service) {
-        String name = null;
         String[] entries = r.getStringArray(R.array.service_entries);
         String[] values = r.getStringArray(R.array.service_values);
 
-        for (int i = 0, l = values.length; (i < l) && (name == null); i++) {
+        for (int i = 0, l = values.length; i < l; i++) {
             if (Integer.toString(service).equals(values[i])) {
-                name = entries[i];
+                return entries[i];
             }
         }
 
-        return name;
+        return null;
     }
 
     public static int[] arrayCat(int[] a, int[] b) {
@@ -432,9 +309,11 @@ public class Sonet {
 
     public static boolean arrayContains(int[] a, int b) {
         for (int c : a) {
-            if (c == b)
+            if (c == b) {
                 return true;
+            }
         }
+
         return false;
     }
 
@@ -530,5 +409,4 @@ public class Sonet {
 
         return false;
     }
-
 }

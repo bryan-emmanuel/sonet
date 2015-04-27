@@ -23,9 +23,8 @@ import android.content.Intent;
 
 public class SonetRemoteViewsService extends android.widget.RemoteViewsService {
 
-	@Override
-	public RemoteViewsFactory onGetViewFactory(Intent intent) {
-		return new SonetRemoteViewsFactory(this.getApplicationContext(), intent);
-	}
-
+    @Override
+    public RemoteViewsFactory onGetViewFactory(Intent intent) {
+        return new SonetRemoteViewsFactory(this.getApplicationContext(), intent);
+    }
 }

@@ -189,7 +189,7 @@ public class Rss extends Client {
                         }
                     }
 
-                    if (Sonet.HasValues(new String[]{title, description, link, date})) {
+                    if (Sonet.HasValues(new String[] { title, description, link, date })) {
                         feedItems.put(new JSONObject()
                                 .put(Stitle, title)
                                 .put(Sdescription, description)
@@ -213,8 +213,17 @@ public class Rss extends Client {
 
     @Nullable
     @Override
-    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
-        addStatusItem(item.getLong(Spubdate), item.getString(Stitle), display_profile ? item.getString(Simage) : null, item.getString(Sdescription), time24hr, appWidgetId, account, null, item.getString(Slink), new ArrayList<String[]>(), httpClient);
+    public void addFeedItem(@NonNull JSONObject item,
+            boolean display_profile,
+            boolean time24hr,
+            int appWidgetId,
+            long account,
+            HttpClient httpClient,
+            Set<String> notificationSids,
+            String[] notificationMessage,
+            boolean doNotify) throws JSONException {
+        addStatusItem(item.getLong(Spubdate), item.getString(Stitle), display_profile ? item.getString(Simage) : null, item.getString(Sdescription),
+                time24hr, appWidgetId, account, null, item.getString(Slink), new ArrayList<String[]>(), httpClient);
     }
 
     @Nullable

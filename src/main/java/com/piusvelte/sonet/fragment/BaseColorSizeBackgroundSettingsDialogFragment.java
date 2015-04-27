@@ -144,7 +144,8 @@ public abstract class BaseColorSizeBackgroundSettingsDialogFragment extends Base
                 break;
 
             case REQUEST_SIZE:
-                getArguments().putInt(ARG_SIZE, Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[SingleChoiceDialogFragment.getWhich(data, 0)]));
+                getArguments().putInt(ARG_SIZE,
+                        Integer.parseInt(getResources().getStringArray(R.array.textsize_values)[SingleChoiceDialogFragment.getWhich(data, 0)]));
                 break;
 
             case REQUEST_BACKGROUND:

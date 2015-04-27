@@ -48,7 +48,8 @@ import static com.piusvelte.sonet.Sonet.MYSPACE;
 /**
  * Created by bemmanuel on 4/21/15.
  */
-public class CommentsList extends ListFragment implements TextWatcher, View.OnKeyListener, View.OnClickListener, LoaderManager.LoaderCallbacks, BaseDialogFragment.OnResultListener {
+public class CommentsList extends ListFragment
+        implements TextWatcher, View.OnKeyListener, View.OnClickListener, LoaderManager.LoaderCallbacks, BaseDialogFragment.OnResultListener {
 
     private static final int LOADER_COMMENTS = 0;
     private static final int LOADER_SEND = 1;
@@ -123,14 +124,14 @@ public class CommentsList extends ListFragment implements TextWatcher, View.OnKe
         mAdapter = new SimpleAdapter(getActivity(),
                 mComments,
                 R.layout.comment,
-                new String[]{Entities.FRIEND,
+                new String[] { Entities.FRIEND,
                         Statuses.MESSAGE,
                         Statuses.CREATEDTEXT,
-                        getString(R.string.like)},
-                new int[]{R.id.friend,
+                        getString(R.string.like) },
+                new int[] { R.id.friend,
                         R.id.message,
                         R.id.created,
-                        R.id.like});
+                        R.id.like });
 
         setListAdapter(mAdapter);
 
@@ -372,7 +373,8 @@ public class CommentsList extends ListFragment implements TextWatcher, View.OnKe
                     Toast.makeText(getActivity(), mServiceName + " " + getString(R.string.success), Toast.LENGTH_LONG).show();
                 } else if (mService == MYSPACE) {
                     // myspace permissions
-                    Toast.makeText(getActivity(), getActivity().getResources().getStringArray(R.array.service_entries)[MYSPACE] + getString(R.string.failure) + " " + getString(R.string.myspace_permissions_message), Toast.LENGTH_LONG).show();
+                    Toast.makeText(getActivity(), getActivity().getResources().getStringArray(R.array.service_entries)[MYSPACE] + getString(
+                            R.string.failure) + " " + getString(R.string.myspace_permissions_message), Toast.LENGTH_LONG).show();
                 } else {
                     Toast.makeText(getActivity(), mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG).show();
                 }
@@ -387,11 +389,11 @@ public class CommentsList extends ListFragment implements TextWatcher, View.OnKe
 
                 if (data instanceof LikeCommentLoader.Result) {
                     LikeCommentLoader.Result result = (LikeCommentLoader.Result) data;
-                    Toast.makeText(getActivity(), mServiceName + " " + getString(result.wasSuccessful ? R.string.success : R.string.failure), Toast.LENGTH_LONG).show();
+                    Toast.makeText(getActivity(), mServiceName + " " + getString(result.wasSuccessful ? R.string.success : R.string.failure),
+                            Toast.LENGTH_LONG).show();
                 } else {
                     Toast.makeText(getActivity(), mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG).show();
                 }
-
 
                 break;
         }

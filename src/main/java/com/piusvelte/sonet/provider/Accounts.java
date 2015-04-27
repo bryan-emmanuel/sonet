@@ -53,11 +53,11 @@ public class Accounts implements BaseColumns {
 
         if (id != INVALID_ACCOUNT_ID) {
             selection = _ID + "=?";
-            selectionArgs = new String[]{Long.toString(id)};
+            selectionArgs = new String[] { Long.toString(id) };
         }
 
         return context.getContentResolver().query(getContentUri(context),
-                new String[]{_ID, ACCOUNTS_QUERY, SERVICE},
+                new String[] { _ID, ACCOUNTS_QUERY, SERVICE },
                 selection,
                 selectionArgs,
                 null);

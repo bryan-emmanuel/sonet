@@ -19,20 +19,6 @@
  */
 package com.piusvelte.sonet;
 
-import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
-import static com.piusvelte.sonet.Sonet.PRO;
-import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
-
-
-import com.google.ads.*;
-import com.piusvelte.sonet.fragment.BaseDialogFragment;
-import com.piusvelte.sonet.fragment.ConfirmationDialogFragment;
-import com.piusvelte.sonet.fragment.ItemsDialogFragment;
-import com.piusvelte.sonet.provider.Accounts;
-import com.piusvelte.sonet.provider.WidgetAccounts;
-import com.piusvelte.sonet.provider.Widgets;
-import com.piusvelte.sonet.provider.WidgetsSettings;
-
 import android.app.WallpaperManager;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
@@ -50,6 +36,21 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+
+import com.google.ads.AdRequest;
+import com.google.ads.AdSize;
+import com.google.ads.AdView;
+import com.piusvelte.sonet.fragment.BaseDialogFragment;
+import com.piusvelte.sonet.fragment.ConfirmationDialogFragment;
+import com.piusvelte.sonet.fragment.ItemsDialogFragment;
+import com.piusvelte.sonet.provider.Accounts;
+import com.piusvelte.sonet.provider.WidgetAccounts;
+import com.piusvelte.sonet.provider.Widgets;
+import com.piusvelte.sonet.provider.WidgetsSettings;
+
+import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
+import static com.piusvelte.sonet.Sonet.PRO;
+import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 
 public class About extends FragmentActivity implements LoaderManager.LoaderCallbacks<Cursor>, BaseDialogFragment.OnResultListener {
     private int[] mAppWidgetIds;
@@ -96,19 +97,22 @@ public class About extends FragmentActivity implements LoaderManager.LoaderCallb
         int itemId = item.getItemId();
 
         if (itemId == R.id.menu_about_refresh) {
-            startService(Sonet.getPackageIntent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID).setAction(ACTION_REFRESH));
+            startService(new Intent(this, SonetService.class)
+                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID).setAction(ACTION_REFRESH));
             return true;
         } else if (itemId == R.id.menu_about_accounts_and_settings) {
-            startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
+            startActivity(new Intent(this, ManageAccounts.class)
+                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID));
             return true;
         } else if (itemId == R.id.menu_about_default_settings) {
-            startActivityForResult(Sonet.getPackageIntent(this, Settings.class), RESULT_REFRESH);
+            startActivityForResult(new Intent(this, Settings.class), RESULT_REFRESH);
             return true;
         } else if (itemId == R.id.menu_about_refresh_widgets) {
-            startService(Sonet.getPackageIntent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
+            startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH)
+                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
             return true;
         } else if (itemId == R.id.menu_about_notifications) {
-            startActivity(Sonet.getPackageIntent(this, SonetNotifications.class));
+            startActivity(new Intent(this, SonetNotifications.class));
             return true;
         } else if (itemId == R.id.menu_about_widget_settings) {
             if (mAppWidgetIds.length > 0) {
@@ -149,7 +153,7 @@ public class About extends FragmentActivity implements LoaderManager.LoaderCallb
     protected void onPause() {
         if (mUpdateWidget) {
             (Toast.makeText(getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
-            startService(Sonet.getPackageIntent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
+            startService(new Intent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
         }
 
         super.onPause();
@@ -174,7 +178,7 @@ public class About extends FragmentActivity implements LoaderManager.LoaderCallb
     public void onResult(int requestCode, int result, Intent data) {
         switch (requestCode) {
             case REQUEST_WIDGET:
-                startActivity(Sonet.getPackageIntent(this, ManageAccounts.class)
+                startActivity(new Intent(this, ManageAccounts.class)
                         .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[ItemsDialogFragment.getWhich(data, 0)]));
                 break;
         }
@@ -186,16 +190,16 @@ public class About extends FragmentActivity implements LoaderManager.LoaderCallb
             case LOADER_ACCOUNTS:
                 return new CursorLoader(this,
                         WidgetAccounts.getContentUri(this),
-                        new String[]{WidgetAccounts._ID},
+                        new String[] { WidgetAccounts._ID },
                         WidgetAccounts.WIDGET + "=?",
-                        new String[]{String.valueOf(AppWidgetManager.INVALID_APPWIDGET_ID)},
+                        new String[] { String.valueOf(AppWidgetManager.INVALID_APPWIDGET_ID) },
                         null);
 
             case LOADER_DEFAULT_WIDGET:
                 return new CursorLoader(this, WidgetsSettings.getContentUri(this),
-                        new String[]{Widgets.DISPLAY_PROFILE},
+                        new String[] { Widgets.DISPLAY_PROFILE },
                         Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
-                        new String[]{String.valueOf(AppWidgetManager.INVALID_APPWIDGET_ID), String.valueOf(Accounts.INVALID_ACCOUNT_ID)},
+                        new String[] { String.valueOf(AppWidgetManager.INVALID_APPWIDGET_ID), String.valueOf(Accounts.INVALID_ACCOUNT_ID) },
                         null);
 
             default:

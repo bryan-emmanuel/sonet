@@ -19,30 +19,6 @@
  */
 package com.piusvelte.sonet;
 
-import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_PHOTOS;
-import static com.piusvelte.sonet.Sonet.NOTIFY_ID;
-import static com.piusvelte.sonet.Sonet.Saccess_token;
-import static com.piusvelte.sonet.Sonet.Smessage;
-import static com.piusvelte.sonet.Sonet.Splace;
-import static com.piusvelte.sonet.Sonet.Ssource;
-import static com.piusvelte.sonet.Sonet.Stags;
-
-import java.io.File;
-import java.io.UnsupportedEncodingException;
-
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.mime.HttpMultipartMode;
-import org.apache.http.entity.mime.MultipartEntity;
-import org.apache.http.entity.mime.content.ContentBody;
-import org.apache.http.entity.mime.content.FileBody;
-import org.apache.http.entity.mime.content.StringBody;
-
-import com.piusvelte.sonet.provider.Accounts;
-import com.piusvelte.sonet.provider.Statuses;
-import com.piusvelte.sonet.provider.Widgets;
-
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -52,6 +28,30 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.IBinder;
 import android.util.Log;
+
+import com.piusvelte.sonet.provider.Accounts;
+import com.piusvelte.sonet.provider.Statuses;
+import com.piusvelte.sonet.provider.Widgets;
+import com.piusvelte.sonet.social.Facebook;
+
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.content.ContentBody;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.StringBody;
+
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+
+import static com.piusvelte.sonet.social.Facebook.FACEBOOK_BASE_URL;
+import static com.piusvelte.sonet.Sonet.NOTIFY_ID;
+import static com.piusvelte.sonet.Sonet.Saccess_token;
+import static com.piusvelte.sonet.Sonet.Smessage;
+import static com.piusvelte.sonet.Sonet.Splace;
+import static com.piusvelte.sonet.Sonet.Ssource;
+import static com.piusvelte.sonet.Sonet.Stags;
 
 public class PhotoUploadService extends Service {
     private static final String TAG = "PhotoUploadService";
@@ -90,7 +90,8 @@ public class PhotoUploadService extends Service {
 
                     // upload a photo
                     Notification notification = new Notification(R.drawable.notification, "uploading photo", System.currentTimeMillis());
-                    notification.setLatestEventInfo(getBaseContext(), "photo upload", "uploading", PendingIntent.getActivity(PhotoUploadService.this, 0, (Sonet.getPackageIntent(PhotoUploadService.this, About.class)), 0));
+                    notification.setLatestEventInfo(getBaseContext(), "photo upload", "uploading",
+                            PendingIntent.getActivity(PhotoUploadService.this, 0, new Intent(PhotoUploadService.this, About.class), 0));
                     ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
                     (new AsyncTask<String, Void, String>() {
 
@@ -99,7 +100,7 @@ public class PhotoUploadService extends Service {
                             String response = null;
                             if (params.length > 2) {
                                 Log.d(TAG, "upload file: " + params[2]);
-                                HttpPost httpPost = new HttpPost(String.format(FACEBOOK_PHOTOS, FACEBOOK_BASE_URL, Saccess_token, params[0]));
+                                HttpPost httpPost = new HttpPost(String.format(Facebook.FACEBOOK_PHOTOS, FACEBOOK_BASE_URL, Saccess_token, params[0]));
                                 MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
                                 File file = new File(params[2]);
                                 ContentBody fileBody = new FileBody(file);
@@ -107,10 +108,12 @@ public class PhotoUploadService extends Service {
                                 HttpClient httpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
                                 try {
                                     entity.addPart(Smessage, new StringBody(params[1]));
-                                    if (params[3] != null)
+                                    if (params[3] != null) {
                                         entity.addPart(Splace, new StringBody(params[3]));
-                                    if (params[4] != null)
+                                    }
+                                    if (params[4] != null) {
                                         entity.addPart(Stags, new StringBody(params[4]));
+                                    }
                                     httpPost.setEntity(entity);
                                     response = SonetHttpClient.httpResponse(httpClient, httpPost);
                                 } catch (UnsupportedEncodingException e) {
@@ -124,13 +127,15 @@ public class PhotoUploadService extends Service {
                         protected void onPostExecute(String response) {
                             // notify photo success
                             String message = getString(response != null ? R.string.success : R.string.failure);
-                            Notification notification = new Notification(R.drawable.notification, "photo upload " + message, System.currentTimeMillis());
-                            notification.setLatestEventInfo(getBaseContext(), "photo upload", message, PendingIntent.getActivity(PhotoUploadService.this, 0, (Sonet.getPackageIntent(PhotoUploadService.this, About.class)), 0));
+                            Notification notification = new Notification(R.drawable.notification, "photo upload " + message,
+                                    System.currentTimeMillis());
+                            notification.setLatestEventInfo(getBaseContext(), "photo upload", message, PendingIntent
+                                    .getActivity(PhotoUploadService.this, 0, new Intent(PhotoUploadService.this, About.class), 0));
                             ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
                             stopSelfResult(mStartId);
                         }
-
-                    }).execute(intent.getStringExtra(Accounts.TOKEN), intent.getStringExtra(Statuses.MESSAGE), intent.getStringExtra(Widgets.INSTANT_UPLOAD), place, tags);
+                    }).execute(intent.getStringExtra(Accounts.TOKEN), intent.getStringExtra(Statuses.MESSAGE),
+                            intent.getStringExtra(Widgets.INSTANT_UPLOAD), place, tags);
                 }
             }
         }
@@ -140,5 +145,4 @@ public class PhotoUploadService extends Service {
     public IBinder onBind(Intent arg0) {
         return null;
     }
-
 }

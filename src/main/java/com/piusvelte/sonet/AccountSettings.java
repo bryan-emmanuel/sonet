@@ -19,22 +19,6 @@
  */
 package com.piusvelte.sonet;
 
-import static com.piusvelte.sonet.Sonet.PRO;
-import static com.piusvelte.sonet.Sonet.initAccountSettings;
-
-import com.google.ads.*;
-import com.piusvelte.sonet.fragment.BaseDialogFragment;
-import com.piusvelte.sonet.fragment.LoadingDialogFragment;
-import com.piusvelte.sonet.fragment.MessageSettingsDialogFragment;
-import com.piusvelte.sonet.fragment.NameSettingsDialogFragment;
-import com.piusvelte.sonet.fragment.NotificationSettingsDialogFragment;
-import com.piusvelte.sonet.fragment.ProfileSettingsDialogFragment;
-import com.piusvelte.sonet.fragment.SingleChoiceDialogFragment;
-import com.piusvelte.sonet.fragment.TimeSettingsDialogFragment;
-import com.piusvelte.sonet.provider.Accounts;
-import com.piusvelte.sonet.provider.Widgets;
-import com.piusvelte.sonet.provider.WidgetsSettings;
-
 import android.app.WallpaperManager;
 import android.appwidget.AppWidgetManager;
 import android.content.ContentValues;
@@ -53,7 +37,26 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 
-public class AccountSettings extends FragmentActivity implements OnClickListener, LoaderManager.LoaderCallbacks<Cursor>, BaseDialogFragment.OnResultListener {
+import com.google.ads.AdRequest;
+import com.google.ads.AdSize;
+import com.google.ads.AdView;
+import com.piusvelte.sonet.fragment.BaseDialogFragment;
+import com.piusvelte.sonet.fragment.LoadingDialogFragment;
+import com.piusvelte.sonet.fragment.MessageSettingsDialogFragment;
+import com.piusvelte.sonet.fragment.NameSettingsDialogFragment;
+import com.piusvelte.sonet.fragment.NotificationSettingsDialogFragment;
+import com.piusvelte.sonet.fragment.ProfileSettingsDialogFragment;
+import com.piusvelte.sonet.fragment.SingleChoiceDialogFragment;
+import com.piusvelte.sonet.fragment.TimeSettingsDialogFragment;
+import com.piusvelte.sonet.provider.Accounts;
+import com.piusvelte.sonet.provider.Widgets;
+import com.piusvelte.sonet.provider.WidgetsSettings;
+
+import static com.piusvelte.sonet.Sonet.PRO;
+import static com.piusvelte.sonet.Sonet.initAccountSettings;
+
+public class AccountSettings extends FragmentActivity
+        implements OnClickListener, LoaderManager.LoaderCallbacks<Cursor>, BaseDialogFragment.OnResultListener {
 
     private static final int LOADER_WIDGET_SETTINGS = 0;
 
@@ -143,7 +146,7 @@ public class AccountSettings extends FragmentActivity implements OnClickListener
     private void updateDatabase(String column, int value) {
         ContentValues values = new ContentValues();
         values.put(column, value);
-        getContentResolver().update(Widgets.getContentUri(this), values, Widgets._ID + "=?", new String[]{mWidgetAccountSettingsId});
+        getContentResolver().update(Widgets.getContentUri(this), values, Widgets._ID + "=?", new String[] { mWidgetAccountSettingsId });
         setResult(RESULT_OK);
     }
 
@@ -189,7 +192,8 @@ public class AccountSettings extends FragmentActivity implements OnClickListener
             // bg color
             // text size
             // icon enabled
-            MessageSettingsDialogFragment.newInstance(REQUEST_MESSAGE_SETTINGS, mMessages_color_value, mMessages_textsize_value, mMessages_bg_color_value, mIcon_value)
+            MessageSettingsDialogFragment
+                    .newInstance(REQUEST_MESSAGE_SETTINGS, mMessages_color_value, mMessages_textsize_value, mMessages_bg_color_value, mIcon_value)
                     .show(getSupportFragmentManager(), DIALOG_MESSAGE_SETTINGS);
         }
     }
@@ -200,7 +204,7 @@ public class AccountSettings extends FragmentActivity implements OnClickListener
             case LOADER_WIDGET_SETTINGS:
                 return new CursorLoader(this,
                         WidgetsSettings.getContentUri(this),
-                        new String[]{Widgets._ID,
+                        new String[] { Widgets._ID,
                                 Widgets.WIDGET,
                                 Widgets.ACCOUNT,
                                 Widgets.MESSAGES_COLOR,
@@ -218,9 +222,10 @@ public class AccountSettings extends FragmentActivity implements OnClickListener
                                 Widgets.VIBRATE,
                                 Widgets.LIGHTS,
                                 Widgets.PROFILES_BG_COLOR,
-                                Widgets.FRIEND_BG_COLOR},
+                                Widgets.FRIEND_BG_COLOR },
                         "(" + Widgets.WIDGET + "=? or " + Widgets.WIDGET + "=?) and (" + Widgets.ACCOUNT + "=? or " + Widgets.ACCOUNT + "=?)",
-                        new String[]{Integer.toString(mAppWidgetId), Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(mAccountId), Long.toString(Sonet.INVALID_ACCOUNT_ID)},
+                        new String[] { Integer.toString(mAppWidgetId), Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long
+                                .toString(mAccountId), Long.toString(Sonet.INVALID_ACCOUNT_ID) },
                         Widgets.WIDGET + " DESC, " + Widgets.ACCOUNT + " DESC");
 
             default:
@@ -273,7 +278,6 @@ public class AccountSettings extends FragmentActivity implements OnClickListener
                         mLights_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.LIGHTS)) == 1;
                         mProfiles_bg_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.PROFILES_BG_COLOR));
                         mFriend_bg_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.FRIEND_BG_COLOR));
-
 
                         mStatuses_per_account.setOnClickListener(this);
 

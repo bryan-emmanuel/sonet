@@ -19,7 +19,10 @@ public class MultiChoiceDialogFragment extends DialogFragment implements DialogI
     private static final String ARG_WHICH = "which";
     private static final String ARG_TITLE = "title";
 
-    public static MultiChoiceDialogFragment newInstance(@NonNull CharSequence[] items, @NonNull boolean[] which, @NonNull String title, int requestCode) {
+    public static MultiChoiceDialogFragment newInstance(@NonNull CharSequence[] items,
+            @NonNull boolean[] which,
+            @NonNull String title,
+            int requestCode) {
         Bundle args = new Bundle();
         args.putInt(ARG_REQUEST_CODE, requestCode);
         args.putCharSequenceArray(ARG_ITEMS, items);
@@ -30,7 +33,6 @@ public class MultiChoiceDialogFragment extends DialogFragment implements DialogI
         chooseAccountDialogFragment.setArguments(args);
         return chooseAccountDialogFragment;
     }
-
 
     @NonNull
     @Override
@@ -75,6 +77,5 @@ public class MultiChoiceDialogFragment extends DialogFragment implements DialogI
     public interface OnMultiChoiceClickListener {
 
         void onClick(MultiChoiceDialogFragment multiChoiceDialogFragment, int requestCode, int which, boolean isChecked);
-
     }
 }

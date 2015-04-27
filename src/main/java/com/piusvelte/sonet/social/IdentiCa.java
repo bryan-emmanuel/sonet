@@ -6,22 +6,23 @@ import android.support.annotation.Nullable;
 
 import com.piusvelte.sonet.BuildConfig;
 
-import java.util.HashMap;
-import java.util.List;
-
-import static com.piusvelte.sonet.Sonet.IDENTICA_BASE_URL;
-import static com.piusvelte.sonet.Sonet.IDENTICA_MENTIONS;
-import static com.piusvelte.sonet.Sonet.IDENTICA_UPDATE;
-import static com.piusvelte.sonet.Sonet.IDENTICA_URL_ACCESS;
-import static com.piusvelte.sonet.Sonet.IDENTICA_URL_AUTHORIZE;
-import static com.piusvelte.sonet.Sonet.IDENTICA_URL_FEED;
-import static com.piusvelte.sonet.Sonet.IDENTICA_RETWEET;
-import static com.piusvelte.sonet.Sonet.IDENTICA_URL_REQUEST;
-
 /**
  * Created by bemmanuel on 2/15/15.
  */
 public class IdentiCa extends Twitter {
+
+    private static final String IDENTICA_BASE_URL = "https://identi.ca/api/";
+    private static final String IDENTICA_URL_REQUEST = "%soauth/request_token";
+    private static final String IDENTICA_URL_AUTHORIZE = "%soauth/authorize";
+    private static final String IDENTICA_URL_ACCESS = "%soauth/access_token";
+    private static final String IDENTICA_URL_FEED = "%sstatuses/home_timeline.json?count=%s";
+    private static final String IDENTICA_RETWEET = "%sstatuses/retweet/%s.json";
+    private static final String IDENTICA_UPDATE = "%sstatuses/update.json";
+    private static final String IDENTICA_MENTIONS = "%sstatuses/mentions.json%s";
+    private static final String IDENTICA_SINCE_ID = "?since_id=%s";
+    private static final String IDENTICA_USER = "%susers/show.json?user_id=%s";
+    private static final String IDENTICA_PROFILE = "http://identi.ca/%s";
+    private static final String IDENTICA_DATE_FORMAT = "EEE MMM dd HH:mm:ss Z yyyy";
 
     public IdentiCa(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);

@@ -1,6 +1,5 @@
 package mobi.intuitit.android.widget;
 
-import mobi.intuitit.android.content.LauncherIntent;
 import android.app.Activity;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
@@ -14,16 +13,16 @@ import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import mobi.intuitit.android.content.LauncherIntent;
+
 /**
- * 
  * @author Bo & Koxx
- * 
  */
 public class WidgetCursorAdapter extends CursorAdapter {
 
@@ -53,17 +52,11 @@ public class WidgetCursorAdapter extends CursorAdapter {
         boolean clickable;
 
         /**
-         * 
-         * @param t
-         *            view type
-         * @param l
-         *            layout id
-         * @param i
-         *            index
-         * @param r
-         *            default resource
-         * @param u
-         *            clickable
+         * @param t view type
+         * @param l layout id
+         * @param i index
+         * @param r default resource
+         * @param u clickable
          */
         ItemMapping(int t, int l, int i, int r, boolean u) {
             type = t;
@@ -89,13 +82,9 @@ public class WidgetCursorAdapter extends CursorAdapter {
     private Activity mActivity;
 
     /**
-     * 
-     * @param context
-     *            remote context
-     * @param c
-     *            cursor for reading data
-     * @param intent
-     *            broadcast intent initiated the replacement, don't save it
+     * @param context remote context
+     * @param c cursor for reading data
+     * @param intent broadcast intent initiated the replacement, don't save it
      * @param appWidgetId
      * @param listViewId
      */
@@ -118,8 +107,9 @@ public class WidgetCursorAdapter extends CursorAdapter {
 
         // Get the layout if for items
         mItemLayoutId = intent.getIntExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_LAYOUT_ID, -1);
-        if (mItemLayoutId <= 0)
+        if (mItemLayoutId <= 0) {
             throw (new IllegalArgumentException("The passed layout id is illegal"));
+        }
 
         mItemChildrenClickable = intent.getBooleanExtra(
                 LauncherIntent.Extra.Scroll.EXTRA_ITEM_CHILDREN_CLICKABLE, false);
@@ -129,17 +119,15 @@ public class WidgetCursorAdapter extends CursorAdapter {
 
         // Generate
         generateItemMapping(intent);
-
     }
 
     /**
      * Collect arrays and put them together
-     * 
+     *
      * @param t
      * @param ids
      * @param c
-     * @param u
-     *            uri indices; could be zero, IMPOSSIBLE_INDEX will be used
+     * @param u uri indices; could be zero, IMPOSSIBLE_INDEX will be used
      */
     private void generateItemMapping(Intent intent) {
 
@@ -155,34 +143,41 @@ public class WidgetCursorAdapter extends CursorAdapter {
                 .getBooleanArrayExtra(LauncherIntent.Extra.Scroll.Mapping.EXTRA_VIEW_CLICKABLE);
 
         // Check
-        if (viewTypes == null || viewIds == null || cursorIndices == null)
+        if (viewTypes == null || viewIds == null || cursorIndices == null) {
             throw (new IllegalArgumentException("A mapping component is missing"));
+        }
 
         if (viewTypes.length == viewIds.length && viewTypes.length == cursorIndices.length) {
-        } else
+        } else {
             throw (new IllegalArgumentException("Mapping inconsistent"));
+        }
 
         // Init mapping array
         final int size = viewTypes.length;
         mItemMappings = new ItemMapping[size];
-        for (int i = size - 1; i >= 0; i--)
+        for (int i = size - 1; i >= 0; i--) {
             mItemMappings[i] = new ItemMapping(viewTypes[i], viewIds[i], cursorIndices[i]);
+        }
 
         // Put extra data in if they are available
-        if (viewClickable != null && viewClickable.length == size)
-            for (int i = size - 1; i >= 0; i--)
+        if (viewClickable != null && viewClickable.length == size) {
+            for (int i = size - 1; i >= 0; i--) {
                 mItemMappings[i].clickable = viewClickable[i];
+            }
+        }
 
-        if (defaultResources != null && defaultResources.length == size)
-            for (int i = size - 1; i >= 0; i--)
+        if (defaultResources != null && defaultResources.length == size) {
+            for (int i = size - 1; i >= 0; i--) {
                 mItemMappings[i].defaultResource = defaultResources[i];
-
+            }
+        }
     }
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-        if (mItemMappings == null)
+        if (mItemMappings == null) {
             return;
+        }
         final int size = mItemMappings.length;
 
         ItemMapping itemMapping;
@@ -196,68 +191,79 @@ public class WidgetCursorAdapter extends CursorAdapter {
                 child = view.findViewById(itemMapping.layoutId);
 
                 switch (itemMapping.type) {
-                case LauncherIntent.Extra.Scroll.Types.TEXTVIEW:
-                    if (!(child instanceof TextView))
+                    case LauncherIntent.Extra.Scroll.Types.TEXTVIEW:
+                        if (!(child instanceof TextView)) {
+                            break;
+                        }
+                        String text = cursor.getString(itemMapping.index);
+                        if (text != null) {
+                            ((TextView) child).setText(cursor.getString(itemMapping.index));
+                        } else {
+                            ((TextView) child).setText(itemMapping.defaultResource);
+                        }
                         break;
-                    String text = cursor.getString(itemMapping.index);
-                    if (text != null)
-                        ((TextView) child).setText(cursor.getString(itemMapping.index));
-                    else
-                        ((TextView) child).setText(itemMapping.defaultResource);
-                    break;
-                case LauncherIntent.Extra.Scroll.Types.TEXTVIEWHTML:
-                    if (!(child instanceof TextView))
+                    case LauncherIntent.Extra.Scroll.Types.TEXTVIEWHTML:
+                        if (!(child instanceof TextView)) {
+                            break;
+                        }
+                        String textHtml = cursor.getString(itemMapping.index);
+                        if (textHtml != null) {
+                            ((TextView) child).setText(Html.fromHtml(cursor
+                                    .getString(itemMapping.index)));
+                        } else {
+                            ((TextView) child).setText(itemMapping.defaultResource);
+                        }
                         break;
-                    String textHtml = cursor.getString(itemMapping.index);
-                    if (textHtml != null)
-                        ((TextView) child).setText(Html.fromHtml(cursor
-                                .getString(itemMapping.index)));
-                    else
-                        ((TextView) child).setText(itemMapping.defaultResource);
-                    break;
-                case LauncherIntent.Extra.Scroll.Types.IMAGEBLOB:
-                    if (!(child instanceof ImageView))
+                    case LauncherIntent.Extra.Scroll.Types.IMAGEBLOB:
+                        if (!(child instanceof ImageView)) {
+                            break;
+                        }
+                        iv = (ImageView) child;
+                        byte[] data = cursor.getBlob(itemMapping.index);
+                        if (data != null) {
+                            iv.setImageBitmap(BitmapFactory.decodeByteArray(data, 0, data.length));
+                        } else if (itemMapping.defaultResource > 0) {
+                            iv.setImageResource(itemMapping.defaultResource);
+                        } else {
+                            iv.setImageDrawable(null);
+                        }
                         break;
-                    iv = (ImageView) child;
-                    byte[] data = cursor.getBlob(itemMapping.index);
-                    if (data != null)
-                        iv.setImageBitmap(BitmapFactory.decodeByteArray(data, 0, data.length));
-                    else if (itemMapping.defaultResource > 0)
-                        iv.setImageResource(itemMapping.defaultResource);
-                    else
-                        iv.setImageDrawable(null);
-                    break;
-                case LauncherIntent.Extra.Scroll.Types.IMAGEURI:
-                    if (!(child instanceof ImageView))
+                    case LauncherIntent.Extra.Scroll.Types.IMAGEURI:
+                        if (!(child instanceof ImageView)) {
+                            break;
+                        }
+                        iv = (ImageView) child;
+                        String uriStr = cursor.getString(itemMapping.index);
+                        if ((uriStr != null) && (!uriStr.equals(""))) {
+                            iv.setImageURI(Uri.parse(uriStr));
+                        } else {
+                            iv.setImageDrawable(null);
+                        }
                         break;
-                    iv = (ImageView) child;
-                    String uriStr = cursor.getString(itemMapping.index);
-                    if ((uriStr != null) && (!uriStr.equals("")))
-                        iv.setImageURI(Uri.parse(uriStr));
-                    else
-                        iv.setImageDrawable(null);
-                    break;
-                case LauncherIntent.Extra.Scroll.Types.IMAGERESOURCE:
-                    if (!(child instanceof ImageView))
+                    case LauncherIntent.Extra.Scroll.Types.IMAGERESOURCE:
+                        if (!(child instanceof ImageView)) {
+                            break;
+                        }
+                        iv = (ImageView) child;
+                        int res = cursor.getInt(itemMapping.index);
+                        if (res > 0) {
+                            iv.setImageResource(res);
+                        } else if (itemMapping.defaultResource > 0) {
+                            iv.setImageResource(itemMapping.defaultResource);
+                        } else {
+                            iv.setImageDrawable(null);
+                        }
                         break;
-                    iv = (ImageView) child;
-                    int res = cursor.getInt(itemMapping.index);
-                    if (res > 0)
-                        iv.setImageResource(res);
-                    else if (itemMapping.defaultResource > 0)
-                        iv.setImageResource(itemMapping.defaultResource);
-                    else
-                        iv.setImageDrawable(null);
-                    break;
                 }
 
                 // Prepare tag
                 view.setTag(null);
                 if (mItemChildrenClickable && itemMapping.clickable) {
-                    if (mItemActionUriIndex >= 0)
+                    if (mItemActionUriIndex >= 0) {
                         child.setTag(cursor.getString(mItemActionUriIndex));
-                    else
+                    } else {
                         child.setTag(Integer.toString(cursor.getPosition()));
+                    }
                     child.setOnClickListener(new ItemViewClickListener());
                 } else {
                     if (mItemActionUriIndex >= 0) {
@@ -265,11 +271,9 @@ public class WidgetCursorAdapter extends CursorAdapter {
                     }
                 }
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     @Override
@@ -294,7 +298,6 @@ public class WidgetCursorAdapter extends CursorAdapter {
                 e.printStackTrace();
             }
         }
-
     }
 
     public static Cursor queryForNewContent(Activity a, ContentResolver cr, Intent intent) {
@@ -302,18 +305,18 @@ public class WidgetCursorAdapter extends CursorAdapter {
         Cursor cursor = null;
         if ((intent != null) && (a != null)) {
             cursor = a.managedQuery(Uri.parse(intent
-                    .getStringExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_URI)), intent
-                    .getStringArrayExtra(LauncherIntent.Extra.Scroll.EXTRA_PROJECTION), intent
-                    .getStringExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION), intent
-                    .getStringArrayExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION_ARGUMENTS),
+                            .getStringExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_URI)), intent
+                            .getStringArrayExtra(LauncherIntent.Extra.Scroll.EXTRA_PROJECTION), intent
+                            .getStringExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION), intent
+                            .getStringArrayExtra(LauncherIntent.Extra.Scroll.EXTRA_SELECTION_ARGUMENTS),
                     intent.getStringExtra(LauncherIntent.Extra.Scroll.EXTRA_SORT_ORDER));
 
-            if (cursor != null)
+            if (cursor != null) {
                 cursor.setNotificationUri(cr, Uri.parse(intent
                         .getStringExtra(LauncherIntent.Extra.Scroll.EXTRA_DATA_URI)));
-            else
+            } else {
                 Log.d(LOG_TAG, "cursor null");
-
+            }
         } else {
             Log.d(LOG_TAG, "intent or activity null");
         }
@@ -345,5 +348,4 @@ public class WidgetCursorAdapter extends CursorAdapter {
     // Log.v(LOG_TAG, "cursor closed or null");
     // }
     // }
-
 }

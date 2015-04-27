@@ -23,23 +23,23 @@ import android.content.Context;
 import android.content.Intent;
 
 public class SonetRemoteViewsServiceWrapper {
-	
-	private static boolean sNativeScrolling = false;
 
-	static {
-		try {
-			Class.forName("android.widget.RemoteViewsService");
-			sNativeScrolling = true;
-		} catch (Exception ex) {
-			throw new RuntimeException(ex);
-		}
-	}
-	
-	public static Intent getRemoteAdapterIntent(Context context) {
-		if (sNativeScrolling) {
-			return Sonet.getPackageIntent(context, SonetRemoteViewsService.class);
-		} else {
-			return null;
-		}
-	}
+    private static boolean sNativeScrolling = false;
+
+    static {
+        try {
+            Class.forName("android.widget.RemoteViewsService");
+            sNativeScrolling = true;
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    public static Intent getRemoteAdapterIntent(Context context) {
+        if (sNativeScrolling) {
+            return new Intent(context, SonetRemoteViewsService.class);
+        } else {
+            return null;
+        }
+    }
 }

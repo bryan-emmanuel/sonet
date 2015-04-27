@@ -19,12 +19,12 @@
  */
 package com.piusvelte.sonet;
 
-import static com.piusvelte.sonet.Sonet.SMS_RECEIVED;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+
+import static com.piusvelte.sonet.Sonet.SMS_RECEIVED;
 
 public class SonetSMSReceiver extends BroadcastReceiver {
 
@@ -34,9 +34,8 @@ public class SonetSMSReceiver extends BroadcastReceiver {
             Bundle bundle = intent.getExtras();
 
             if (bundle != null) {
-                context.startService(Sonet.getPackageIntent(context, SonetService.class).setAction(SMS_RECEIVED).putExtras(bundle));
+                context.startService(new Intent(context, SonetService.class).setAction(SMS_RECEIVED).putExtras(bundle));
             }
         }
     }
-
 }

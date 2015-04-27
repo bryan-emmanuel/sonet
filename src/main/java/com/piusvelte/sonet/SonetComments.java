@@ -19,18 +19,19 @@
  */
 package com.piusvelte.sonet;
 
-import com.google.ads.*;
-
-import static com.piusvelte.sonet.Sonet.*;
-
-import com.piusvelte.sonet.fragment.CommentsList;
-
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+
+import com.google.ads.AdRequest;
+import com.google.ads.AdSize;
+import com.google.ads.AdView;
+import com.piusvelte.sonet.fragment.CommentsList;
+
+import static com.piusvelte.sonet.Sonet.PRO;
 
 public class SonetComments extends FragmentActivity {
 

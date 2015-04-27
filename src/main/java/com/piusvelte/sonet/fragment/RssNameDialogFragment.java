@@ -27,7 +27,8 @@ public class RssNameDialogFragment extends BaseDialogFragment {
 
     @StringDef({ ARG_URL, ARG_NAME })
     @Retention(RetentionPolicy.SOURCE)
-    private @interface Argument {}
+    private @interface Argument {
+    }
 
     private EditText mName;
 

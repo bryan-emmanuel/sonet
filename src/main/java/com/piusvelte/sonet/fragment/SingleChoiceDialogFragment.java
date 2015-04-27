@@ -34,7 +34,6 @@ public class SingleChoiceDialogFragment extends BaseDialogFragment implements Di
         return chooseAccountDialogFragment;
     }
 
-
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {

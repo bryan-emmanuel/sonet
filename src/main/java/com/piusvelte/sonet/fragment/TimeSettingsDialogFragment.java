@@ -25,7 +25,6 @@ public class TimeSettingsDialogFragment extends BaseColorSizeBackgroundSettingsD
         return dialogFragment;
     }
 
-
     @Override
     protected int getTitle() {
         return R.string.settings_time;

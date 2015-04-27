@@ -36,7 +36,6 @@ public class NotificationSettingsDialogFragment extends BaseDialogFragment imple
         return dialogFragment;
     }
 
-
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {

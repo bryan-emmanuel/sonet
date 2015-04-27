@@ -19,10 +19,10 @@
  */
 package com.piusvelte.sonet;
 
+import android.util.Log;
+
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
-
-import android.util.Log;
 
 import oauth.signpost.OAuthConsumer;
 import oauth.signpost.OAuthProvider;
@@ -51,7 +51,8 @@ public class SonetOAuth {
         mOAuthConsumer.setTokenWithSecret(token, tokenSecret);
     }
 
-    public String getAuthUrl(String request, String access, String authorize, String callback, boolean isOAuth10a, HttpClient httpClient) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
+    public String getAuthUrl(String request, String access, String authorize, String callback, boolean isOAuth10a, HttpClient httpClient)
+            throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
         if (BuildConfig.DEBUG) Log.d(TAG, "getAuthUrl");
         mOAuthProvider = new CommonsHttpOAuthProvider(request, access, authorize, httpClient);
         mOAuthProvider.setOAuth10a(isOAuth10a);
@@ -97,5 +98,4 @@ public class SonetOAuth {
     public String getTokenSecret() {
         return mOAuthConsumer.getTokenSecret();
     }
-
 }

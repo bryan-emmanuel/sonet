@@ -8,8 +8,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.Fragment;
 
 /**
  * Created by bemmanuel on 4/11/15.
@@ -28,7 +26,6 @@ public class ItemsDialogFragment extends BaseDialogFragment implements DialogInt
         args.putCharSequenceArray(ARG_ITEMS, items);
         return chooseAccountDialogFragment;
     }
-
 
     @NonNull
     @Override

@@ -19,5 +19,4 @@ public final class AccountsStyles implements BaseColumns {
     }
 
     public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.accounts_styles";
-
 }

@@ -48,24 +48,27 @@ import static com.piusvelte.sonet.Sonet.Sscreen_name;
 import static com.piusvelte.sonet.Sonet.Sstatus;
 import static com.piusvelte.sonet.Sonet.Stext;
 import static com.piusvelte.sonet.Sonet.Suser;
-import static com.piusvelte.sonet.Sonet.TWITTER_BASE_URL;
-import static com.piusvelte.sonet.Sonet.TWITTER_DATE_FORMAT;
-import static com.piusvelte.sonet.Sonet.TWITTER_MENTIONS;
-import static com.piusvelte.sonet.Sonet.TWITTER_RETWEET;
-import static com.piusvelte.sonet.Sonet.TWITTER_SEARCH;
-import static com.piusvelte.sonet.Sonet.TWITTER_SINCE_ID;
-import static com.piusvelte.sonet.Sonet.TWITTER_UPDATE;
-import static com.piusvelte.sonet.Sonet.TWITTER_URL_ACCESS;
-import static com.piusvelte.sonet.Sonet.TWITTER_URL_AUTHORIZE;
-import static com.piusvelte.sonet.Sonet.TWITTER_URL_FEED;
-import static com.piusvelte.sonet.Sonet.TWITTER_URL_REQUEST;
-import static com.piusvelte.sonet.Sonet.TWITTER_USER;
 import static oauth.signpost.OAuth.OAUTH_VERIFIER;
 
 /**
  * Created by bemmanuel on 2/15/15.
  */
 public class Twitter extends Client {
+
+    private static final String TWITTER_BASE_URL = "https://api.twitter.com/";
+    private static final String TWITTER_URL_REQUEST = "%soauth/request_token";
+    private static final String TWITTER_URL_AUTHORIZE = "%soauth/authorize";
+    private static final String TWITTER_URL_ACCESS = "%soauth/access_token";
+    private static final String TWITTER_URL_FEED = "%s1.1/statuses/home_timeline.json?count=%s";
+    private static final String TWITTER_RETWEET = "%s1.1/statuses/retweets/%s.json";
+    private static final String TWITTER_USER = "%s1.1/users/show.json?user_id=%s";
+    private static final String TWITTER_UPDATE = "%s1.1/statuses/update.json";
+    private static final String TWITTER_SEARCH = "%s1.1/geo/search.json?lat=%s&long=%s";
+    private static final String TWITTER_DATE_FORMAT = "EEE MMM dd HH:mm:ss Z yyyy";
+    private static final String TWITTER_MENTIONS = "%s1.1/statuses/mentions_timeline.json%s";
+    private static final String TWITTER_SINCE_ID = "?since_id=%s";
+    private static final String TWITTER_VERIFY_CREDENTIALS = "%s1.1/account/verify_credentials.json";
+    private static final String TWITTER_PROFILE = "http://twitter.com/%s";
 
     public Twitter(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
@@ -74,7 +77,8 @@ public class Twitter extends Client {
     @Nullable
     @Override
     public String getProfileUrl(@NonNull String esid) {
-        String response = SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(getUserUrl(), getBaseUrl(), esid))));
+        String response = SonetHttpClient
+                .httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(getUserUrl(), getBaseUrl(), esid))));
 
         if (!TextUtils.isEmpty(response)) {
 
@@ -191,7 +195,7 @@ public class Twitter extends Client {
     }
 
     String getVerifyCredentialsUrl() {
-        return String.format(Sonet.TWITTER_VERIFY_CREDENTIALS, getBaseUrl());
+        return String.format(TWITTER_VERIFY_CREDENTIALS, getBaseUrl());
     }
 
     @Override
@@ -208,7 +212,8 @@ public class Twitter extends Client {
     @Nullable
     @Override
     public String getFeedResponse(int status_count) {
-        return SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(getFeedUrl(), getBaseUrl(), status_count))));
+        return SonetHttpClient
+                .httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(getFeedUrl(), getBaseUrl(), status_count))));
     }
 
     @Nullable
@@ -219,7 +224,15 @@ public class Twitter extends Client {
 
     @Nullable
     @Override
-    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+    public void addFeedItem(@NonNull JSONObject item,
+            boolean display_profile,
+            boolean time24hr,
+            int appWidgetId,
+            long account,
+            HttpClient httpClient,
+            Set<String> notificationSids,
+            String[] notificationMessage,
+            boolean doNotify) throws JSONException {
         JSONObject user = item.getJSONObject(Suser);
 
         addStatusItem(parseDate(item.getString(Screated_at), TWITTER_DATE_FORMAT),
@@ -245,7 +258,9 @@ public class Twitter extends Client {
         ArrayList<String> notificationSids = new ArrayList<>();
         String sid;
         String friend;
-        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext), new String[]{Notifications.SID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+        Cursor currentNotifications = getContentResolver()
+                .query(Notifications.getContentUri(mContext), new String[] { Notifications.SID }, Notifications.ACCOUNT + "=?",
+                        new String[] { Long.toString(account) }, null);
 
         // loop over notifications
         if (currentNotifications.moveToFirst()) {
@@ -260,7 +275,8 @@ public class Twitter extends Client {
         currentNotifications.close();
         // limit to oldest status
         String last_sid = null;
-        Cursor last_status = getContentResolver().query(Statuses.getContentUri(mContext), new String[]{Statuses.SID}, Statuses.ACCOUNT + "=?", new String[]{Long.toString(account)}, Statuses.CREATED + " ASC LIMIT 1");
+        Cursor last_status = getContentResolver().query(Statuses.getContentUri(mContext), new String[] { Statuses.SID }, Statuses.ACCOUNT + "=?",
+                new String[] { Long.toString(account) }, Statuses.CREATED + " ASC LIMIT 1");
 
         if (last_status.moveToFirst()) {
             last_sid = SonetCrypto.getInstance(mContext).Decrypt(last_status.getString(0));
@@ -269,7 +285,8 @@ public class Twitter extends Client {
         last_status.close();
 
         // get all mentions since the oldest status for this account
-        String response = SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(getMentionsUrl(), getBaseUrl(), last_sid != null ? String.format(TWITTER_SINCE_ID, last_sid) : ""))));
+        String response = SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(
+                new HttpGet(String.format(getMentionsUrl(), getBaseUrl(), last_sid != null ? String.format(TWITTER_SINCE_ID, last_sid) : ""))));
 
         if (!TextUtils.isEmpty(response)) {
             try {
@@ -283,7 +300,8 @@ public class Twitter extends Client {
 
                     if (!friendObj.getString(Sid).equals(mAccountEsid) && !notificationSids.contains(statusObj.getString(Sid))) {
                         friend = friendObj.getString(Sname);
-                        addNotification(statusObj.getString(Sid), friendObj.getString(Sid), friend, statusObj.getString(Stext), parseDate(statusObj.getString(Screated_at), TWITTER_DATE_FORMAT), account, friend + " mentioned you on Twitter");
+                        addNotification(statusObj.getString(Sid), friendObj.getString(Sid), friend, statusObj.getString(Stext),
+                                parseDate(statusObj.getString(Screated_at), TWITTER_DATE_FORMAT), account, friend + " mentioned you on Twitter");
                         updateNotificationMessage(notificationMessage, friend + " mentioned you on Twitter");
                     }
                 }
@@ -395,7 +413,8 @@ public class Twitter extends Client {
 
     @Override
     public String getCommentsResponse(String statusId) {
-        return SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(getMentionsUrl(), getBaseUrl(), String.format(TWITTER_SINCE_ID, statusId)))));
+        return SonetHttpClient.httpResponse(mContext,
+                getOAuth().getSignedRequest(new HttpGet(String.format(getMentionsUrl(), getBaseUrl(), String.format(TWITTER_SINCE_ID, statusId)))));
     }
 
     @Override
@@ -430,7 +449,8 @@ public class Twitter extends Client {
     public LinkedHashMap<String, String> getLocations(String latitude, String longitude) {
         // anonymous requests are rate limited to 150 per hour
         // authenticated requests are rate limited to 350 per hour, so authenticate this!
-        String response = SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(getSearchUrl(), getBaseUrl(), latitude, longitude))));
+        String response = SonetHttpClient
+                .httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(getSearchUrl(), getBaseUrl(), latitude, longitude))));
 
         if (response != null) {
             LinkedHashMap<String, String> locations = new LinkedHashMap<String, String>();
@@ -493,7 +513,8 @@ public class Twitter extends Client {
 
     @Nullable
     private String getScreenName(String accountId) {
-        String response = SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(getUserUrl(), getBaseUrl(), accountId))));
+        String response = SonetHttpClient
+                .httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(getUserUrl(), getBaseUrl(), accountId))));
 
         if (response != null) {
             try {

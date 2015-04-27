@@ -19,35 +19,6 @@
  */
 package com.piusvelte.sonet;
 
-import static com.piusvelte.sonet.Sonet.FACEBOOK_BASE_URL;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_FRIENDS;
-import static com.piusvelte.sonet.Sonet.FACEBOOK_PICTURE;
-import static com.piusvelte.sonet.Sonet.FOURSQUARE;
-import static com.piusvelte.sonet.Sonet.LINKEDIN;
-import static com.piusvelte.sonet.Sonet.PRO;
-import static com.piusvelte.sonet.Sonet.Saccess_token;
-import static com.piusvelte.sonet.Sonet.Sdata;
-import static com.piusvelte.sonet.Sonet.Sid;
-import static com.piusvelte.sonet.Sonet.TWITTER;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import com.google.ads.AdRequest;
-import com.google.ads.AdSize;
-import com.google.ads.AdView;
-import com.piusvelte.sonet.provider.Accounts;
-import com.piusvelte.sonet.provider.Entities;
-
-import static com.piusvelte.sonet.Sonet.*;
-
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -63,6 +34,41 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.SimpleAdapter;
 
+import com.google.ads.AdRequest;
+import com.google.ads.AdSize;
+import com.google.ads.AdView;
+import com.piusvelte.sonet.provider.Accounts;
+import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.social.Facebook;
+
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import static com.piusvelte.sonet.Sonet.CHATTER;
+import static com.piusvelte.sonet.Sonet.FACEBOOK;
+import static com.piusvelte.sonet.social.Facebook.FACEBOOK_BASE_URL;
+import static com.piusvelte.sonet.social.Facebook.FACEBOOK_FRIENDS;
+import static com.piusvelte.sonet.social.Facebook.FACEBOOK_PICTURE;
+import static com.piusvelte.sonet.Sonet.FOURSQUARE;
+import static com.piusvelte.sonet.Sonet.GOOGLEPLUS;
+import static com.piusvelte.sonet.Sonet.IDENTICA;
+import static com.piusvelte.sonet.Sonet.LINKEDIN;
+import static com.piusvelte.sonet.Sonet.MYSPACE;
+import static com.piusvelte.sonet.Sonet.PRO;
+import static com.piusvelte.sonet.Sonet.Saccess_token;
+import static com.piusvelte.sonet.Sonet.Sdata;
+import static com.piusvelte.sonet.Sonet.Sid;
+import static com.piusvelte.sonet.Sonet.Sname;
+import static com.piusvelte.sonet.Sonet.Stags;
+import static com.piusvelte.sonet.Sonet.TWITTER;
+
 public class SelectFriends extends ListActivity {
     private static final String TAG = "SelectFriends";
     private HttpClient mHttpClient;
@@ -72,7 +78,6 @@ public class SelectFriends extends ListActivity {
     private String mToken = null;
     private String mSecret = null;
     private int mService;
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -126,8 +131,9 @@ public class SelectFriends extends ListActivity {
             if (view.getId() == R.id.selected) {
                 ((CheckBox) view).setChecked(mSelectedFriends.contains(textRepresentation));
                 return true;
-            } else
+            } else {
                 return false;
+            }
         }
     };
 
@@ -139,16 +145,17 @@ public class SelectFriends extends ListActivity {
             HashMap<String, String> friend = mFriends.get(position);
             String esid = friend.get(Entities.ESID);
             boolean checked = false;
-            if (mSelectedFriends.contains(esid))
+            if (mSelectedFriends.contains(esid)) {
                 mSelectedFriends.remove(esid);
-            else {
+            } else {
                 mSelectedFriends.add(esid);
                 checked = true;
             }
             ((CheckBox) ((RelativeLayout) view).getChildAt(0)).setChecked(checked);
             String[] friends = new String[mSelectedFriends.size()];
-            for (int i = 0, l = friends.length; i < l; i++)
+            for (int i = 0, l = friends.length; i < l; i++) {
                 friends[i] = mSelectedFriends.get(i);
+            }
             Intent i = new Intent();
             i.putExtra(Accounts.SID, mAccountId);
             i.putExtra(Stags, friends);
@@ -158,8 +165,10 @@ public class SelectFriends extends ListActivity {
 
     protected void loadFriends() {
         mFriends.clear();
-//		SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend, new String[]{Entities.PROFILE, Entities.FRIEND, Entities.ESID}, new int[]{R.id.profile, R.id.name, R.id.selected});
-        SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend, new String[]{Entities.FRIEND, Entities.ESID}, new int[]{R.id.name, R.id.selected});
+//		SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend, new String[]{Entities.PROFILE, Entities.FRIEND, Entities
+// .ESID}, new int[]{R.id.profile, R.id.name, R.id.selected});
+        SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend, new String[] { Entities.FRIEND, Entities.ESID },
+                new int[] { R.id.name, R.id.selected });
         setListAdapter(sa);
         final ProgressDialog loadingDialog = new ProgressDialog(this);
         final AsyncTask<Long, String, Boolean> asyncTask = new AsyncTask<Long, String, Boolean>() {
@@ -168,7 +177,9 @@ public class SelectFriends extends ListActivity {
                 boolean loadList = false;
                 SonetCrypto sonetCrypto = SonetCrypto.getInstance(getApplicationContext());
                 // load the session
-                Cursor account = getContentResolver().query(Accounts.getContentUri(SelectFriends.this), new String[]{Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE}, Accounts._ID + "=?", new String[]{Long.toString(params[0])}, null);
+                Cursor account = getContentResolver()
+                        .query(Accounts.getContentUri(SelectFriends.this), new String[] { Accounts.TOKEN, Accounts.SECRET, Accounts.SERVICE },
+                                Accounts._ID + "=?", new String[] { Long.toString(params[0]) }, null);
                 if (account.moveToFirst()) {
                     mToken = sonetCrypto.Decrypt(account.getString(0));
                     mSecret = sonetCrypto.Decrypt(account.getString(1));
@@ -180,26 +191,27 @@ public class SelectFriends extends ListActivity {
                     case TWITTER:
                         break;
                     case FACEBOOK:
-                        if ((response = SonetHttpClient.httpResponse(mHttpClient, new HttpGet(String.format(FACEBOOK_FRIENDS, FACEBOOK_BASE_URL, Saccess_token, mToken)))) != null) {
+                        if ((response = SonetHttpClient.httpResponse(mHttpClient,
+                                new HttpGet(String.format(Facebook.FACEBOOK_FRIENDS, Facebook.FACEBOOK_BASE_URL, Saccess_token, mToken)))) != null) {
                             try {
                                 JSONArray friends = new JSONObject(response).getJSONArray(Sdata);
                                 for (int i = 0, l = friends.length(); i < l; i++) {
                                     JSONObject f = friends.getJSONObject(i);
                                     HashMap<String, String> newFriend = new HashMap<String, String>();
                                     newFriend.put(Entities.ESID, f.getString(Sid));
-                                    newFriend.put(Entities.PROFILE, String.format(FACEBOOK_PICTURE, f.getString(Sid)));
+                                    newFriend.put(Entities.PROFILE, String.format(Facebook.FACEBOOK_PICTURE, f.getString(Sid)));
                                     newFriend.put(Entities.FRIEND, f.getString(Sname));
                                     // need to alphabetize
-                                    if (mFriends.isEmpty())
+                                    if (mFriends.isEmpty()) {
                                         mFriends.add(newFriend);
-                                    else {
+                                    } else {
                                         String fullName = f.getString(Sname);
                                         int spaceIdx = fullName.lastIndexOf(" ");
                                         String newFirstName = null;
                                         String newLastName = null;
-                                        if (spaceIdx == -1)
+                                        if (spaceIdx == -1) {
                                             newFirstName = fullName;
-                                        else {
+                                        } else {
                                             newFirstName = fullName.substring(0, spaceIdx++);
                                             newLastName = fullName.substring(spaceIdx);
                                         }
@@ -213,9 +225,9 @@ public class SelectFriends extends ListActivity {
                                                 spaceIdx = fullName.lastIndexOf(" ");
                                                 String oldFirstName = null;
                                                 String oldLastName = null;
-                                                if (spaceIdx == -1)
+                                                if (spaceIdx == -1) {
                                                     oldFirstName = fullName;
-                                                else {
+                                                } else {
                                                     oldFirstName = fullName.substring(0, spaceIdx++);
                                                     oldLastName = fullName.substring(spaceIdx);
                                                 }
@@ -247,8 +259,9 @@ public class SelectFriends extends ListActivity {
                                                 newFriends.add(oldFriend);
                                             }
                                         }
-                                        if (newFriend != null)
+                                        if (newFriend != null) {
                                             newFriends.add(newFriend);
+                                        }
                                         mFriends = newFriends;
                                     }
                                 }
@@ -277,8 +290,10 @@ public class SelectFriends extends ListActivity {
             @Override
             protected void onPostExecute(Boolean loadList) {
                 if (loadList) {
-//					SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend, new String[]{Entities.PROFILE, Entities.FRIEND}, new int[]{R.id.profile, R.id.name});
-                    SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend, new String[]{Entities.FRIEND, Entities.ESID}, new int[]{R.id.name, R.id.selected});
+//					SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend, new String[]{Entities.PROFILE, Entities
+// .FRIEND}, new int[]{R.id.profile, R.id.name});
+                    SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend,
+                            new String[] { Entities.FRIEND, Entities.ESID }, new int[] { R.id.name, R.id.selected });
                     sa.setViewBinder(mViewBinder);
                     setListAdapter(sa);
                 }
@@ -290,8 +305,9 @@ public class SelectFriends extends ListActivity {
         loadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
             @Override
             public void onCancel(DialogInterface dialog) {
-                if (!asyncTask.isCancelled())
+                if (!asyncTask.isCancelled()) {
                     asyncTask.cancel(true);
+                }
             }
         });
         loadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), new DialogInterface.OnClickListener() {

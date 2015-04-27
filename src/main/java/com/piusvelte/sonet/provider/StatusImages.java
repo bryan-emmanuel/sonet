@@ -22,5 +22,4 @@ public final class StatusImages implements BaseColumns {
     public static final String STATUS_ID = "status_id";
     public static final String IMAGE = "image";
     public static final String IMAGE_BG = "image_bg";
-
 }

@@ -21,10 +21,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-import static com.piusvelte.sonet.Sonet.PINTEREST_BASE_URL;
-import static com.piusvelte.sonet.Sonet.PINTEREST_DATE_FORMAT;
-import static com.piusvelte.sonet.Sonet.PINTEREST_PROFILE;
-import static com.piusvelte.sonet.Sonet.PINTEREST_URL_FEED;
 import static com.piusvelte.sonet.Sonet.Sboard;
 import static com.piusvelte.sonet.Sonet.Scomments;
 import static com.piusvelte.sonet.Sonet.Scounts;
@@ -42,6 +38,12 @@ import static com.piusvelte.sonet.Sonet.Susername;
  * Created by bemmanuel on 2/15/15.
  */
 public class Pinterest extends Client {
+
+    private static final String PINTEREST_BASE_URL = "https://api.pinterest.com/v2/";
+    private static final String PINTEREST_URL_FEED = "%spopular/";
+    public static final String PINTEREST_PIN = "https://pinterest.com/pin/%s/";
+    private static final String PINTEREST_PROFILE = "https://pinterest.com/%s/";
+    private static final String PINTEREST_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
 
     public Pinterest(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
@@ -127,7 +129,15 @@ public class Pinterest extends Client {
 
     @Nullable
     @Override
-    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+    public void addFeedItem(@NonNull JSONObject item,
+            boolean display_profile,
+            boolean time24hr,
+            int appWidgetId,
+            long account,
+            HttpClient httpClient,
+            Set<String> notificationSids,
+            String[] notificationMessage,
+            boolean doNotify) throws JSONException {
         ArrayList<String[]> links = new ArrayList<>();
         JSONObject friendObj = item.getJSONObject(Suser);
         long date = parseDate(item.getString(Screated_at), PINTEREST_DATE_FORMAT);
@@ -145,9 +155,9 @@ public class Pinterest extends Client {
             JSONObject images = item.getJSONObject(Simages);
 
             if (images.has(Smobile)) {
-                links.add(new String[]{Simage, images.getString(Smobile)});
+                links.add(new String[] { Simage, images.getString(Smobile) });
             } else if (images.has(Sboard)) {
-                links.add(new String[]{Simage, images.getString(Sboard)});
+                links.add(new String[] { Simage, images.getString(Sboard) });
             }
         }
 

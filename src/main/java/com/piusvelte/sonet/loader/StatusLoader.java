@@ -52,16 +52,16 @@ public class StatusLoader extends BaseAsyncTaskLoader {
         result.sonetCrypto = SonetCrypto.getInstance(mContext);
 
         Cursor c = mContext.getContentResolver().query(StatusesStyles.getContentUri(mContext),
-                new String[]{StatusesStyles._ID,
+                new String[] { StatusesStyles._ID,
                         StatusesStyles.WIDGET,
                         StatusesStyles.ACCOUNT,
                         StatusesStyles.ESID,
                         StatusesStyles.MESSAGE,
                         StatusesStyles.FRIEND,
                         StatusesStyles.SERVICE,
-                        StatusesStyles.SID},
+                        StatusesStyles.SID },
                 StatusesStyles._ID + "=?",
-                new String[]{mData.getLastPathSegment()},
+                new String[] { mData.getLastPathSegment() },
                 null);
 
         if (c.moveToFirst()) {
@@ -91,9 +91,10 @@ public class StatusLoader extends BaseAsyncTaskLoader {
 
                 if (result.service == SMS) {
                     // lookup the contact, else null rect
-                    Cursor phones = mContext.getContentResolver().query(Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(result.esid)),
-                            new String[]{ContactsContract.PhoneLookup.LOOKUP_KEY},
-                            null, null, null);
+                    Cursor phones = mContext.getContentResolver()
+                            .query(Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(result.esid)),
+                                    new String[] { ContactsContract.PhoneLookup.LOOKUP_KEY },
+                                    null, null, null);
 
                     if (phones.moveToFirst()) {
                         result.esid = phones.getString(phones.getColumnIndexOrThrow(ContactsContract.PhoneLookup.LOOKUP_KEY));
@@ -106,10 +107,10 @@ public class StatusLoader extends BaseAsyncTaskLoader {
                     result.serviceName = Sonet.getServiceName(mContext.getResources(), result.service);
                     // get links from table
                     Cursor links = mContext.getContentResolver().query(StatusLinks.getContentUri(mContext),
-                            new String[]{StatusLinks.LINK_URI,
-                                    StatusLinks.LINK_TYPE},
+                            new String[] { StatusLinks.LINK_URI,
+                                    StatusLinks.LINK_TYPE },
                             StatusLinks.STATUS_ID + "=?",
-                            new String[]{Long.toString(c.getLong(c.getColumnIndexOrThrow(StatusesStyles._ID)))},
+                            new String[] { Long.toString(c.getLong(c.getColumnIndexOrThrow(StatusesStyles._ID))) },
                             null);
                     //						count += links.getCount();
                     int count = links.getCount();

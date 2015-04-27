@@ -34,17 +34,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-import static com.piusvelte.sonet.Sonet.FOURSQUARE_ADDCOMMENT;
-import static com.piusvelte.sonet.Sonet.FOURSQUARE_BASE_URL;
-import static com.piusvelte.sonet.Sonet.FOURSQUARE_CHECKIN;
-import static com.piusvelte.sonet.Sonet.FOURSQUARE_CHECKINS;
-import static com.piusvelte.sonet.Sonet.FOURSQUARE_CHECKIN_NO_SHOUT;
-import static com.piusvelte.sonet.Sonet.FOURSQUARE_CHECKIN_NO_VENUE;
-import static com.piusvelte.sonet.Sonet.FOURSQUARE_GET_CHECKIN;
-import static com.piusvelte.sonet.Sonet.FOURSQUARE_SEARCH;
-import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_AUTHORIZE;
-import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_ME;
-import static com.piusvelte.sonet.Sonet.FOURSQUARE_URL_PROFILE;
 import static com.piusvelte.sonet.Sonet.SNearby;
 import static com.piusvelte.sonet.Sonet.Saccess_token;
 import static com.piusvelte.sonet.Sonet.Scheckin;
@@ -68,6 +57,20 @@ import static com.piusvelte.sonet.Sonet.Svenue;
  * Created by bemmanuel on 2/15/15.
  */
 public class Foursquare extends Client {
+
+    private static final String FOURSQUARE_BASE_URL = "https://api.foursquare.com/v2/";
+    private static final String FOURSQUARE_URL_AUTHORIZE = "https://foursquare" +
+            ".com/oauth2/authorize?client_id=%s&response_type=token&redirect_uri=%s&display=touch";
+    private static final String FOURSQUARE_URL_ME = "%susers/self?oauth_token=%s";
+    private static final String FOURSQUARE_URL_PROFILE = "https://foursquare.com/user/%s";
+    private static final String FOURSQUARE_CHECKINS = "%scheckins/recent?oauth_token=%s";
+    private static final String FOURSQUARE_CHECKIN = "%scheckins/add?venueId=%s&shout=%s&ll=%s,%s&broadcast=public&oauth_token=%s";
+    private static final String FOURSQUARE_CHECKIN_NO_VENUE = "%scheckins/add?shout=%s&broadcast=public&oauth_token=%s";
+    private static final String FOURSQUARE_CHECKIN_NO_SHOUT = "%scheckins/add?venueId=%s&ll=%s,%s&broadcast=public&oauth_token=%s";
+    private static final String FOURSQUARE_ADDCOMMENT = "%scheckins/%s/addcomment?text=%s&oauth_token=%s";
+    private static final String FOURSQUARE_SEARCH = "%svenues/search?ll=%s,%s&intent=checkin&oauth_token=%s";
+    private static final String FOURSQUARE_GET_CHECKIN = "%scheckins/%s?oauth_token=%s";
+    private static final String FOURSQUARE_URL_USER = "%susers/%s?oauth_token=%s";
 
     public Foursquare(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
@@ -156,7 +159,9 @@ public class Foursquare extends Client {
     @Override
     public Set<String> getNotificationStatusIds(long account, String[] notificationMessage) {
         Set<String> notificationSids = new HashSet<>();
-        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext), new String[]{Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext),
+                new String[] { Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID },
+                Notifications.ACCOUNT + "=?", new String[] { Long.toString(account) }, null);
 
         // loop over notifications
         if (currentNotifications.moveToFirst()) {
@@ -172,12 +177,14 @@ public class Foursquare extends Client {
                 }
 
                 // get comments for current notifications
-                String response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, sid, mToken)));
+                String response = SonetHttpClient
+                        .httpResponse(mContext, new HttpGet(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, sid, mToken)));
 
                 if (!TextUtils.isEmpty(response)) {
                     // check for a newer post, if it's the user's own, then set CLEARED=0
                     try {
-                        JSONArray commentsArray = new JSONObject(response).getJSONObject(Sresponse).getJSONObject(Scheckin).getJSONObject(Scomments).getJSONArray(Sitems);
+                        JSONArray commentsArray = new JSONObject(response).getJSONObject(Sresponse).getJSONObject(Scheckin).getJSONObject(Scomments)
+                                .getJSONArray(Sitems);
                         int i2 = commentsArray.length();
 
                         if (i2 > 0) {
@@ -188,7 +195,8 @@ public class Foursquare extends Client {
                                 if (created_time > updated) {
                                     JSONObject friendObj = commentObj.getJSONObject(Suser);
                                     updateNotificationMessage(notificationMessage,
-                                            updateNotification(notificationId, created_time, mAccountEsid, friendObj.getString(Sid), friendObj.getString(SfirstName) + " " + friendObj.getString(SlastName), cleared));
+                                            updateNotification(notificationId, created_time, mAccountEsid, friendObj.getString(Sid),
+                                                    friendObj.getString(SfirstName) + " " + friendObj.getString(SlastName), cleared));
                                 }
                             }
                         }
@@ -219,7 +227,15 @@ public class Foursquare extends Client {
 
     @Nullable
     @Override
-    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+    public void addFeedItem(@NonNull JSONObject item,
+            boolean display_profile,
+            boolean time24hr,
+            int appWidgetId,
+            long account,
+            HttpClient httpClient,
+            Set<String> notificationSids,
+            String[] notificationMessage,
+            boolean doNotify) throws JSONException {
         JSONObject friendObj = item.getJSONObject(Suser);
         String shout = "";
 
@@ -270,7 +286,8 @@ public class Foursquare extends Client {
                         } else if (hasCommented) {
                             // don't notify about user's own comments
                             // send the parent comment sid
-                            notification = String.format(getString(R.string.friendcommented), c4.getString(SfirstName) + " " + c4.getString(SlastName));
+                            notification = String
+                                    .format(getString(R.string.friendcommented), c4.getString(SfirstName) + " " + c4.getString(SlastName));
                         }
                     }
                 }
@@ -303,7 +320,9 @@ public class Foursquare extends Client {
 
     @Override
     public void getNotifications(long account, String[] notificationMessage) {
-        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext), new String[]{Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext),
+                new String[] { Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID },
+                Notifications.ACCOUNT + "=?", new String[] { Long.toString(account) }, null);
 
         if (currentNotifications.moveToFirst()) {
             Set<String> notificationSids = new HashSet<>();
@@ -319,12 +338,14 @@ public class Foursquare extends Client {
                 notificationSids.add(sid);
 
                 // get comments for current notifications
-                String response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, sid, mToken)));
+                String response = SonetHttpClient
+                        .httpResponse(mContext, new HttpGet(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, sid, mToken)));
 
                 if (!TextUtils.isEmpty(response)) {
                     // check for a newer post, if it's the user's own, then set CLEARED=0
                     try {
-                        JSONArray comments = new JSONObject(response).getJSONObject(Sresponse).getJSONObject(Scheckin).getJSONObject(Scomments).getJSONArray(Sitems);
+                        JSONArray comments = new JSONObject(response).getJSONObject(Sresponse).getJSONObject(Scheckin).getJSONObject(Scomments)
+                                .getJSONArray(Sitems);
                         int i2 = comments.length();
                         if (i2 > 0) {
                             for (int i = 0; i < i2; i++) {
@@ -340,13 +361,16 @@ public class Foursquare extends Client {
                                         // user's own comment, clear the notification
                                         values.put(Notifications.CLEARED, 1);
                                     } else if (cleared) {
-                                        values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), user.getString(SfirstName) + " " + user.getString(SlastName)));
+                                        values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented),
+                                                user.getString(SfirstName) + " " + user.getString(SlastName)));
                                         values.put(Notifications.CLEARED, 0);
                                     } else {
-                                        values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented), user.getString(SfirstName) + " " + user.getString(SlastName) + " and others"));
+                                        values.put(Notifications.NOTIFICATION, String.format(getString(R.string.friendcommented),
+                                                user.getString(SfirstName) + " " + user.getString(SlastName) + " and others"));
                                     }
 
-                                    getContentResolver().update(Notifications.getContentUri(mContext), values, Notifications._ID + "=?", new String[]{Long.toString(notificationId)});
+                                    getContentResolver().update(Notifications.getContentUri(mContext), values, Notifications._ID + "=?",
+                                            new String[] { Long.toString(notificationId) });
                                 }
                             }
                         }
@@ -405,7 +429,8 @@ public class Foursquare extends Client {
                                                     } else if (hasCommented) {
                                                         // don't notify about user's own comments
                                                         // send the parent comment sid
-                                                        notification = String.format(getString(R.string.friendcommented), c4.getString(SfirstName) + " " + c4.getString(SlastName));
+                                                        notification = String.format(getString(R.string.friendcommented),
+                                                                c4.getString(SfirstName) + " " + c4.getString(SlastName));
                                                     }
                                                 }
                                             }
@@ -522,7 +547,8 @@ public class Foursquare extends Client {
 
     @Override
     public LinkedHashMap<String, String> getLocations(String latitude, String longitude) {
-        String response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FOURSQUARE_SEARCH, FOURSQUARE_BASE_URL, latitude, longitude, mToken)));
+        String response = SonetHttpClient
+                .httpResponse(mContext, new HttpGet(String.format(FOURSQUARE_SEARCH, FOURSQUARE_BASE_URL, latitude, longitude, mToken)));
 
         if (!TextUtils.isEmpty(response)) {
             LinkedHashMap<String, String> locations = new LinkedHashMap<String, String>();

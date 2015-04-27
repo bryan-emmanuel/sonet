@@ -19,7 +19,7 @@ import oauth.signpost.http.HttpRequest;
 
 /**
  * Supports signing HTTP requests of type {@link org.apache.http.HttpRequest}.
- * 
+ *
  * @author Matthias Kaeppler
  */
 public class CommonsHttpOAuthConsumer extends AbstractOAuthConsumer {
@@ -40,5 +40,4 @@ public class CommonsHttpOAuthConsumer extends AbstractOAuthConsumer {
 
         return new HttpRequestAdapter((org.apache.http.client.methods.HttpUriRequest) request);
     }
-
 }

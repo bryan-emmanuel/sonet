@@ -19,21 +19,6 @@
  */
 package com.piusvelte.sonet;
 
-import static com.piusvelte.sonet.Sonet.*;
-
-import mobi.intuitit.android.content.LauncherIntent;
-
-import com.piusvelte.sonet.fragment.BaseDialogFragment;
-import com.piusvelte.sonet.fragment.ChooseAccountDialogFragment;
-import com.piusvelte.sonet.fragment.ChooseWidgetDialogFragment;
-import com.piusvelte.sonet.fragment.ConfirmationDialogFragment;
-import com.piusvelte.sonet.fragment.ItemsDialogFragment;
-import com.piusvelte.sonet.fragment.LoadingDialogFragment;
-import com.piusvelte.sonet.loader.StatusLoader;
-import com.piusvelte.sonet.provider.Accounts;
-import com.piusvelte.sonet.provider.WidgetAccounts;
-import com.piusvelte.sonet.provider.Widgets;
-
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Intent;
@@ -54,9 +39,30 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.piusvelte.sonet.fragment.BaseDialogFragment;
+import com.piusvelte.sonet.fragment.ChooseAccountDialogFragment;
+import com.piusvelte.sonet.fragment.ChooseWidgetDialogFragment;
+import com.piusvelte.sonet.fragment.ConfirmationDialogFragment;
+import com.piusvelte.sonet.fragment.ItemsDialogFragment;
+import com.piusvelte.sonet.fragment.LoadingDialogFragment;
+import com.piusvelte.sonet.loader.StatusLoader;
+import com.piusvelte.sonet.provider.Accounts;
+import com.piusvelte.sonet.provider.WidgetAccounts;
+import com.piusvelte.sonet.provider.Widgets;
+import com.piusvelte.sonet.social.Pinterest;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.HashMap;
+
+import mobi.intuitit.android.content.LauncherIntent;
+
+import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
+import static com.piusvelte.sonet.Sonet.GOOGLEPLUS;
+import static com.piusvelte.sonet.Sonet.PINTEREST;
+import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
+import static com.piusvelte.sonet.Sonet.RSS;
+import static com.piusvelte.sonet.Sonet.SMS;
 
 public class StatusDialog extends FragmentActivity implements LoaderManager.LoaderCallbacks, BaseDialogFragment.OnResultListener {
     private static final String TAG = "StatusDialog";
@@ -74,7 +80,8 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
     private static final int REQUEST_REFRESH_WIDGET = 6;
     private static final int REQUEST_LOADING_PROFILE = 7;
 
-    @IntDef({REQUEST_LOADING_STATUS, REQUEST_CONFIRM_UPLOAD, REQUEST_ITEMS, REQUEST_CHOOSE_ACCOUNT, REQUEST_LOADING_ACCOUNTS, REQUEST_CHOOSE_WIDGET, REQUEST_REFRESH_WIDGET, REQUEST_LOADING_PROFILE})
+    @IntDef({ REQUEST_LOADING_STATUS, REQUEST_CONFIRM_UPLOAD, REQUEST_ITEMS, REQUEST_CHOOSE_ACCOUNT, REQUEST_LOADING_ACCOUNTS,
+            REQUEST_CHOOSE_WIDGET, REQUEST_REFRESH_WIDGET, REQUEST_LOADING_PROFILE })
     @Retention(RetentionPolicy.SOURCE)
     private @interface RequestCode {
     }
@@ -88,7 +95,8 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
     private static final String DIALOG_REFRESH_WIDGET = "dialog:refresh_widget";
     private static final String DIALOG_LOADING_PROFILE = "dialog:loading_profile";
 
-    @StringDef({DIALOG_LOADING_STATUS, DIALOG_CONFIRM_UPLOAD, DIALOG_ITEMS, DIALOG_CHOOSE_ACCOUNT, DIALOG_LOADING_ACCOUNTS, DIALOG_CHOOSE_WIDGET, DIALOG_REFRESH_WIDGET, DIALOG_LOADING_PROFILE})
+    @StringDef({ DIALOG_LOADING_STATUS, DIALOG_CONFIRM_UPLOAD, DIALOG_ITEMS, DIALOG_CHOOSE_ACCOUNT, DIALOG_LOADING_ACCOUNTS, DIALOG_CHOOSE_WIDGET,
+            DIALOG_REFRESH_WIDGET, DIALOG_LOADING_PROFILE })
     @Retention(RetentionPolicy.SOURCE)
     private @interface DialogTag {
     }
@@ -210,7 +218,8 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
         if (mStatusLoaderResult.service == SMS) {
             // if mRect go straight to message app...
             if (mStatusLoaderResult.rect != null) {
-                QuickContact.showQuickContact(this, mStatusLoaderResult.rect, Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, mStatusLoaderResult.esid), QuickContact.MODE_LARGE, null);
+                QuickContact.showQuickContact(this, mStatusLoaderResult.rect,
+                        Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, mStatusLoaderResult.esid), QuickContact.MODE_LARGE, null);
             } else {
                 startActivity(new Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + mStatusLoaderResult.esid)));
                 finish();
@@ -231,12 +240,13 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
             if (mStatusLoaderResult.appwidgetId != Sonet.INVALID_ACCOUNT_ID) {
                 // informational messages go to settings
                 mFinish = true;
-                startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mStatusLoaderResult.appwidgetId));
+                startActivity(new Intent(this, ManageAccounts.class)
+                        .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mStatusLoaderResult.appwidgetId));
                 finish();
             } else {
                 (Toast.makeText(StatusDialog.this, R.string.widget_loading, Toast.LENGTH_LONG)).show();
                 // force widgets rebuild
-                startService(Sonet.getPackageIntent(this, SonetService.class).setAction(ACTION_REFRESH));
+                startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH));
                 finish();
             }
         }
@@ -248,8 +258,8 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
         mAppWidgetIds = Sonet.getWidgets(getApplicationContext(), appWidgetManager);
 
         // older versions had a null widget, remove them
-        getContentResolver().delete(Widgets.getContentUri(StatusDialog.this), Widgets.WIDGET + "=?", new String[]{""});
-        getContentResolver().delete(WidgetAccounts.getContentUri(StatusDialog.this), WidgetAccounts.WIDGET + "=?", new String[]{""});
+        getContentResolver().delete(Widgets.getContentUri(StatusDialog.this), Widgets.WIDGET + "=?", new String[] { "" });
+        getContentResolver().delete(WidgetAccounts.getContentUri(StatusDialog.this), WidgetAccounts.WIDGET + "=?", new String[] { "" });
 
         String[] widgetsOptions = new String[mAppWidgetIds.length];
 
@@ -304,7 +314,7 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
             case LOADER_ACCOUNTS:
                 return new CursorLoader(this,
                         Accounts.getContentUri(this),
-                        new String[]{Accounts._ID, Accounts.ACCOUNTS_QUERY},
+                        new String[] { Accounts._ID, Accounts.ACCOUNTS_QUERY },
                         null,
                         null,
                         null);
@@ -391,7 +401,7 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
 
             case REQUEST_CONFIRM_UPLOAD:
                 if (result == RESULT_OK) {
-                    startActivityForResult(Sonet.getPackageIntent(getApplicationContext(), SonetCreatePost.class)
+                    startActivityForResult(new Intent(this, SonetCreatePost.class)
                                     .putExtra(Widgets.INSTANT_UPLOAD, mFilePath),
                             RESULT_REFRESH);
                 } else {
@@ -410,12 +420,13 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
                                     startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://plus.google.com")));
                                 } else if (mStatusLoaderResult.service == PINTEREST) {
                                     if (mStatusLoaderResult.sid != null) {
-                                        startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(String.format(PINTEREST_PIN, mStatusLoaderResult.sid))));
+                                        startActivity(new Intent(Intent.ACTION_VIEW)
+                                                .setData(Uri.parse(String.format(Pinterest.PINTEREST_PIN, mStatusLoaderResult.sid))));
                                     } else {
                                         startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
                                     }
                                 } else {
-                                    startActivity(Sonet.getPackageIntent(this, SonetComments.class).setData(mStatusLoaderResult.data));
+                                    startActivity(new Intent(this, SonetComments.class).setData(mStatusLoaderResult.data));
                                 }
                             } else {
                                 (Toast.makeText(this, getString(R.string.error_status), Toast.LENGTH_LONG)).show();
@@ -431,7 +442,9 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
                                 } else if (mStatusLoaderResult.service == PINTEREST) {
                                     startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://pinterest.com")));
                                 } else {
-                                    startActivity(Sonet.getPackageIntent(this, SonetCreatePost.class).setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(mStatusLoaderResult.accountId))));
+                                    startActivity(new Intent(this, SonetCreatePost.class).setData(
+                                            Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this),
+                                                    Long.toString(mStatusLoaderResult.accountId))));
                                 }
 
                                 finish();
@@ -445,7 +458,8 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
 
                         case StatusLoader.Result.SETTINGS:
                             if (mStatusLoaderResult.appwidgetId != -1) {
-                                startActivity(Sonet.getPackageIntent(this, ManageAccounts.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mStatusLoaderResult.appwidgetId));
+                                startActivity(new Intent(this, ManageAccounts.class)
+                                        .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mStatusLoaderResult.appwidgetId));
                                 finish();
                             } else {
                                 chooseWidget(REQUEST_CHOOSE_WIDGET, DIALOG_CHOOSE_WIDGET);
@@ -453,14 +467,15 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
                             break;
 
                         case StatusLoader.Result.NOTIFICATIONS:
-                            startActivity(Sonet.getPackageIntent(this, SonetNotifications.class));
+                            startActivity(new Intent(this, SonetNotifications.class));
                             finish();
                             break;
 
                         case StatusLoader.Result.REFRESH:
                             if (mStatusLoaderResult.appwidgetId != -1) {
                                 Toast.makeText(getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG).show();
-                                startService(Sonet.getPackageIntent(this, SonetService.class).setAction(ACTION_REFRESH).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mStatusLoaderResult.appwidgetId}));
+                                startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH)
+                                        .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[] { mStatusLoaderResult.appwidgetId }));
                             } else {
                                 chooseWidget(REQUEST_REFRESH_WIDGET, DIALOG_REFRESH_WIDGET);
                             }
@@ -476,7 +491,8 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
                             break;
 
                         default:
-                            if (mStatusLoaderResult.itemsData != null && which < mStatusLoaderResult.itemsData.length && mStatusLoaderResult.itemsData[which] != null) {
+                            if (mStatusLoaderResult.itemsData != null && which < mStatusLoaderResult.itemsData.length && mStatusLoaderResult
+                                    .itemsData[which] != null) {
                                 // open link
                                 startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(mStatusLoaderResult.itemsData[which])));
                             } else {
@@ -492,7 +508,7 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
             case REQUEST_CHOOSE_ACCOUNT:
                 if (result == RESULT_OK) {
                     long id = ChooseAccountDialogFragment.getSelectedId(data);
-                    startActivity(Sonet.getPackageIntent(StatusDialog.this, SonetCreatePost.class)
+                    startActivity(new Intent(this, SonetCreatePost.class)
                             .setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(id))));
                 }
 
@@ -508,7 +524,7 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
             case REQUEST_CHOOSE_WIDGET:
                 if (result == RESULT_OK) {
                     int id = ChooseWidgetDialogFragment.getSelectedId(data);
-                    startActivity(Sonet.getPackageIntent(StatusDialog.this, ManageAccounts.class)
+                    startActivity(new Intent(this, ManageAccounts.class)
                             .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id));
                 }
 
@@ -519,9 +535,9 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
                 if (result == RESULT_OK) {
                     int id = ChooseWidgetDialogFragment.getSelectedId(data);
                     Toast.makeText(this, getString(R.string.refreshing), Toast.LENGTH_LONG).show();
-                    startService(Sonet.getPackageIntent(StatusDialog.this, SonetService.class)
+                    startService(new Intent(this, SonetService.class)
                             .setAction(ACTION_REFRESH)
-                            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{id}));
+                            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[] { id }));
                 }
 
                 finish();

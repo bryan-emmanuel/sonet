@@ -22,5 +22,4 @@ public final class StatusLinks implements BaseColumns {
     public static final String STATUS_ID = "status_id";
     public static final String LINK_URI = "link_uri";
     public static final String LINK_TYPE = "link_type";
-
 }

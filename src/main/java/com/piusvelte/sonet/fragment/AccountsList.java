@@ -114,7 +114,7 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
         mAdapter = new SimpleCursorAdapter(getActivity(),
                 R.layout.widget_item,
                 null,
-                new String[]{StatusesStyles.FRIEND,
+                new String[] { StatusesStyles.FRIEND,
                         StatusesStyles.FRIEND + "2",
                         StatusesStyles.MESSAGE,
                         StatusesStyles.MESSAGE + "2",
@@ -123,8 +123,8 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
                         StatusesStyles.PROFILE,
                         StatusesStyles.ICON,
                         StatusesStyles.PROFILE_BG,
-                        StatusesStyles.FRIEND_BG},
-                new int[]{R.id.friend_bg_clear,
+                        StatusesStyles.FRIEND_BG },
+                new int[] { R.id.friend_bg_clear,
                         R.id.friend,
                         R.id.message_bg_clear,
                         R.id.message,
@@ -133,7 +133,7 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
                         R.id.profile,
                         R.id.icon,
                         R.id.profile_bg,
-                        R.id.friend_bg},
+                        R.id.friend_bg },
                 0);
         mAdapter.setViewBinder(new AccountsViewBinder(getResources()));
         setListAdapter(mAdapter);
@@ -146,9 +146,9 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
             Eidos.requestBackup(getActivity());
             Toast.makeText(getActivity(), getString(R.string.refreshing), Toast.LENGTH_LONG)
                     .show();
-            getActivity().startService(Sonet.getPackageIntent(getActivity(), SonetService.class)
+            getActivity().startService(new Intent(getActivity(), SonetService.class)
                     .setAction(ACTION_REFRESH)
-                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{mAppWidgetId}));
+                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[] { mAppWidgetId }));
         }
 
         super.onPause();
@@ -172,7 +172,7 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
 
             case R.id.default_widget_settings:
                 mAddingAccount = true;
-                startActivityForResult(Sonet.getPackageIntent(getActivity(), Settings.class)
+                startActivityForResult(new Intent(getActivity(), Settings.class)
                         .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId), RESULT_REFRESH);
                 return true;
 
@@ -207,7 +207,8 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
         super.onListItemClick(l, v, position, id);
 
         boolean isEnabled = ((TextView) v.findViewById(R.id.message)).getText().toString().contains("enabled");
-        final CharSequence[] items = {getString(R.string.re_authenticate), getString(R.string.account_settings), getString(isEnabled ? R.string.disable : R.string.enable)};
+        final CharSequence[] items = { getString(R.string.re_authenticate), getString(R.string.account_settings), getString(
+                isEnabled ? R.string.disable : R.string.enable) };
         AccountOptionsDialogFragment.newInstance(REQUEST_ACCOUNT_OPTIONS, id, items, isEnabled)
                 .show(getChildFragmentManager(), DIALOG_ACCOUNT_OPTIONS);
     }
@@ -219,7 +220,7 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
                 int appWidgetId = getArguments().getInt(ARG_APP_WIDGET_ID);
                 return new CursorLoader(getActivity(),
                         AccountsStyles.getContentUri(getActivity()),
-                        new String[]{
+                        new String[] {
                                 Accounts._ID,
 
                                 "(case when " + Accounts.SERVICE + "=" + Sonet.TWITTER + " then 'Twitter: ' when "
@@ -242,64 +243,153 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
                                         + Accounts.SERVICE + "=" + Sonet.RSS + " then 'RSS: ' when "
                                         + Accounts.SERVICE + "=" + Sonet.IDENTICA + " then 'Identi.ca: ' when "
                                         + Accounts.SERVICE + "=" + Sonet.GOOGLEPLUS + " then 'Google+: ' when "
-                                        + Accounts.SERVICE + "=" + Sonet.PINTEREST + " then 'Pinterest: ' else '' end) as " + StatusesStyles.FRIEND + "2",
+                                        + Accounts.SERVICE + "=" + Sonet.PINTEREST + " then 'Pinterest: ' else '' end) as " + StatusesStyles.FRIEND
+                                        + "2",
 
-                                "(case when (select " + Widgets.DISPLAY_PROFILE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then (select " + Widgets.DISPLAY_PROFILE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
-                                        + "when (select " + Widgets.DISPLAY_PROFILE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.DISPLAY_PROFILE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1 limit 1)"
-                                        + "when (select " + Widgets.DISPLAY_PROFILE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.DISPLAY_PROFILE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
+                                "(case when (select " + Widgets.DISPLAY_PROFILE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then " +
+                                        "(select " + Widgets.DISPLAY_PROFILE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
+                                        + "when (select " + Widgets.DISPLAY_PROFILE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.DISPLAY_PROFILE + " " +
+                                        "from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1" +
+                                        " limit 1)"
+                                        + "when (select " + Widgets.DISPLAY_PROFILE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 " +
+                                        "and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.DISPLAY_PROFILE + " from " +
+                                        TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
                                         + "else 1 end) as " + StatusesStyles.PROFILE,
 
-                                "(case when (select " + WidgetAccounts.WIDGET + " from " + TABLE_WIDGET_ACCOUNTS + " where " + WidgetAccounts.WIDGET + "=" + appWidgetId + " and " + WidgetAccounts.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1) is null then 'getActivity() account is disabled for getActivity() widget, select to enable' else 'account is enabled for getActivity() widget, select to change settings' end) as " + StatusesStyles.MESSAGE,
+                                "(case when (select " + WidgetAccounts.WIDGET + " from " + TABLE_WIDGET_ACCOUNTS + " where " + WidgetAccounts
+                                        .WIDGET + "=" + appWidgetId + " and " + WidgetAccounts.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID
+                                        + " limit 1) is null then 'getActivity() account is disabled for getActivity() widget, select to enable' " +
+                                        "else 'account is enabled for getActivity() widget, select to change settings' end) as " + StatusesStyles
+                                        .MESSAGE,
 
-                                "(case when (select " + WidgetAccounts.WIDGET + " from " + TABLE_WIDGET_ACCOUNTS + " where " + WidgetAccounts.WIDGET + "=" + appWidgetId + " and " + WidgetAccounts.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1) is null then 'getActivity() account is disabled for getActivity() widget, select to enable' else 'account is enabled for getActivity() widget, select to change settings' end) as " + StatusesStyles.MESSAGE + "2",
+                                "(case when (select " + WidgetAccounts.WIDGET + " from " + TABLE_WIDGET_ACCOUNTS + " where " + WidgetAccounts
+                                        .WIDGET + "=" + appWidgetId + " and " + WidgetAccounts.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID
+                                        + " limit 1) is null then 'getActivity() account is disabled for getActivity() widget, select to enable' " +
+                                        "else 'account is enabled for getActivity() widget, select to change settings' end) as " + StatusesStyles
+                                        .MESSAGE + "2",
 
                                 Accounts.USERNAME + " as " + StatusesStyles.CREATEDTEXT,
 
-                                "(case when (select " + Widgets.MESSAGES_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then (select " + Widgets.MESSAGES_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
-                                        + "when (select " + Widgets.MESSAGES_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.MESSAGES_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1 limit 1)"
-                                        + "when (select " + Widgets.MESSAGES_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.MESSAGES_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
+                                "(case when (select " + Widgets.MESSAGES_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then " +
+                                        "(select " + Widgets.MESSAGES_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
+                                        + "when (select " + Widgets.MESSAGES_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.MESSAGES_COLOR + " " +
+                                        "from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1" +
+                                        " limit 1)"
+                                        + "when (select " + Widgets.MESSAGES_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 " +
+                                        "and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.MESSAGES_COLOR + " from " +
+                                        TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
                                         + "else " + Sonet.default_message_color + " end) as " + StatusesStyles.MESSAGES_COLOR,
 
-                                "(case when (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
-                                        + "when (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1 limit 1)"
-                                        + "when (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
+                                "(case when (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then " +
+                                        "(select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
+                                        + "when (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.FRIEND_COLOR + " from " +
+                                        "" + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1 " +
+                                        "limit 1)"
+                                        + "when (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " +
+                                        "" + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.FRIEND_COLOR + " from " + TABLE_WIDGETS +
+                                        " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
                                         + "else " + Sonet.default_friend_color + " end) as " + StatusesStyles.FRIEND_COLOR,
 
-                                "(case when (select " + Widgets.CREATED_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then (select " + Widgets.CREATED_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
-                                        + "when (select " + Widgets.CREATED_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.CREATED_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1 limit 1)"
-                                        + "when (select " + Widgets.CREATED_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.CREATED_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
+                                "(case when (select " + Widgets.CREATED_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then " +
+                                        "(select " + Widgets.CREATED_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
+                                        + "when (select " + Widgets.CREATED_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.CREATED_COLOR + " from" +
+                                        " " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1 " +
+                                        "limit 1)"
+                                        + "when (select " + Widgets.CREATED_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and" +
+                                        " " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.CREATED_COLOR + " from " + TABLE_WIDGETS
+                                        + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
                                         + "else " + Sonet.default_created_color + " end) as " + StatusesStyles.CREATED_COLOR,
 
-                                "(case when (select " + Widgets.MESSAGES_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then (select " + Widgets.MESSAGES_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
-                                        + "when (select " + Widgets.MESSAGES_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.MESSAGES_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1 limit 1)"
-                                        + "when (select " + Widgets.MESSAGES_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.MESSAGES_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
+                                "(case when (select " + Widgets.MESSAGES_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then " +
+                                        "(select " + Widgets.MESSAGES_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
+                                        + "when (select " + Widgets.MESSAGES_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "="
+                                        + appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.MESSAGES_TEXTSIZE +
+                                        " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT +
+                                        "=-1 limit 1)"
+                                        + "when (select " + Widgets.MESSAGES_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0" +
+                                        " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.MESSAGES_TEXTSIZE + " from " +
+                                        TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
                                         + "else " + Sonet.default_messages_textsize + " end) as " + StatusesStyles.MESSAGES_TEXTSIZE,
 
-                                "(case when (select " + Widgets.FRIEND_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then (select " + Widgets.FRIEND_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
-                                        + "when (select " + Widgets.FRIEND_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.FRIEND_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1 limit 1)"
-                                        + "when (select " + Widgets.FRIEND_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.FRIEND_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
+                                "(case when (select " + Widgets.FRIEND_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then " +
+                                        "(select " + Widgets.FRIEND_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
+                                        + "when (select " + Widgets.FRIEND_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.FRIEND_TEXTSIZE + " " +
+                                        "from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1" +
+                                        " limit 1)"
+                                        + "when (select " + Widgets.FRIEND_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 " +
+                                        "and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.FRIEND_TEXTSIZE + " from " +
+                                        TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
                                         + "else " + Sonet.default_friend_textsize + " end) as " + StatusesStyles.FRIEND_TEXTSIZE,
 
-                                "(case when (select " + Widgets.CREATED_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then (select " + Widgets.CREATED_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
-                                        + "when (select " + Widgets.CREATED_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.CREATED_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1 limit 1)"
-                                        + "when (select " + Widgets.CREATED_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.CREATED_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
+                                "(case when (select " + Widgets.CREATED_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then " +
+                                        "(select " + Widgets.CREATED_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
+                                        + "when (select " + Widgets.CREATED_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "="
+                                        + appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.CREATED_TEXTSIZE + "" +
+                                        " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT +
+                                        "=-1 limit 1)"
+                                        + "when (select " + Widgets.CREATED_TEXTSIZE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 " +
+                                        "and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.CREATED_TEXTSIZE + " from " +
+                                        TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
                                         + "else " + Sonet.default_created_textsize + " end) as " + StatusesStyles.CREATED_TEXTSIZE,
 
-                                "(case when (select " + Widgets.MESSAGES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then (select " + Widgets.MESSAGES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
-                                        + "when (select " + Widgets.MESSAGES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.MESSAGES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1 limit 1)"
-                                        + "when (select " + Widgets.MESSAGES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.MESSAGES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
+                                "(case when (select " + Widgets.MESSAGES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then " +
+                                        "(select " + Widgets.MESSAGES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
+                                        + "when (select " + Widgets.MESSAGES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "="
+                                        + appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.MESSAGES_BG_COLOR +
+                                        " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT +
+                                        "=-1 limit 1)"
+                                        + "when (select " + Widgets.MESSAGES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0" +
+                                        " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.MESSAGES_BG_COLOR + " from " +
+                                        TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
                                         + "else " + Sonet.default_message_bg_color + " end) as " + StatusesStyles.STATUS_BG,
 
                                 Accounts.SERVICE + " as " + StatusesStyles.ICON,
 
-                                "(case when (select " + Widgets.PROFILES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then (select " + Widgets.PROFILES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
-                                        + "when (select " + Widgets.PROFILES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.PROFILES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1 limit 1)"
-                                        + "when (select " + Widgets.PROFILES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.PROFILES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
+                                "(case when (select " + Widgets.PROFILES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then " +
+                                        "(select " + Widgets.PROFILES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
+                                        + "when (select " + Widgets.PROFILES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "="
+                                        + appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.PROFILES_BG_COLOR +
+                                        " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT +
+                                        "=-1 limit 1)"
+                                        + "when (select " + Widgets.PROFILES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0" +
+                                        " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.PROFILES_BG_COLOR + " from " +
+                                        TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
                                         + "else " + Sonet.default_message_bg_color + " end) as " + StatusesStyles.PROFILE_BG,
 
-                                "(case when (select " + Widgets.FRIEND_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then (select " + Widgets.FRIEND_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
-                                        + "when (select " + Widgets.FRIEND_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.FRIEND_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1 limit 1)"
-                                        + "when (select " + Widgets.FRIEND_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.FRIEND_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
+                                "(case when (select " + Widgets.FRIEND_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then " +
+                                        "(select " + Widgets.FRIEND_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
+                                        + "when (select " + Widgets.FRIEND_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
+                                        appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.FRIEND_BG_COLOR + " " +
+                                        "from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1" +
+                                        " limit 1)"
+                                        + "when (select " + Widgets.FRIEND_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 " +
+                                        "and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.FRIEND_BG_COLOR + " from " +
+                                        TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
                                         + "else " + Sonet.default_friend_bg_color + " end) as " + StatusesStyles.FRIEND_BG
                         },
                         null,
@@ -310,9 +400,9 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
                 long accountId = args.getLong(ARG_ACCOUNT_ID);
                 return new CursorLoader(getActivity(),
                         Accounts.getContentUri(getActivity()),
-                        new String[]{Accounts._ID, Accounts.SERVICE},
+                        new String[] { Accounts._ID, Accounts.SERVICE },
                         Accounts._ID + "=?",
-                        new String[]{Long.toString(accountId)},
+                        new String[] { Long.toString(accountId) },
                         null);
 
             default:
@@ -339,7 +429,7 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
 
                         if ((service != SMS) && (service != RSS)) {
                             mAddingAccount = true;
-                            startActivityForResult(Sonet.getPackageIntent(getActivity(), OAuthLogin.class)
+                            startActivityForResult(new Intent(getActivity(), OAuthLogin.class)
                                             .putExtra(Accounts.SERVICE, service)
                                             .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId)
                                             .putExtra(Sonet.EXTRA_ACCOUNT_ID, id),
@@ -396,16 +486,20 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
                             break;
                         case SETTINGS_ID:
                             mAddingAccount = true;
-                            startActivityForResult(Sonet.getPackageIntent(getActivity(), AccountSettings.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id), RESULT_REFRESH);
+                            startActivityForResult(new Intent(getActivity(), AccountSettings.class)
+                                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id),
+                                    RESULT_REFRESH);
                             break;
                         case ENABLE_ID:
                             boolean isEnabled = AccountOptionsDialogFragment.getIsEnabled(data, true);
 
                             if (isEnabled) {
-                                getActivity().startService(AccountUpdateService.obtainIntent(getActivity(), AccountUpdateService.ACTION_DISABLE, id, mAppWidgetId));
+                                getActivity().startService(
+                                        AccountUpdateService.obtainIntent(getActivity(), AccountUpdateService.ACTION_DISABLE, id, mAppWidgetId));
                             } else {
                                 // enable the account
-                                getActivity().startService(AccountUpdateService.obtainIntent(getActivity(), AccountUpdateService.ACTION_ENABLE, id, mAppWidgetId));
+                                getActivity().startService(
+                                        AccountUpdateService.obtainIntent(getActivity(), AccountUpdateService.ACTION_ENABLE, id, mAppWidgetId));
                             }
 
                             mUpdateWidget = true;
@@ -416,8 +510,9 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
 
             case REQUEST_ADD_ACCOUNT:
                 mAddingAccount = true;
-                startActivityForResult(Sonet.getPackageIntent(getActivity(), OAuthLogin.class)
-                        .putExtra(Accounts.SERVICE, Integer.parseInt(getResources().getStringArray(R.array.service_values)[ItemsDialogFragment.getWhich(data, 0)]))
+                startActivityForResult(new Intent(getActivity(), OAuthLogin.class)
+                        .putExtra(Accounts.SERVICE,
+                                Integer.parseInt(getResources().getStringArray(R.array.service_values)[ItemsDialogFragment.getWhich(data, 0)]))
                         .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId)
                         .putExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID)
                         , RESULT_REFRESH);

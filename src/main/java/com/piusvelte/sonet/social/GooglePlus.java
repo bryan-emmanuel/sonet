@@ -33,14 +33,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-import static com.piusvelte.sonet.Sonet.GOOGLEPLUS_ACTIVITIES;
-import static com.piusvelte.sonet.Sonet.GOOGLEPLUS_ACTIVITY;
-import static com.piusvelte.sonet.Sonet.GOOGLEPLUS_AUTHORIZE;
-import static com.piusvelte.sonet.Sonet.GOOGLEPLUS_BASE_URL;
-import static com.piusvelte.sonet.Sonet.GOOGLEPLUS_DATE_FORMAT;
-import static com.piusvelte.sonet.Sonet.GOOGLEPLUS_PROFILE;
-import static com.piusvelte.sonet.Sonet.GOOGLEPLUS_URL_ME;
-import static com.piusvelte.sonet.Sonet.GOOGLE_ACCESS;
 import static com.piusvelte.sonet.Sonet.Saccess_token;
 import static com.piusvelte.sonet.Sonet.Sactor;
 import static com.piusvelte.sonet.Sonet.Scontent;
@@ -59,6 +51,16 @@ import static com.piusvelte.sonet.Sonet.Surl;
  * Created by bemmanuel on 2/15/15.
  */
 public class GooglePlus extends Client {
+
+    private static final String GOOGLEPLUS_AUTHORIZE = "https://accounts.google.com/o/oauth2/auth?client_id=%s&redirect_uri=%s&scope=https://www" +
+            ".googleapis.com/auth/plus.me&response_type=code";
+    private static final String GOOGLE_ACCESS = "https://accounts.google.com/o/oauth2/token";
+    private static final String GOOGLEPLUS_BASE_URL = "https://www.googleapis.com/plus/v1/";
+    private static final String GOOGLEPLUS_URL_ME = "%speople/me?fields=displayName,id&access_token=%s";
+    private static final String GOOGLEPLUS_ACTIVITIES = "%speople/%s/activities/%s?maxResults=%s&access_token=%s";
+    private static final String GOOGLEPLUS_ACTIVITY = "%sactivities/%s?access_token=%s";
+    private static final String GOOGLEPLUS_PROFILE = "https://plus.google.com/%s";
+    private static final String GOOGLEPLUS_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
     public GooglePlus(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
@@ -126,7 +128,8 @@ public class GooglePlus extends Client {
                         JSONObject j = new JSONObject(response);
                         if (j.has("access_token") && j.has("refresh_token")) {
                             String refresh_token = j.getString("refresh_token");
-                            String httpResponse = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(GOOGLEPLUS_URL_ME, GOOGLEPLUS_BASE_URL, j.getString("access_token"))));
+                            String httpResponse = SonetHttpClient.httpResponse(mContext,
+                                    new HttpGet(String.format(GOOGLEPLUS_URL_ME, GOOGLEPLUS_BASE_URL, j.getString("access_token"))));
 
                             if (!TextUtils.isEmpty(httpResponse)) {
 
@@ -178,7 +181,9 @@ public class GooglePlus extends Client {
     @Override
     public Set<String> getNotificationStatusIds(long account, String[] notificationMessage) {
         Set<String> notificationSids = new HashSet<>();
-        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext), new String[]{Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext),
+                new String[] { Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID },
+                Notifications.ACCOUNT + "=?", new String[] { Long.toString(account) }, null);
 
         // loop over notifications
         if (currentNotifications.moveToFirst()) {
@@ -195,7 +200,8 @@ public class GooglePlus extends Client {
 
                 // TODO
                 // get comments for current notifications
-//                String response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(GOOGLEPLUS_ACTIVITY, GOOGLEPLUS_BASE_URL, sid, access_token)));
+//                String response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(GOOGLEPLUS_ACTIVITY, GOOGLEPLUS_BASE_URL, sid,
+// access_token)));
 //
 //                if (!TextUtils.isEmpty(response)) {
 //                    // check for a newer post, if it's the user's own, then set CLEARED=0
@@ -249,7 +255,8 @@ public class GooglePlus extends Client {
                     String access_token = j.getString("access_token");
 
                     if (!TextUtils.isEmpty(access_token)) {
-                        return SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(GOOGLEPLUS_ACTIVITIES, GOOGLEPLUS_BASE_URL, "me", "public", status_count, access_token)));
+                        return SonetHttpClient.httpResponse(mContext,
+                                new HttpGet(String.format(GOOGLEPLUS_ACTIVITIES, GOOGLEPLUS_BASE_URL, "me", "public", status_count, access_token)));
                     }
                 }
             }
@@ -276,13 +283,22 @@ public class GooglePlus extends Client {
 
     @Nullable
     @Override
-    public void addFeedItem(@NonNull JSONObject item, boolean display_profile, boolean time24hr, int appWidgetId, long account, HttpClient httpClient, Set<String> notificationSids, String[] notificationMessage, boolean doNotify) throws JSONException {
+    public void addFeedItem(@NonNull JSONObject item,
+            boolean display_profile,
+            boolean time24hr,
+            int appWidgetId,
+            long account,
+            HttpClient httpClient,
+            Set<String> notificationSids,
+            String[] notificationMessage,
+            boolean doNotify) throws JSONException {
 
         if (item.has(Sactor) && item.has(Sobject)) {
             JSONObject friendObj = item.getJSONObject(Sactor);
             JSONObject object = item.getJSONObject(Sobject);
 
-            if (item.has(Sid) && friendObj.has(Sid) && friendObj.has(SdisplayName) && item.has(Spublished) && object.has(Sreplies) && object.has(SoriginalContent)) {
+            if (item.has(Sid) && friendObj.has(Sid) && friendObj.has(SdisplayName) && item.has(Spublished) && object.has(Sreplies) && object
+                    .has(SoriginalContent)) {
                 String sid = item.getString(Sid);
                 String esid = friendObj.getString(Sid);
                 String friend = friendObj.getString(SdisplayName);
@@ -296,8 +312,9 @@ public class GooglePlus extends Client {
 
                 if (display_profile && friendObj.has(Simage)) {
                     JSONObject image = friendObj.getJSONObject(Simage);
-                    if (image.has(Surl))
+                    if (image.has(Surl)) {
                         photo = image.getString(Surl);
+                    }
                 }
 
                 long date = parseDate(item.getString(Spublished), GOOGLEPLUS_DATE_FORMAT);
@@ -338,7 +355,9 @@ public class GooglePlus extends Client {
 
     @Override
     public void getNotifications(long account, String[] notificationMessage) {
-        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext), new String[]{Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID}, Notifications.ACCOUNT + "=?", new String[]{Long.toString(account)}, null);
+        Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext),
+                new String[] { Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID },
+                Notifications.ACCOUNT + "=?", new String[] { Long.toString(account) }, null);
 
         if (currentNotifications.moveToFirst()) {
             Set<String> notificationSids = new HashSet<>();
@@ -369,7 +388,8 @@ public class GooglePlus extends Client {
                                 notificationSids.add(sid);
                             }
                             // get comments for current notifications
-                            if ((response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(GOOGLEPLUS_ACTIVITY, GOOGLEPLUS_BASE_URL, sid, access_token)))) != null) {
+                            if ((response = SonetHttpClient.httpResponse(mContext,
+                                    new HttpGet(String.format(GOOGLEPLUS_ACTIVITY, GOOGLEPLUS_BASE_URL, sid, access_token)))) != null) {
                                 // check for a newer post, if it's the user's own, then set CLEARED=0
                                 try {
                                     JSONObject item = new JSONObject(response);
@@ -390,7 +410,8 @@ public class GooglePlus extends Client {
                             currentNotifications.moveToNext();
                         }
                         // get new feed
-                        if ((response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(GOOGLEPLUS_ACTIVITIES, GOOGLEPLUS_BASE_URL, "me", "public", 20, access_token)))) != null) {
+                        if ((response = SonetHttpClient.httpResponse(mContext,
+                                new HttpGet(String.format(GOOGLEPLUS_ACTIVITIES, GOOGLEPLUS_BASE_URL, "me", "public", 20, access_token)))) != null) {
                             JSONObject r = new JSONObject(response);
                             if (r.has(Sitems)) {
                                 JSONArray items = r.getJSONArray(Sitems);
@@ -399,7 +420,8 @@ public class GooglePlus extends Client {
                                     if (item.has(Sactor) && item.has(Sobject)) {
                                         JSONObject actor = item.getJSONObject(Sactor);
                                         JSONObject object = item.getJSONObject(Sobject);
-                                        if (item.has(Sid) && actor.has(Sid) && actor.has(SdisplayName) && item.has(Spublished) && object.has(Sreplies) && object.has(SoriginalContent)) {
+                                        if (item.has(Sid) && actor.has(Sid) && actor.has(SdisplayName) && item.has(Spublished) && object
+                                                .has(Sreplies) && object.has(SoriginalContent)) {
                                             String sid = item.getString(Sid);
                                             String esid = actor.getString(Sid);
                                             String friend = actor.getString(SdisplayName);
