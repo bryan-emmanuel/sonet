@@ -27,6 +27,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -34,7 +35,7 @@ import android.support.v4.content.Loader;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.LinearLayout;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import com.google.ads.AdRequest;
@@ -43,8 +44,8 @@ import com.google.ads.AdView;
 import com.piusvelte.sonet.fragment.BaseDialogFragment;
 import com.piusvelte.sonet.fragment.ConfirmationDialogFragment;
 import com.piusvelte.sonet.fragment.ItemsDialogFragment;
+import com.piusvelte.sonet.fragment.WidgetsList;
 import com.piusvelte.sonet.provider.Accounts;
-import com.piusvelte.sonet.provider.WidgetAccounts;
 import com.piusvelte.sonet.provider.Widgets;
 import com.piusvelte.sonet.provider.WidgetsSettings;
 
@@ -58,8 +59,9 @@ public class About extends FragmentActivity implements LoaderManager.LoaderCallb
     private boolean mUpdateWidget = false;
     private static final String TAG = "About";
 
-    private static final int LOADER_ACCOUNTS = 0;
-    private static final int LOADER_DEFAULT_WIDGET = 1;
+    private static final String FRAGMENT_WIDGETS_LIST = "widgets_list";
+
+    private static final int LOADER_DEFAULT_WIDGET = 0;
 
     private static final String DIALOG_ABOUT = "dialog:about";
     private static final String DIALOG_WIDGETS = "dialog:widgets";
@@ -70,9 +72,10 @@ public class About extends FragmentActivity implements LoaderManager.LoaderCallb
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.about);
+
         if (!getPackageName().toLowerCase().contains(PRO)) {
             AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);
-            ((LinearLayout) findViewById(R.id.ad)).addView(adView);
+            ((FrameLayout) findViewById(R.id.ad)).addView(adView);
             adView.loadAd(new AdRequest());
         }
 
@@ -82,7 +85,15 @@ public class About extends FragmentActivity implements LoaderManager.LoaderCallb
             findViewById(R.id.ad).getRootView().setBackgroundDrawable(wp);
         }
 
-        getSupportLoaderManager().initLoader(LOADER_ACCOUNTS, null, this);
+        Fragment widgetsList = getSupportFragmentManager().findFragmentByTag(FRAGMENT_WIDGETS_LIST);
+
+        if (widgetsList == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.widgets_list_container, new WidgetsList(), FRAGMENT_WIDGETS_LIST)
+                    .commit();
+        }
+
+        getSupportLoaderManager().initLoader(LOADER_DEFAULT_WIDGET, null, this);
     }
 
     @Override
@@ -187,14 +198,6 @@ public class About extends FragmentActivity implements LoaderManager.LoaderCallb
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         switch (id) {
-            case LOADER_ACCOUNTS:
-                return new CursorLoader(this,
-                        WidgetAccounts.getContentUri(this),
-                        new String[] { WidgetAccounts._ID },
-                        WidgetAccounts.WIDGET + "=?",
-                        new String[] { String.valueOf(AppWidgetManager.INVALID_APPWIDGET_ID) },
-                        null);
-
             case LOADER_DEFAULT_WIDGET:
                 return new CursorLoader(this, WidgetsSettings.getContentUri(this),
                         new String[] { Widgets.DISPLAY_PROFILE },
@@ -210,19 +213,10 @@ public class About extends FragmentActivity implements LoaderManager.LoaderCallb
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         switch (loader.getId()) {
-            case LOADER_ACCOUNTS:
-                if (cursor != null && cursor.getCount() > 0) {
-                    getSupportLoaderManager().initLoader(LOADER_DEFAULT_WIDGET, null, this);
-                } else {
-                    ConfirmationDialogFragment.newInstance(R.string.about_title, R.string.about, -1)
-                            .show(getSupportFragmentManager(), DIALOG_ABOUT);
-                }
-                break;
-
             case LOADER_DEFAULT_WIDGET:
                 if (cursor != null && cursor.moveToFirst()) {
                     // TODO used to determine showing profile in WidgetsList
-                    boolean showProfile = cursor.getInt(cursor.getColumnIndex(Widgets.DISPLAY_PROFILE)) != 0;
+                    //boolean showProfile = cursor.getInt(cursor.getColumnIndex(Widgets.DISPLAY_PROFILE)) != 0;
                 } else {
                     // initialize account settings
                     ContentValues values = new ContentValues();

@@ -38,6 +38,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
@@ -82,7 +83,7 @@ public class SonetNotifications extends ListActivity {
         setContentView(R.layout.notifications);
         if (!getPackageName().toLowerCase().contains(PRO)) {
             AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);
-            ((LinearLayout) findViewById(R.id.ad)).addView(adView);
+            ((FrameLayout) findViewById(R.id.ad)).addView(adView);
             adView.loadAd(new AdRequest());
         }
         registerForContextMenu(getListView());

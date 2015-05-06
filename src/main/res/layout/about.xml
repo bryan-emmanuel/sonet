@@ -27,7 +27,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
-    <com.piusvelte.sonet.fragment.WidgetsList
+    <FrameLayout
+        android:id="@+id/widgets_list_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />

@@ -21,7 +21,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.piusvelte.sonet.R;
-import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetService;
 import com.piusvelte.sonet.StatusDialog;
 import com.piusvelte.sonet.provider.StatusesStyles;
@@ -42,7 +41,7 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.widgets, container, false);
+        return inflater.inflate(R.layout.loading_list, container, false);
     }
 
     @Override
@@ -131,6 +130,7 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
         switch (loader.getId()) {
             case LOADER_WIDGETS:
                 mAdapter.changeCursor(cursor);
+
                 // if no statuses, trigger a refresh
                 if (cursor.getCount() == 0 && isAdded() && isResumed()) {
                     getActivity().startService(new Intent(getActivity(),

@@ -26,6 +26,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
 import com.google.ads.AdRequest;
@@ -48,7 +49,7 @@ public class ManageAccounts extends ActionBarActivity {
         setContentView(R.layout.accounts_container);
         if (!getPackageName().toLowerCase().contains(PRO)) {
             AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);
-            ((LinearLayout) findViewById(R.id.ad)).addView(adView);
+            ((FrameLayout) findViewById(R.id.ad)).addView(adView);
             adView.loadAd(new AdRequest());
         }
 

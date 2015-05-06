@@ -23,6 +23,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -47,7 +48,7 @@ public class SonetComments extends FragmentActivity {
 
         if (!getPackageName().toLowerCase().contains(PRO)) {
             AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);
-            ((LinearLayout) findViewById(R.id.ad)).addView(adView);
+            ((FrameLayout) findViewById(R.id.ad)).addView(adView);
             adView.loadAd(new AdRequest());
         }
 

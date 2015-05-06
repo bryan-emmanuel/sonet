@@ -34,8 +34,8 @@ import android.support.v4.content.Loader;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 
 import com.google.ads.AdRequest;
 import com.google.ads.AdSize;
@@ -111,7 +111,7 @@ public class AccountSettings extends FragmentActivity
 
         if (!getPackageName().toLowerCase().contains(PRO)) {
             AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);
-            ((LinearLayout) findViewById(R.id.ad)).addView(adView);
+            ((FrameLayout) findViewById(R.id.ad)).addView(adView);
             adView.loadAd(new AdRequest());
         }
 

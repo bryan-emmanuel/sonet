@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
  * Sonet - Android Social Networking Widget
  * Copyright (C) 2009 Bryan Emmanuel
  * 
@@ -19,21 +18,54 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="match_parent" android:layout_height="match_parent">
-	<LinearLayout android:id="@+id/ad" android:layout_width="match_parent"
-		android:layout_height="wrap_content" />
-	<RelativeLayout android:id="@+id/buttons"
-		android:layout_width="match_parent" android:layout_height="wrap_content"
-		android:layout_alignParentBottom="true">
-		<ImageButton android:id="@+id/send" android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:src="@drawable/ic_menu_send"
-			 android:scaleType="fitXY" android:layout_alignParentRight="true" />
-		<Button android:id="@+id/count" android:layout_width="match_parent"
-			android:layout_height="wrap_content" android:text="0"
-			android:layout_toLeftOf="@id/send" android:enabled="false"
-			android:gravity="right|center_vertical" />
-	</RelativeLayout>
-	<EditText android:id="@+id/message" android:layout_width="match_parent"
-		android:layout_height="match_parent" android:layout_below="@id/ad"
-		android:layout_above="@id/buttons" android:gravity="top" android:hint="message" />
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/ad"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <RelativeLayout
+        android:id="@+id/buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true">
+
+        <ImageButton
+            android:id="@+id/send"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:scaleType="fitXY"
+            android:src="@drawable/ic_menu_send" />
+
+        <Button
+            android:id="@+id/count"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toLeftOf="@id/send"
+            android:enabled="false"
+            android:gravity="right|center_vertical"
+            android:text="0" />
+    </RelativeLayout>
+
+    <EditText
+        android:id="@+id/message"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/buttons"
+        android:layout_below="@id/ad"
+        android:gravity="top"
+        android:hint="message" />
+
+    <ProgressBar
+        android:id="@+id/loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:indeterminate="true"
+        android:visibility="gone"
+        tools:visibility="visible" />
 </RelativeLayout>

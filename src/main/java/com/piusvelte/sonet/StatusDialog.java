@@ -22,7 +22,6 @@ package com.piusvelte.sonet;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
@@ -30,21 +29,20 @@ import android.provider.ContactsContract;
 import android.provider.ContactsContract.QuickContact;
 import android.support.annotation.IntDef;
 import android.support.annotation.StringDef;
-import android.support.v4.app.DialogFragment;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
-import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import com.piusvelte.sonet.fragment.BaseDialogFragment;
-import com.piusvelte.sonet.fragment.ChooseAccountDialogFragment;
+import com.piusvelte.sonet.fragment.ChooseAccount;
 import com.piusvelte.sonet.fragment.ChooseWidgetDialogFragment;
 import com.piusvelte.sonet.fragment.ConfirmationDialogFragment;
 import com.piusvelte.sonet.fragment.ItemsDialogFragment;
-import com.piusvelte.sonet.fragment.LoadingDialogFragment;
 import com.piusvelte.sonet.loader.StatusLoader;
 import com.piusvelte.sonet.provider.Accounts;
 import com.piusvelte.sonet.provider.WidgetAccounts;
@@ -59,6 +57,7 @@ import mobi.intuitit.android.content.LauncherIntent;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.GOOGLEPLUS;
+import static com.piusvelte.sonet.Sonet.INVALID_ACCOUNT_ID;
 import static com.piusvelte.sonet.Sonet.PINTEREST;
 import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 import static com.piusvelte.sonet.Sonet.RSS;
@@ -68,8 +67,7 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
     private static final String TAG = "StatusDialog";
 
     private static final int LOADER_STATUS = 0;
-    private static final int LOADER_ACCOUNTS = 1;
-    private static final int LOADER_PROFILE = 2;
+    private static final int LOADER_PROFILE = 1;
 
     private static final int REQUEST_LOADING_STATUS = 0;
     private static final int REQUEST_CONFIRM_UPLOAD = 1;
@@ -86,17 +84,13 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
     private @interface RequestCode {
     }
 
-    private static final String DIALOG_LOADING_STATUS = "dialog:loading_status";
     private static final String DIALOG_CONFIRM_UPLOAD = "dialog:confirm_upload";
     private static final String DIALOG_ITEMS = "dialog:items";
     private static final String DIALOG_CHOOSE_ACCOUNT = "dialog:choose_account";
-    private static final String DIALOG_LOADING_ACCOUNTS = "dialog:loading_accounts";
     private static final String DIALOG_CHOOSE_WIDGET = "dialog:choose_widget";
     private static final String DIALOG_REFRESH_WIDGET = "dialog:refresh_widget";
-    private static final String DIALOG_LOADING_PROFILE = "dialog:loading_profile";
 
-    @StringDef({ DIALOG_LOADING_STATUS, DIALOG_CONFIRM_UPLOAD, DIALOG_ITEMS, DIALOG_CHOOSE_ACCOUNT, DIALOG_LOADING_ACCOUNTS, DIALOG_CHOOSE_WIDGET,
-            DIALOG_REFRESH_WIDGET, DIALOG_LOADING_PROFILE })
+    @StringDef({ DIALOG_CONFIRM_UPLOAD, DIALOG_ITEMS, DIALOG_CHOOSE_ACCOUNT, DIALOG_CHOOSE_WIDGET, DIALOG_REFRESH_WIDGET })
     @Retention(RetentionPolicy.SOURCE)
     private @interface DialogTag {
     }
@@ -113,9 +107,15 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
     private boolean mFinish = false;
     private String mFilePath = null;
 
+    private View mLoadingView;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.status_dialog);
+
+        mLoadingView = findViewById(R.id.loading);
 
         Intent intent = getIntent();
 
@@ -139,10 +139,7 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
                 rect = intent.getSourceBounds();
             }
 
-            if (getSupportFragmentManager().findFragmentByTag(DIALOG_LOADING_STATUS) == null) {
-                LoadingDialogFragment.newInstance(REQUEST_LOADING_STATUS)
-                        .show(getSupportFragmentManager(), DIALOG_LOADING_STATUS);
-            }
+            mLoadingView.setVisibility(View.VISIBLE);
 
             Bundle args = new Bundle();
             args.putString(ARG_DATA, getIntent().getData().toString());
@@ -175,10 +172,7 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
                 rect = intent.getSourceBounds();
             }
 
-            if (getSupportFragmentManager().findFragmentByTag(DIALOG_LOADING_STATUS) == null) {
-                LoadingDialogFragment.newInstance(REQUEST_LOADING_STATUS)
-                        .show(getSupportFragmentManager(), DIALOG_LOADING_STATUS);
-            }
+            mLoadingView.setVisibility(View.VISIBLE);
 
             Bundle args = new Bundle();
             args.putString(ARG_DATA, getIntent().getData().toString());
@@ -272,17 +266,6 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
         return widgetsOptions;
     }
 
-    private boolean dismissDialog(@DialogTag String tag) {
-        DialogFragment dialogFragment = (DialogFragment) getSupportFragmentManager().findFragmentByTag(tag);
-
-        if (dialogFragment != null) {
-            dialogFragment.dismiss();
-            return true;
-        }
-
-        return false;
-    }
-
     private void chooseWidget(@RequestCode int requestCode, @DialogTag String tag) {
         // no widget sent in, dialog to select one
         // TODO change the way this HashMap is populated, drop mAppWidgetIds
@@ -311,14 +294,6 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
             case LOADER_STATUS:
                 return new StatusLoader(this, Uri.parse(args.getString(ARG_DATA)), args.<Rect>getParcelable(ARG_RECT));
 
-            case LOADER_ACCOUNTS:
-                return new CursorLoader(this,
-                        Accounts.getContentUri(this),
-                        new String[] { Accounts._ID, Accounts.ACCOUNTS_QUERY },
-                        null,
-                        null,
-                        null);
-
             default:
                 return null;
         }
@@ -329,7 +304,7 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
 
         switch (loader.getId()) {
             case LOADER_STATUS:
-                dismissDialog(DIALOG_LOADING_STATUS);
+                mLoadingView.setVisibility(View.GONE);
 
                 if (data instanceof StatusLoader.Result) {
                     mStatusLoaderResult = (StatusLoader.Result) data;
@@ -338,34 +313,8 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
                 showDialog();
                 break;
 
-            case LOADER_ACCOUNTS:
-                dismissDialog(DIALOG_LOADING_ACCOUNTS);
-
-                if (data instanceof Cursor) {
-                    Cursor cursor = (Cursor) data;
-
-                    if (cursor.moveToFirst()) {
-                        int indexId = cursor.getColumnIndex(Accounts._ID);
-                        int indexUsername = cursor.getColumnIndex(Accounts.USERNAME);
-
-                        HashMap<Long, String> accounts = new HashMap<>();
-
-                        while (!cursor.isAfterLast()) {
-                            accounts.put(cursor.getLong(indexId), cursor.getString(indexUsername));
-                            cursor.moveToNext();
-                        }
-
-                        ChooseAccountDialogFragment.newInstance(accounts, getString(R.string.accounts), REQUEST_CHOOSE_ACCOUNT)
-                                .show(getSupportFragmentManager(), DIALOG_CHOOSE_ACCOUNT);
-                    } else {
-                        Toast.makeText(StatusDialog.this, getString(R.string.error_status), Toast.LENGTH_LONG).show();
-                        finish();
-                    }
-                }
-                break;
-
             case LOADER_PROFILE:
-                dismissDialog(DIALOG_LOADING_PROFILE);
+                mLoadingView.setVisibility(View.GONE);
 
                 if (data instanceof String) {
                     String url = (String) data;
@@ -383,11 +332,7 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
     public void onLoaderReset(Loader loader) {
         switch (loader.getId()) {
             case LOADER_STATUS:
-                DialogFragment dialogFragment = (DialogFragment) getSupportFragmentManager().findFragmentByTag(DIALOG_LOADING_STATUS);
-
-                if (dialogFragment != null) {
-                    dialogFragment.dismiss();
-                }
+                mLoadingView.setVisibility(View.GONE);
                 break;
         }
     }
@@ -450,9 +395,10 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
                                 finish();
                             } else {
                                 // no widget sent in, load accounts to select
-                                LoadingDialogFragment.newInstance(REQUEST_LOADING_ACCOUNTS)
-                                        .show(getSupportFragmentManager(), DIALOG_LOADING_ACCOUNTS);
-                                getSupportLoaderManager().restartLoader(LOADER_ACCOUNTS, null, this);
+                                getSupportFragmentManager().beginTransaction()
+                                        .add(ChooseAccount.newInstance(REQUEST_CHOOSE_ACCOUNT), DIALOG_CHOOSE_ACCOUNT)
+                                        .addToBackStack(null)
+                                        .commit();
                             }
                             break;
 
@@ -482,8 +428,7 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
                             break;
 
                         case StatusLoader.Result.PROFILE:
-                            LoadingDialogFragment.newInstance(REQUEST_LOADING_PROFILE)
-                                    .show(getSupportFragmentManager(), DIALOG_LOADING_PROFILE);
+                            mLoadingView.setVisibility(View.VISIBLE);
                             Bundle args = new Bundle();
                             args.putLong(ARG_ACCOUNT_ID, mStatusLoaderResult.accountId);
                             args.putString(ARG_ESID, mStatusLoaderResult.esid);
@@ -507,12 +452,21 @@ public class StatusDialog extends FragmentActivity implements LoaderManager.Load
 
             case REQUEST_CHOOSE_ACCOUNT:
                 if (result == RESULT_OK) {
-                    long id = ChooseAccountDialogFragment.getSelectedId(data);
-                    startActivity(new Intent(this, SonetCreatePost.class)
-                            .setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(id))));
+                    long accountId = ChooseAccount.getSelectedId(data);
+
+                    if (accountId != INVALID_ACCOUNT_ID) {
+                        startActivity(new Intent(this, SonetCreatePost.class)
+                                .setData(Uri.withAppendedPath(Accounts.getContentUri(StatusDialog.this), Long.toString(accountId))));
+                    }
                 }
 
-                finish();
+                Fragment fragment = getSupportFragmentManager().findFragmentByTag(DIALOG_CHOOSE_ACCOUNT);
+
+                if (fragment != null) {
+                    getSupportFragmentManager().beginTransaction()
+                            .remove(fragment)
+                            .commit();
+                }
                 break;
 
             case REQUEST_LOADING_ACCOUNTS:

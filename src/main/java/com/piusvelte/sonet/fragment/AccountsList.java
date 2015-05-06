@@ -66,12 +66,10 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
     private static final String ARG_ACCOUNT_ID = "account_id";
 
     private static final String DIALOG_ACCOUNT_OPTIONS = "dialog:account_options";
-    private static final String DIALOG_LOADING = "dialog:loading";
     private static final String DIALOG_ADD_ACCOUNT = "dialog:add_account";
 
     private static final int REQUEST_ACCOUNT_OPTIONS = 0;
-    private static final int REQUEST_LOADING = 1;
-    private static final int REQUEST_ADD_ACCOUNT = 2;
+    private static final int REQUEST_ADD_ACCOUNT = 1;
 
     private static final int REAUTH_ID = 0;
     private static final int SETTINGS_ID = 1;
@@ -81,6 +79,8 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
     private boolean mAddingAccount;
     private boolean mUpdateWidget = false;
     private SimpleCursorAdapter mAdapter;
+
+    private View mLoadingView;
 
     public static AccountsList newInstance(int appWidgetId) {
         AccountsList accountsList = new AccountsList();
@@ -110,6 +110,7 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        mLoadingView = view.findViewById(R.id.loading);
         registerForContextMenu(getListView());
         mAdapter = new SimpleCursorAdapter(getActivity(),
                 R.layout.widget_item,
@@ -414,12 +415,12 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
     public void onLoadFinished(Loader loader, Object data) {
         switch (loader.getId()) {
             case LOADER_ACCOUNTS:
-                if (data instanceof Cursor) {
-                    mAdapter.changeCursor((Cursor) data);
-                }
+                mAdapter.changeCursor((Cursor) data);
                 break;
 
             case LOADER_ACCOUNT:
+                mLoadingView.setVisibility(View.GONE);
+
                 if (data instanceof Cursor) {
                     Cursor cursor = (Cursor) data;
 
@@ -481,13 +482,12 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
                             Bundle args = new Bundle();
                             args.putLong(ARG_ACCOUNT_ID, id);
                             getLoaderManager().restartLoader(LOADER_ACCOUNT, args, this);
-                            LoadingDialogFragment.newInstance(REQUEST_LOADING)
-                                    .show(getChildFragmentManager(), DIALOG_LOADING);
+                            mLoadingView.setVisibility(View.VISIBLE);
                             break;
                         case SETTINGS_ID:
                             mAddingAccount = true;
                             startActivityForResult(new Intent(getActivity(), AccountSettings.class)
-                                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id),
+                                            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id),
                                     RESULT_REFRESH);
                             break;
                         case ENABLE_ID:

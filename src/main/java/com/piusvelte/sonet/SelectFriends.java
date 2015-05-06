@@ -29,6 +29,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -53,9 +54,6 @@ import java.util.List;
 
 import static com.piusvelte.sonet.Sonet.CHATTER;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
-import static com.piusvelte.sonet.social.Facebook.FACEBOOK_BASE_URL;
-import static com.piusvelte.sonet.social.Facebook.FACEBOOK_FRIENDS;
-import static com.piusvelte.sonet.social.Facebook.FACEBOOK_PICTURE;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE;
 import static com.piusvelte.sonet.Sonet.GOOGLEPLUS;
 import static com.piusvelte.sonet.Sonet.IDENTICA;
@@ -89,7 +87,7 @@ public class SelectFriends extends ListActivity {
 
         if (!getPackageName().toLowerCase().contains(PRO)) {
             AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);
-            ((LinearLayout) findViewById(R.id.ad)).addView(adView);
+            ((FrameLayout) findViewById(R.id.ad)).addView(adView);
             adView.loadAd(new AdRequest());
         }
 

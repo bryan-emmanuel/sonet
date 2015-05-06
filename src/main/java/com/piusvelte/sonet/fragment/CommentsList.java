@@ -55,15 +55,9 @@ public class CommentsList extends ListFragment
     private static final int LOADER_SEND = 1;
     private static final int LOADER_LIKE = 2;
 
-    private static final String DIALOG_LOADING_COMMENTS = "dialog:loading_comments";
-    private static final String DIALOG_SEND = "dialog:send";
     private static final String DIALOG_OPTIONS = "dialog:options";
-    private static final String DIALOG_LIKE = "dialog:like";
 
-    private static final int REQUEST_LOADING_COMMENTS = 0;
-    private static final int REQUEST_SEND = 1;
-    private static final int REQUEST_OPTIONS = 2;
-    private static final int REQUEST_LIKE = 3;
+    private static final int REQUEST_OPTIONS = 0;
 
     private static final String ARG_DATA = "data";
     private static final String ARG_SID = "sid";
@@ -85,6 +79,8 @@ public class CommentsList extends ListFragment
     private TextView mCount;
 
     private SimpleAdapter mAdapter;
+
+    private View mLoadingView;
 
     @NonNull
     private Set<Integer> mPendingLoaders = new HashSet<>();
@@ -117,6 +113,8 @@ public class CommentsList extends ListFragment
         mMessage = (EditText) view.findViewById(R.id.message);
         mSend = (ImageButton) view.findViewById(R.id.send);
         mCount = (TextView) view.findViewById(R.id.count);
+        mLoadingView = view.findViewById(R.id.loading);
+
         mMessage.addTextChangedListener(this);
         mMessage.setOnKeyListener(this);
         mSend.setOnClickListener(this);
@@ -137,8 +135,7 @@ public class CommentsList extends ListFragment
 
         LoaderManager loaderManager = getLoaderManager();
 
-        LoadingDialogFragment.newInstance(REQUEST_LOADING_COMMENTS)
-                .show(getChildFragmentManager(), DIALOG_LOADING_COMMENTS);
+        mLoadingView.setVisibility(View.VISIBLE);
         getLoaderManager().initLoader(LOADER_COMMENTS, null, this);
 
         if (savedInstanceState != null) {
@@ -215,8 +212,7 @@ public class CommentsList extends ListFragment
 
     private void refresh() {
         mMessage.setEnabled(false);
-        LoadingDialogFragment.newInstance(REQUEST_LOADING_COMMENTS)
-                .show(getChildFragmentManager(), DIALOG_LOADING_COMMENTS);
+        mLoadingView.setVisibility(View.VISIBLE);
         getLoaderManager().restartLoader(LOADER_COMMENTS, null, this);
     }
 
@@ -280,8 +276,7 @@ public class CommentsList extends ListFragment
                 mMessage.setEnabled(false);
                 mSend.setEnabled(false);
 
-                LoadingDialogFragment.newInstance(REQUEST_SEND)
-                        .show(getChildFragmentManager(), DIALOG_SEND);
+                mLoadingView.setVisibility(View.VISIBLE);
                 getLoaderManager().restartLoader(LOADER_SEND, null, this);
             } else {
                 (Toast.makeText(getActivity(), "error parsing message body", Toast.LENGTH_LONG)).show();
@@ -317,11 +312,7 @@ public class CommentsList extends ListFragment
 
         switch (loader.getId()) {
             case LOADER_COMMENTS:
-                dialogFragment = (DialogFragment) getChildFragmentManager().findFragmentByTag(DIALOG_LOADING_COMMENTS);
-
-                if (dialogFragment != null) {
-                    dialogFragment.dismiss();
-                }
+                mLoadingView.setVisibility(View.GONE);
 
                 if (data instanceof CommentsLoader.Result) {
                     CommentsLoader.Result result = (CommentsLoader.Result) data;
@@ -363,11 +354,7 @@ public class CommentsList extends ListFragment
                 break;
 
             case LOADER_SEND:
-                dialogFragment = (DialogFragment) getChildFragmentManager().findFragmentByTag(DIALOG_SEND);
-
-                if (dialogFragment != null) {
-                    dialogFragment.dismiss();
-                }
+                mLoadingView.setVisibility(View.GONE);
 
                 if (Boolean.TRUE.equals(data)) {
                     Toast.makeText(getActivity(), mServiceName + " " + getString(R.string.success), Toast.LENGTH_LONG).show();
@@ -381,11 +368,7 @@ public class CommentsList extends ListFragment
                 break;
 
             case LOADER_LIKE:
-                dialogFragment = (DialogFragment) getChildFragmentManager().findFragmentByTag(DIALOG_LIKE);
-
-                if (dialogFragment != null) {
-                    dialogFragment.dismiss();
-                }
+                mLoadingView.setVisibility(View.GONE);
 
                 if (data instanceof LikeCommentLoader.Result) {
                     LikeCommentLoader.Result result = (LikeCommentLoader.Result) data;
@@ -407,12 +390,6 @@ public class CommentsList extends ListFragment
     @Override
     public void onResult(int requestCode, int result, Intent data) {
         switch (requestCode) {
-            case REQUEST_LOADING_COMMENTS:
-                if (result == Activity.RESULT_CANCELED) {
-                    getActivity().finish();
-                }
-                break;
-
             case REQUEST_OPTIONS:
                 if (result == Activity.RESULT_OK) {
                     int which = ItemsDialogFragment.getWhich(data, 0);
@@ -422,8 +399,7 @@ public class CommentsList extends ListFragment
                         String sid = CommentOptionsDialogFragment.getSid(data);
                         boolean doLike = CommentOptionsDialogFragment.getDoLiked(data, false);
 
-                        LoadingDialogFragment.newInstance(REQUEST_LIKE)
-                                .show(getChildFragmentManager(), DIALOG_LIKE);
+                        mLoadingView.setVisibility(View.VISIBLE);
 
                         Bundle args = new Bundle();
                         args.putString(ARG_SID, sid);

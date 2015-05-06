@@ -138,8 +138,6 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
                     (Toast.makeText(OAuthLogin.this, String.format(getString(R.string.oauth_error), mServiceName), Toast.LENGTH_LONG)).show();
                     finish();
                 }
-
-                getSupportLoaderManager().destroyLoader(LOADER_OAUTH_LOGIN);
                 break;
 
             case LOADER_SMS:
@@ -153,7 +151,6 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
                     }
                 }
 
-                getSupportLoaderManager().destroyLoader(LOADER_SMS);
                 finish();
                 break;
 
@@ -167,7 +164,6 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
                             .show(getSupportFragmentManager(), DIALOG_RSS_NAME);
                 }
 
-                getSupportLoaderManager().destroyLoader(LOADER_RSS);
                 break;
 
             case LOADER_PINTEREST:
@@ -191,7 +187,6 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
                     }
                 }
 
-                getSupportLoaderManager().destroyLoader(LOADER_PINTEREST);
                 finish();
                 break;
 
@@ -202,9 +197,9 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
                     Client.MemberAuthentication memberAuthentication = (Client.MemberAuthentication) data;
                     addAccount(memberAuthentication.username, memberAuthentication.token, memberAuthentication.secret, memberAuthentication.expiry,
                             memberAuthentication.network, memberAuthentication.id);
-                    finish();
                 }
 
+                finish();
                 break;
         }
     }
@@ -259,11 +254,12 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
                 mAccountId = extras.getLong(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID);
                 mSonetWebView = new SonetWebView(this);
 
-                // TODO this needs updating if we're recreated after rotation
                 switch (service) {
                     case SMS:
                         showLoading();
-                        getSupportLoaderManager().initLoader(LOADER_SMS, null, this);
+                        if (!mPendingLoaders.contains(LOADER_SMS)) {
+                            getSupportLoaderManager().restartLoader(LOADER_SMS, null, this);
+                        }
                         break;
 
                     case RSS:
@@ -273,19 +269,38 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
 
                     case PINTEREST:
                         showLoading();
-                        getSupportLoaderManager().initLoader(LOADER_PINTEREST, null, this);
+                        if (!mPendingLoaders.contains(LOADER_PINTEREST)) {
+                            getSupportLoaderManager().restartLoader(LOADER_PINTEREST, null, this);
+                        }
                         break;
 
                     default: {
                         showLoading();
-                        Bundle args = new Bundle();
-                        args.putInt(LOADER_ARG_NETWORK, service);
-                        getSupportLoaderManager().initLoader(LOADER_OAUTH_LOGIN, args, this);
+                        if (!mPendingLoaders.contains(LOADER_OAUTH_LOGIN)) {
+                            Bundle args = new Bundle();
+                            args.putInt(LOADER_ARG_NETWORK, service);
+                            getSupportLoaderManager().restartLoader(LOADER_OAUTH_LOGIN, args, this);
+                        }
                     }
                     break;
                 }
             }
         }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        int loaderIndex = 0;
+        int[] loaders = new int[mPendingLoaders.size()];
+
+        for (Integer loader : mPendingLoaders) {
+            loaders[loaderIndex] = loader;
+            loaderIndex++;
+        }
+
+        outState.putIntArray(STATE_PENDING_LOADERS, loaders);
     }
 
     private String addAccount(String username, String token, String secret, int expiry, int service, String sid) {
@@ -332,7 +347,7 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
                     showLoading();
                     Bundle args = new Bundle();
                     args.putString(LOADER_ARG_RSS_URL, RssUrlDialogFragment.getUrl(data, null));
-                    getSupportLoaderManager().initLoader(LOADER_RSS, args, OAuthLogin.this);
+                    getSupportLoaderManager().restartLoader(LOADER_RSS, args, OAuthLogin.this);
                 } else {
                     finish();
                 }
@@ -373,7 +388,7 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
                             showLoading();
                             Bundle args = new Bundle();
                             args.putString(LOADER_ARG_AUTHENTICATED_URL, view.getTitle());
-                            getSupportLoaderManager().initLoader(LOADER_MEMBER_AUTHENTICATION, args, mOAuthLogin);
+                            getSupportLoaderManager().restartLoader(LOADER_MEMBER_AUTHENTICATION, args, mOAuthLogin);
                         }
                     }
                 }
@@ -381,7 +396,6 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
                 @Override
                 public boolean shouldOverrideUrlLoading(WebView view, String url) {
                     if (url != null) {
-                        showLoading();
                         Uri uri = Uri.parse(url);
                         String host = uri.getHost();
 
@@ -391,7 +405,7 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
                             showLoading();
                             Bundle args = new Bundle();
                             args.putString(LOADER_ARG_AUTHENTICATED_URL, url);
-                            getSupportLoaderManager().initLoader(LOADER_MEMBER_AUTHENTICATION, args, mOAuthLogin);
+                            getSupportLoaderManager().restartLoader(LOADER_MEMBER_AUTHENTICATION, args, mOAuthLogin);
                         } else {
                             return false;// allow google to redirect
                         }

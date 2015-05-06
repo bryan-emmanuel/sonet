@@ -29,7 +29,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.DialogFragment;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -45,8 +45,8 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnKeyListener;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -54,19 +54,15 @@ import com.google.ads.AdRequest;
 import com.google.ads.AdSize;
 import com.google.ads.AdView;
 import com.piusvelte.sonet.fragment.BaseDialogFragment;
-import com.piusvelte.sonet.fragment.ChooseAccountDialogFragment;
-import com.piusvelte.sonet.fragment.ChooseAccountsDialogFragment;
-import com.piusvelte.sonet.fragment.ChooseLocationDialogFragment;
-import com.piusvelte.sonet.fragment.ConfirmSetLocationDialogFragment;
-import com.piusvelte.sonet.fragment.LoadingDialogFragment;
-import com.piusvelte.sonet.fragment.MultiChoiceDialogFragment;
-import com.piusvelte.sonet.loader.LocationLoader;
+import com.piusvelte.sonet.fragment.ChooseAccount;
+import com.piusvelte.sonet.fragment.ChooseLocation;
+import com.piusvelte.sonet.fragment.ChoosePostAccounts;
 import com.piusvelte.sonet.loader.SendPostLoader;
 import com.piusvelte.sonet.provider.Accounts;
 import com.piusvelte.sonet.provider.Widgets;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -79,47 +75,32 @@ import static com.piusvelte.sonet.Sonet.Stags;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 
 public class SonetCreatePost extends FragmentActivity
-        implements OnKeyListener, OnClickListener, TextWatcher, LoaderManager.LoaderCallbacks, BaseDialogFragment.OnResultListener,
-        MultiChoiceDialogFragment.OnMultiChoiceClickListener {
+        implements OnKeyListener, OnClickListener, TextWatcher, LoaderManager.LoaderCallbacks, BaseDialogFragment.OnResultListener {
     private static final String TAG = "SonetCreatePost";
 
     private static final int LOADER_ACCOUNT = 0;
-    private static final int LOADER_LOCATION = 1;
     private static final int LOADER_SEND_POST = 2;
     private static final int LOADER_PHOTO = 3;
-    private static final int LOADER_ACCOUNT_NAMES = 4;
-    private static final int LOADER_ACCOUNTS_NAMES = 5;
 
-    private static final String DIALOG_LOADING = "dialog:loading";
-    private static final String DIALOG_ACCOUNT = "dialog:account";
-    private static final String DIALOG_LOCATION = "dialog:location";
-    private static final String DIALOG_ACCOUNTS = "dialog:accounts";
-    private static final String DIALOG_SET_LOCATION = "dialog:set_location";
+    private static final String DIALOG_CHOOSE_LOCATION_ACCOUNT = "dialog:choose_location_account";
+    private static final String DIALOG_CHOOSE_POST_ACCOUNTS = "dialog:choose_post_accounts";
+    private static final String DIALOG_CHOOSE_LOCATION = "dialog:choose_location";
 
     private static final String LOADER_ARG_ACCOUNT_ID = "account_id";
-    private static final String LOADER_ARG_LATITUDE = "latitude";
-    private static final String LOADER_ARG_LONGITUDE = "longitude";
     private static final String LOADER_ARG_PHOTO_URI = "photo_uri";
 
-    private static final int REQUEST_LOCATION = 0;
-    private static final int REQUEST_PHOTO = 1;
-    private static final int REQUEST_SEND_POST = 2;
-    private static final int REQUEST_ACCOUNT = 3;
-    private static final int REQUEST_SELECT_LOCATION = 4;
-    private static final int REQUEST_ACCOUNTS = 5;
-    private static final int REQUEST_SET_LOCATION = 6;
+    private static final int REQUEST_CHOOSE_LOCATION_ACCOUNT = 0;
+    private static final int REQUEST_CHOOSE_POST_ACCOUNTS = 1;
+    private static final int REQUEST_CHOOSE_LOCATION = 2;
 
     private static final String STATE_PENDING_LOADERS = "state:pending_loaders";
     private static final String STATE_MESSAGE = "state:message";
 
-    private HashMap<Long, String> mAccountsLocation = new HashMap<>();
-    private HashMap<Long, String[]> mAccountsTags = new HashMap<>();
-    private HashMap<Long, Integer> mAccountsService = new HashMap<>();
+    private HashSet<ChoosePostAccounts.Account> mAccounts = new HashSet<>();
     private EditText mMessage;
     private ImageButton mSend;
     private TextView mCount;
-    private String mLat = null;
-    private String mLong = null;
+    private View mLoadingView;
     private static final int PHOTO = 1;
     private static final int TAGS = 2;
     private String mPhotoPath;
@@ -150,13 +131,15 @@ public class SonetCreatePost extends FragmentActivity
 
         if (!getPackageName().toLowerCase().contains(PRO)) {
             AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);
-            ((LinearLayout) findViewById(R.id.ad)).addView(adView);
+            ((FrameLayout) findViewById(R.id.ad)).addView(adView);
             adView.loadAd(new AdRequest());
         }
 
         mMessage = (EditText) findViewById(R.id.message);
         mSend = (ImageButton) findViewById(R.id.send);
         mCount = (TextView) findViewById(R.id.count);
+        mLoadingView = findViewById(R.id.loading);
+
         mMessage.addTextChangedListener(this);
         mMessage.setOnKeyListener(this);
         mSend.setOnClickListener(this);
@@ -226,7 +209,7 @@ public class SonetCreatePost extends FragmentActivity
                     Bundle args = new Bundle();
                     args.putString(LOADER_ARG_ACCOUNT_ID, data.getLastPathSegment());
                     getSupportLoaderManager().restartLoader(LOADER_ACCOUNT, args, this);
-                    LoadingDialogFragment.newInstance(REQUEST_ACCOUNT).show(getSupportFragmentManager(), DIALOG_LOADING);
+                    mLoadingView.setVisibility(View.VISIBLE);
                 } else if (intent.hasExtra(Widgets.INSTANT_UPLOAD)) {
                     // check if a photo path was passed and prompt user to select the account
                     setPhoto(intent.getStringExtra(Widgets.INSTANT_UPLOAD));
@@ -252,8 +235,8 @@ public class SonetCreatePost extends FragmentActivity
         } else if (itemId == R.id.menu_post_photo) {
             boolean supported = false;
 
-            for (Integer service : mAccountsService.values()) {
-                supported = sPhotoSupported.contains(service);
+            for (ChoosePostAccounts.Account account : mAccounts) {
+                supported = sPhotoSupported.contains(account.service);
 
                 if (supported) {
                     break;
@@ -321,18 +304,34 @@ public class SonetCreatePost extends FragmentActivity
             Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 
             if (location != null) {
-                mLat = Double.toString(location.getLatitude());
-                mLong = Double.toString(location.getLongitude());
-
-                if (mAccountsService.size() == 1) {
-                    if (sLocationSupported.contains(mAccountsService.values().iterator().next())) {
-                        setLocation(mAccountsService.keySet().iterator().next());
+                if (mAccounts.size() == 1) {
+                    ChoosePostAccounts.Account account = mAccounts.iterator().next();
+                    if (sLocationSupported.contains(account.service)) {
+                        setLocation(account.id);
                     } else {
                         unsupportedToast(sLocationSupported);
                     }
                 } else {
-                    getSupportLoaderManager().restartLoader(LOADER_ACCOUNT_NAMES, null, this);
-                    LoadingDialogFragment.newInstance(REQUEST_ACCOUNT).show(getSupportFragmentManager(), DIALOG_LOADING);
+                    int index = 0;
+                    List<Long> supportedAccounts = new ArrayList<>();
+
+                    for (ChoosePostAccounts.Account account : mAccounts) {
+                        if (sLocationSupported.contains(account.service)) {
+                            supportedAccounts.add(account.id);
+                        }
+                    }
+
+                    long[] ids = new long[supportedAccounts.size()];
+
+                    for (Long id : supportedAccounts) {
+                        ids[index] = id;
+                        index++;
+                    }
+
+                    getSupportFragmentManager().beginTransaction()
+                            .add(ChooseAccount.newInstance(REQUEST_CHOOSE_LOCATION_ACCOUNT, ids), DIALOG_CHOOSE_LOCATION_ACCOUNT)
+                            .addToBackStack(null)
+                            .commit();
                 }
             } else {
                 (Toast.makeText(this, getString(R.string.location_unavailable), Toast.LENGTH_LONG)).show();
@@ -343,13 +342,28 @@ public class SonetCreatePost extends FragmentActivity
     }
 
     private void setLocation(final long accountId) {
-        // TODO make sure this works :D how should it resume?
-        Bundle args = new Bundle();
-        args.putLong(LOADER_ARG_ACCOUNT_ID, accountId);
-        args.putString(LOADER_ARG_LATITUDE, mLat);
-        args.putString(LOADER_ARG_LONGITUDE, mLong);
-        getSupportLoaderManager().restartLoader(LOADER_LOCATION, args, this);
-        LoadingDialogFragment.newInstance(REQUEST_LOCATION).show(getSupportFragmentManager(), DIALOG_LOADING);
+        String latitude;
+        String longitude;
+
+        // TODO FusedLocationProvider
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+        if (location != null) {
+            latitude = Double.toString(location.getLatitude());
+            longitude = Double.toString(location.getLongitude());
+        } else {
+            latitude = null;
+            longitude = null;
+        }
+
+        if (!TextUtils.isEmpty(latitude) && !TextUtils.isEmpty(longitude)) {
+
+            getSupportFragmentManager().beginTransaction()
+                    .add(ChooseLocation.newInstance(REQUEST_CHOOSE_LOCATION, accountId, latitude, longitude), DIALOG_CHOOSE_LOCATION)
+                    .addToBackStack(null)
+                    .commit();
+        }// TODO else, no location available
     }
 
     private void unsupportedToast(List<Integer> supportedServices) {
@@ -374,9 +388,9 @@ public class SonetCreatePost extends FragmentActivity
     @Override
     public void onClick(View v) {
         if (v == mSend) {
-            if (!mAccountsService.isEmpty()) {
+            if (!mAccounts.isEmpty()) {
                 getSupportLoaderManager().restartLoader(LOADER_SEND_POST, null, this);
-                LoadingDialogFragment.newInstance(REQUEST_SEND_POST).show(getSupportFragmentManager(), DIALOG_LOADING);
+                mLoadingView.setVisibility(View.VISIBLE);
             } else {
                 Toast.makeText(SonetCreatePost.this, "no accounts selected", Toast.LENGTH_LONG).show();
             }
@@ -388,8 +402,7 @@ public class SonetCreatePost extends FragmentActivity
         Bundle args = new Bundle();
         args.putString(LOADER_ARG_PHOTO_URI, uri.toString());
         getSupportLoaderManager().restartLoader(LOADER_PHOTO, args, this);
-        LoadingDialogFragment.newInstance(REQUEST_PHOTO)
-                .show(getSupportFragmentManager(), DIALOG_LOADING);
+        mLoadingView.setVisibility(View.VISIBLE);
     }
 
     protected void setPhoto(String path) {
@@ -398,19 +411,22 @@ public class SonetCreatePost extends FragmentActivity
     }
 
     protected void selectFriends(long accountId) {
-        if ((mAccountsService.get(accountId) == FACEBOOK) && (!mAccountsLocation.containsKey(accountId) || (mAccountsLocation
-                .get(accountId) == null))) {
-            (Toast.makeText(SonetCreatePost.this, "To tag friends, Facebook requires a location to be included.", Toast.LENGTH_LONG)).show();
-        } else {
-            startActivityForResult(
-                    new Intent(this, SelectFriends.class).putExtra(Accounts.SID, accountId).putExtra(Stags, mAccountsTags.get(accountId)),
-                    TAGS);
-        }
+        // TODO unsupported
+//        if ((mAccountsService.get(accountId) == FACEBOOK) && (!mAccountsLocation.containsKey(accountId) || (mAccountsLocation
+//                .get(accountId) == null))) {
+//            (Toast.makeText(SonetCreatePost.this, "To tag friends, Facebook requires a location to be included.", Toast.LENGTH_LONG)).show();
+//        } else {
+//            startActivityForResult(
+//                    new Intent(this, SelectFriends.class).putExtra(Accounts.SID, accountId).putExtra(Stags, mAccountsTags.get(accountId)),
+//                    TAGS);
+//        }
     }
 
     protected void chooseAccounts() {
-        // don't limit accounts to the widget...
-        getSupportLoaderManager().restartLoader(LOADER_ACCOUNTS_NAMES, null, this);
+        getSupportFragmentManager().beginTransaction()
+                .add(ChoosePostAccounts.newInstance(REQUEST_CHOOSE_POST_ACCOUNTS, mAccounts), DIALOG_CHOOSE_POST_ACCOUNTS)
+                .addToBackStack(null)
+                .commit();
     }
 
     @Override
@@ -424,7 +440,14 @@ public class SonetCreatePost extends FragmentActivity
 
             case TAGS:
                 if ((resultCode == RESULT_OK) && data.hasExtra(Stags) && data.hasExtra(Accounts.SID)) {
-                    mAccountsTags.put(data.getLongExtra(Accounts.SID, Sonet.INVALID_ACCOUNT_ID), data.getStringArrayExtra(Stags));
+                    long id = data.getLongExtra(Accounts.SID, Sonet.INVALID_ACCOUNT_ID);
+
+                    for (ChoosePostAccounts.Account account : mAccounts) {
+                        if (account.id == id) {
+                            account.tags = Arrays.asList(data.getStringArrayExtra(Stags));
+                            break;
+                        }
+                    }
                 }
                 break;
         }
@@ -462,42 +485,16 @@ public class SonetCreatePost extends FragmentActivity
                         new String[] { args.getString(LOADER_ARG_ACCOUNT_ID) },
                         null);
 
-            case LOADER_LOCATION:
-                return new LocationLoader(this,
-                        args.getLong(LOADER_ARG_ACCOUNT_ID),
-                        args.getString(LOADER_ARG_LATITUDE),
-                        args.getString(LOADER_ARG_LONGITUDE));
-
             case LOADER_SEND_POST:
                 return new SendPostLoader(this,
-                        mAccountsService,
+                        mAccounts,
                         mMessage.getText().toString(),
-                        mAccountsLocation,
-                        mLat,
-                        mLong,
-                        mPhotoPath,
-                        mAccountsTags);
+                        mPhotoPath);
 
             case LOADER_PHOTO:
                 return new CursorLoader(this,
                         Uri.parse(args.getString(LOADER_ARG_PHOTO_URI)),
                         new String[] { MediaStore.Images.Media.DATA },
-                        null,
-                        null,
-                        null);
-
-            case LOADER_ACCOUNT_NAMES:
-                return new CursorLoader(this,
-                        Accounts.getContentUri(this),
-                        new String[] { Accounts._ID, Accounts.SERVICE, Accounts.ACCOUNTS_QUERY },
-                        Accounts._ID + " in (?)",
-                        new String[] { TextUtils.join(",", mAccountsService.keySet()) },
-                        null);
-
-            case LOADER_ACCOUNTS_NAMES:
-                return new CursorLoader(this,
-                        Accounts.getContentUri(this),
-                        new String[] { Accounts._ID, Accounts.SERVICE, Accounts.USERNAME },
                         null,
                         null,
                         null);
@@ -513,43 +510,32 @@ public class SonetCreatePost extends FragmentActivity
 
         switch (loader.getId()) {
             case LOADER_ACCOUNT:
-                dismissLoading();
+                mLoadingView.setVisibility(View.GONE);
+
                 if (data instanceof Cursor) {
                     Cursor cursor = (Cursor) data;
 
                     if (cursor.moveToFirst()) {
-                        mAccountsService.put(cursor.getLong(cursor.getColumnIndexOrThrow(Accounts._ID)),
-                                cursor.getInt(cursor.getColumnIndexOrThrow(Accounts.SERVICE)));
+                        ChoosePostAccounts.Account account = new ChoosePostAccounts.Account();
+                        account.id = cursor.getLong(cursor.getColumnIndexOrThrow(Accounts._ID));
+                        account.service = cursor.getInt(cursor.getColumnIndexOrThrow(Accounts.SERVICE));
+                        mAccounts.add(account);
                     }
-                }
-                break;
-
-            case LOADER_LOCATION:
-                dismissLoading();
-
-                if (data instanceof LocationLoader.LocationResult) {
-                    final LocationLoader.LocationResult result = (LocationLoader.LocationResult) data;
-
-                    ChooseLocationDialogFragment.newInstance(result.accountId, result.locations, "Select Location", REQUEST_SELECT_LOCATION)
-                            .show(getSupportFragmentManager(), DIALOG_LOCATION);
-                } else {
-                    (Toast.makeText(SonetCreatePost.this, getString(R.string.failure), Toast.LENGTH_LONG)).show();
                 }
                 break;
 
             case LOADER_SEND_POST:
-                dismissLoading();
+                mLoadingView.setVisibility(View.GONE);
 
-                if (data instanceof Boolean) {
-                    // TODO determine success
-                    if ((Boolean) data) {
-                        // TODO toast?
-                    }
+                if (Boolean.TRUE.equals(data)) {
+                    Toast.makeText(this, R.string.success, Toast.LENGTH_LONG).show();
                 }
+
+                finish();
                 break;
 
             case LOADER_PHOTO:
-                dismissLoading();
+                mLoadingView.setVisibility(View.GONE);
 
                 if (data instanceof Cursor) {
                     String path = null;
@@ -566,75 +552,8 @@ public class SonetCreatePost extends FragmentActivity
                     if (!TextUtils.isEmpty(path)) {
                         setPhoto(path);
                     } else {
-                        (Toast.makeText(SonetCreatePost.this, "error retrieving the photo path", Toast.LENGTH_LONG)).show();
+                        Toast.makeText(this, "error retrieving the photo path", Toast.LENGTH_LONG).show();
                     }
-                }
-                break;
-
-            case LOADER_ACCOUNT_NAMES:
-                dismissLoading();
-
-                if (data instanceof Cursor) {
-                    Cursor cursor = (Cursor) data;
-
-                    if (cursor.moveToFirst()) {
-                        final int idIndex = cursor.getColumnIndexOrThrow(Accounts._ID);
-                        final int serviceIndex = cursor.getColumnIndexOrThrow(Accounts.SERVICE);
-                        final int usernameIndex = cursor.getColumnIndexOrThrow(Accounts.USERNAME);
-                        HashMap<Long, String> accounts = new HashMap<>();
-
-                        while (!cursor.isAfterLast()) {
-                            int service = cursor.getInt(serviceIndex);
-
-                            if (sLocationSupported.contains(service)) {
-                                accounts.put(cursor.getLong(idIndex), cursor.getString(usernameIndex));
-                            }
-
-                            cursor.moveToNext();
-                        }
-
-                        if (!accounts.isEmpty()) {
-                            ChooseAccountDialogFragment.newInstance(accounts, getString(R.string.accounts), REQUEST_ACCOUNT)
-                                    .show(getSupportFragmentManager(), DIALOG_ACCOUNT);
-                        } else {
-                            unsupportedToast(sLocationSupported);
-                        }
-                    } else {
-                        unsupportedToast(sLocationSupported);
-                    }
-                } else {
-                    unsupportedToast(sLocationSupported);
-                }
-                break;
-
-            case LOADER_ACCOUNTS_NAMES:
-                dismissLoading();
-
-                if (data instanceof Cursor) {
-                    Cursor cursor = (Cursor) data;
-
-                    if (cursor.moveToFirst()) {
-                        final int idIndex = cursor.getColumnIndexOrThrow(Accounts._ID);
-                        final int serviceIndex = cursor.getColumnIndexOrThrow(Accounts.SERVICE);
-                        final int usernameIndex = cursor.getColumnIndexOrThrow(Accounts.USERNAME);
-
-                        List<Accounts.Account> accounts = new ArrayList<>();
-
-                        while (!cursor.isAfterLast()) {
-                            Accounts.Account account = new Accounts.Account();
-                            account.id = cursor.getLong(idIndex);
-                            account.service = cursor.getInt(serviceIndex);
-                            account.username = cursor.getString(usernameIndex);
-
-                            accounts.add(account);
-                            cursor.moveToNext();
-                        }
-
-                        if (!accounts.isEmpty()) {
-                            ChooseAccountsDialogFragment.newInstance(accounts, mAccountsService, getString(R.string.accounts), REQUEST_ACCOUNTS)
-                                    .show(getSupportFragmentManager(), DIALOG_ACCOUNTS);
-                        } // TODO else Toast?
-                    } // TODO else Toast?
                 }
                 break;
 
@@ -648,105 +567,52 @@ public class SonetCreatePost extends FragmentActivity
         mPendingLoaders.remove(loader.getId());
     }
 
-    private void dismissLoading() {
-        DialogFragment loadingDialog = (DialogFragment) getSupportFragmentManager().findFragmentByTag(DIALOG_LOADING);
-
-        if (loadingDialog != null) {
-            loadingDialog.dismiss();
-        }
-    }
-
     @Override
     public void onResult(int requestCode, int result, Intent data) {
         switch (requestCode) {
-            case REQUEST_LOCATION:
-                if (result == RESULT_CANCELED) {
-                    getSupportLoaderManager().destroyLoader(LOADER_LOCATION);
-                }
-                break;
-
-            case REQUEST_SEND_POST:
-                if (result == RESULT_CANCELED) {
-                    getSupportLoaderManager().destroyLoader(LOADER_SEND_POST);
-                }
-                break;
-
-            case REQUEST_PHOTO:
-                if (result == RESULT_CANCELED) {
-                    getSupportLoaderManager().destroyLoader(LOADER_PHOTO);
-                }
-                break;
-
-            case REQUEST_ACCOUNT:
+            case REQUEST_CHOOSE_LOCATION_ACCOUNT:
                 if (result == RESULT_OK) {
-                    long accountId = ChooseAccountDialogFragment.getSelectedId(data);
+                    long accountId = ChooseAccount.getSelectedId(data);
 
                     if (accountId != INVALID_ACCOUNT_ID) {
                         setLocation(accountId);
                     }
                 }
+
+                Fragment fragment = getSupportFragmentManager().findFragmentByTag(DIALOG_CHOOSE_LOCATION_ACCOUNT);
+
+                if (fragment != null) {
+                    getSupportFragmentManager().beginTransaction()
+                            .remove(fragment)
+                            .commit();
+                }
                 break;
 
-            case REQUEST_SELECT_LOCATION:
+            case REQUEST_CHOOSE_POST_ACCOUNTS:
                 if (result == RESULT_OK) {
-                    long accountId = ChooseLocationDialogFragment.getAccount(data);
+                    mAccounts.clear();
+                    List<ChoosePostAccounts.Account> selectedAccounts = ChoosePostAccounts.getAccounts(data);
 
-                    if (accountId != INVALID_ACCOUNT_ID) {
-                        String location = ChooseLocationDialogFragment.getSelectedId(data, null);
-
-                        if (!TextUtils.isEmpty(location)) {
-                            mAccountsLocation.put(accountId, location);
-                        }
+                    if (selectedAccounts != null) {
+                        mAccounts.addAll(selectedAccounts);
                     }
                 }
                 break;
 
-            case REQUEST_SET_LOCATION:
+            case REQUEST_CHOOSE_LOCATION:
                 if (result == RESULT_OK) {
-                    long accountId = ConfirmSetLocationDialogFragment.getAccountId(data);
+                    long accountId = ChooseLocation.getAccountId(data);
+                    String latitude = ChooseLocation.getLatitude(data);
+                    String longitude = ChooseLocation.getLongitude(data);
+                    String location = ChooseLocation.getLocation(data);
 
-                    if (accountId != INVALID_ACCOUNT_ID) {
-                        setLocation(INVALID_ACCOUNT_ID);
-                    }
-                }
-                break;
-        }
-    }
-
-    @Override
-    public void onClick(MultiChoiceDialogFragment multiChoiceDialogFragment, int requestCode, int which, boolean isChecked) {
-        switch (requestCode) {
-            case REQUEST_ACCOUNTS:
-                long accountId = ChooseAccountsDialogFragment.getAccountId(multiChoiceDialogFragment, which);
-
-                if (accountId != INVALID_ACCOUNT_ID) {
-                    if (isChecked) {
-                        int service = ChooseAccountsDialogFragment.getService(multiChoiceDialogFragment, which);
-
-                        if (service != -1) {
-                            mAccountsService.put(accountId, service);
-
-                            if (sLocationSupported.contains(service)) {
-                                if (mLat == null) {
-                                    LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-                                    Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-
-                                    if (location != null) {
-                                        mLat = Double.toString(location.getLatitude());
-                                        mLong = Double.toString(location.getLongitude());
-                                    }
-                                }
-
-                                if ((mLat != null) && (mLong != null)) {
-                                    ConfirmSetLocationDialogFragment.newInstance(accountId, R.string.set_location, REQUEST_SET_LOCATION)
-                                            .show(getSupportFragmentManager(), DIALOG_SET_LOCATION);
-                                }
-                            }
+                    for (ChoosePostAccounts.Account account : mAccounts) {
+                        if (account.id == accountId) {
+                            account.latitude = latitude;
+                            account.longitude = longitude;
+                            account.location = location;
+                            break;
                         }
-                    } else {
-                        mAccountsService.remove(accountId);
-                        mAccountsLocation.remove(accountId);
-                        mAccountsTags.remove(accountId);
                     }
                 }
                 break;
