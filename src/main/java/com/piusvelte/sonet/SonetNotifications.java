@@ -66,6 +66,7 @@ import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 import static com.piusvelte.sonet.Sonet.sRFC822;
 import static com.piusvelte.sonet.Sonet.sTimeZone;
 
+// TODO AppCompatActivity
 public class SonetNotifications extends ListActivity {
     // list the current notifications
     // check for cache versions in statuses first, falling back on reloading them from the service

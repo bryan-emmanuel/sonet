@@ -34,6 +34,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -74,7 +75,7 @@ import static com.piusvelte.sonet.Sonet.PRO;
 import static com.piusvelte.sonet.Sonet.Stags;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 
-public class SonetCreatePost extends FragmentActivity
+public class SonetCreatePost extends AppCompatActivity
         implements OnKeyListener, OnClickListener, TextWatcher, LoaderManager.LoaderCallbacks, BaseDialogFragment.OnResultListener {
     private static final String TAG = "SonetCreatePost";
 

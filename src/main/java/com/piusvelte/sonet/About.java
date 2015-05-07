@@ -28,10 +28,10 @@ import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -53,7 +53,7 @@ import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.PRO;
 import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 
-public class About extends FragmentActivity implements LoaderManager.LoaderCallbacks<Cursor>, BaseDialogFragment.OnResultListener {
+public class About extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>, BaseDialogFragment.OnResultListener {
     private int[] mAppWidgetIds;
     private AppWidgetManager mAppWidgetManager;
     private boolean mUpdateWidget = false;

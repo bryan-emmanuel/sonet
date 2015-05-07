@@ -23,6 +23,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -34,7 +35,7 @@ import com.piusvelte.sonet.fragment.CommentsList;
 
 import static com.piusvelte.sonet.Sonet.PRO;
 
-public class SonetComments extends FragmentActivity {
+public class SonetComments extends AppCompatActivity {
 
     private static final String FRAGMENT_COMMENTS_LIST = "fragment:comments_list";
 
