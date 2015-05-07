@@ -26,7 +26,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -38,7 +37,6 @@ import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.google.ads.AdRequest;
@@ -46,7 +44,6 @@ import com.google.ads.AdSize;
 import com.google.ads.AdView;
 import com.piusvelte.sonet.fragment.BaseDialogFragment;
 import com.piusvelte.sonet.fragment.ButtonSettingsDialogFragment;
-import com.piusvelte.sonet.fragment.LoadingDialogFragment;
 import com.piusvelte.sonet.fragment.MessageSettingsDialogFragment;
 import com.piusvelte.sonet.fragment.NameSettingsDialogFragment;
 import com.piusvelte.sonet.fragment.NotificationSettingsDialogFragment;
@@ -73,7 +70,6 @@ public class Settings extends FragmentActivity
     private static final int REQUEST_TIME_SETTINGS = 5;
     private static final int REQUEST_PROFILE_SETTINGS = 6;
     private static final int REQUEST_MESSAGE_SETTINGS = 7;
-    private static final int REQUEST_LOADING_SETTINGS = 8;
 
     private static final String DIALOG_UPDATE_SETTINGS = "dialog:update_settings";
     private static final String DIALOG_NOTIFICATIONS = "dialog:notifications";
@@ -83,7 +79,6 @@ public class Settings extends FragmentActivity
     private static final String DIALOG_TIME_SETTINGS = "dialog:time_settings";
     private static final String DIALOG_PROFILE_SETTINGS = "dialog:profile_settings";
     private static final String DIALOG_MESSAGE_SETTINGS = "dialog:message_settings";
-    private static final String DIALOG_LOADING_SETTINGS = "dialog:loading_settings";
 
     private int mInterval_value = Sonet.default_interval;
     private int mButtons_bg_color_value = Sonet.default_buttons_bg_color;
@@ -121,6 +116,7 @@ public class Settings extends FragmentActivity
     private Button mBtn_time;
     private ImageButton mBtn_profile;
     private Button mBtn_message;
+    private View mLoadingView;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -149,6 +145,7 @@ public class Settings extends FragmentActivity
         mBtn_time = (Button) findViewById(R.id.settings_time);
         mBtn_profile = (ImageButton) findViewById(R.id.settings_profile);
         mBtn_message = (Button) findViewById(R.id.settings_message);
+        mLoadingView = findViewById(R.id.loading);
 
         Drawable wp = WallpaperManager.getInstance(getApplicationContext()).getDrawable();
 
@@ -156,8 +153,7 @@ public class Settings extends FragmentActivity
             findViewById(R.id.ad).getRootView().setBackgroundDrawable(wp);
         }
 
-        LoadingDialogFragment.newInstance(REQUEST_LOADING_SETTINGS)
-                .show(getSupportFragmentManager(), DIALOG_LOADING_SETTINGS);
+        mLoadingView.setVisibility(View.VISIBLE);
         getSupportLoaderManager().initLoader(LOADER_SETTINGS, null, this);
     }
 
@@ -215,11 +211,7 @@ public class Settings extends FragmentActivity
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         switch (loader.getId()) {
             case LOADER_SETTINGS:
-                DialogFragment dialogFragment = (DialogFragment) getSupportFragmentManager().findFragmentByTag(DIALOG_LOADING_SETTINGS);
-
-                if (dialogFragment != null) {
-                    dialogFragment.dismiss();
-                }
+                mLoadingView.setVisibility(View.GONE);
 
                 // determine if we have settings or need to initialize them
                 if (cursor != null) {

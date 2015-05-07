@@ -97,6 +97,12 @@ public class ChoosePostAccounts extends ListFragment implements LoaderManager.Lo
     }
 
     @Override
+    public void onDestroyView() {
+        mLoadingView = null;
+        super.onDestroyView();
+    }
+
+    @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
             case REQUEST_CONFIRM_SET_LOCATION:

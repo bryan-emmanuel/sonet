@@ -18,6 +18,7 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -28,59 +29,59 @@
 
     <Button
         android:id="@+id/statuses_per_account"
-        android:layout_height="wrap_content"
         android:layout_width="match_parent"
-        android:text="@string/statuses_per_account"
-        android:layout_below="@id/ad" />
+        android:layout_height="wrap_content"
+        android:layout_below="@id/ad"
+        android:text="@string/statuses_per_account" />
 
     <Button
         android:id="@+id/settings_notification"
-        android:layout_height="wrap_content"
         android:layout_width="match_parent"
-        android:text="@string/settings_notification"
-        android:layout_below="@id/statuses_per_account" />
+        android:layout_height="wrap_content"
+        android:layout_below="@id/statuses_per_account"
+        android:text="@string/settings_notification" />
 
     <LinearLayout
         android:id="@+id/settings_name_and_time"
-        android:layout_height="wrap_content"
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/settings_notification"
         android:orientation="horizontal"
-        android:weightSum="1"
-        android:layout_below="@id/settings_notification">
+        android:weightSum="1">
 
         <Button
             android:id="@+id/settings_name"
-            android:layout_height="wrap_content"
             android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_weight=".5"
-            android:text="@string/settings_name"
-            android:gravity="left|center_vertical" />
+            android:gravity="left|center_vertical"
+            android:text="@string/settings_name" />
 
         <Button
             android:id="@+id/settings_time"
-            android:layout_height="wrap_content"
             android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_weight=".5"
-            android:text="@string/settings_time"
-            android:gravity="right|center_vertical" />
+            android:gravity="right|center_vertical"
+            android:text="@string/settings_time" />
     </LinearLayout>
 
     <ImageButton
         android:id="@+id/settings_profile"
-        android:layout_height="match_parent"
         android:layout_width="48dip"
+        android:layout_height="match_parent"
         android:layout_alignParentLeft="true"
-        android:scaleType="fitStart"
         android:layout_below="@id/settings_name_and_time"
+        android:scaleType="fitStart"
         android:src="@drawable/ic_contact_picture" />
 
     <Button
         android:id="@+id/settings_message"
-        android:layout_height="match_parent"
         android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_alignParentRight="true"
-        android:layout_toRightOf="@id/settings_profile"
         android:layout_below="@id/settings_name_and_time"
+        android:layout_toRightOf="@id/settings_profile"
         android:text="@string/settings_message_extended" />
 
     <ImageView
@@ -92,4 +93,13 @@
         android:paddingBottom="4dip"
         android:paddingRight="4dip"
         android:src="@drawable/icon" />
+
+    <ProgressBar
+        android:id="@+id/loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:indeterminate="true"
+        android:visibility="gone"
+        tools:visibility="visible" />
 </RelativeLayout>

@@ -78,6 +78,12 @@ public class ChooseLocation extends ListFragment implements LoaderManager.Loader
     }
 
     @Override
+    public void onDestroyView() {
+        mLoadingView = null;
+        super.onDestroyView();
+    }
+
+    @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         HashMap<String, String> selectedLocation = mLocations.get(position);
 

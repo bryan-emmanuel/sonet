@@ -198,6 +198,7 @@ public class CommentsList extends ListFragment
         mMessage = null;
         mSend = null;
         mCount = null;
+        mLoadingView = null;
         super.onDestroyView();
     }
 

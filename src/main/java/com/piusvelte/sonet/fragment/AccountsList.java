@@ -156,6 +156,12 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
     }
 
     @Override
+    public void onDestroyView() {
+        mLoadingView = null;
+        super.onDestroyView();
+    }
+
+    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.menu_manageaccounts, menu);

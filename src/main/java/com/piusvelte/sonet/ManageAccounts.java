@@ -25,9 +25,8 @@ import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 
 import com.google.ads.AdRequest;
 import com.google.ads.AdSize;
@@ -37,7 +36,7 @@ import com.piusvelte.sonet.fragment.AccountsList;
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.PRO;
 
-public class ManageAccounts extends ActionBarActivity {
+public class ManageAccounts extends AppCompatActivity {
     private static final String TAG = "ManageAccounts";
 
     private static final String FRAGMENT_ACCOUNTS_LIST = "fragment:accounts_list";

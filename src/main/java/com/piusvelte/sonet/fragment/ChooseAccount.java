@@ -89,6 +89,12 @@ public class ChooseAccount extends ListFragment implements LoaderManager.LoaderC
     }
 
     @Override
+    public void onDestroyView() {
+        mLoadingView = null;
+        super.onDestroyView();
+    }
+
+    @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         int requestCode = getArguments().getInt(ARG_REQUEST_CODE);
         Intent intent = new Intent();

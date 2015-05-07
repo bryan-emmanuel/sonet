@@ -38,6 +38,7 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
     private static final int LOADER_WIDGETS = 0;
 
     private SimpleCursorAdapter mAdapter;
+    private View mLoadingView;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -47,6 +48,9 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        mLoadingView = view.findViewById(R.id.loading);
+
         mAdapter = new SimpleCursorAdapter(getActivity(),
                 R.layout.widget_item,
                 null,
@@ -77,7 +81,15 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
                 0);
         mAdapter.setViewBinder(new WidgetsViewBinder());
         setListAdapter(mAdapter);
+
+        mLoadingView.setVisibility(View.VISIBLE);
         getLoaderManager().initLoader(LOADER_WIDGETS, null, this);
+    }
+
+    @Override
+    public void onDestroyView() {
+        mLoadingView.setVisibility(View.GONE);
+        super.onDestroyView();
     }
 
     @Override
@@ -129,6 +141,7 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         switch (loader.getId()) {
             case LOADER_WIDGETS:
+                mLoadingView.setVisibility(View.GONE);
                 mAdapter.changeCursor(cursor);
 
                 // if no statuses, trigger a refresh

@@ -33,13 +33,14 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.text.TextUtils;
+import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import com.piusvelte.sonet.fragment.BaseDialogFragment;
-import com.piusvelte.sonet.fragment.LoadingDialogFragment;
 import com.piusvelte.sonet.fragment.RssNameDialogFragment;
 import com.piusvelte.sonet.fragment.RssUrlDialogFragment;
 import com.piusvelte.sonet.loader.AddRssLoader;
@@ -60,13 +61,11 @@ import static com.piusvelte.sonet.Sonet.SMS;
 public class OAuthLogin extends FragmentActivity implements LoaderManager.LoaderCallbacks, BaseDialogFragment.OnResultListener {
     private static final String TAG = "OAuthLogin";
 
-    private static final String DIALOG_LOADING = "dialog:loading";
     private static final String DIALOG_RSS_URL = "dialog:rss_url";
     private static final String DIALOG_RSS_NAME = "dialog:rss_name";
 
-    private static final int REQUEST_LOADING = 0;
-    private static final int REQUEST_RSS_URL = 1;
-    private static final int REQUEST_RSS_NAME = 2;
+    private static final int REQUEST_RSS_URL = 0;
+    private static final int REQUEST_RSS_NAME = 1;
 
     private static final String STATE_PENDING_LOADERS = "state:pending_loaders";
 
@@ -74,6 +73,7 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
     private long mAccountId;
     private String mServiceName = "unknown";
     private SonetWebView mSonetWebView;
+    private View mLoadingView;
 
     private Set<Integer> mPendingLoaders = new HashSet<>();
 
@@ -210,23 +210,21 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
     }
 
     private void showLoading() {
-        if (getSupportFragmentManager().findFragmentByTag(DIALOG_LOADING) == null) {
-            LoadingDialogFragment.newInstance(REQUEST_LOADING)
-                    .show(getSupportFragmentManager(), DIALOG_LOADING);
-        }
+        mLoadingView.setVisibility(View.VISIBLE);
     }
 
     private void dismissLoading() {
-        DialogFragment dialogFragment = (DialogFragment) getSupportFragmentManager().findFragmentByTag(DIALOG_LOADING);
-
-        if (dialogFragment != null) {
-            dialogFragment.dismiss();
-        }
+        mLoadingView.setVisibility(View.GONE);
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.login);
+
+        mLoadingView = findViewById(R.id.loading);
+
         setResult(RESULT_CANCELED);
 
         LoaderManager loaderManager = getSupportLoaderManager();
@@ -333,15 +331,6 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
     @Override
     public void onResult(int requestCode, int result, Intent data) {
         switch (requestCode) {
-            case REQUEST_LOADING:
-                LoaderManager loaderManager = getSupportLoaderManager();
-                if (loaderManager.hasRunningLoaders()) {
-                    // destroy loaders
-                }
-
-                finish();
-                break;
-
             case REQUEST_RSS_URL:
                 if (result == RESULT_OK) {
                     showLoading();
@@ -373,7 +362,7 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
         public SonetWebView(OAuthLogin oAuthLogin) {
             mOAuthLogin = oAuthLogin;
             mWebView = new WebView(mOAuthLogin);
-            mOAuthLogin.setContentView(mWebView);
+            ((FrameLayout) mOAuthLogin.findViewById(R.id.webview_container)).addView(mWebView);
             mWebView.setWebViewClient(new WebViewClient() {
 
                 @Override
