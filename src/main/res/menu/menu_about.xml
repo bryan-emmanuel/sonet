@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
  * Sonet - Android Social Networking Widget
  * Copyright (C) 2009 Bryan Emmanuel
  * 
@@ -18,40 +17,48 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/menu_about_refresh"
-        android:title="@string/button_refresh"
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/menu_about_refresh"
         android:icon="@drawable/ic_menu_rotate"
         android:orderInCategory="0"
-        android:showAsAction="always|withText" />
-    <item android:id="@+id/menu_about_accounts_and_settings"
-        android:title="@string/accounts_and_settings"
+        android:title="@string/button_refresh"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/menu_about_accounts_and_settings"
         android:icon="@drawable/ic_menu_manage"
         android:orderInCategory="0"
-        android:showAsAction="always|withText" />
-    <item android:id="@+id/menu_about_refresh_widgets"
-        android:title="@string/refreshallwidgets"
+        android:title="@string/accounts_and_settings"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/menu_about_refresh_widgets"
         android:icon="@drawable/ic_menu_rotate"
         android:orderInCategory="0"
-        android:showAsAction="ifRoom|withText" />
-    <item android:id="@+id/menu_about_default_settings"
+        android:title="@string/refreshallwidgets"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/menu_about_default_settings"
+        android:icon="@drawable/ic_menu_preferences"
+        android:orderInCategory="0"
         android:title="@string/defaultsettings"
-        android:icon="@drawable/ic_menu_preferences"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/menu_about_notifications"
+        android:icon="@drawable/ic_menu_more"
         android:orderInCategory="0"
-        android:showAsAction="ifRoom|withText" />
-    <item android:id="@+id/menu_about_notifications"
         android:title="@string/notifications"
-        android:icon="@drawable/ic_menu_more"
-        android:orderInCategory="0"
-        android:showAsAction="ifRoom|withText" />
-    <item android:id="@+id/menu_about_widget_settings"
-        android:title="@string/widget_settings"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/menu_about_widget_settings"
         android:icon="@drawable/ic_menu_preferences"
         android:orderInCategory="0"
-        android:showAsAction="ifRoom|withText" />
-    <item android:id="@+id/menu_about_about"
-        android:title="@string/about_title"
+        android:title="@string/widget_settings"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/menu_about_about"
         android:icon="@drawable/ic_menu_more"
         android:orderInCategory="0"
-        android:showAsAction="ifRoom|withText" />
+        android:title="@string/about_title"
+        app:showAsAction="ifRoom" />
 </menu>

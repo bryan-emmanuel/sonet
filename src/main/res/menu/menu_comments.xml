@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
  * Sonet - Android Social Networking Widget
  * Copyright (C) 2009 Bryan Emmanuel
  * 
@@ -18,10 +17,12 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/menu_comments_refresh"
-        android:title="@string/button_refresh"
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/menu_comments_refresh"
         android:icon="@drawable/ic_menu_rotate"
         android:orderInCategory="0"
-        android:showAsAction="always|withText" />
+        android:title="@string/button_refresh"
+        app:showAsAction="ifRoom" />
 </menu>
