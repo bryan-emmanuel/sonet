@@ -31,7 +31,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -41,7 +40,6 @@ import android.widget.Toast;
 import com.google.ads.AdRequest;
 import com.google.ads.AdSize;
 import com.google.ads.AdView;
-import com.piusvelte.sonet.fragment.BaseDialogFragment;
 import com.piusvelte.sonet.fragment.ConfirmationDialogFragment;
 import com.piusvelte.sonet.fragment.ItemsDialogFragment;
 import com.piusvelte.sonet.fragment.WidgetsList;
@@ -53,7 +51,7 @@ import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.PRO;
 import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 
-public class About extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>, BaseDialogFragment.OnResultListener {
+public class About extends BaseActivity implements LoaderManager.LoaderCallbacks<Cursor> {
     private int[] mAppWidgetIds;
     private AppWidgetManager mAppWidgetManager;
     private boolean mUpdateWidget = false;

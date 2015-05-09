@@ -62,7 +62,7 @@ public class SonetHttpClient {
     private SonetHttpClient(Context context) {
     }
 
-    protected static DefaultHttpClient getThreadSafeClient(Context context) {
+    public static DefaultHttpClient getThreadSafeClient(Context context) {
         if (sHttpClient == null) {
             Log.d(TAG, "create http client");
             SocketFactory sf;

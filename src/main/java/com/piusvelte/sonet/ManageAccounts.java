@@ -46,6 +46,7 @@ public class ManageAccounts extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.accounts_container);
+
         if (!getPackageName().toLowerCase().contains(PRO)) {
             AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);
             ((FrameLayout) findViewById(R.id.ad)).addView(adView);

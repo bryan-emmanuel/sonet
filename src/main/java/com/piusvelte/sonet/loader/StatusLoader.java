@@ -117,9 +117,9 @@ public class StatusLoader extends BaseAsyncTaskLoader {
                     result.items = new String[Result.PROFILE + count + 1];
                     result.itemsData = new String[result.items.length];
                     // for facebook wall posts, remove everything after the " > "
-                    String friend = c.getString(5);
+                    String friend = c.getString(c.getColumnIndexOrThrow(StatusesStyles.FRIEND));
 
-                    if (friend.indexOf(">") > 0) {
+                    if (friend != null && friend.indexOf(">") > 0) {
                         friend = friend.substring(0, friend.indexOf(">") - 1);
                     }
 

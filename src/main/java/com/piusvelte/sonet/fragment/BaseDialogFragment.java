@@ -46,6 +46,6 @@ public abstract class BaseDialogFragment extends DialogFragment {
 
     public interface OnResultListener {
 
-        void onResult(int requestCode, int result, Intent data);
+        void onResult(int requestCode, int resultCode, Intent data);
     }
 }

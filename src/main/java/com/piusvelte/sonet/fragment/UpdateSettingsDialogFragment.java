@@ -19,7 +19,7 @@ import com.piusvelte.sonet.R;
  * Created by bemmanuel on 4/20/15.
  */
 public class UpdateSettingsDialogFragment extends BaseDialogFragment
-        implements View.OnClickListener, CompoundButton.OnCheckedChangeListener, BaseDialogFragment.OnResultListener {
+        implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
 
     private static final String ARG_UPDATE_INTERVAL = "update_interval";
     private static final String ARG_STATUS_COUNT = "status_count";
@@ -117,20 +117,24 @@ public class UpdateSettingsDialogFragment extends BaseDialogFragment
     }
 
     @Override
-    public void onResult(int requestCode, int result, Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
             case REQUEST_INTERVAL:
-                if (result == Activity.RESULT_OK) {
+                if (resultCode == Activity.RESULT_OK) {
                     int which = SingleChoiceDialogFragment.getWhich(data, 0);
                     getArguments().putInt(ARG_UPDATE_INTERVAL, Integer.parseInt(getResources().getStringArray(R.array.interval_values)[which]));
                 }
                 break;
 
             case REQUEST_STATUS_COUNT:
-                if (result == Activity.RESULT_OK) {
+                if (resultCode == Activity.RESULT_OK) {
                     int which = SingleChoiceDialogFragment.getWhich(data, 0);
                     getArguments().putInt(ARG_STATUS_COUNT, Integer.parseInt(getResources().getStringArray(R.array.status_counts)[which]));
                 }
+                break;
+
+            default:
+                super.onActivityResult(requestCode, resultCode, data);
                 break;
         }
     }

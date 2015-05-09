@@ -57,8 +57,8 @@ import com.piusvelte.sonet.provider.WidgetsSettings;
 import static com.piusvelte.sonet.Sonet.PRO;
 import static com.piusvelte.sonet.Sonet.initAccountSettings;
 
-public class Settings extends FragmentActivity
-        implements View.OnClickListener, BaseDialogFragment.OnResultListener, LoaderManager.LoaderCallbacks<Cursor> {
+public class Settings extends BaseActivity
+        implements View.OnClickListener, LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final int LOADER_SETTINGS = 0;
 

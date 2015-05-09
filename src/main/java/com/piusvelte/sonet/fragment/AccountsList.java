@@ -44,7 +44,6 @@ import com.piusvelte.sonet.service.AccountUpdateService;
 import com.piusvelte.sonet.social.Client;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
-import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 import static com.piusvelte.sonet.Sonet.RSS;
 import static com.piusvelte.sonet.Sonet.SMS;
 import static com.piusvelte.sonet.Sonet.sBFOptions;
@@ -55,7 +54,7 @@ import static com.piusvelte.sonet.SonetProvider.TABLE_WIDGET_ACCOUNTS;
 /**
  * Created by bemmanuel on 4/19/15.
  */
-public class AccountsList extends ListFragment implements LoaderManager.LoaderCallbacks, BaseDialogFragment.OnResultListener {
+public class AccountsList extends ListFragment implements LoaderManager.LoaderCallbacks {
 
     private static final int LOADER_ACCOUNTS = 0;
     private static final int LOADER_ACCOUNT = 1;
@@ -70,6 +69,7 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
 
     private static final int REQUEST_ACCOUNT_OPTIONS = 0;
     private static final int REQUEST_ADD_ACCOUNT = 1;
+    private static final int REQUEST_REFRESH = 2;
 
     private static final int REAUTH_ID = 0;
     private static final int SETTINGS_ID = 1;
@@ -180,7 +180,7 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
             case R.id.default_widget_settings:
                 mAddingAccount = true;
                 startActivityForResult(new Intent(getActivity(), Settings.class)
-                        .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId), RESULT_REFRESH);
+                        .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId), REQUEST_REFRESH);
                 return true;
 
             default:
@@ -440,7 +440,7 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
                                             .putExtra(Accounts.SERVICE, service)
                                             .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId)
                                             .putExtra(Sonet.EXTRA_ACCOUNT_ID, id),
-                                    RESULT_REFRESH);
+                                    REQUEST_REFRESH);
                         }
                     }
 
@@ -462,24 +462,8 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
-            case RESULT_REFRESH:
-                mAddingAccount = false;
-
-                if (resultCode == Activity.RESULT_OK) {
-                    mUpdateWidget = true;
-                }
-                break;
-
-            default:
-                super.onActivityResult(requestCode, resultCode, data);
-        }
-    }
-
-    @Override
-    public void onResult(int requestCode, int result, Intent data) {
-        switch (requestCode) {
             case REQUEST_ACCOUNT_OPTIONS:
-                if (result == Activity.RESULT_OK) {
+                if (requestCode == Activity.RESULT_OK) {
                     long id = AccountOptionsDialogFragment.getAccountId(data, 0);
                     int which = ItemsDialogFragment.getWhich(data, 0);
 
@@ -494,7 +478,7 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
                             mAddingAccount = true;
                             startActivityForResult(new Intent(getActivity(), AccountSettings.class)
                                             .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId).putExtra(Sonet.EXTRA_ACCOUNT_ID, id),
-                                    RESULT_REFRESH);
+                                    REQUEST_REFRESH);
                             break;
                         case ENABLE_ID:
                             boolean isEnabled = AccountOptionsDialogFragment.getIsEnabled(data, true);
@@ -521,8 +505,19 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
                                 Integer.parseInt(getResources().getStringArray(R.array.service_values)[ItemsDialogFragment.getWhich(data, 0)]))
                         .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId)
                         .putExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID)
-                        , RESULT_REFRESH);
+                        , REQUEST_REFRESH);
                 break;
+
+            case REQUEST_REFRESH:
+                mAddingAccount = false;
+
+                if (resultCode == Activity.RESULT_OK) {
+                    mUpdateWidget = true;
+                }
+                break;
+
+            default:
+                super.onActivityResult(requestCode, resultCode, data);
         }
     }
 

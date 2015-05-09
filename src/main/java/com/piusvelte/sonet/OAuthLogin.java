@@ -27,8 +27,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -40,7 +38,6 @@ import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
-import com.piusvelte.sonet.fragment.BaseDialogFragment;
 import com.piusvelte.sonet.fragment.RssNameDialogFragment;
 import com.piusvelte.sonet.fragment.RssUrlDialogFragment;
 import com.piusvelte.sonet.loader.AddRssLoader;
@@ -58,7 +55,7 @@ import static com.piusvelte.sonet.Sonet.PINTEREST;
 import static com.piusvelte.sonet.Sonet.RSS;
 import static com.piusvelte.sonet.Sonet.SMS;
 
-public class OAuthLogin extends FragmentActivity implements LoaderManager.LoaderCallbacks, BaseDialogFragment.OnResultListener {
+public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCallbacks {
     private static final String TAG = "OAuthLogin";
 
     private static final String DIALOG_RSS_URL = "dialog:rss_url";
@@ -89,133 +86,6 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
     private static final String LOADER_ARG_NETWORK = "network";
     private static final String LOADER_ARG_RSS_URL = "rss_url";
     private static final String LOADER_ARG_AUTHENTICATED_URL = "authenticated_url";
-
-    @Override
-    public Loader onCreateLoader(int id, Bundle args) {
-        mPendingLoaders.add(id);
-
-        switch (id) {
-            case LOADER_OAUTH_LOGIN:
-                return new OAuthLoginLoader(this, args.getInt(LOADER_ARG_NETWORK));
-
-            case LOADER_SMS:
-                return new CursorLoader(this, Accounts.getContentUri(this), new String[] { Accounts._ID }, Accounts.SERVICE + "=?",
-                        new String[] { Integer.toString(SMS) }, null);
-
-            case LOADER_RSS:
-                return new AddRssLoader(this, args.getString(LOADER_ARG_RSS_URL));
-
-            case LOADER_PINTEREST:
-                return new CursorLoader(this, Accounts.getContentUri(this), new String[] { Accounts._ID }, Accounts.SERVICE + "=?",
-                        new String[] { Integer.toString(PINTEREST) }, null);
-
-            case LOADER_MEMBER_AUTHENTICATION:
-                return new MemberAuthenticationLoader(this, mOAuthLoginLoaderResult, args.getString(LOADER_ARG_AUTHENTICATED_URL));
-
-            default:
-                return null;
-        }
-    }
-
-    @Override
-    public void onLoadFinished(Loader loader, Object data) {
-        mPendingLoaders.remove(loader.getId());
-
-        switch (loader.getId()) {
-            case LOADER_OAUTH_LOGIN:
-                dismissLoading();
-
-                if (data instanceof OAuthLoginLoader.OAuthLoginLoaderResult) {
-                    mOAuthLoginLoaderResult = (OAuthLoginLoader.OAuthLoginLoaderResult) data;
-
-                    if (!TextUtils.isEmpty(mOAuthLoginLoaderResult.authUrl)) {
-                        mSonetWebView.open(mOAuthLoginLoaderResult.authUrl);
-                    } else {
-                        (Toast.makeText(OAuthLogin.this, String.format(getString(R.string.oauth_error), mServiceName), Toast.LENGTH_LONG)).show();
-                        finish();
-                    }
-                } else {
-                    (Toast.makeText(OAuthLogin.this, String.format(getString(R.string.oauth_error), mServiceName), Toast.LENGTH_LONG)).show();
-                    finish();
-                }
-                break;
-
-            case LOADER_SMS:
-                dismissLoading();
-
-                if (data instanceof Cursor) {
-                    if (((Cursor) data).moveToFirst()) {
-                        (Toast.makeText(OAuthLogin.this, "SMS has already been added.", Toast.LENGTH_LONG)).show();
-                    } else {
-                        addAccount(getResources().getStringArray(R.array.service_entries)[SMS], null, null, 0, SMS, null);
-                    }
-                }
-
-                finish();
-                break;
-
-            case LOADER_RSS:
-                dismissLoading();
-
-                if (data instanceof String) {
-                    final String rssUrl = (String) data;
-
-                    RssNameDialogFragment.newInstance(REQUEST_RSS_NAME, rssUrl)
-                            .show(getSupportFragmentManager(), DIALOG_RSS_NAME);
-                }
-
-                break;
-
-            case LOADER_PINTEREST:
-                dismissLoading();
-
-                if (data instanceof Cursor) {
-                    if (((Cursor) data).moveToFirst()) {
-                        (Toast.makeText(OAuthLogin.this, "Pinterest has already been added.", Toast.LENGTH_LONG)).show();
-                    } else {
-                        Toast.makeText(OAuthLogin.this, "Pinterest currently allows only public, non-authenticated viewing.", Toast.LENGTH_LONG)
-                                .show();
-                        String[] values = getResources().getStringArray(R.array.service_values);
-                        String[] entries = getResources().getStringArray(R.array.service_entries);
-
-                        for (int i = 0, l = values.length; i < l; i++) {
-                            if (Integer.toString(PINTEREST).equals(values[i])) {
-                                addAccount(entries[i], null, null, 0, PINTEREST, null);
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                finish();
-                break;
-
-            case LOADER_MEMBER_AUTHENTICATION:
-                dismissLoading();
-
-                if (data instanceof Client.MemberAuthentication) {
-                    Client.MemberAuthentication memberAuthentication = (Client.MemberAuthentication) data;
-                    addAccount(memberAuthentication.username, memberAuthentication.token, memberAuthentication.secret, memberAuthentication.expiry,
-                            memberAuthentication.network, memberAuthentication.id);
-                }
-
-                finish();
-                break;
-        }
-    }
-
-    @Override
-    public void onLoaderReset(Loader loader) {
-        mPendingLoaders.remove(loader.getId());
-    }
-
-    private void showLoading() {
-        mLoadingView.setVisibility(View.VISIBLE);
-    }
-
-    private void dismissLoading() {
-        mLoadingView.setVisibility(View.GONE);
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -254,7 +124,8 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
 
                 switch (service) {
                     case SMS:
-                        showLoading();
+                        mLoadingView.setVisibility(View.VISIBLE);
+
                         if (!mPendingLoaders.contains(LOADER_SMS)) {
                             getSupportLoaderManager().restartLoader(LOADER_SMS, null, this);
                         }
@@ -266,14 +137,16 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
                         break;
 
                     case PINTEREST:
-                        showLoading();
+                        mLoadingView.setVisibility(View.VISIBLE);
+
                         if (!mPendingLoaders.contains(LOADER_PINTEREST)) {
                             getSupportLoaderManager().restartLoader(LOADER_PINTEREST, null, this);
                         }
                         break;
 
                     default: {
-                        showLoading();
+                        mLoadingView.setVisibility(View.VISIBLE);
+
                         if (!mPendingLoaders.contains(LOADER_OAUTH_LOGIN)) {
                             Bundle args = new Bundle();
                             args.putInt(LOADER_ARG_NETWORK, service);
@@ -299,6 +172,125 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
         }
 
         outState.putIntArray(STATE_PENDING_LOADERS, loaders);
+    }
+
+    @Override
+    public Loader onCreateLoader(int id, Bundle args) {
+        mPendingLoaders.add(id);
+
+        switch (id) {
+            case LOADER_OAUTH_LOGIN:
+                return new OAuthLoginLoader(this, args.getInt(LOADER_ARG_NETWORK));
+
+            case LOADER_SMS:
+                return new CursorLoader(this, Accounts.getContentUri(this), new String[] { Accounts._ID }, Accounts.SERVICE + "=?",
+                        new String[] { Integer.toString(SMS) }, null);
+
+            case LOADER_RSS:
+                return new AddRssLoader(this, args.getString(LOADER_ARG_RSS_URL));
+
+            case LOADER_PINTEREST:
+                return new CursorLoader(this, Accounts.getContentUri(this), new String[] { Accounts._ID }, Accounts.SERVICE + "=?",
+                        new String[] { Integer.toString(PINTEREST) }, null);
+
+            case LOADER_MEMBER_AUTHENTICATION:
+                return new MemberAuthenticationLoader(this, mOAuthLoginLoaderResult, args.getString(LOADER_ARG_AUTHENTICATED_URL));
+
+            default:
+                return null;
+        }
+    }
+
+    @Override
+    public void onLoadFinished(Loader loader, Object data) {
+        mPendingLoaders.remove(loader.getId());
+
+        switch (loader.getId()) {
+            case LOADER_OAUTH_LOGIN:
+                mLoadingView.setVisibility(View.GONE);
+
+                if (data instanceof OAuthLoginLoader.OAuthLoginLoaderResult) {
+                    mOAuthLoginLoaderResult = (OAuthLoginLoader.OAuthLoginLoaderResult) data;
+
+                    if (!TextUtils.isEmpty(mOAuthLoginLoaderResult.authUrl)) {
+                        mSonetWebView.open(mOAuthLoginLoaderResult.authUrl);
+                    } else {
+                        Toast.makeText(OAuthLogin.this, String.format(getString(R.string.oauth_error), mServiceName), Toast.LENGTH_LONG).show();
+                        finish();
+                    }
+                } else {
+                    Toast.makeText(OAuthLogin.this, String.format(getString(R.string.oauth_error), mServiceName), Toast.LENGTH_LONG).show();
+                    finish();
+                }
+                break;
+
+            case LOADER_SMS:
+                mLoadingView.setVisibility(View.GONE);
+
+                if (data instanceof Cursor) {
+                    if (((Cursor) data).moveToFirst()) {
+                        (Toast.makeText(OAuthLogin.this, "SMS has already been added.", Toast.LENGTH_LONG)).show();
+                    } else {
+                        addAccount(getResources().getStringArray(R.array.service_entries)[SMS], null, null, 0, SMS, null);
+                    }
+                }
+
+                finish();
+                break;
+
+            case LOADER_RSS:
+                mLoadingView.setVisibility(View.GONE);
+
+                if (data instanceof String) {
+                    final String rssUrl = (String) data;
+
+                    RssNameDialogFragment.newInstance(REQUEST_RSS_NAME, rssUrl)
+                            .show(getSupportFragmentManager(), DIALOG_RSS_NAME);
+                }
+
+                break;
+
+            case LOADER_PINTEREST:
+                mLoadingView.setVisibility(View.GONE);
+
+                if (data instanceof Cursor) {
+                    if (((Cursor) data).moveToFirst()) {
+                        (Toast.makeText(OAuthLogin.this, "Pinterest has already been added.", Toast.LENGTH_LONG)).show();
+                    } else {
+                        Toast.makeText(OAuthLogin.this, "Pinterest currently allows only public, non-authenticated viewing.", Toast.LENGTH_LONG)
+                                .show();
+                        String[] values = getResources().getStringArray(R.array.service_values);
+                        String[] entries = getResources().getStringArray(R.array.service_entries);
+
+                        for (int i = 0, l = values.length; i < l; i++) {
+                            if (Integer.toString(PINTEREST).equals(values[i])) {
+                                addAccount(entries[i], null, null, 0, PINTEREST, null);
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                finish();
+                break;
+
+            case LOADER_MEMBER_AUTHENTICATION:
+                mLoadingView.setVisibility(View.GONE);
+
+                if (data instanceof Client.MemberAuthentication) {
+                    Client.MemberAuthentication memberAuthentication = (Client.MemberAuthentication) data;
+                    addAccount(memberAuthentication.username, memberAuthentication.token, memberAuthentication.secret, memberAuthentication.expiry,
+                            memberAuthentication.network, memberAuthentication.id);
+                }
+
+                finish();
+                break;
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader loader) {
+        mPendingLoaders.remove(loader.getId());
     }
 
     private String addAccount(String username, String token, String secret, int expiry, int service, String sid) {
@@ -333,7 +325,7 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
         switch (requestCode) {
             case REQUEST_RSS_URL:
                 if (result == RESULT_OK) {
-                    showLoading();
+                    mLoadingView.setVisibility(View.VISIBLE);
                     Bundle args = new Bundle();
                     args.putString(LOADER_ARG_RSS_URL, RssUrlDialogFragment.getUrl(data, null));
                     getSupportLoaderManager().restartLoader(LOADER_RSS, args, OAuthLogin.this);
@@ -374,7 +366,7 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
                         matcher.addURI("accounts.google.com", "o/oauth2/approval", 1);
 
                         if (matcher.match(uri) == 1) {
-                            showLoading();
+                            mLoadingView.setVisibility(View.VISIBLE);
                             Bundle args = new Bundle();
                             args.putString(LOADER_ARG_AUTHENTICATED_URL, view.getTitle());
                             getSupportLoaderManager().restartLoader(LOADER_MEMBER_AUTHENTICATION, args, mOAuthLogin);
@@ -391,7 +383,7 @@ public class OAuthLogin extends FragmentActivity implements LoaderManager.Loader
                         Uri callback = mOAuthLoginLoaderResult.client.getCallback();
 
                         if (callback != null && callback.getHost().equals(host)) {
-                            showLoading();
+                            mLoadingView.setVisibility(View.VISIBLE);
                             Bundle args = new Bundle();
                             args.putString(LOADER_ARG_AUTHENTICATED_URL, url);
                             getSupportLoaderManager().restartLoader(LOADER_MEMBER_AUTHENTICATION, args, mOAuthLogin);

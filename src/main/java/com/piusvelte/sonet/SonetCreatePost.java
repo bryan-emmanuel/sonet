@@ -75,8 +75,8 @@ import static com.piusvelte.sonet.Sonet.PRO;
 import static com.piusvelte.sonet.Sonet.Stags;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 
-public class SonetCreatePost extends AppCompatActivity
-        implements OnKeyListener, OnClickListener, TextWatcher, LoaderManager.LoaderCallbacks, BaseDialogFragment.OnResultListener {
+public class SonetCreatePost extends BaseActivity
+        implements OnKeyListener, OnClickListener, TextWatcher, LoaderManager.LoaderCallbacks {
     private static final String TAG = "SonetCreatePost";
 
     private static final int LOADER_ACCOUNT = 0;

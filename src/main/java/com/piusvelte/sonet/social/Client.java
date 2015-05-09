@@ -435,7 +435,12 @@ abstract public class Client {
     @Nullable
     public String getAuthUrl(@NonNull SonetOAuth sonetOAuth) {
         try {
-            return sonetOAuth.getAuthUrl(getRequestUrl(), getAccessUrl(), getAuthorizeUrl(), getCallbackUrl(), isOAuth10a(), null);
+            return sonetOAuth.getAuthUrl(getRequestUrl(),
+                    getAccessUrl(),
+                    getAuthorizeUrl(),
+                    getCallbackUrl(),
+                    isOAuth10a(),
+                    SonetHttpClient.getThreadSafeClient(mContext));
         } catch (OAuthMessageSignerException e) {
             if (BuildConfig.DEBUG) Log.d(mTag, e.toString());
         } catch (OAuthNotAuthorizedException e) {

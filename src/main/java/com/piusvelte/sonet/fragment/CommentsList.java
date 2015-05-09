@@ -49,7 +49,7 @@ import static com.piusvelte.sonet.Sonet.MYSPACE;
  * Created by bemmanuel on 4/21/15.
  */
 public class CommentsList extends ListFragment
-        implements TextWatcher, View.OnKeyListener, View.OnClickListener, LoaderManager.LoaderCallbacks, BaseDialogFragment.OnResultListener {
+        implements TextWatcher, View.OnKeyListener, View.OnClickListener, LoaderManager.LoaderCallbacks {
 
     private static final int LOADER_COMMENTS = 0;
     private static final int LOADER_SEND = 1;
@@ -389,10 +389,10 @@ public class CommentsList extends ListFragment
     }
 
     @Override
-    public void onResult(int requestCode, int result, Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
             case REQUEST_OPTIONS:
-                if (result == Activity.RESULT_OK) {
+                if (resultCode == Activity.RESULT_OK) {
                     int which = ItemsDialogFragment.getWhich(data, 0);
 
                     if (which == 0) {
@@ -418,6 +418,10 @@ public class CommentsList extends ListFragment
                         }
                     }
                 }
+                break;
+
+            default:
+                super.onActivityResult(requestCode, resultCode, data);
                 break;
         }
     }
