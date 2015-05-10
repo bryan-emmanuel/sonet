@@ -198,7 +198,7 @@ public class Facebook extends Client {
     @Override
     String getPostFriendOverride(String friend) {
         // facebook wall post handling
-        if (friend.indexOf(">") > 0) {
+        if (friend.contains(">")) {
             return friend;
         }
 
@@ -207,8 +207,10 @@ public class Facebook extends Client {
 
     @Override
     String getPostFriend(String friend) {
-        if (friend.indexOf(">") > 0) {
-            return friend.substring(0, friend.indexOf(">") - 1);
+        int wallIndex = friend.indexOf(">");
+
+        if (wallIndex > 0) {
+            return friend.substring(0, wallIndex - 1);
         }
 
         return super.getPostFriend(friend);

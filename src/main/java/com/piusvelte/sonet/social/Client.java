@@ -491,7 +491,7 @@ abstract public class Client {
     }
 
     String getPostFriend(String friend) {
-        return null;
+        return friend;
     }
 
     void formatLink(Matcher matcher, StringBuffer stringBuffer, String link) {

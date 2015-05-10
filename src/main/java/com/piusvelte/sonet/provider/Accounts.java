@@ -1,10 +1,8 @@
 package com.piusvelte.sonet.provider;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.net.Uri;
 import android.provider.BaseColumns;
-import android.support.annotation.NonNull;
 
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.social.Client;
@@ -43,35 +41,5 @@ public class Accounts implements BaseColumns {
 
     public static Uri getContentUri(Context context) {
         return Uri.parse("content://" + Sonet.getAuthority(context) + "/accounts");
-    }
-
-    @Deprecated
-    @NonNull
-    public static Cursor get(@NonNull Context context, long id) {
-        String selection = null;
-        String[] selectionArgs = null;
-
-        if (id != INVALID_ACCOUNT_ID) {
-            selection = _ID + "=?";
-            selectionArgs = new String[] { Long.toString(id) };
-        }
-
-        return context.getContentResolver().query(getContentUri(context),
-                new String[] { _ID, ACCOUNTS_QUERY, SERVICE },
-                selection,
-                selectionArgs,
-                null);
-    }
-
-    @Deprecated
-    @NonNull
-    public static Cursor get(@NonNull Context context) {
-        return get(context, INVALID_ACCOUNT_ID);
-    }
-
-    public static class Account {
-        public long id;
-        public int service;
-        public String username;
     }
 }

@@ -234,6 +234,7 @@ public class Twitter extends Client {
             String[] notificationMessage,
             boolean doNotify) throws JSONException {
         JSONObject user = item.getJSONObject(Suser);
+        Log.d("Bryan", "user: " + user.toString());
 
         addStatusItem(parseDate(item.getString(Screated_at), TWITTER_DATE_FORMAT),
                 user.getString(Sname),
