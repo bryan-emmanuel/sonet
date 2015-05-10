@@ -104,7 +104,7 @@ public class StatusOptions extends ListFragment implements LoaderManager.LoaderC
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.loading_list, container, false);
+        return inflater.inflate(R.layout.status_options, container, false);
     }
 
     @Override
