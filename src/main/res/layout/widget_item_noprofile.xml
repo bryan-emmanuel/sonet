@@ -25,62 +25,54 @@
     android:layout_height="wrap_content">
 
     <ImageView
-        android:id="@+id/friend_bg"
+        android:id="@+id/status_bg"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/message_item_header_height"
-        android:layout_alignBottom="@+id/friend"
-        android:layout_alignTop="@+id/friend"
+        android:layout_height="match_parent"
         android:scaleType="fitXY"
-        android:src="@color/colorPrimary" />
-
-    <TextView
-        android:id="@+id/friend"
-        android:layout_width="wrap_content"
-        android:layout_height="@dimen/message_item_header_height"
-        android:layout_alignParentTop="true"
-        android:gravity="center_vertical"
-        android:maxLines="1"
-        android:padding="@dimen/message_item_padding"
-        android:textColor="@color/default_friend_color"
-        android:textStyle="bold"
-        tools:text="Hello, my name is" />
+        android:src="@android:color/white" />
 
     <ImageView
         android:id="@+id/icon"
-        android:layout_width="@dimen/message_item_header_height"
-        android:layout_height="@dimen/message_item_header_height"
-        android:paddingBottom="@dimen/message_item_padding"
+        android:layout_width="32dip"
+        android:layout_height="32dip"
         android:paddingLeft="@dimen/message_item_padding"
-        android:paddingRight="40dip"
-        android:paddingTop="40dip"
+        android:paddingTop="@dimen/message_item_padding"
         android:scaleType="fitCenter"
         tools:src="@drawable/googleplus" />
 
     <TextView
+        android:id="@+id/friend"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@+id/icon"
+        android:gravity="center_vertical"
+        android:maxLines="1"
+        android:paddingLeft="@dimen/message_item_padding"
+        android:paddingTop="@dimen/message_item_padding"
+        android:textColor="@color/default_friend_color"
+        android:textStyle="bold"
+        tools:text="Hello, my name is" />
+
+    <TextView
         android:id="@+id/created"
         android:layout_width="wrap_content"
-        android:layout_height="@dimen/message_item_header_height"
+        android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
         android:gravity="center_vertical"
         android:maxLines="1"
-        android:padding="@dimen/message_item_padding"
+        android:paddingRight="@dimen/message_item_padding"
+        android:paddingTop="@dimen/message_item_padding"
         android:textColor="@color/default_friend_color"
         tools:text="Today" />
-
-    <ImageView
-        android:id="@+id/status_bg"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/friend"
-        android:scaleType="fitXY"
-        android:src="@android:color/white" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/friend"
         android:orientation="vertical"
-        android:padding="@dimen/message_item_padding">
+        android:paddingBottom="@dimen/message_item_padding"
+        android:paddingLeft="@dimen/message_item_padding"
+        android:paddingRight="@dimen/message_item_padding">
 
         <TextView
             android:id="@+id/message"
@@ -93,8 +85,7 @@
             android:id="@+id/image"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingLeft="@dimen/message_item_padding"
-            android:paddingRight="@dimen/message_item_padding"
+            android:paddingTop="@dimen/message_item_padding"
             android:scaleType="fitCenter"
             tools:src="@drawable/icon" />
 

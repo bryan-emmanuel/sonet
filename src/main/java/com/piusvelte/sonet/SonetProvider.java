@@ -181,7 +181,6 @@ public class SonetProvider extends ContentProvider {
         widgetsProjectionMap.put(Widgets.DISPLAY_PROFILE, Widgets.DISPLAY_PROFILE);
         widgetsProjectionMap.put(Widgets.INSTANT_UPLOAD, Widgets.INSTANT_UPLOAD);
         widgetsProjectionMap.put(Widgets.MARGIN, Widgets.MARGIN);
-        widgetsProjectionMap.put(Widgets.PROFILES_BG_COLOR, Widgets.PROFILES_BG_COLOR);
         widgetsProjectionMap.put(Widgets.FRIEND_BG_COLOR, Widgets.FRIEND_BG_COLOR);
 
         sUriMatcher.addURI(AUTHORITY, TABLE_STATUSES, STATUSES);
@@ -226,8 +225,6 @@ public class SonetProvider extends ContentProvider {
         statuses_stylesProjectionMap.put(StatusesStyles.SID, StatusesStyles.SID);
         statuses_stylesProjectionMap.put(StatusesStyles.ENTITY, StatusesStyles.ENTITY);
         statuses_stylesProjectionMap.put(StatusesStyles.ESID, StatusesStyles.ESID);
-        statuses_stylesProjectionMap.put(StatusesStyles.PROFILE_BG, StatusesStyles.PROFILE_BG);
-        statuses_stylesProjectionMap.put(StatusesStyles.FRIEND_BG, StatusesStyles.FRIEND_BG);
         statuses_stylesProjectionMap.put(StatusesStyles.IMAGE, StatusesStyles.IMAGE);
 
         sUriMatcher.addURI(AUTHORITY, TABLE_ENTITIES, ENTITIES);
@@ -279,16 +276,12 @@ public class SonetProvider extends ContentProvider {
 
     public enum StatusesStylesColumns {
         _id, friend, profile, message, createdtext, messages_color, friend_color, created_color, messages_textsize, friend_textsize,
-        created_textsize, status_bg, icon, friend_bg, image_bg, image
+        created_textsize, status_bg, icon, image
     }
 
     public enum StatusesStylesColumnsNoProfile {
         _id, friend, message, createdtext, messages_color, friend_color, created_color, messages_textsize, friend_textsize, created_textsize,
-        status_bg, icon, friend_bg, image_bg, image
-    }
-
-    public enum StatusesStylesColumnsCompact {
-        _id, friend, message, messages_color, friend_color, messages_textsize, friend_textsize, status_bg, icon, friend_bg, image_bg, image
+        status_bg, icon, image
     }
 
     @Override

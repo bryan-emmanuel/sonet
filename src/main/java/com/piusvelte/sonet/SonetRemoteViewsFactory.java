@@ -101,9 +101,6 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
             fillInIntent.putExtras(extras);
             views.setOnClickFillInIntent(R.id.item, fillInIntent);
 
-            byte[] friend_bg = mCursor.getBlob(13);
-            setImageViewBitmap(views, R.id.friend_bg, friend_bg);
-
             views.setTextViewText(R.id.friend, mCursor.getString(1));
             views.setTextColor(R.id.friend, friend_color);
             views.setFloat(R.id.friend, "setTextSize", friend_textsize);
@@ -111,7 +108,7 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
             views.setTextColor(R.id.created, created_color);
             views.setFloat(R.id.created, "setTextSize", created_textsize);
 
-            byte[] image = mCursor.getBlob(14);
+            byte[] image = mCursor.getBlob(13);
 
             if (!setImageViewBitmap(views, R.id.image, image)) {
                 views.setViewVisibility(R.id.image, View.GONE);
@@ -172,7 +169,6 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
                         StatusesStyles.CREATED_TEXTSIZE,
                         StatusesStyles.STATUS_BG,
                         StatusesStyles.ICON,
-                        StatusesStyles.FRIEND_BG,
                         StatusesStyles.IMAGE },
                 null,
                 null,

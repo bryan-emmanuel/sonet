@@ -120,15 +120,13 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
                         StatusesStyles.STATUS_BG,
                         StatusesStyles.CREATEDTEXT,
                         StatusesStyles.PROFILE,
-                        StatusesStyles.ICON,
-                        StatusesStyles.FRIEND_BG },
+                        StatusesStyles.ICON },
                 new int[] { R.id.friend,
                         R.id.message,
                         R.id.status_bg,
                         R.id.created,
                         R.id.profile,
-                        R.id.icon,
-                        R.id.friend_bg },
+                        R.id.icon },
                 0);
         mAdapter.setViewBinder(new AccountsViewBinder(getResources()));
         setListAdapter(mAdapter);
@@ -347,20 +345,7 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
                                         TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
                                         + "else " + Sonet.default_message_bg_color + " end) as " + StatusesStyles.STATUS_BG,
 
-                                Accounts.SERVICE + " as " + StatusesStyles.ICON,
-
-                                "(case when (select " + Widgets.FRIEND_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
-                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then " +
-                                        "(select " + Widgets.FRIEND_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
-                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
-                                        + "when (select " + Widgets.FRIEND_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
-                                        appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.FRIEND_BG_COLOR + " " +
-                                        "from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT + "=-1" +
-                                        " limit 1)"
-                                        + "when (select " + Widgets.FRIEND_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 " +
-                                        "and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.FRIEND_BG_COLOR + " from " +
-                                        TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
-                                        + "else " + Sonet.default_friend_bg_color + " end) as " + StatusesStyles.FRIEND_BG
+                                Accounts.SERVICE + " as " + StatusesStyles.ICON
                         },
                         null,
                         null,
@@ -530,12 +515,6 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
                     ((ImageView) view).setImageBitmap(bmp);
                 }
 
-                return true;
-            } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.FRIEND_BG)) {
-                Bitmap bmp = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
-                Canvas canvas = new Canvas(bmp);
-                canvas.drawColor(cursor.getInt(columnIndex));
-                ((ImageView) view).setImageBitmap(bmp);
                 return true;
             }
 

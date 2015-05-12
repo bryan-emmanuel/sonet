@@ -49,5 +49,6 @@ public class Widgets implements BaseColumns {
     public static final String MARGIN = "margin";
     @Deprecated
     public static final String PROFILES_BG_COLOR = "profiles_bg_color";
+    @Deprecated
     public static final String FRIEND_BG_COLOR = "friend_bg_color";
 }

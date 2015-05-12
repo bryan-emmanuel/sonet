@@ -91,12 +91,6 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
                                 StatusesStyles.PROFILE,
                                 StatusesStyles.MESSAGE,
                                 StatusesStyles.CREATEDTEXT,
-                                StatusesStyles.MESSAGES_COLOR,
-                                StatusesStyles.FRIEND_COLOR,
-                                StatusesStyles.CREATED_COLOR,
-                                StatusesStyles.MESSAGES_TEXTSIZE,
-                                StatusesStyles.FRIEND_TEXTSIZE,
-                                StatusesStyles.CREATED_TEXTSIZE,
                                 StatusesStyles.ICON,
                                 StatusesStyles.IMAGE },
                         StatusesStyles.WIDGET + "=?",
@@ -168,18 +162,12 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
                 return true;
             } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.FRIEND)) {
                 ((TextView) view).setText(cursor.getString(columnIndex));
-                ((TextView) view).setTextSize(cursor.getLong(cursor.getColumnIndex(StatusesStyles.FRIEND_TEXTSIZE)));
-                ((TextView) view).setTextColor(cursor.getInt(cursor.getColumnIndex(StatusesStyles.FRIEND_COLOR)));
                 return true;
             } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.CREATEDTEXT)) {
                 ((TextView) view).setText(cursor.getString(columnIndex));
-                ((TextView) view).setTextSize(cursor.getLong(cursor.getColumnIndex(StatusesStyles.CREATED_TEXTSIZE)));
-                ((TextView) view).setTextColor(cursor.getInt(cursor.getColumnIndex(StatusesStyles.CREATED_COLOR)));
                 return true;
             } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.MESSAGE)) {
                 ((TextView) view).setText(cursor.getString(columnIndex));
-                ((TextView) view).setTextSize(cursor.getLong(cursor.getColumnIndex(StatusesStyles.MESSAGES_TEXTSIZE)));
-                ((TextView) view).setTextColor(cursor.getInt(cursor.getColumnIndex(StatusesStyles.MESSAGES_COLOR)));
                 return true;
             } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.ICON)) {
                 setImageBitmap(view, cursor.getBlob(columnIndex));

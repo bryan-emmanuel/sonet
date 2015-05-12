@@ -44,7 +44,9 @@ public final class StatusesStyles implements BaseColumns {
     // store friend and profile data in a separate table
     public static final String ENTITY = "entity";
     public static final String ESID = "esid";
+    @Deprecated
     public static final String PROFILE_BG = "profiles_bg_color";
+    @Deprecated
     public static final String FRIEND_BG = "friend_bg";
     @Deprecated
     public static final String IMAGE_BG = "image_bg";
