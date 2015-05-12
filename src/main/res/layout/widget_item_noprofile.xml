@@ -31,7 +31,7 @@
         android:layout_alignBottom="@+id/friend"
         android:layout_alignTop="@+id/friend"
         android:scaleType="fitXY"
-        tools:background="#FF000000" />
+        android:src="@color/colorPrimary" />
 
     <TextView
         android:id="@+id/friend"
@@ -72,7 +72,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/friend"
-        android:scaleType="fitXY" />
+        android:scaleType="fitXY"
+        android:src="@android:color/white" />
 
     <LinearLayout
         android:layout_width="match_parent"

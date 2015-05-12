@@ -29,7 +29,7 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/message_item_header_height"
         android:scaleType="fitXY"
-        tools:background="#FF000000" />
+        android:src="@color/colorPrimary" />
 
     <ImageView
         android:id="@+id/profile"
@@ -79,7 +79,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/friend"
-        android:scaleType="fitXY" />
+        android:scaleType="fitXY"
+        android:src="@android:color/white" />
 
     <LinearLayout
         android:layout_width="match_parent"

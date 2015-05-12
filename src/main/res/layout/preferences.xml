@@ -25,13 +25,13 @@
     <FrameLayout
         android:id="@+id/ad"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true" />
 
     <Button
         android:id="@+id/settings_update"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/ad"
         android:text="@string/settings_update" />
 
     <Button
@@ -100,6 +100,8 @@
         android:id="@+id/message"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_above="@+id/ad"
+        android:layout_alignWithParentIfMissing="true"
         android:layout_below="@id/friend"
         android:padding="@dimen/message_item_padding"
         android:text="@string/settings_message_extended" />
@@ -108,8 +110,9 @@
         android:id="@+id/icon"
         android:layout_width="32dip"
         android:layout_height="32dip"
-        android:layout_alignParentBottom="true"
+        android:layout_above="@+id/ad"
         android:layout_alignParentRight="true"
+        android:layout_alignWithParentIfMissing="true"
         android:paddingBottom="@dimen/message_item_padding"
         android:paddingRight="@dimen/message_item_padding"
         android:scaleType="fitCenter"

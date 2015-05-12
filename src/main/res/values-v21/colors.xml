@@ -17,19 +17,10 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+<resources>
 
-    <FrameLayout
-        android:id="@+id/notifications_list_container"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+    <color name="android:colorPrimary">#FF8BA9FF</color>
+    <color name="android:colorPrimaryDark">#FF4B7BFF</color>
+    <color name="android:colorAccent">#FFC9D8FF</color>
 
-    <FrameLayout
-        android:id="@+id/ad"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-</LinearLayout>
+</resources>

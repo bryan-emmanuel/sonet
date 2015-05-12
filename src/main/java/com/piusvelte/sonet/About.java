@@ -19,13 +19,11 @@
  */
 package com.piusvelte.sonet;
 
-import android.app.WallpaperManager;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
@@ -75,12 +73,6 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
             AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);
             ((FrameLayout) findViewById(R.id.ad)).addView(adView);
             adView.loadAd(new AdRequest());
-        }
-
-        Drawable wp = WallpaperManager.getInstance(getApplicationContext()).getDrawable();
-
-        if (wp != null) {
-            findViewById(R.id.ad).getRootView().setBackgroundDrawable(wp);
         }
 
         Fragment widgetsList = getSupportFragmentManager().findFragmentByTag(FRAGMENT_WIDGETS_LIST);

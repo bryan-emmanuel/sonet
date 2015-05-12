@@ -56,19 +56,15 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
                 null,
                 new String[] { StatusesStyles.FRIEND,
                         StatusesStyles.MESSAGE,
-                        StatusesStyles.STATUS_BG,
                         StatusesStyles.CREATEDTEXT,
                         StatusesStyles.PROFILE,
                         StatusesStyles.ICON,
-                        StatusesStyles.FRIEND_BG,
                         StatusesStyles.IMAGE },
                 new int[] { R.id.friend,
                         R.id.message,
-                        R.id.status_bg,
                         R.id.created,
                         R.id.profile,
                         R.id.icon,
-                        R.id.friend_bg,
                         R.id.image },
                 0);
         mAdapter.setViewBinder(new WidgetsViewBinder());
@@ -101,9 +97,7 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
                                 StatusesStyles.MESSAGES_TEXTSIZE,
                                 StatusesStyles.FRIEND_TEXTSIZE,
                                 StatusesStyles.CREATED_TEXTSIZE,
-                                StatusesStyles.STATUS_BG,
                                 StatusesStyles.ICON,
-                                StatusesStyles.FRIEND_BG,
                                 StatusesStyles.IMAGE },
                         StatusesStyles.WIDGET + "=?",
                         new String[] { Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID) },
@@ -154,24 +148,22 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
 
     private static class WidgetsViewBinder implements SimpleCursorAdapter.ViewBinder {
 
-        private static void setImageBitmap(View view, byte[] data) {
-            Bitmap bmp;
-
+        private static boolean setImageBitmap(View view, byte[] data) {
             if (data != null) {
-                bmp = BitmapFactory.decodeByteArray(data, 0, data.length, sBFOptions);
+                Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length, sBFOptions);
 
                 if (bmp != null) {
                     ((ImageView) view).setImageBitmap(bmp);
+                    return true;
                 }
             }
+
+            return false;
         }
 
         @Override
         public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
-            if (columnIndex == cursor.getColumnIndex(StatusesStyles.STATUS_BG)) {
-                setImageBitmap(view, cursor.getBlob(columnIndex));
-                return true;
-            } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.PROFILE)) {
+            if (columnIndex == cursor.getColumnIndex(StatusesStyles.PROFILE)) {
                 setImageBitmap(view, cursor.getBlob(columnIndex));
                 return true;
             } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.FRIEND)) {
@@ -192,11 +184,10 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
             } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.ICON)) {
                 setImageBitmap(view, cursor.getBlob(columnIndex));
                 return true;
-            } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.FRIEND_BG)) {
-                setImageBitmap(view, cursor.getBlob(columnIndex));
-                return true;
             } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.IMAGE)) {
-                setImageBitmap(view, cursor.getBlob(columnIndex));
+                if (!setImageBitmap(view, cursor.getBlob(columnIndex))) {
+                    view.setVisibility(View.GONE);
+                }
                 return true;
             } else {
                 return false;
