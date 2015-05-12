@@ -10,6 +10,7 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.RemoteViews;
 
 import com.piusvelte.sonet.provider.StatusLinks;
@@ -111,7 +112,10 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
             views.setFloat(R.id.created, "setTextSize", created_textsize);
 
             byte[] image = mCursor.getBlob(14);
-            setImageViewBitmap(views, R.id.image, image);
+
+            if (!setImageViewBitmap(views, R.id.image, image)) {
+                views.setViewVisibility(R.id.image, View.GONE);
+            }
 
             if (mDisplay_profile) {
                 byte[] profile = mCursor.getBlob(2);
