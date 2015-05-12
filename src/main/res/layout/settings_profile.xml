@@ -24,14 +24,8 @@
 
     <CheckBox
         android:id="@+id/display_profile"
-        android:text="@string/display_profile"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:checked="true" />
-
-    <Button
-        android:id="@+id/background"
-        android:text="@string/profile_bg_color"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:checked="true"
+        android:text="@string/display_profile" />
 </LinearLayout>

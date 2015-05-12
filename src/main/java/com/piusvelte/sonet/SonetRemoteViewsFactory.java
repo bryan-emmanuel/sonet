@@ -16,7 +16,6 @@ import com.piusvelte.sonet.provider.StatusLinks;
 import com.piusvelte.sonet.provider.StatusesStyles;
 import com.piusvelte.sonet.provider.Widgets;
 
-import static com.piusvelte.sonet.Sonet.getBlob;
 import static com.piusvelte.sonet.Sonet.sBFOptions;
 
 @SuppressLint("NewApi")
@@ -86,10 +85,6 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
             byte[] icon = mCursor.getBlob(12);
             setImageViewBitmap(views, R.id.icon, icon);
 
-            views.setTextViewText(R.id.friend_bg_clear, mCursor.getString(1));
-            views.setFloat(R.id.friend_bg_clear, "setTextSize", friend_textsize);
-            views.setTextViewText(R.id.message_bg_clear, mCursor.getString(3));
-            views.setFloat(R.id.message_bg_clear, "setTextSize", messages_textsize);
             // set messages background
             byte[] status_bg = mCursor.getBlob(11);
             setImageViewBitmap(views, R.id.status_bg, status_bg);
@@ -105,7 +100,7 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
             fillInIntent.putExtras(extras);
             views.setOnClickFillInIntent(R.id.item, fillInIntent);
 
-            byte[] friend_bg = mCursor.getBlob(14);
+            byte[] friend_bg = mCursor.getBlob(13);
             setImageViewBitmap(views, R.id.friend_bg, friend_bg);
 
             views.setTextViewText(R.id.friend, mCursor.getString(1));
@@ -114,24 +109,15 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
             views.setTextViewText(R.id.created, mCursor.getString(4));
             views.setTextColor(R.id.created, created_color);
             views.setFloat(R.id.created, "setTextSize", created_textsize);
-            byte[] image_bg = mCursor.getBlob(15);
 
-            if (setImageViewBitmap(views, R.id.image_clear, image_bg)) {
-                byte[] image = mCursor.getBlob(16);
-                setImageViewBitmap(views, R.id.image, image);
-            }
-
-            byte[] profile_bg = mCursor.getBlob(13);
+            byte[] image = mCursor.getBlob(14);
+            setImageViewBitmap(views, R.id.image, image);
 
             if (mDisplay_profile) {
-                setImageViewBitmap(views, R.id.profile_bg, profile_bg);
-            }
+                byte[] profile = mCursor.getBlob(2);
 
-            byte[] profile = mCursor.getBlob(2);
-
-            if (mDisplay_profile) {
                 if (profile == null) {
-                    profile = getBlob(mContext.getResources(), R.drawable.ic_contact_picture);
+                    profile = Sonet.getBlob(Sonet.getBitmap(mContext.getResources(), R.drawable.ic_contact_picture));
                 }
 
                 setImageViewBitmap(views, R.id.profile, profile);
@@ -169,10 +155,21 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
         }
 
         mCursor = mContext.getContentResolver().query(Uri.withAppendedPath(StatusesStyles.getContentUri(mContext), Integer.toString(mAppWidgetId)),
-                new String[] { StatusesStyles._ID, StatusesStyles.FRIEND, StatusesStyles.PROFILE, StatusesStyles.MESSAGE, StatusesStyles
-                        .CREATEDTEXT, StatusesStyles.MESSAGES_COLOR, StatusesStyles.FRIEND_COLOR, StatusesStyles.CREATED_COLOR, StatusesStyles
-                        .MESSAGES_TEXTSIZE, StatusesStyles.FRIEND_TEXTSIZE, StatusesStyles.CREATED_TEXTSIZE, StatusesStyles.STATUS_BG,
-                        StatusesStyles.ICON, StatusesStyles.PROFILE_BG, StatusesStyles.FRIEND_BG, StatusesStyles.IMAGE_BG, StatusesStyles.IMAGE },
+                new String[] { StatusesStyles._ID,
+                        StatusesStyles.FRIEND,
+                        StatusesStyles.PROFILE,
+                        StatusesStyles.MESSAGE,
+                        StatusesStyles.CREATEDTEXT,
+                        StatusesStyles.MESSAGES_COLOR,
+                        StatusesStyles.FRIEND_COLOR,
+                        StatusesStyles.CREATED_COLOR,
+                        StatusesStyles.MESSAGES_TEXTSIZE,
+                        StatusesStyles.FRIEND_TEXTSIZE,
+                        StatusesStyles.CREATED_TEXTSIZE,
+                        StatusesStyles.STATUS_BG,
+                        StatusesStyles.ICON,
+                        StatusesStyles.FRIEND_BG,
+                        StatusesStyles.IMAGE },
                 null,
                 null,
                 StatusesStyles.CREATED + " DESC");

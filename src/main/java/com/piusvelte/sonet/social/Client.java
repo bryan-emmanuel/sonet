@@ -52,7 +52,6 @@ import oauth.signpost.exception.OAuthNotAuthorizedException;
 
 import static com.piusvelte.sonet.Sonet.Simgur;
 import static com.piusvelte.sonet.Sonet.Slink;
-import static com.piusvelte.sonet.Sonet.getBlob;
 import static com.piusvelte.sonet.Sonet.getCropSize;
 import static com.piusvelte.sonet.Sonet.insertStatusImageBg;
 import static com.piusvelte.sonet.Sonet.sBFOptions;
@@ -527,11 +526,11 @@ abstract public class Client {
 
         if (url != null) {
             // get profile
-            profile = SonetHttpClient.httpBlobResponse(httpClient, new HttpGet(url));
+            profile = Sonet.getBlob(Sonet.getCircleCrop(SonetHttpClient.getHttpResponse(httpClient, new HttpGet(url))));
         }
 
         if (profile == null) {
-            profile = getBlob(getResources(), R.drawable.ic_contact_picture);
+            profile = Sonet.getBlob(Sonet.getCircleCrop(Sonet.getBitmap(getResources(), R.drawable.ic_contact_picture)));
         }
 
         String friend_override = getPostFriendOverride(friend);
@@ -614,12 +613,8 @@ abstract public class Client {
 
         boolean insertEmptyImage = true;
 
-        if (imageUrl != null) {
-            byte[] image = null;
-
-            if (url != null) {
-                image = SonetHttpClient.httpBlobResponse(httpClient, new HttpGet(imageUrl));
-            }
+        if (!TextUtils.isEmpty(imageUrl)) {
+            byte[] image = Sonet.getBlob(SonetHttpClient.getHttpResponse(httpClient, new HttpGet(imageUrl)));
 
             if (image != null) {
                 Bitmap imageBmp = BitmapFactory.decodeByteArray(image, 0, image.length, sBFOptions);

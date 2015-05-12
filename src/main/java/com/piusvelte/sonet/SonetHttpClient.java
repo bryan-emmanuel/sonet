@@ -21,8 +21,10 @@ package com.piusvelte.sonet;
 
 import android.content.Context;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import org.apache.http.HttpEntity;
@@ -49,8 +51,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.Locale;
-
-import static com.piusvelte.sonet.Sonet.getBlob;
 
 public class SonetHttpClient {
 
@@ -113,10 +113,12 @@ public class SonetHttpClient {
         return sHttpClient;
     }
 
-    public static byte[] httpBlobResponse(HttpClient httpClient, HttpUriRequest httpRequest) {
+    @Nullable
+    public static Bitmap getHttpResponse(HttpClient httpClient, HttpUriRequest httpRequest) {
         if (httpClient != null) {
             HttpResponse httpResponse;
             HttpEntity entity = null;
+
             try {
                 httpResponse = httpClient.execute(httpRequest);
                 StatusLine statusLine = httpResponse.getStatusLine();
@@ -127,12 +129,13 @@ public class SonetHttpClient {
                     case 201:
                     case 204:
                         if (entity != null) {
-                            return getBlob(new FlushedInputStream(entity.getContent()));
+                            return Sonet.getBitmap(new FlushedInputStream(entity.getContent()));
                         }
                         break;
                 }
             } catch (ClientProtocolException e) {
                 Log.e(TAG, e.toString());
+
                 try {
                     httpRequest.abort();
                 } catch (UnsupportedOperationException ignore) {
@@ -140,6 +143,7 @@ public class SonetHttpClient {
                 }
             } catch (IOException e) {
                 Log.e(TAG, e.toString());
+
                 try {
                     httpRequest.abort();
                 } catch (UnsupportedOperationException ignore) {
@@ -155,6 +159,7 @@ public class SonetHttpClient {
                 }
             }
         }
+
         return null;
     }
 
@@ -246,18 +251,23 @@ public class SonetHttpClient {
         @Override
         public long skip(long n) throws IOException {
             long totalBytesSkipped = 0L;
+
             while (totalBytesSkipped < n) {
                 long bytesSkipped = in.skip(n - totalBytesSkipped);
+
                 if (bytesSkipped == 0L) {
                     int nextByte = read();
+
                     if (nextByte < 0) {
                         break;  // we reached EOF
                     } else {
                         bytesSkipped = 1; // we read one byte
                     }
                 }
+
                 totalBytesSkipped += bytesSkipped;
             }
+
             return totalBytesSkipped;
         }
     }

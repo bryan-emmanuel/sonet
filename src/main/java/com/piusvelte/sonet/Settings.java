@@ -26,7 +26,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -36,13 +35,13 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.FrameLayout;
-import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.ads.AdRequest;
 import com.google.ads.AdSize;
 import com.google.ads.AdView;
-import com.piusvelte.sonet.fragment.BaseDialogFragment;
 import com.piusvelte.sonet.fragment.ButtonSettingsDialogFragment;
 import com.piusvelte.sonet.fragment.MessageSettingsDialogFragment;
 import com.piusvelte.sonet.fragment.NameSettingsDialogFragment;
@@ -93,7 +92,6 @@ public class Settings extends BaseActivity
     private int mCreated_textsize_value = Sonet.default_created_textsize;
     private int mStatuses_per_account_value = Sonet.default_statuses_per_account;
     private int mMargin_value = Sonet.default_margin;
-    private int mProfiles_bg_color_value = Sonet.default_message_bg_color;
     private int mFriend_bg_color_value = Sonet.default_friend_bg_color;
     private int mScrollable_version = 0;
     private boolean mHasButtons_value = Sonet.default_hasButtons;
@@ -112,10 +110,10 @@ public class Settings extends BaseActivity
     private CheckBox mChk_instantUpload;
     private Button mBtn_margin;
     private Button mBtn_buttons;
-    private Button mBtn_name;
-    private Button mBtn_time;
-    private ImageButton mBtn_profile;
-    private Button mBtn_message;
+    private TextView mBtn_name;
+    private TextView mBtn_time;
+    private ImageView mBtn_profile;
+    private TextView mBtn_message;
     private View mLoadingView;
 
     @Override
@@ -141,10 +139,10 @@ public class Settings extends BaseActivity
         mChk_instantUpload = (CheckBox) findViewById(R.id.instantupload);
         mBtn_margin = (Button) findViewById(R.id.margin);
         mBtn_buttons = (Button) findViewById(R.id.settings_buttons);
-        mBtn_name = (Button) findViewById(R.id.settings_name);
-        mBtn_time = (Button) findViewById(R.id.settings_time);
-        mBtn_profile = (ImageButton) findViewById(R.id.settings_profile);
-        mBtn_message = (Button) findViewById(R.id.settings_message);
+        mBtn_name = (TextView) findViewById(R.id.friend);
+        mBtn_time = (TextView) findViewById(R.id.created);
+        mBtn_profile = (ImageView) findViewById(R.id.profile);
+        mBtn_message = (TextView) findViewById(R.id.message);
         mLoadingView = findViewById(R.id.loading);
 
         Drawable wp = WallpaperManager.getInstance(getApplicationContext()).getDrawable();
@@ -195,7 +193,6 @@ public class Settings extends BaseActivity
                                 Widgets.DISPLAY_PROFILE,
                                 Widgets.INSTANT_UPLOAD,
                                 Widgets.MARGIN,
-                                Widgets.PROFILES_BG_COLOR,
                                 Widgets.FRIEND_BG_COLOR },
                         "(" + Widgets.WIDGET + "=? or " + Widgets.WIDGET + "=?) and " + Widgets.ACCOUNT + "=?",
                         new String[] { Integer.toString(mAppWidgetId), Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long
@@ -250,7 +247,6 @@ public class Settings extends BaseActivity
                         mDisplay_profile_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.DISPLAY_PROFILE)) == 1;
                         mInstantUpload_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.INSTANT_UPLOAD)) == 1;
                         mMargin_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.MARGIN));
-                        mProfiles_bg_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.PROFILES_BG_COLOR));
                         mFriend_bg_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.FRIEND_BG_COLOR));
 
                         mBtn_update.setOnClickListener(this);
@@ -288,7 +284,7 @@ public class Settings extends BaseActivity
                         mBtn_time.setTextSize(mCreated_textsize_value);
                         mBtn_time.setOnClickListener(this);
 
-                        mBtn_profile.setBackgroundColor(mProfiles_bg_color_value);
+                        mBtn_profile.setBackgroundColor(mFriend_bg_color_value);
                         mBtn_profile.setOnClickListener(this);
 
                         mBtn_message.setBackgroundColor(mMessages_bg_color_value);
@@ -361,7 +357,7 @@ public class Settings extends BaseActivity
         } else if (v == mBtn_profile) {
             // enabled
             // bg color
-            ProfileSettingsDialogFragment.newInstance(REQUEST_PROFILE_SETTINGS, mProfiles_bg_color_value, mDisplay_profile_value)
+            ProfileSettingsDialogFragment.newInstance(REQUEST_PROFILE_SETTINGS, mDisplay_profile_value)
                     .show(getSupportFragmentManager(), DIALOG_PROFILE_SETTINGS);
         } else if (v == mBtn_message) {
             // color
@@ -532,14 +528,6 @@ public class Settings extends BaseActivity
 
             case REQUEST_PROFILE_SETTINGS:
                 if (result == RESULT_OK) {
-                    int background = ProfileSettingsDialogFragment.getBackground(data, mProfiles_bg_color_value);
-
-                    if (background != mProfiles_bg_color_value) {
-                        mProfiles_bg_color_value = background;
-                        updateDatabase(Widgets.PROFILES_BG_COLOR, background);
-                        mBtn_profile.setBackgroundColor(mProfiles_bg_color_value);
-                    }
-
                     boolean profile = ProfileSettingsDialogFragment.hasProfile(data, mDisplay_profile_value);
 
                     if (profile != mDisplay_profile_value) {

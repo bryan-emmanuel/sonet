@@ -116,24 +116,18 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
                 R.layout.widget_item,
                 null,
                 new String[] { StatusesStyles.FRIEND,
-                        StatusesStyles.FRIEND + "2",
                         StatusesStyles.MESSAGE,
-                        StatusesStyles.MESSAGE + "2",
                         StatusesStyles.STATUS_BG,
                         StatusesStyles.CREATEDTEXT,
                         StatusesStyles.PROFILE,
                         StatusesStyles.ICON,
-                        StatusesStyles.PROFILE_BG,
                         StatusesStyles.FRIEND_BG },
-                new int[] { R.id.friend_bg_clear,
-                        R.id.friend,
-                        R.id.message_bg_clear,
+                new int[] { R.id.friend,
                         R.id.message,
                         R.id.status_bg,
                         R.id.created,
                         R.id.profile,
                         R.id.icon,
-                        R.id.profile_bg,
                         R.id.friend_bg },
                 0);
         mAdapter.setViewBinder(new AccountsViewBinder(getResources()));
@@ -241,18 +235,6 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
                                         + Accounts.SERVICE + "=" + Sonet.GOOGLEPLUS + " then 'Google+: ' when "
                                         + Accounts.SERVICE + "=" + Sonet.PINTEREST + " then 'Pinterest: ' else '' end) as " + StatusesStyles.FRIEND,
 
-                                "(case when " + Accounts.SERVICE + "=" + Sonet.TWITTER + " then 'Twitter: ' when "
-                                        + Accounts.SERVICE + "=" + Sonet.FACEBOOK + " then 'Facebook: ' when "
-                                        + Accounts.SERVICE + "=" + Sonet.MYSPACE + " then 'MySpace: ' when "
-                                        + Accounts.SERVICE + "=" + Sonet.LINKEDIN + " then 'LinkedIn: ' when "
-                                        + Accounts.SERVICE + "=" + Sonet.FOURSQUARE + " then 'Foursquare: ' when "
-                                        + Accounts.SERVICE + "=" + Sonet.CHATTER + " then 'Chatter: ' when "
-                                        + Accounts.SERVICE + "=" + Sonet.RSS + " then 'RSS: ' when "
-                                        + Accounts.SERVICE + "=" + Sonet.IDENTICA + " then 'Identi.ca: ' when "
-                                        + Accounts.SERVICE + "=" + Sonet.GOOGLEPLUS + " then 'Google+: ' when "
-                                        + Accounts.SERVICE + "=" + Sonet.PINTEREST + " then 'Pinterest: ' else '' end) as " + StatusesStyles.FRIEND
-                                        + "2",
-
                                 "(case when (select " + Widgets.DISPLAY_PROFILE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
                                         appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then " +
                                         "(select " + Widgets.DISPLAY_PROFILE + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
@@ -271,12 +253,6 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
                                         + " limit 1) is null then 'getActivity() account is disabled for getActivity() widget, select to enable' " +
                                         "else 'account is enabled for getActivity() widget, select to change settings' end) as " + StatusesStyles
                                         .MESSAGE,
-
-                                "(case when (select " + WidgetAccounts.WIDGET + " from " + TABLE_WIDGET_ACCOUNTS + " where " + WidgetAccounts
-                                        .WIDGET + "=" + appWidgetId + " and " + WidgetAccounts.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID
-                                        + " limit 1) is null then 'getActivity() account is disabled for getActivity() widget, select to enable' " +
-                                        "else 'account is enabled for getActivity() widget, select to change settings' end) as " + StatusesStyles
-                                        .MESSAGE + "2",
 
                                 Accounts.USERNAME + " as " + StatusesStyles.CREATEDTEXT,
 
@@ -373,19 +349,6 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
 
                                 Accounts.SERVICE + " as " + StatusesStyles.ICON,
 
-                                "(case when (select " + Widgets.PROFILES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
-                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then " +
-                                        "(select " + Widgets.PROFILES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
-                                        appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + " limit 1)"
-                                        + "when (select " + Widgets.PROFILES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "="
-                                        + appWidgetId + " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.PROFILES_BG_COLOR +
-                                        " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" + appWidgetId + " and " + Widgets.ACCOUNT +
-                                        "=-1 limit 1)"
-                                        + "when (select " + Widgets.PROFILES_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0" +
-                                        " and " + Widgets.ACCOUNT + "=-1) is not null then (select " + Widgets.PROFILES_BG_COLOR + " from " +
-                                        TABLE_WIDGETS + " where " + Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1 limit 1)"
-                                        + "else " + Sonet.default_message_bg_color + " end) as " + StatusesStyles.PROFILE_BG,
-
                                 "(case when (select " + Widgets.FRIEND_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
                                         appWidgetId + " and " + Widgets.ACCOUNT + "=" + TABLE_ACCOUNTS + "." + Accounts._ID + ") is not null then " +
                                         "(select " + Widgets.FRIEND_BG_COLOR + " from " + TABLE_WIDGETS + " where " + Widgets.WIDGET + "=" +
@@ -463,7 +426,7 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
             case REQUEST_ACCOUNT_OPTIONS:
-                if (requestCode == Activity.RESULT_OK) {
+                if (resultCode == Activity.RESULT_OK) {
                     long id = AccountOptionsDialogFragment.getAccountId(data, 0);
                     int which = ItemsDialogFragment.getWhich(data, 0);
 
@@ -518,6 +481,7 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
 
             default:
                 super.onActivityResult(requestCode, resultCode, data);
+                break;
         }
     }
 
@@ -554,20 +518,10 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
                 }
 
                 return true;
-            } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.FRIEND + "2")) {
-                ((TextView) view).setText(cursor.getString(columnIndex));
-                ((TextView) view).setTextSize(cursor.getLong(cursor.getColumnIndex(StatusesStyles.FRIEND_TEXTSIZE)));
-                ((TextView) view).setTextColor(cursor.getInt(cursor.getColumnIndex(StatusesStyles.FRIEND_COLOR)));
-                return true;
             } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.CREATEDTEXT)) {
                 ((TextView) view).setText(cursor.getString(columnIndex));
                 ((TextView) view).setTextSize(cursor.getLong(cursor.getColumnIndex(StatusesStyles.CREATED_TEXTSIZE)));
                 ((TextView) view).setTextColor(cursor.getInt(cursor.getColumnIndex(StatusesStyles.CREATED_COLOR)));
-                return true;
-            } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.MESSAGE + "2")) {
-                ((TextView) view).setText(cursor.getString(columnIndex));
-                ((TextView) view).setTextSize(cursor.getLong(cursor.getColumnIndex(StatusesStyles.MESSAGES_TEXTSIZE)));
-                ((TextView) view).setTextColor(cursor.getInt(cursor.getColumnIndex(StatusesStyles.MESSAGES_COLOR)));
                 return true;
             } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.ICON)) {
                 Bitmap bmp = BitmapFactory.decodeResource(mResources, Client.Network.get(cursor.getInt(columnIndex)).getIcon(), sBFOptions);
@@ -576,12 +530,6 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
                     ((ImageView) view).setImageBitmap(bmp);
                 }
 
-                return true;
-            } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.PROFILE_BG)) {
-                Bitmap bmp = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
-                Canvas canvas = new Canvas(bmp);
-                canvas.drawColor(cursor.getInt(columnIndex));
-                ((ImageView) view).setImageBitmap(bmp);
                 return true;
             } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.FRIEND_BG)) {
                 Bitmap bmp = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);

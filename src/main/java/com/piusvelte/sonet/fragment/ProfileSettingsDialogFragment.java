@@ -18,9 +18,9 @@ public class ProfileSettingsDialogFragment extends BaseColorSizeBackgroundSettin
 
     private static final String ARG_PROFILE = "profile";
 
-    public static MessageSettingsDialogFragment newInstance(int requestCode, int background, boolean profile) {
+    public static MessageSettingsDialogFragment newInstance(int requestCode, boolean profile) {
         MessageSettingsDialogFragment dialogFragment = new MessageSettingsDialogFragment();
-        dialogFragment.setArguments(requestCode, 0, 0, background);
+        dialogFragment.setArguments(requestCode, 0, 0, 0);
         dialogFragment.getArguments().putBoolean(ARG_PROFILE, profile);
         return dialogFragment;
     }

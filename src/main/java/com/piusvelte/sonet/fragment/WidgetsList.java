@@ -55,28 +55,20 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
                 R.layout.widget_item,
                 null,
                 new String[] { StatusesStyles.FRIEND,
-                        StatusesStyles.FRIEND + "2",
                         StatusesStyles.MESSAGE,
-                        StatusesStyles.MESSAGE + "2",
                         StatusesStyles.STATUS_BG,
                         StatusesStyles.CREATEDTEXT,
                         StatusesStyles.PROFILE,
                         StatusesStyles.ICON,
-                        StatusesStyles.PROFILE_BG,
                         StatusesStyles.FRIEND_BG,
-                        StatusesStyles.IMAGE_BG,
                         StatusesStyles.IMAGE },
-                new int[] { R.id.friend_bg_clear,
-                        R.id.friend,
-                        R.id.message_bg_clear,
+                new int[] { R.id.friend,
                         R.id.message,
                         R.id.status_bg,
                         R.id.created,
                         R.id.profile,
                         R.id.icon,
-                        R.id.profile_bg,
                         R.id.friend_bg,
-                        R.id.image_clear,
                         R.id.image },
                 0);
         mAdapter.setViewBinder(new WidgetsViewBinder());
@@ -100,10 +92,8 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
                         StatusesStyles.getContentUri(getActivity()),
                         new String[] { StatusesStyles._ID,
                                 StatusesStyles.FRIEND,
-                                StatusesStyles.FRIEND + " as " + StatusesStyles.FRIEND + "2",
                                 StatusesStyles.PROFILE,
                                 StatusesStyles.MESSAGE,
-                                StatusesStyles.MESSAGE + " as " + StatusesStyles.MESSAGE + "2",
                                 StatusesStyles.CREATEDTEXT,
                                 StatusesStyles.MESSAGES_COLOR,
                                 StatusesStyles.FRIEND_COLOR,
@@ -113,9 +103,7 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
                                 StatusesStyles.CREATED_TEXTSIZE,
                                 StatusesStyles.STATUS_BG,
                                 StatusesStyles.ICON,
-                                StatusesStyles.PROFILE_BG,
                                 StatusesStyles.FRIEND_BG,
-                                StatusesStyles.IMAGE_BG,
                                 StatusesStyles.IMAGE },
                         StatusesStyles.WIDGET + "=?",
                         new String[] { Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID) },
@@ -180,21 +168,13 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
 
         @Override
         public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
-            if (columnIndex == cursor.getColumnIndex(StatusesStyles.FRIEND)) {
-                ((TextView) view).setText(cursor.getString(columnIndex));
-                ((TextView) view).setTextSize(cursor.getLong(cursor.getColumnIndex(StatusesStyles.FRIEND_TEXTSIZE)));
-                return true;
-            } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.MESSAGE)) {
-                ((TextView) view).setText(cursor.getString(columnIndex));
-                ((TextView) view).setTextSize(cursor.getLong(cursor.getColumnIndex(StatusesStyles.MESSAGES_TEXTSIZE)));
-                return true;
-            } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.STATUS_BG)) {
+            if (columnIndex == cursor.getColumnIndex(StatusesStyles.STATUS_BG)) {
                 setImageBitmap(view, cursor.getBlob(columnIndex));
                 return true;
             } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.PROFILE)) {
                 setImageBitmap(view, cursor.getBlob(columnIndex));
                 return true;
-            } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.FRIEND + "2")) {
+            } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.FRIEND)) {
                 ((TextView) view).setText(cursor.getString(columnIndex));
                 ((TextView) view).setTextSize(cursor.getLong(cursor.getColumnIndex(StatusesStyles.FRIEND_TEXTSIZE)));
                 ((TextView) view).setTextColor(cursor.getInt(cursor.getColumnIndex(StatusesStyles.FRIEND_COLOR)));
@@ -204,7 +184,7 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
                 ((TextView) view).setTextSize(cursor.getLong(cursor.getColumnIndex(StatusesStyles.CREATED_TEXTSIZE)));
                 ((TextView) view).setTextColor(cursor.getInt(cursor.getColumnIndex(StatusesStyles.CREATED_COLOR)));
                 return true;
-            } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.MESSAGE + "2")) {
+            } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.MESSAGE)) {
                 ((TextView) view).setText(cursor.getString(columnIndex));
                 ((TextView) view).setTextSize(cursor.getLong(cursor.getColumnIndex(StatusesStyles.MESSAGES_TEXTSIZE)));
                 ((TextView) view).setTextColor(cursor.getInt(cursor.getColumnIndex(StatusesStyles.MESSAGES_COLOR)));
@@ -212,13 +192,7 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
             } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.ICON)) {
                 setImageBitmap(view, cursor.getBlob(columnIndex));
                 return true;
-            } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.PROFILE_BG)) {
-                setImageBitmap(view, cursor.getBlob(columnIndex));
-                return true;
             } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.FRIEND_BG)) {
-                setImageBitmap(view, cursor.getBlob(columnIndex));
-                return true;
-            } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.IMAGE_BG)) {
                 setImageBitmap(view, cursor.getBlob(columnIndex));
                 return true;
             } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.IMAGE)) {

@@ -46,6 +46,7 @@ public final class StatusesStyles implements BaseColumns {
     public static final String ESID = "esid";
     public static final String PROFILE_BG = "profiles_bg_color";
     public static final String FRIEND_BG = "friend_bg";
+    @Deprecated
     public static final String IMAGE_BG = "image_bg";
     public static final String IMAGE = "image";
 }

@@ -198,7 +198,6 @@ public class SonetProvider extends ContentProvider {
         statusesProjectionMap.put(Statuses.ICON, Statuses.ICON);
         statusesProjectionMap.put(Statuses.SID, Statuses.SID);
         statusesProjectionMap.put(Statuses.ENTITY, Statuses.ENTITY);
-        statusesProjectionMap.put(Statuses.PROFILE_BG, Statuses.PROFILE_BG);
         statusesProjectionMap.put(Statuses.FRIEND_BG, Statuses.FRIEND_BG);
 
         sUriMatcher.addURI(AUTHORITY, VIEW_STATUSES_STYLES, STATUSES_STYLES);
@@ -229,7 +228,6 @@ public class SonetProvider extends ContentProvider {
         statuses_stylesProjectionMap.put(StatusesStyles.ESID, StatusesStyles.ESID);
         statuses_stylesProjectionMap.put(StatusesStyles.PROFILE_BG, StatusesStyles.PROFILE_BG);
         statuses_stylesProjectionMap.put(StatusesStyles.FRIEND_BG, StatusesStyles.FRIEND_BG);
-        statuses_stylesProjectionMap.put(StatusesStyles.IMAGE_BG, StatusesStyles.IMAGE_BG);
         statuses_stylesProjectionMap.put(StatusesStyles.IMAGE, StatusesStyles.IMAGE);
 
         sUriMatcher.addURI(AUTHORITY, TABLE_ENTITIES, ENTITIES);
@@ -281,7 +279,7 @@ public class SonetProvider extends ContentProvider {
 
     public enum StatusesStylesColumns {
         _id, friend, profile, message, createdtext, messages_color, friend_color, created_color, messages_textsize, friend_textsize,
-        created_textsize, status_bg, icon, profile_bg, friend_bg, image_bg, image
+        created_textsize, status_bg, icon, friend_bg, image_bg, image
     }
 
     public enum StatusesStylesColumnsNoProfile {
@@ -2174,5 +2172,7 @@ public class SonetProvider extends ContentProvider {
             sqlite_master.close();
             return success;
         }
+
+        // TODO remove IMAGE_BG
     }
 }

@@ -47,6 +47,7 @@ public class Widgets implements BaseColumns {
     public static final String DISPLAY_PROFILE = "display_profile";
     public static final String INSTANT_UPLOAD = "instant_upload";
     public static final String MARGIN = "margin";
+    @Deprecated
     public static final String PROFILES_BG_COLOR = "profiles_bg_color";
     public static final String FRIEND_BG_COLOR = "friend_bg_color";
 }
