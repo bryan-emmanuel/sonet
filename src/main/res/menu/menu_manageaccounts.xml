@@ -21,13 +21,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/default_widget_settings"
-        android:icon="@drawable/ic_menu_manage"
+        android:icon="@drawable/ic_settings_applications_white_24dp"
         android:orderInCategory="0"
         android:title="@string/defaultwidgetsettings"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/button_add_account"
-        android:icon="@drawable/ic_menu_add"
+        android:icon="@drawable/ic_add_white_24dp"
         android:orderInCategory="1"
         android:title="@string/button_add_account"
         app:showAsAction="ifRoom" />

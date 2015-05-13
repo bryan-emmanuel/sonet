@@ -24,6 +24,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -46,6 +47,7 @@ public class SonetComments extends AppCompatActivity {
         // allow selecting which accounts to use
         // get existing comments, allow liking|unliking those comments
         setContentView(R.layout.comments);
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
 
         if (!getPackageName().toLowerCase().contains(PRO)) {
             AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);

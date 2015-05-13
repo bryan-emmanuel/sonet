@@ -29,6 +29,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -68,6 +69,7 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.about);
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
 
         if (!getPackageName().toLowerCase().contains(PRO)) {
             AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);

@@ -21,43 +21,43 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/menu_about_refresh"
-        android:icon="@drawable/ic_menu_rotate"
+        android:icon="@drawable/ic_refresh_white_24dp"
         android:orderInCategory="0"
         android:title="@string/button_refresh"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/menu_about_accounts_and_settings"
-        android:icon="@drawable/ic_menu_manage"
+        android:icon="@drawable/ic_settings_applications_white_24dp"
         android:orderInCategory="0"
         android:title="@string/accounts_and_settings"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/menu_about_refresh_widgets"
-        android:icon="@drawable/ic_menu_rotate"
+        android:icon="@drawable/ic_refresh_white_24dp"
         android:orderInCategory="0"
         android:title="@string/refreshallwidgets"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/menu_about_default_settings"
-        android:icon="@drawable/ic_menu_preferences"
+        android:icon="@drawable/ic_settings_applications_white_24dp"
         android:orderInCategory="0"
         android:title="@string/defaultsettings"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/menu_about_notifications"
-        android:icon="@drawable/ic_menu_more"
+        android:icon="@drawable/ic_unfold_more_white_24dp"
         android:orderInCategory="0"
         android:title="@string/notifications"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/menu_about_widget_settings"
-        android:icon="@drawable/ic_menu_preferences"
+        android:icon="@drawable/ic_settings_applications_white_24dp"
         android:orderInCategory="0"
         android:title="@string/widget_settings"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/menu_about_about"
-        android:icon="@drawable/ic_menu_more"
+        android:icon="@drawable/ic_unfold_more_white_24dp"
         android:orderInCategory="0"
         android:title="@string/about_title"
         app:showAsAction="ifRoom" />

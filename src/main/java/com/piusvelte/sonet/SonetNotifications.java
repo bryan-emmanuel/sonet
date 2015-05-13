@@ -24,6 +24,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.widget.FrameLayout;
 
 import com.google.ads.AdRequest;
@@ -47,6 +48,7 @@ public class SonetNotifications extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.notifications);
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
 
         if (!getPackageName().toLowerCase().contains(PRO)) {
             AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);

@@ -29,6 +29,7 @@ import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -103,6 +104,7 @@ public class AccountSettings extends BaseActivity
         super.onCreate(savedInstanceState);
         setResult(RESULT_CANCELED);
         setContentView(R.layout.account_preferences);
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
 
         if (!getPackageName().toLowerCase().contains(PRO)) {
             AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);

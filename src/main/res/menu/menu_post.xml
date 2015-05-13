@@ -21,25 +21,25 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/menu_post_accounts"
-        android:icon="@drawable/ic_menu_add"
+        android:icon="@drawable/ic_add_white_24dp"
         android:orderInCategory="0"
         android:title="@string/accounts"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/menu_post_photo"
-        android:icon="@drawable/ic_menu_camera"
+        android:icon="@drawable/ic_camera_white_24dp"
         android:orderInCategory="1"
         android:title="@string/add_photo"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/menu_post_location"
-        android:icon="@drawable/ic_menu_mylocation"
+        android:icon="@drawable/ic_my_location_white_24dp"
         android:orderInCategory="2"
         android:title="@string/add_location"
         app:showAsAction="ifRoom" />
     <!--     <item android:id="@+id/menu_post_tags" -->
     <!--         android:title="@string/add_tags" -->
-    <!--         android:icon="@drawable/ic_menu_invite" -->
+    <!--         android:icon="@drawable/ic_person_add_white_24dp" -->
     <!--         android:orderInCategory="3" -->
     <!--         android:showAsAction="ifRoom|withText" /> -->
 </menu>

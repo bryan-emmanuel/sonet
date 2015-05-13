@@ -35,6 +35,7 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -129,6 +130,7 @@ public class SonetCreatePost extends BaseActivity
         // allow selecting which accounts to use
         // get existing comments, allow liking|unliking those comments
         setContentView(R.layout.post);
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
 
         if (!getPackageName().toLowerCase().contains(PRO)) {
             AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);

@@ -19,13 +19,12 @@
  */
 package com.piusvelte.sonet;
 
-import android.app.WallpaperManager;
 import android.appwidget.AppWidgetManager;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.widget.FrameLayout;
 
 import com.google.ads.AdRequest;
@@ -44,8 +43,8 @@ public class ManageAccounts extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.accounts_container);
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
 
         if (!getPackageName().toLowerCase().contains(PRO)) {
             AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);
@@ -72,12 +71,6 @@ public class ManageAccounts extends AppCompatActivity {
         Intent resultValue = new Intent();
         resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
         setResult(RESULT_OK, resultValue);
-
-        Drawable wp = WallpaperManager.getInstance(getApplicationContext()).getDrawable();
-
-        if (wp != null) {
-            findViewById(R.id.ad).getRootView().setBackgroundDrawable(wp);
-        }
 
         Fragment fragment = getSupportFragmentManager().findFragmentByTag(FRAGMENT_ACCOUNTS_LIST);
 

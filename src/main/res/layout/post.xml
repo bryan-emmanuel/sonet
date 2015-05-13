@@ -22,6 +22,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <include
+        android:id="@+id/toolbar"
+        layout="@layout/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
     <FrameLayout
         android:id="@+id/ad"
         android:layout_width="match_parent"
@@ -41,7 +47,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
             android:scaleType="fitXY"
-            android:src="@drawable/ic_menu_send" />
+            android:src="@drawable/ic_send_white_24dp" />
 
         <Button
             android:id="@+id/count"
@@ -58,6 +64,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/buttons"
+        android:layout_below="@+id/toolbar"
         android:gravity="top"
         android:hint="message" />
 
