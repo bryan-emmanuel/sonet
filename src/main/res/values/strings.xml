@@ -156,4 +156,6 @@
 	<string name="add_location">Add Location</string>
 	<string name="key_version">version</string>
     <string name="notify_multiple_updates">Multiple updates</string>
+	<string name="drawer_open">Drawer Open</string>
+	<string name="drawer_closed">Drawer Closed</string>
 </resources>
