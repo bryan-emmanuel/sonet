@@ -80,7 +80,6 @@ public class AccountSettings extends BaseActivity
     private int mCreated_color_value = Sonet.default_created_color;
     private int mCreated_textsize_value = Sonet.default_created_textsize;
     private int mStatuses_per_account_value = Sonet.default_statuses_per_account;
-    private int mFriend_bg_color_value = Sonet.default_friend_bg_color;
     private int mScrollable_version = 0;
     private boolean mTime24hr_value = Sonet.default_time24hr;
     private boolean mIcon_value = Sonet.default_hasIcon;
@@ -172,7 +171,7 @@ public class AccountSettings extends BaseActivity
             // bg color
             // color
             // textsize
-            NameSettingsDialogFragment.newInstance(REQUEST_NAME_SETTINGS, mFriend_color_value, mFriend_textsize_value, mFriend_bg_color_value)
+            NameSettingsDialogFragment.newInstance(REQUEST_NAME_SETTINGS, mFriend_color_value, mFriend_textsize_value)
                     .show(getSupportFragmentManager(), DIALOG_NAME_SETTINGS);
         } else if (v == mBtn_time) {
             // color
@@ -217,8 +216,7 @@ public class AccountSettings extends BaseActivity
                                 Widgets.SCROLLABLE,
                                 Widgets.SOUND,
                                 Widgets.VIBRATE,
-                                Widgets.LIGHTS,
-                                Widgets.FRIEND_BG_COLOR },
+                                Widgets.LIGHTS },
                         "(" + Widgets.WIDGET + "=? or " + Widgets.WIDGET + "=?) and (" + Widgets.ACCOUNT + "=? or " + Widgets.ACCOUNT + "=?)",
                         new String[] { Integer.toString(mAppWidgetId), Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long
                                 .toString(mAccountId), Long.toString(Sonet.INVALID_ACCOUNT_ID) },
@@ -268,23 +266,19 @@ public class AccountSettings extends BaseActivity
                         mSound_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.SOUND)) == 1;
                         mVibrate_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.VIBRATE)) == 1;
                         mLights_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.LIGHTS)) == 1;
-                        mFriend_bg_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.FRIEND_BG_COLOR));
 
                         mStatuses_per_account.setOnClickListener(this);
 
                         mBtn_notification.setOnClickListener(this);
 
-                        mBtn_name.setBackgroundColor(mFriend_bg_color_value);
                         mBtn_name.setTextColor(mFriend_color_value);
                         mBtn_name.setTextSize(mFriend_textsize_value);
                         mBtn_name.setOnClickListener(this);
 
-                        mBtn_time.setBackgroundColor(mFriend_bg_color_value);
                         mBtn_time.setTextColor(mCreated_color_value);
                         mBtn_time.setTextSize(mCreated_textsize_value);
                         mBtn_time.setOnClickListener(this);
 
-                        mBtn_profile.setBackgroundColor(mFriend_bg_color_value);
                         mBtn_profile.setOnClickListener(this);
 
                         mBtn_message.setBackgroundColor(mMessages_bg_color_value);
@@ -362,15 +356,6 @@ public class AccountSettings extends BaseActivity
                         mFriend_textsize_value = value;
                         updateDatabase(Widgets.FRIEND_TEXTSIZE, mFriend_textsize_value);
                         mBtn_name.setTextSize(mFriend_textsize_value);
-                    }
-
-                    value = NameSettingsDialogFragment.getBackground(data, mFriend_bg_color_value);
-
-                    if (value != mFriend_bg_color_value) {
-                        mFriend_bg_color_value = value;
-                        updateDatabase(Widgets.FRIEND_BG_COLOR, value);
-                        mBtn_name.setBackgroundColor(mFriend_bg_color_value);
-                        mBtn_time.setBackgroundColor(mFriend_bg_color_value);
                     }
                 }
                 break;

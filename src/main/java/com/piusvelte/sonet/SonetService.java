@@ -304,7 +304,6 @@ public class SonetService extends Service {
                                     // get settings
                                     boolean time24hr = true;
                                     int status_bg_color = Sonet.default_message_bg_color;
-                                    int friend_bg_color = Sonet.default_friend_bg_color;
                                     boolean icon = true;
                                     int status_count = Sonet.default_statuses_per_account;
                                     int notifications = 0;
@@ -315,9 +314,7 @@ public class SonetService extends Service {
                                                     Widgets.STATUSES_PER_ACCOUNT,
                                                     Widgets.SOUND,
                                                     Widgets.VIBRATE,
-                                                    Widgets.LIGHTS,
-                                                    Widgets.PROFILES_BG_COLOR,
-                                                    Widgets.FRIEND_BG_COLOR },
+                                                    Widgets.LIGHTS },
                                             Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
                                             new String[] { Integer.toString(widget),
                                                     Long.toString(accountId) },
@@ -332,9 +329,7 @@ public class SonetService extends Service {
                                                         Widgets.STATUSES_PER_ACCOUNT,
                                                         Widgets.SOUND,
                                                         Widgets.VIBRATE,
-                                                        Widgets.LIGHTS,
-                                                        Widgets.PROFILES_BG_COLOR,
-                                                        Widgets.FRIEND_BG_COLOR },
+                                                        Widgets.LIGHTS },
                                                 Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
                                                 new String[] { Integer.toString(widget),
                                                         Long.toString(Sonet.INVALID_ACCOUNT_ID) },
@@ -349,9 +344,7 @@ public class SonetService extends Service {
                                                             Widgets.STATUSES_PER_ACCOUNT,
                                                             Widgets.SOUND,
                                                             Widgets.VIBRATE,
-                                                            Widgets.LIGHTS,
-                                                            Widgets.PROFILES_BG_COLOR,
-                                                            Widgets.FRIEND_BG_COLOR },
+                                                            Widgets.LIGHTS },
                                                     Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
                                                     new String[] { Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID),
                                                             Long.toString(Sonet.INVALID_ACCOUNT_ID) },
@@ -387,8 +380,6 @@ public class SonetService extends Service {
                                         if (c.getInt(6) == 1) {
                                             notifications |= Notification.DEFAULT_LIGHTS;
                                         }
-
-                                        friend_bg_color = c.getInt(8);
                                     }
 
                                     c.close();
@@ -396,8 +387,6 @@ public class SonetService extends Service {
                                     // update the bg and icon
                                     // create the status_bg
                                     values.put(Statuses.STATUS_BG, createBackground(status_bg_color));
-                                    // friend_bg
-                                    values.put(Statuses.FRIEND_BG, createBackground(friend_bg_color));
                                     values.put(Statuses.ICON,
                                             icon ? Sonet.getBlob(Sonet.getBitmap(getResources(), Client.Network.Sms.getIcon())) : null);
                                     // insert the message
@@ -676,14 +665,10 @@ public class SonetService extends Service {
                     long account = accounts.getLong(0);
                     int service = accounts.getInt(3);
                     int status_bg_color = Sonet.default_message_bg_color;
-                    int profile_bg_color = Sonet.default_message_bg_color;
-                    int friend_bg_color = Sonet.default_friend_bg_color;
                     boolean icon = true;
                     Cursor c = getContentResolver().query(WidgetsSettings.getContentUri(SonetService.this),
                             new String[] { Widgets.MESSAGES_BG_COLOR,
-                                    Widgets.ICON,
-                                    Widgets.PROFILES_BG_COLOR,
-                                    Widgets.FRIEND_BG_COLOR },
+                                    Widgets.ICON },
                             Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
                             new String[] { widget,
                                     Long.toString(account) },
@@ -694,9 +679,7 @@ public class SonetService extends Service {
                         c.close();
                         c = getContentResolver().query(WidgetsSettings.getContentUri(SonetService.this),
                                 new String[] { Widgets.MESSAGES_BG_COLOR,
-                                        Widgets.ICON,
-                                        Widgets.PROFILES_BG_COLOR,
-                                        Widgets.FRIEND_BG_COLOR },
+                                        Widgets.ICON },
                                 Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
                                 new String[] { widget,
                                         Long.toString(Sonet.INVALID_ACCOUNT_ID) },
@@ -731,8 +714,6 @@ public class SonetService extends Service {
                     if (c.moveToFirst()) {
                         status_bg_color = c.getInt(0);
                         icon = c.getInt(1) == 1;
-                        profile_bg_color = c.getInt(2);
-                        friend_bg_color = c.getInt(3);
                     }
 
                     c.close();
@@ -740,8 +721,6 @@ public class SonetService extends Service {
                     // create the status_bg
                     ContentValues values = new ContentValues();
                     values.put(Statuses.STATUS_BG, createBackground(status_bg_color));
-                    // friend_bg
-                    values.put(Statuses.FRIEND_BG, createBackground(friend_bg_color));
                     // icon
                     values.put(Statuses.ICON, icon ? Sonet.getBlob(Sonet.getBitmap(getResources(), Client.Network.get(service).getIcon())) : null);
                     getContentResolver().update(Statuses.getContentUri(SonetService.this),
@@ -783,8 +762,6 @@ public class SonetService extends Service {
                         // get the settings form time24hr and bg_color
                         boolean time24hr = false;
                         int status_bg_color = Sonet.default_message_bg_color;
-                        int profile_bg_color = Sonet.default_message_bg_color;
-                        int friend_bg_color = Sonet.default_friend_bg_color;
                         boolean icon = true;
                         int status_count = Sonet.default_statuses_per_account;
                         Cursor c = getContentResolver().query(WidgetsSettings.getContentUri(SonetService.this),
@@ -794,9 +771,7 @@ public class SonetService extends Service {
                                         Widgets.STATUSES_PER_ACCOUNT,
                                         Widgets.SOUND,
                                         Widgets.VIBRATE,
-                                        Widgets.LIGHTS,
-                                        Widgets.PROFILES_BG_COLOR,
-                                        Widgets.FRIEND_BG_COLOR },
+                                        Widgets.LIGHTS },
                                 Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
                                 new String[] { widget,
                                         Long.toString(account) },
@@ -812,9 +787,7 @@ public class SonetService extends Service {
                                             Widgets.STATUSES_PER_ACCOUNT,
                                             Widgets.SOUND,
                                             Widgets.VIBRATE,
-                                            Widgets.LIGHTS,
-                                            Widgets.PROFILES_BG_COLOR,
-                                            Widgets.FRIEND_BG_COLOR },
+                                            Widgets.LIGHTS },
                                     Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
                                     new String[] { widget,
                                             Long.toString(Sonet.INVALID_ACCOUNT_ID) },
@@ -830,9 +803,7 @@ public class SonetService extends Service {
                                                 Widgets.STATUSES_PER_ACCOUNT,
                                                 Widgets.SOUND,
                                                 Widgets.VIBRATE,
-                                                Widgets.LIGHTS,
-                                                Widgets.PROFILES_BG_COLOR,
-                                                Widgets.FRIEND_BG_COLOR },
+                                                Widgets.LIGHTS },
                                         Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
                                         new String[] { Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID),
                                                 Long.toString(Sonet.INVALID_ACCOUNT_ID) },
@@ -867,9 +838,6 @@ public class SonetService extends Service {
                             if (c.getInt(6) == 1) {
                                 notifications |= Notification.DEFAULT_LIGHTS;
                             }
-
-                            profile_bg_color = c.getInt(7);
-                            friend_bg_color = c.getInt(8);
                         }
 
                         c.close();
@@ -917,8 +885,6 @@ public class SonetService extends Service {
                         // create the status_bg
                         ContentValues values = new ContentValues();
                         values.put(Statuses.STATUS_BG, createBackground(status_bg_color));
-                        // friend_bg
-                        values.put(Statuses.FRIEND_BG, createBackground(friend_bg_color));
                         // icon
                         values.put(Statuses.ICON,
                                 icon ? Sonet.getBlob(Sonet.getBitmap(getResources(), Client.Network.get(service).getIcon())) : null);
@@ -1009,29 +975,40 @@ public class SonetService extends Service {
 
         private void addStatusItem(String widget, String message, int appWidgetId) {
             int status_bg_color = Sonet.default_message_bg_color;
-            int profile_bg_color = Sonet.default_message_bg_color;
-            int friend_bg_color = Sonet.default_friend_bg_color;
             boolean icon = true;
             Cursor c = getContentResolver().query(WidgetsSettings.getContentUri(SonetService.this),
-                    new String[] { Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND, Widgets
-                            .VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR },
-                    Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?", new String[] { widget, Long.toString(Sonet.INVALID_ACCOUNT_ID) }, null);
+                    new String[] { Widgets.TIME24HR,
+                            Widgets.MESSAGES_BG_COLOR,
+                            Widgets.ICON,
+                            Widgets.STATUSES_PER_ACCOUNT,
+                            Widgets.SOUND,
+                            Widgets.VIBRATE,
+                            Widgets.LIGHTS },
+                    Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
+                    new String[] { widget,
+                            Long.toString(Sonet.INVALID_ACCOUNT_ID) },
+                    null);
 
             if (!c.moveToFirst()) {
                 // no widget settings
                 c.close();
                 c = getContentResolver().query(WidgetsSettings.getContentUri(SonetService.this),
-                        new String[] { Widgets.TIME24HR, Widgets.MESSAGES_BG_COLOR, Widgets.ICON, Widgets.STATUSES_PER_ACCOUNT, Widgets.SOUND,
-                                Widgets.VIBRATE, Widgets.LIGHTS, Widgets.PROFILES_BG_COLOR, Widgets.FRIEND_BG_COLOR },
+                        new String[] { Widgets.TIME24HR,
+                                Widgets.MESSAGES_BG_COLOR,
+                                Widgets.ICON,
+                                Widgets.STATUSES_PER_ACCOUNT,
+                                Widgets.SOUND,
+                                Widgets.VIBRATE,
+                                Widgets.LIGHTS },
                         Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
-                        new String[] { Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID) }, null);
+                        new String[] { Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID),
+                                Long.toString(Sonet.INVALID_ACCOUNT_ID) },
+                        null);
             }
 
             if (c.moveToFirst()) {
                 status_bg_color = c.getInt(1);
                 icon = c.getInt(2) == 1;
-                profile_bg_color = c.getInt(7);
-                friend_bg_color = c.getInt(8);
             }
 
             c.close();
@@ -1070,7 +1047,6 @@ public class SonetService extends Service {
             values.put(Statuses.SID, sid);
             values.put(Statuses.FRIEND_OVERRIDE, friend);
             values.put(Statuses.STATUS_BG, createBackground(status_bg_color));
-            values.put(Statuses.FRIEND_BG, createBackground(friend_bg_color));
             Bitmap emptyBmp = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
             ByteArrayOutputStream imageBgStream = new ByteArrayOutputStream();
             emptyBmp.compress(Bitmap.CompressFormat.PNG, 100, imageBgStream);

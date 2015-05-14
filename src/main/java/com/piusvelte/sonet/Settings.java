@@ -93,7 +93,6 @@ public class Settings extends BaseActivity
     private int mCreated_textsize_value = Sonet.default_created_textsize;
     private int mStatuses_per_account_value = Sonet.default_statuses_per_account;
     private int mMargin_value = Sonet.default_margin;
-    private int mFriend_bg_color_value = Sonet.default_friend_bg_color;
     private int mScrollable_version = 0;
     private boolean mHasButtons_value = Sonet.default_hasButtons;
     private boolean mTime24hr_value = Sonet.default_time24hr;
@@ -194,8 +193,7 @@ public class Settings extends BaseActivity
                                 Widgets.LIGHTS,
                                 Widgets.DISPLAY_PROFILE,
                                 Widgets.INSTANT_UPLOAD,
-                                Widgets.MARGIN,
-                                Widgets.FRIEND_BG_COLOR },
+                                Widgets.MARGIN },
                         "(" + Widgets.WIDGET + "=? or " + Widgets.WIDGET + "=?) and " + Widgets.ACCOUNT + "=?",
                         new String[] { Integer.toString(mAppWidgetId), Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long
                                 .toString(Sonet.INVALID_ACCOUNT_ID) },
@@ -249,7 +247,6 @@ public class Settings extends BaseActivity
                         mDisplay_profile_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.DISPLAY_PROFILE)) == 1;
                         mInstantUpload_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.INSTANT_UPLOAD)) == 1;
                         mMargin_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.MARGIN));
-                        mFriend_bg_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.FRIEND_BG_COLOR));
 
                         mBtn_update.setOnClickListener(this);
                         mBtn_notification.setOnClickListener(this);
@@ -276,17 +273,14 @@ public class Settings extends BaseActivity
                         mBtn_buttons.setTextSize(mButtons_textsize_value);
                         mBtn_buttons.setOnClickListener(this);
 
-                        mBtn_name.setBackgroundColor(mFriend_bg_color_value);
                         mBtn_name.setTextColor(mFriend_color_value);
                         mBtn_name.setTextSize(mFriend_textsize_value);
                         mBtn_name.setOnClickListener(this);
 
-                        mBtn_time.setBackgroundColor(mFriend_bg_color_value);
                         mBtn_time.setTextColor(mCreated_color_value);
                         mBtn_time.setTextSize(mCreated_textsize_value);
                         mBtn_time.setOnClickListener(this);
 
-                        mBtn_profile.setBackgroundColor(mFriend_bg_color_value);
                         mBtn_profile.setOnClickListener(this);
 
                         mBtn_message.setBackgroundColor(mMessages_bg_color_value);
@@ -349,7 +343,7 @@ public class Settings extends BaseActivity
             // bg color
             // color
             // textsize
-            NameSettingsDialogFragment.newInstance(REQUEST_NAME_SETTINGS, mFriend_color_value, mFriend_textsize_value, mFriend_bg_color_value)
+            NameSettingsDialogFragment.newInstance(REQUEST_NAME_SETTINGS, mFriend_color_value, mFriend_textsize_value)
                     .show(getSupportFragmentManager(), DIALOG_NAME_SETTINGS);
         } else if (v == mBtn_time) {
             // color
@@ -488,15 +482,6 @@ public class Settings extends BaseActivity
                         mFriend_textsize_value = value;
                         updateDatabase(Widgets.FRIEND_TEXTSIZE, mFriend_textsize_value);
                         mBtn_name.setTextSize(mFriend_textsize_value);
-                    }
-
-                    value = NameSettingsDialogFragment.getBackground(data, mFriend_bg_color_value);
-
-                    if (value != mFriend_bg_color_value) {
-                        mFriend_bg_color_value = value;
-                        updateDatabase(Widgets.FRIEND_BG_COLOR, value);
-                        mBtn_name.setBackgroundColor(mFriend_bg_color_value);
-                        mBtn_time.setBackgroundColor(mFriend_bg_color_value);
                     }
                 }
                 break;

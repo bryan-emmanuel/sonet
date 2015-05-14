@@ -211,6 +211,7 @@ public class Sonet {
     protected static final int default_statuses_per_account = 10;
     protected static final boolean default_include_profile = true;
     protected static final int default_margin = 0;
+    @Deprecated
     public static final int default_friend_bg_color = 0x88000000;
     protected static final boolean default_hasButtons = false;
     protected static final boolean default_time24hr = false;
