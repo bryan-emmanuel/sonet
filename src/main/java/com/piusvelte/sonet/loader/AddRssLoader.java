@@ -51,7 +51,7 @@ public class AddRssLoader extends BaseAsyncTaskLoader {
 
     @Override
     public Object loadInBackground() {
-        String httpResponse = SonetHttpClient.httpResponse(mContext, new HttpGet(mUrl));
+        String httpResponse = SonetHttpClient.httpResponse(mUrl);
 
         if (!TextUtils.isEmpty(httpResponse)) {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();

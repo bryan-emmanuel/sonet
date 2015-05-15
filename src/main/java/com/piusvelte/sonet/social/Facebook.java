@@ -21,19 +21,15 @@ import com.piusvelte.sonet.provider.Entities;
 import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.Statuses;
 import com.piusvelte.sonet.provider.Widgets;
+import com.squareup.okhttp.FormEncodingBuilder;
+import com.squareup.okhttp.Request;
 
-import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -91,8 +87,7 @@ public class Facebook extends Client {
     @Nullable
     @Override
     public String getProfileUrl(@NonNull String esid) {
-        String response = SonetHttpClient
-                .httpResponse(mContext, new HttpGet(String.format(FACEBOOK_USER, FACEBOOK_BASE_URL, esid, Saccess_token, mToken)));
+        String response = SonetHttpClient.httpResponse(String.format(FACEBOOK_USER, FACEBOOK_BASE_URL, esid, Saccess_token, mToken));
 
         if (!TextUtils.isEmpty(response)) {
             try {
@@ -151,8 +146,7 @@ public class Facebook extends Client {
                 expiry = (int) System.currentTimeMillis() + Integer.parseInt(expiryValue) * 1000;
             }
 
-            String httpResponse = SonetHttpClient
-                    .httpResponse(mContext, new HttpGet(String.format(FACEBOOK_URL_ME, FACEBOOK_BASE_URL, Saccess_token, token)));
+            String httpResponse = SonetHttpClient.httpResponse(String.format(FACEBOOK_URL_ME, FACEBOOK_BASE_URL, Saccess_token, token));
 
             if (!TextUtils.isEmpty(httpResponse)) {
                 try {
@@ -238,8 +232,7 @@ public class Facebook extends Client {
                 notificationSids.add(sid);
 
                 // get comments for current notifications
-                String response = SonetHttpClient
-                        .httpResponse(mContext, new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, sid, Saccess_token, mToken)));
+                String response = SonetHttpClient.httpResponse(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, sid, Saccess_token, mToken));
 
                 if (!TextUtils.isEmpty(response)) {
                     JSONArray commentsArray;
@@ -287,7 +280,7 @@ public class Facebook extends Client {
     @Nullable
     @Override
     public String getFeedResponse(int status_count) {
-        return SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FACEBOOK_HOME, FACEBOOK_BASE_URL, Saccess_token, mToken)));
+        return SonetHttpClient.httpResponse(String.format(FACEBOOK_HOME, FACEBOOK_BASE_URL, Saccess_token, mToken));
     }
 
     @Nullable
@@ -447,8 +440,7 @@ public class Facebook extends Client {
 
         if (!notificationSids.isEmpty()) {
             // check the latest feed
-            String response = SonetHttpClient
-                    .httpResponse(mContext, new HttpGet(String.format(FACEBOOK_HOME, FACEBOOK_BASE_URL, Saccess_token, mToken)));
+            String response = SonetHttpClient.httpResponse(String.format(FACEBOOK_HOME, FACEBOOK_BASE_URL, Saccess_token, mToken));
 
             if (!TextUtils.isEmpty(response)) {
                 try {
@@ -594,22 +586,20 @@ public class Facebook extends Client {
             return true;
         } else {
             // regular post
-            HttpPost httpPost = new HttpPost(String.format(FACEBOOK_POST, FACEBOOK_BASE_URL, Saccess_token, mToken));
-            List<NameValuePair> params = new ArrayList<NameValuePair>();
-            params.add(new BasicNameValuePair(Smessage, message));
+            FormEncodingBuilder builder = new FormEncodingBuilder();
+            builder.add(Smessage, message);
 
-            if (placeId != null) {
-                params.add(new BasicNameValuePair(Splace, placeId));
-            }
+            if (!TextUtils.isEmpty(placeId)) builder.add(Splace, placeId);
+            if (tags != null) builder.add(Stags, tags.toString());
 
-            if (tags != null) {
-                params.add(new BasicNameValuePair(Stags, tags.toString()));
-            }
+            Request request = new Request.Builder()
+                    .url(String.format(FACEBOOK_POST, FACEBOOK_BASE_URL, Saccess_token, mToken))
+                    .post(builder.build())
+                    .build();
 
             try {
-                httpPost.setEntity(new UrlEncodedFormEntity(params));
-                return SonetHttpClient.httpResponse(mContext, httpPost) != null;
-            } catch (UnsupportedEncodingException e) {
+                return SonetHttpClient.getOkHttpClientInstance().newCall(request).execute().isSuccessful();
+            } catch (IOException e) {
                 if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
             }
         }
@@ -624,8 +614,7 @@ public class Facebook extends Client {
 
     @Override
     public boolean isLiked(String statusId, String accountId) {
-        String response = SonetHttpClient
-                .httpResponse(mContext, new HttpGet(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken)));
+        String response = SonetHttpClient.httpResponse(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken));
 
         if (!TextUtils.isEmpty(response)) {
             try {
@@ -649,12 +638,20 @@ public class Facebook extends Client {
     @Override
     public boolean likeStatus(String statusId, String accountId, boolean doLike) {
         if (doLike) {
-            return SonetHttpClient
-                    .httpResponse(mContext, new HttpPost(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken))) != null;
+            Request request = new Request.Builder()
+                    .url(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken))
+                    .post(null)
+                    .build();
+
+            return SonetHttpClient.request(request);
         } else {
-            HttpDelete httpDelete = new HttpDelete(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken));
-            httpDelete.setHeader("Content-Length", "0");
-            return SonetHttpClient.httpResponse(mContext, httpDelete) != null;
+            Request request = new Request.Builder()
+                    .url(String.format(FACEBOOK_LIKES, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken))
+                    .header("Content-Length", "0")
+                    .delete()
+                    .build();
+
+            return SonetHttpClient.request(request);
         }
     }
 
@@ -676,8 +673,7 @@ public class Facebook extends Client {
     @Nullable
     @Override
     public String getCommentsResponse(String statusId) {
-        return SonetHttpClient
-                .httpResponse(mContext, new HttpGet(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken)));
+        return SonetHttpClient.httpResponse(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken));
     }
 
     @Nullable
@@ -700,8 +696,7 @@ public class Facebook extends Client {
 
     @Override
     public LinkedHashMap<String, String> getLocations(String latitude, String longitude) {
-        String response = SonetHttpClient
-                .httpResponse(mContext, new HttpGet(String.format(FACEBOOK_SEARCH, FACEBOOK_BASE_URL, latitude, longitude, Saccess_token, mToken)));
+        String response = SonetHttpClient.httpResponse(String.format(FACEBOOK_SEARCH, FACEBOOK_BASE_URL, latitude, longitude, Saccess_token, mToken));
 
         if (response != null) {
             LinkedHashMap<String, String> locations = new LinkedHashMap<String, String>();
@@ -725,26 +720,20 @@ public class Facebook extends Client {
 
     @Override
     public boolean sendComment(@NonNull String statusId, @NonNull String message) {
-        HttpPost httpPost = new HttpPost(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken));
-        List<NameValuePair> params = new ArrayList<>();
-        params.add(new BasicNameValuePair(Smessage, message));
-
-        try {
-            httpPost.setEntity(new UrlEncodedFormEntity(params));
-            return !TextUtils.isEmpty(SonetHttpClient.httpResponse(mContext, httpPost));
-        } catch (UnsupportedEncodingException e) {
-            if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
-        }
-
-        return false;
+        Request request = new Request.Builder()
+                .url(String.format(FACEBOOK_COMMENTS, FACEBOOK_BASE_URL, statusId, Saccess_token, mToken))
+                .post(new FormEncodingBuilder()
+                        .add(Smessage, message)
+                        .build())
+                .build();
+        return SonetHttpClient.request(request);
     }
 
     @Override
     public List<HashMap<String, String>> getFriends() {
         // TODO use Collections.sort with comparator for name
         List<HashMap<String, String>> friends = new ArrayList<>();
-        String response = SonetHttpClient
-                .httpResponse(mContext, new HttpGet(String.format(FACEBOOK_FRIENDS, FACEBOOK_BASE_URL, Saccess_token, mToken)));
+        String response = SonetHttpClient.httpResponse(String.format(FACEBOOK_FRIENDS, FACEBOOK_BASE_URL, Saccess_token, mToken));
 
         if (!TextUtils.isEmpty(response)) {
             try {

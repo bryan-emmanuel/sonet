@@ -23,19 +23,13 @@ import android.appwidget.AppWidgetManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.widget.FrameLayout;
 
-import com.google.ads.AdRequest;
-import com.google.ads.AdSize;
-import com.google.ads.AdView;
 import com.piusvelte.sonet.fragment.AccountsList;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
-import static com.piusvelte.sonet.Sonet.PRO;
 
-public class ManageAccounts extends AppCompatActivity {
+public class ManageAccounts extends BaseActivity {
     private static final String TAG = "ManageAccounts";
 
     private static final String FRAGMENT_ACCOUNTS_LIST = "fragment:accounts_list";
@@ -45,12 +39,7 @@ public class ManageAccounts extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.accounts_container);
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
-
-        if (!getPackageName().toLowerCase().contains(PRO)) {
-            AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);
-            ((FrameLayout) findViewById(R.id.ad)).addView(adView);
-            adView.loadAd(new AdRequest());
-        }
+        setupAd();
 
         int appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 
@@ -79,5 +68,10 @@ public class ManageAccounts extends AppCompatActivity {
                     .add(R.id.accounts_list_container, AccountsList.newInstance(appWidgetId), FRAGMENT_ACCOUNTS_LIST)
                     .commit();
         }
+    }
+
+    @Override
+    public void onResult(int requestCode, int resultCode, Intent data) {
+        // NO-OP
     }
 }

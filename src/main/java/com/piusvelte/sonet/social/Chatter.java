@@ -14,6 +14,8 @@ import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.SonetOAuth;
 import com.piusvelte.sonet.provider.Entities;
 import com.piusvelte.sonet.provider.Statuses;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
@@ -24,6 +26,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -85,8 +88,23 @@ public class Chatter extends Client {
 
     private boolean getChatterInstance() {
         if (!hasChatterInstance()) {
-            String response = SonetHttpClient
-                    .httpResponse(mContext, new HttpPost(String.format(CHATTER_URL_ACCESS, BuildConfig.CHATTER_KEY, mToken)));
+            String response = null;
+            String url = String.format(CHATTER_URL_ACCESS, BuildConfig.CHATTER_KEY, mToken);
+            OkHttpClient client = SonetHttpClient.getOkHttpClientInstance();
+            Request request = new Request.Builder()
+                    .url(url)
+                    .post(null)
+                    .build();
+            try {
+                response = client.newCall(request)
+                        .execute()
+                        .body()
+                        .toString();
+            } catch (IOException e) {
+                if (BuildConfig.DEBUG) {
+                    Log.e(mTag, "request error; url=" + url, e);
+                }
+            }
 
             if (!TextUtils.isEmpty(response)) {
                 try {

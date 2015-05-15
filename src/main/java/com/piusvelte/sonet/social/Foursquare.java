@@ -20,7 +20,6 @@ import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.Statuses;
 
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -120,7 +119,7 @@ public class Foursquare extends Client {
         String token = uri.getQueryParameter(Saccess_token);
 
         if (!TextUtils.isEmpty(token)) {
-            String httpResponse = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FOURSQUARE_URL_ME, FOURSQUARE_BASE_URL, token)));
+            String httpResponse = SonetHttpClient.httpResponse(String.format(FOURSQUARE_URL_ME, FOURSQUARE_BASE_URL, token));
 
             if (!TextUtils.isEmpty(httpResponse)) {
                 JSONObject jobj;
@@ -178,7 +177,7 @@ public class Foursquare extends Client {
 
                 // get comments for current notifications
                 String response = SonetHttpClient
-                        .httpResponse(mContext, new HttpGet(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, sid, mToken)));
+                        .httpResponse(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, sid, mToken));
 
                 if (!TextUtils.isEmpty(response)) {
                     // check for a newer post, if it's the user's own, then set CLEARED=0
@@ -216,7 +215,7 @@ public class Foursquare extends Client {
     @Nullable
     @Override
     public String getFeedResponse(int status_count) {
-        return SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FOURSQUARE_CHECKINS, FOURSQUARE_BASE_URL, mToken)));
+        return SonetHttpClient.httpResponse(String.format(FOURSQUARE_CHECKINS, FOURSQUARE_BASE_URL, mToken));
     }
 
     @Nullable
@@ -339,7 +338,7 @@ public class Foursquare extends Client {
 
                 // get comments for current notifications
                 String response = SonetHttpClient
-                        .httpResponse(mContext, new HttpGet(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, sid, mToken)));
+                        .httpResponse(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, sid, mToken));
 
                 if (!TextUtils.isEmpty(response)) {
                     // check for a newer post, if it's the user's own, then set CLEARED=0
@@ -381,7 +380,7 @@ public class Foursquare extends Client {
                 currentNotifications.moveToNext();
             }
             // check the latest feed
-            String response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FOURSQUARE_CHECKINS, FOURSQUARE_BASE_URL, mToken)));
+            String response = SonetHttpClient.httpResponse(String.format(FOURSQUARE_CHECKINS, FOURSQUARE_BASE_URL, mToken));
 
             if (!TextUtils.isEmpty(response)) {
                 try {
@@ -523,7 +522,7 @@ public class Foursquare extends Client {
     @Nullable
     @Override
     public String getCommentsResponse(String statusId) {
-        return SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, statusId, mToken)));
+        return SonetHttpClient.httpResponse(String.format(FOURSQUARE_GET_CHECKIN, FOURSQUARE_BASE_URL, statusId, mToken));
     }
 
     @Nullable
@@ -548,7 +547,7 @@ public class Foursquare extends Client {
     @Override
     public LinkedHashMap<String, String> getLocations(String latitude, String longitude) {
         String response = SonetHttpClient
-                .httpResponse(mContext, new HttpGet(String.format(FOURSQUARE_SEARCH, FOURSQUARE_BASE_URL, latitude, longitude, mToken)));
+                .httpResponse(String.format(FOURSQUARE_SEARCH, FOURSQUARE_BASE_URL, latitude, longitude, mToken));
 
         if (!TextUtils.isEmpty(response)) {
             LinkedHashMap<String, String> locations = new LinkedHashMap<String, String>();

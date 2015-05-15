@@ -113,7 +113,7 @@ public class Pinterest extends Client {
     @Nullable
     @Override
     public String getFeedResponse(int status_count) {
-        return SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(PINTEREST_URL_FEED, PINTEREST_BASE_URL)));
+        return SonetHttpClient.httpResponse(String.format(PINTEREST_URL_FEED, PINTEREST_BASE_URL));
     }
 
     @Nullable

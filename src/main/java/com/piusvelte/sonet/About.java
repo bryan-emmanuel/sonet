@@ -40,13 +40,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.google.ads.AdRequest;
-import com.google.ads.AdSize;
-import com.google.ads.AdView;
 import com.piusvelte.sonet.adapter.MenuItemAdapter;
 import com.piusvelte.sonet.fragment.ConfirmationDialogFragment;
 import com.piusvelte.sonet.fragment.ItemsDialogFragment;
@@ -56,7 +52,6 @@ import com.piusvelte.sonet.provider.Widgets;
 import com.piusvelte.sonet.provider.WidgetsSettings;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
-import static com.piusvelte.sonet.Sonet.PRO;
 import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 
 public class About extends BaseActivity implements LoaderManager.LoaderCallbacks<Cursor>, AdapterView.OnItemClickListener {
@@ -81,12 +76,7 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.about);
-
-        if (!getPackageName().toLowerCase().contains(PRO)) {
-            AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);
-            ((FrameLayout) findViewById(R.id.ad)).addView(adView);
-            adView.loadAd(new AdRequest());
-        }
+        setupAd();
 
         setupActionBar();
         setupDrawer();

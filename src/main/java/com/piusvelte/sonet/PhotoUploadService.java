@@ -34,7 +34,6 @@ import com.piusvelte.sonet.provider.Statuses;
 import com.piusvelte.sonet.provider.Widgets;
 import com.piusvelte.sonet.social.Facebook;
 
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
@@ -45,13 +44,13 @@ import org.apache.http.entity.mime.content.StringBody;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 
-import static com.piusvelte.sonet.social.Facebook.FACEBOOK_BASE_URL;
 import static com.piusvelte.sonet.Sonet.NOTIFY_ID;
 import static com.piusvelte.sonet.Sonet.Saccess_token;
 import static com.piusvelte.sonet.Sonet.Smessage;
 import static com.piusvelte.sonet.Sonet.Splace;
 import static com.piusvelte.sonet.Sonet.Ssource;
 import static com.piusvelte.sonet.Sonet.Stags;
+import static com.piusvelte.sonet.social.Facebook.FACEBOOK_BASE_URL;
 
 public class PhotoUploadService extends Service {
     private static final String TAG = "PhotoUploadService";
@@ -100,12 +99,13 @@ public class PhotoUploadService extends Service {
                             String response = null;
                             if (params.length > 2) {
                                 Log.d(TAG, "upload file: " + params[2]);
-                                HttpPost httpPost = new HttpPost(String.format(Facebook.FACEBOOK_PHOTOS, FACEBOOK_BASE_URL, Saccess_token, params[0]));
+                                HttpPost httpPost = new HttpPost(
+                                        String.format(Facebook.FACEBOOK_PHOTOS, FACEBOOK_BASE_URL, Saccess_token, params[0]));
                                 MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
                                 File file = new File(params[2]);
                                 ContentBody fileBody = new FileBody(file);
                                 entity.addPart(Ssource, fileBody);
-                                HttpClient httpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
+
                                 try {
                                     entity.addPart(Smessage, new StringBody(params[1]));
                                     if (params[3] != null) {
@@ -115,7 +115,7 @@ public class PhotoUploadService extends Service {
                                         entity.addPart(Stags, new StringBody(params[4]));
                                     }
                                     httpPost.setEntity(entity);
-                                    response = SonetHttpClient.httpResponse(httpClient, httpPost);
+                                    response = SonetHttpClient.httpResponse(getApplicationContext(), httpPost);
                                 } catch (UnsupportedEncodingException e) {
                                     Log.e(TAG, e.toString());
                                 }

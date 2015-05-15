@@ -33,13 +33,9 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.google.ads.AdRequest;
-import com.google.ads.AdSize;
-import com.google.ads.AdView;
 import com.piusvelte.sonet.fragment.MessageSettingsDialogFragment;
 import com.piusvelte.sonet.fragment.NameSettingsDialogFragment;
 import com.piusvelte.sonet.fragment.NotificationSettingsDialogFragment;
@@ -50,7 +46,6 @@ import com.piusvelte.sonet.provider.Accounts;
 import com.piusvelte.sonet.provider.Widgets;
 import com.piusvelte.sonet.provider.WidgetsSettings;
 
-import static com.piusvelte.sonet.Sonet.PRO;
 import static com.piusvelte.sonet.Sonet.initAccountSettings;
 
 public class AccountSettings extends BaseActivity
@@ -104,12 +99,7 @@ public class AccountSettings extends BaseActivity
         setResult(RESULT_CANCELED);
         setContentView(R.layout.account_preferences);
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
-
-        if (!getPackageName().toLowerCase().contains(PRO)) {
-            AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);
-            ((FrameLayout) findViewById(R.id.ad)).addView(adView);
-            adView.loadAd(new AdRequest());
-        }
+        setupAd();
 
         Intent i = getIntent();
 

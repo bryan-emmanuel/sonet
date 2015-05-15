@@ -22,21 +22,12 @@ package com.piusvelte.sonet;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.google.ads.AdRequest;
-import com.google.ads.AdSize;
-import com.google.ads.AdView;
 import com.piusvelte.sonet.fragment.CommentsList;
 
-import static com.piusvelte.sonet.Sonet.PRO;
-
-public class SonetComments extends AppCompatActivity {
+public class SonetComments extends BaseActivity {
 
     private static final String FRAGMENT_COMMENTS_LIST = "fragment:comments_list";
 
@@ -48,12 +39,7 @@ public class SonetComments extends AppCompatActivity {
         // get existing comments, allow liking|unliking those comments
         setContentView(R.layout.comments);
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
-
-        if (!getPackageName().toLowerCase().contains(PRO)) {
-            AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);
-            ((FrameLayout) findViewById(R.id.ad)).addView(adView);
-            adView.loadAd(new AdRequest());
-        }
+        setupAd();
 
         setResult(RESULT_OK);
 
@@ -96,5 +82,10 @@ public class SonetComments extends AppCompatActivity {
                 fragment.setData(data);
             }
         }
+    }
+
+    @Override
+    public void onResult(int requestCode, int resultCode, Intent data) {
+        // NO-OP
     }
 }

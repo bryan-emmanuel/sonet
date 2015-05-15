@@ -25,7 +25,12 @@ import android.graphics.Bitmap;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
+
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -58,8 +63,17 @@ public class SonetHttpClient {
     private static final int SO_TIMEOUT = 5 * 60 * 1000;
     private static final String TAG = "SonetHttpClient";
     private static DefaultHttpClient sHttpClient = null;
+    private static OkHttpClient mOkHttpClient;
 
     private SonetHttpClient(Context context) {
+    }
+
+    public static OkHttpClient getOkHttpClientInstance() {
+        if (mOkHttpClient == null) {
+            mOkHttpClient = new OkHttpClient();
+        }
+
+        return mOkHttpClient;
     }
 
     public static DefaultHttpClient getThreadSafeClient(Context context) {
@@ -163,11 +177,67 @@ public class SonetHttpClient {
         return null;
     }
 
-    public static String httpResponse(@NonNull Context context, HttpUriRequest httpRequest) {
-        return httpResponse(SonetHttpClient.getThreadSafeClient(context), httpRequest);
+    @Nullable
+    public static String httpResponse(String url) {
+        OkHttpClient client = getOkHttpClientInstance();
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+        Response response;
+
+        try {
+            response = client.newCall(request)
+                    .execute();
+        } catch (IOException e) {
+            if (BuildConfig.DEBUG) {
+                Log.e(TAG, "request error; url=" + url, e);
+            }
+
+            response = null;
+        }
+
+        if (response != null && response.isSuccessful()) {
+            String body;
+
+            if (response.body() != null) {
+                body = response.body().toString();
+            } else {
+                body = null;
+            }
+
+            // TODO a null or empty response is handled by clients as failure
+            if (TextUtils.isEmpty(body)) {
+                return "OK";
+            }
+
+            return body;
+        }
+
+        return null;
     }
 
-    public static String httpResponse(HttpClient httpClient, HttpUriRequest httpRequest) {
+    public static boolean request(@NonNull Request request) {
+        try {
+            return getOkHttpClientInstance()
+                    .newCall(request)
+                    .execute()
+                    .isSuccessful();
+        } catch (IOException e) {
+            if (BuildConfig.DEBUG) {
+                Log.e(TAG, "request error", e);
+            }
+        }
+
+        return false;
+    }
+
+    @Deprecated
+    public static String httpResponse(@NonNull Context context, HttpUriRequest httpRequest) {
+        return httpResponse(getThreadSafeClient(context), httpRequest);
+    }
+
+    @Deprecated
+    private static String httpResponse(HttpClient httpClient, HttpUriRequest httpRequest) {
         String response = null;
         if (httpClient != null) {
             HttpResponse httpResponse;
@@ -243,6 +313,7 @@ public class SonetHttpClient {
         return response;
     }
 
+    @Deprecated
     protected static class FlushedInputStream extends FilterInputStream {
         public FlushedInputStream(InputStream inputStream) {
             super(inputStream);

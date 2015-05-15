@@ -200,7 +200,7 @@ public class GooglePlus extends Client {
 
                 // TODO
                 // get comments for current notifications
-//                String response = SonetHttpClient.httpResponse(mContext, new HttpGet(String.format(GOOGLEPLUS_ACTIVITY, GOOGLEPLUS_BASE_URL, sid,
+//                String response = SonetHttpClient.httpResponse(String.format(GOOGLEPLUS_ACTIVITY, GOOGLEPLUS_BASE_URL, sid,
 // access_token)));
 //
 //                if (!TextUtils.isEmpty(response)) {

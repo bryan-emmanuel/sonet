@@ -61,7 +61,7 @@ public class MenuItemAdapter extends BaseAdapter {
 
         if (viewHolder != null) {
             viewHolder.title.setText(menuItem.getTitle());
-            viewHolder.title.setCompoundDrawables(menuItem.getIcon(), null, null, null);
+            viewHolder.title.setCompoundDrawablesWithIntrinsicBounds(menuItem.getIcon(), null, null, null);
         }
 
         return convertView;

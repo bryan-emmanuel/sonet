@@ -35,14 +35,10 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.ads.AdRequest;
-import com.google.ads.AdSize;
-import com.google.ads.AdView;
 import com.piusvelte.sonet.fragment.ButtonSettingsDialogFragment;
 import com.piusvelte.sonet.fragment.MessageSettingsDialogFragment;
 import com.piusvelte.sonet.fragment.NameSettingsDialogFragment;
@@ -54,7 +50,6 @@ import com.piusvelte.sonet.fragment.UpdateSettingsDialogFragment;
 import com.piusvelte.sonet.provider.Widgets;
 import com.piusvelte.sonet.provider.WidgetsSettings;
 
-import static com.piusvelte.sonet.Sonet.PRO;
 import static com.piusvelte.sonet.Sonet.initAccountSettings;
 
 public class Settings extends BaseActivity
@@ -122,12 +117,7 @@ public class Settings extends BaseActivity
         setResult(RESULT_CANCELED);
         setContentView(R.layout.preferences);
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
-
-        if (!getPackageName().toLowerCase().contains(PRO)) {
-            AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);
-            ((FrameLayout) findViewById(R.id.ad)).addView(adView);
-            adView.loadAd(new AdRequest());
-        }
+        setupAd();
 
         Intent i = getIntent();
 

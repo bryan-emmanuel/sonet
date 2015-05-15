@@ -21,20 +21,14 @@ package com.piusvelte.sonet;
 
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.widget.FrameLayout;
 
-import com.google.ads.AdRequest;
-import com.google.ads.AdSize;
-import com.google.ads.AdView;
 import com.piusvelte.sonet.fragment.NotificationsList;
 
-import static com.piusvelte.sonet.Sonet.PRO;
-
-public class SonetNotifications extends AppCompatActivity {
+public class SonetNotifications extends BaseActivity {
     // list the current notifications
     // check for cache versions in statuses first, falling back on reloading them from the service
     private static final String TAG = "SonetNotifications";
@@ -49,12 +43,7 @@ public class SonetNotifications extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.notifications);
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
-
-        if (!getPackageName().toLowerCase().contains(PRO)) {
-            AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);
-            ((FrameLayout) findViewById(R.id.ad)).addView(adView);
-            adView.loadAd(new AdRequest());
-        }
+        setupAd();
 
         setResult(RESULT_OK);
 
@@ -72,5 +61,10 @@ public class SonetNotifications extends AppCompatActivity {
         super.onResume();
         // cancel any notifications
         ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(Sonet.NOTIFY_ID);
+    }
+
+    @Override
+    public void onResult(int requestCode, int resultCode, Intent data) {
+        // NO-OP
     }
 }

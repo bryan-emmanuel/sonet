@@ -30,11 +30,9 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -47,15 +45,10 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnKeyListener;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.ads.AdRequest;
-import com.google.ads.AdSize;
-import com.google.ads.AdView;
-import com.piusvelte.sonet.fragment.BaseDialogFragment;
 import com.piusvelte.sonet.fragment.ChooseAccount;
 import com.piusvelte.sonet.fragment.ChooseLocation;
 import com.piusvelte.sonet.fragment.ChoosePostAccounts;
@@ -72,7 +65,6 @@ import java.util.Set;
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE;
 import static com.piusvelte.sonet.Sonet.INVALID_ACCOUNT_ID;
-import static com.piusvelte.sonet.Sonet.PRO;
 import static com.piusvelte.sonet.Sonet.Stags;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 
@@ -131,12 +123,7 @@ public class SonetCreatePost extends BaseActivity
         // get existing comments, allow liking|unliking those comments
         setContentView(R.layout.post);
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
-
-        if (!getPackageName().toLowerCase().contains(PRO)) {
-            AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);
-            ((FrameLayout) findViewById(R.id.ad)).addView(adView);
-            adView.loadAd(new AdRequest());
-        }
+        setupAd();
 
         mMessage = (EditText) findViewById(R.id.message);
         mSend = (ImageButton) findViewById(R.id.send);

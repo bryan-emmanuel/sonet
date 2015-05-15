@@ -29,20 +29,14 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
-import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.SimpleAdapter;
 
-import com.google.ads.AdRequest;
-import com.google.ads.AdSize;
-import com.google.ads.AdView;
 import com.piusvelte.sonet.provider.Accounts;
 import com.piusvelte.sonet.provider.Entities;
 import com.piusvelte.sonet.social.Facebook;
 
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -59,7 +53,6 @@ import static com.piusvelte.sonet.Sonet.GOOGLEPLUS;
 import static com.piusvelte.sonet.Sonet.IDENTICA;
 import static com.piusvelte.sonet.Sonet.LINKEDIN;
 import static com.piusvelte.sonet.Sonet.MYSPACE;
-import static com.piusvelte.sonet.Sonet.PRO;
 import static com.piusvelte.sonet.Sonet.Saccess_token;
 import static com.piusvelte.sonet.Sonet.Sdata;
 import static com.piusvelte.sonet.Sonet.Sid;
@@ -67,9 +60,9 @@ import static com.piusvelte.sonet.Sonet.Sname;
 import static com.piusvelte.sonet.Sonet.Stags;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 
+@Deprecated
 public class SelectFriends extends ListActivity {
     private static final String TAG = "SelectFriends";
-    private HttpClient mHttpClient;
     private List<HashMap<String, String>> mFriends = new ArrayList<HashMap<String, String>>();
     private List<String> mSelectedFriends = new ArrayList<String>();
     private long mAccountId = Sonet.INVALID_ACCOUNT_ID;
@@ -84,12 +77,7 @@ public class SelectFriends extends ListActivity {
         // allow selecting which accounts to use
         // get existing comments, allow liking|unliking those comments
         setContentView(R.layout.friends);
-
-        if (!getPackageName().toLowerCase().contains(PRO)) {
-            AdView adView = new AdView(this, AdSize.BANNER, BuildConfig.GOOGLEAD_ID);
-            ((FrameLayout) findViewById(R.id.ad)).addView(adView);
-            adView.loadAd(new AdRequest());
-        }
+        // TODO setupAd()
 
         Intent intent = getIntent();
 
@@ -105,7 +93,6 @@ public class SelectFriends extends ListActivity {
             finish();
         }
 
-        mHttpClient = SonetHttpClient.getThreadSafeClient(getApplicationContext());
         registerForContextMenu(getListView());
         setResult(RESULT_CANCELED);
     }
@@ -189,7 +176,7 @@ public class SelectFriends extends ListActivity {
                     case TWITTER:
                         break;
                     case FACEBOOK:
-                        if ((response = SonetHttpClient.httpResponse(mHttpClient,
+                        if ((response = SonetHttpClient.httpResponse(getApplicationContext(),
                                 new HttpGet(String.format(Facebook.FACEBOOK_FRIENDS, Facebook.FACEBOOK_BASE_URL, Saccess_token, mToken)))) != null) {
                             try {
                                 JSONArray friends = new JSONObject(response).getJSONArray(Sdata);

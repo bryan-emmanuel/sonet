@@ -101,7 +101,7 @@ public class Rss extends Client {
     @Nullable
     @Override
     public String getFeedResponse(int status_count) {
-        return SonetHttpClient.httpResponse(mContext, new HttpGet(mAccountEsid));
+        return SonetHttpClient.httpResponse(mAccountEsid);
     }
 
     @Nullable

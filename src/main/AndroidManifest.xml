@@ -42,6 +42,11 @@
         android:icon="@drawable/icon"
         android:label="@string/app_name"
         android:theme="@style/AppBaseTheme">
+
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
         <activity
             android:name=".About"
             android:label="@string/app_name">
@@ -50,14 +55,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity android:name=".ManageAccounts">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
+
         <activity android:name=".Settings" />
+
         <activity android:name=".AccountSettings" />
+
         <activity android:name=".OAuthLogin" />
+
         <activity
             android:name=".SonetCreatePost"
             android:launchMode="singleTop"
@@ -70,22 +80,27 @@
                 <data android:mimeType="text/*" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".SonetComments"
             android:launchMode="singleTop"
             android:windowSoftInputMode="stateVisible|adjustResize" />
+
         <activity android:name=".SelectFriends" />
+
         <activity
             android:name=".StatusDialog"
             android:clearTaskOnLaunch="true"
             android:noHistory="true"
             android:taskAffinity=""
             android:theme="@style/SonetDialog" />
+
         <activity
             android:name=".SonetNotifications"
             android:clearTaskOnLaunch="true"
             android:noHistory="true"
             android:taskAffinity="" />
+
         <!-- Broadcast Receiver that will process AppWidget updates -->
         <receiver
             android:name=".SonetWidget_2x2"
@@ -104,6 +119,7 @@
                 android:name="LauncherMetadata.Requirements.Scrollable"
                 android:value="true" />
         </receiver>
+
         <receiver
             android:name=".SonetWidget_2x3"
             android:label="@string/sonet_2x3">
@@ -121,6 +137,7 @@
                 android:name="LauncherMetadata.Requirements.Scrollable"
                 android:value="true" />
         </receiver>
+
         <receiver
             android:name=".SonetWidget_2x4"
             android:label="@string/sonet_2x4">
@@ -138,6 +155,7 @@
                 android:name="LauncherMetadata.Requirements.Scrollable"
                 android:value="true" />
         </receiver>
+
         <receiver
             android:name=".SonetWidget_4x2"
             android:label="@string/sonet_4x2">
@@ -155,6 +173,7 @@
                 android:name="LauncherMetadata.Requirements.Scrollable"
                 android:value="true" />
         </receiver>
+
         <receiver
             android:name=".SonetWidget_4x3"
             android:label="@string/sonet_4x3">
@@ -172,6 +191,7 @@
                 android:name="LauncherMetadata.Requirements.Scrollable"
                 android:value="true" />
         </receiver>
+
         <receiver
             android:name=".SonetWidget_4x4"
             android:label="@string/sonet_4x4">
@@ -189,6 +209,7 @@
                 android:name="LauncherMetadata.Requirements.Scrollable"
                 android:value="true" />
         </receiver>
+
         <receiver android:name=".SonetWidget">
             <intent-filter>
                 <action android:name="com.piusvelte.sonet.Sonet.REFRESH" />
@@ -207,16 +228,24 @@
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
         </receiver>
+
         <service
             android:name=".SonetRemoteViewsService"
             android:exported="false"
             android:permission="android.permission.BIND_REMOTEVIEWS" />
+
         <provider
             android:name=".SonetProvider"
             android:authorities="${applicationId}.SonetProvider"
             android:exported="true"
             android:grantUriPermissions="true"
             android:multiprocess="true" />
+
+        <activity
+            android:name="com.google.android.gms.ads.AdActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
+            android:theme="@android:style/Theme.Translucent" />
+
         <meta-data
             android:name="com.google.android.backup.api_key"
             android:value="${backupApiKey}" />

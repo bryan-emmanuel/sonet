@@ -119,14 +119,6 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
             case LOADER_WIDGETS:
                 mLoadingView.setVisibility(View.GONE);
                 mAdapter.changeCursor(cursor);
-
-                // if no statuses, trigger a refresh
-                if (cursor.getCount() == 0 && isAdded() && isResumed()) {
-                    getActivity().startService(new Intent(getActivity(),
-                            SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,
-                            AppWidgetManager.INVALID_APPWIDGET_ID)
-                            .setAction(ACTION_REFRESH));
-                }
                 break;
         }
     }
