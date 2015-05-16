@@ -17,11 +17,6 @@ import com.piusvelte.sonet.provider.Statuses;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -99,7 +94,7 @@ public class Chatter extends Client {
                 response = client.newCall(request)
                         .execute()
                         .body()
-                        .toString();
+                        .string();
             } catch (IOException e) {
                 if (BuildConfig.DEBUG) {
                     Log.e(mTag, "request error; url=" + url, e);
@@ -134,9 +129,11 @@ public class Chatter extends Client {
     @Override
     public String getFeedResponse(int status_count) {
         if (getChatterInstance()) {
-            HttpGet httpGet = new HttpGet(String.format(CHATTER_URL_FEED, mChatterInstance));
-            httpGet.setHeader("Authorization", "OAuth " + mChatterToken);
-            return SonetHttpClient.httpResponse(mContext, httpGet);
+            Request request = new Request.Builder()
+                    .url(String.format(CHATTER_URL_FEED, mChatterInstance))
+                    .addHeader("Authorization", "OAuth " + mChatterToken)
+                    .build();
+            return SonetHttpClient.getResponse(request);
         }
 
         return null;
@@ -155,7 +152,6 @@ public class Chatter extends Client {
             boolean time24hr,
             int appWidgetId,
             long account,
-            HttpClient httpClient,
             Set<String> notificationSids,
             String[] notificationMessage,
             boolean doNotify) throws JSONException {
@@ -174,8 +170,8 @@ public class Chatter extends Client {
                 account,
                 item.getString(Sid),
                 friendObj.getString(Sid),
-                links,
-                httpClient);
+                links
+        );
     }
 
     @Nullable
@@ -192,9 +188,12 @@ public class Chatter extends Client {
     @Override
     public boolean createPost(String message, String placeId, String latitude, String longitude, String photoPath, String[] tags) {
         if (getChatterInstance()) {
-            HttpPost httpPost = new HttpPost(String.format(CHATTER_URL_POST, mChatterInstance, Uri.encode(message)));
-            httpPost.setHeader("Authorization", "OAuth " + mChatterToken);
-            return SonetHttpClient.httpResponse(mContext, httpPost) != null;
+            Request request = new Request.Builder()
+                    .url(String.format(CHATTER_URL_POST, mChatterInstance, Uri.encode(message)))
+                    .addHeader("Authorization", "OAuth " + mChatterToken)
+                    .post(null)
+                    .build();
+            return SonetHttpClient.request(request);
         }
 
         return false;
@@ -208,9 +207,11 @@ public class Chatter extends Client {
     @Override
     public boolean isLiked(String statusId, String accountId) {
         if (getChatterInstance()) {
-            HttpGet httpGet = new HttpGet(String.format(CHATTER_URL_LIKES, mChatterInstance, statusId));
-            httpGet.setHeader("Authorization", "OAuth " + mChatterToken);
-            String response = SonetHttpClient.httpResponse(mContext, httpGet);
+            Request request = new Request.Builder()
+                    .url(String.format(CHATTER_URL_LIKES, mChatterInstance, statusId))
+                    .addHeader("Authorization", "OAuth " + mChatterToken)
+                    .build();
+            String response = SonetHttpClient.getResponse(request);
 
             if (!TextUtils.isEmpty(response)) {
                 try {
@@ -239,17 +240,18 @@ public class Chatter extends Client {
 
     @Override
     public boolean likeStatus(String statusId, String accountId, boolean doLike) {
-        HttpUriRequest httpRequest;
+        Request.Builder builder = new Request.Builder();
 
         if (doLike) {
-            httpRequest = new HttpPost(String.format(CHATTER_URL_LIKES, mChatterInstance, statusId));
+            builder.url(String.format(CHATTER_URL_LIKES, mChatterInstance, statusId));
+            builder.post(null);
         } else {
-            httpRequest = new HttpDelete(
-                    String.format(CHATTER_URL_LIKE, mChatterInstance, "" /* TODO replace this string with the like id from isLiked */));
+            builder.url(String.format(CHATTER_URL_LIKE, mChatterInstance, "" /* TODO replace this string with the like id from isLiked */));
+            builder.delete();
         }
 
-        httpRequest.setHeader("Authorization", "OAuth " + mChatterToken);
-        return SonetHttpClient.httpResponse(mContext, httpRequest) != null;
+        builder.addHeader("Authorization", "OAuth " + mChatterToken);
+        return SonetHttpClient.request(builder.build());
     }
 
     @Override
@@ -271,9 +273,11 @@ public class Chatter extends Client {
     @Override
     public String getCommentsResponse(String statusId) {
         if (getChatterInstance()) {
-            HttpGet httpGet = new HttpGet(String.format(CHATTER_URL_COMMENTS, mChatterInstance, statusId));
-            httpGet.setHeader("Authorization", "OAuth " + mChatterToken);
-            return SonetHttpClient.httpResponse(mContext, httpGet);
+            Request request = new Request.Builder()
+                    .url(String.format(CHATTER_URL_COMMENTS, mChatterInstance, statusId))
+                    .addHeader("Authorization", "OAuth " + mChatterToken)
+                    .build();
+            return SonetHttpClient.getResponse(request);
         }
 
         return null;
@@ -312,9 +316,12 @@ public class Chatter extends Client {
     @Override
     public boolean sendComment(@NonNull String statusId, @NonNull String message) {
         if (getChatterInstance()) {
-            HttpPost httpPost = new HttpPost(String.format(CHATTER_URL_COMMENT, mChatterInstance, statusId, Uri.encode(message)));
-            httpPost.setHeader("Authorization", "OAuth " + mChatterToken);
-            return !TextUtils.isEmpty(SonetHttpClient.httpResponse(mContext, httpPost));
+            Request request = new Request.Builder()
+                    .url(String.format(CHATTER_URL_COMMENT, mChatterInstance, statusId, Uri.encode(message)))
+                    .post(null)
+                    .addHeader("Authorization", "OAuth " + mChatterToken)
+                    .build();
+            return SonetHttpClient.request(request);
         }
 
         return false;
@@ -374,9 +381,12 @@ public class Chatter extends Client {
         String refresh_token = uri.getQueryParameter("refresh_token");
         String instance_url = uri.getQueryParameter("instance_url");
 
-        HttpGet httpGet = new HttpGet(String.format(CHATTER_URL_ME, instance_url));
-        httpGet.setHeader("Authorization", "OAuth " + token);
-        String httpRespnose = SonetHttpClient.httpResponse(mContext, httpGet);
+        Request request = new Request.Builder()
+                .url(String.format(CHATTER_URL_ME, instance_url))
+                .addHeader("Authorization", "OAuth " + token)
+                .build();
+
+        String httpRespnose = SonetHttpClient.getResponse(request);
 
         if (!TextUtils.isEmpty(httpRespnose)) {
             try {

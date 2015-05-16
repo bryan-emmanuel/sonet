@@ -17,18 +17,14 @@ import com.piusvelte.sonet.SonetOAuth;
 import com.piusvelte.sonet.provider.Entities;
 import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.Statuses;
+import com.squareup.okhttp.FormEncodingBuilder;
+import com.squareup.okhttp.Request;
 
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -77,8 +73,10 @@ public class Twitter extends Client {
     @Nullable
     @Override
     public String getProfileUrl(@NonNull String esid) {
-        String response = SonetHttpClient
-                .httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(getUserUrl(), getBaseUrl(), esid))));
+        Request request = getOAuth().signRequest(new Request.Builder()
+                .url(String.format(getUserUrl(), getBaseUrl(), esid))
+                .build());
+        String response = SonetHttpClient.getResponse(request);
 
         if (!TextUtils.isEmpty(response)) {
 
@@ -132,7 +130,10 @@ public class Twitter extends Client {
         String verifier = uri.getQueryParameter(OAUTH_VERIFIER);
 
         if (!TextUtils.isEmpty(verifier) && sonetOAuth.retrieveAccessToken(verifier)) {
-            String httpResponse = SonetHttpClient.httpResponse(mContext, sonetOAuth.getSignedRequest(new HttpGet(getVerifyCredentialsUrl())));
+            Request request = sonetOAuth.signRequest(new Request.Builder()
+                    .url(getVerifyCredentialsUrl())
+                    .build());
+            String httpResponse = SonetHttpClient.getResponse(request);
 
             if (!TextUtils.isEmpty(httpResponse)) {
                 try {
@@ -212,8 +213,10 @@ public class Twitter extends Client {
     @Nullable
     @Override
     public String getFeedResponse(int status_count) {
-        return SonetHttpClient
-                .httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(getFeedUrl(), getBaseUrl(), status_count))));
+        Request request = getOAuth().signRequest(new Request.Builder()
+                .url(String.format(getFeedUrl(), getBaseUrl(), status_count))
+                .build());
+        return SonetHttpClient.getResponse(request);
     }
 
     @Nullable
@@ -229,7 +232,6 @@ public class Twitter extends Client {
             boolean time24hr,
             int appWidgetId,
             long account,
-            HttpClient httpClient,
             Set<String> notificationSids,
             String[] notificationMessage,
             boolean doNotify) throws JSONException {
@@ -243,8 +245,8 @@ public class Twitter extends Client {
                 appWidgetId,
                 account,
                 item.getString(Sid),
-                user.getString(Sid),
-                httpClient);
+                user.getString(Sid)
+        );
     }
 
     @Nullable
@@ -285,8 +287,10 @@ public class Twitter extends Client {
         last_status.close();
 
         // get all mentions since the oldest status for this account
-        String response = SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(
-                new HttpGet(String.format(getMentionsUrl(), getBaseUrl(), last_sid != null ? String.format(TWITTER_SINCE_ID, last_sid) : ""))));
+        Request request = getOAuth().signRequest(new Request.Builder()
+                .url(String.format(getMentionsUrl(), getBaseUrl(), last_sid != null ? String.format(TWITTER_SINCE_ID, last_sid) : ""))
+                .build());
+        String response = SonetHttpClient.getResponse(request);
 
         if (!TextUtils.isEmpty(response)) {
             try {
@@ -336,7 +340,6 @@ public class Twitter extends Client {
     @Override
     public boolean createPost(String message, String placeId, String latitude, String longitude, String photoPath, String[] tags) {
         boolean result = false;
-        HttpPost httpPost;
         int startTweetIndex = 0;
 
         // limit tweets to 140, breaking up the message if necessary
@@ -345,23 +348,24 @@ public class Twitter extends Client {
 
             String tweet = message.substring(startTweetIndex, endTweetIndex);
 
-            httpPost = new HttpPost(String.format(getUpdateUrl(), getBaseUrl()));
-            // resolve Error 417 Expectation by Twitter
-            httpPost.getParams().setBooleanParameter("http.protocol.expect-continue", false);
-            List<NameValuePair> params = new ArrayList<NameValuePair>();
-            params.add(new BasicNameValuePair(Sstatus, tweet));
+            FormEncodingBuilder builder = new FormEncodingBuilder()
+                    .add("http.protocol.expect-continue", Boolean.FALSE.toString())
+                    .add(Sstatus, tweet);
 
             if (placeId != null) {
-                params.add(new BasicNameValuePair("place_id", placeId));
-                params.add(new BasicNameValuePair("lat", latitude));
-                params.add(new BasicNameValuePair("long", longitude));
+                builder.add("place_id", placeId)
+                        .add("lat", latitude)
+                        .add("long", longitude);
             }
 
-            try {
-                httpPost.setEntity(new UrlEncodedFormEntity(params));
-                result = SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(httpPost)) != null;
-            } catch (UnsupportedEncodingException e) {
-                Log.e(mTag, e.toString());
+            Request request = getOAuth().signRequest(new Request.Builder()
+                    .url(String.format(getUpdateUrl(), getBaseUrl()))
+                    .post(builder.build())
+                    .build());
+
+            result = SonetHttpClient.request(request);
+
+            if (!result) {
                 break;
             }
 
@@ -387,10 +391,13 @@ public class Twitter extends Client {
     public boolean likeStatus(String statusId, String accountId, boolean doLike) {
         if (doLike) {
             // retweet
-            HttpPost httpPost = new HttpPost(String.format(getRetweetUrl(), getBaseUrl(), statusId));
-            // resolve Error 417 Expectation by Twitter
-            httpPost.getParams().setBooleanParameter("http.protocol.expect-continue", false);
-            return !TextUtils.isEmpty(SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(httpPost)));
+            Request request = getOAuth().signRequest(new Request.Builder()
+                    .url(String.format(getRetweetUrl(), getBaseUrl(), statusId))
+                    .post(new FormEncodingBuilder()
+                            .add("http.protocol.expect-continue", Boolean.FALSE.toString())
+                            .build())
+                    .build());
+            return SonetHttpClient.request(request);
         }
 
         return false;
@@ -413,8 +420,10 @@ public class Twitter extends Client {
 
     @Override
     public String getCommentsResponse(String statusId) {
-        return SonetHttpClient.httpResponse(mContext,
-                getOAuth().getSignedRequest(new HttpGet(String.format(getMentionsUrl(), getBaseUrl(), String.format(TWITTER_SINCE_ID, statusId)))));
+        Request request = getOAuth().signRequest(new Request.Builder()
+                .url(String.format(getMentionsUrl(), getBaseUrl(), String.format(TWITTER_SINCE_ID, statusId)))
+                .build());
+        return SonetHttpClient.getResponse(request);
     }
 
     @Override
@@ -449,8 +458,10 @@ public class Twitter extends Client {
     public LinkedHashMap<String, String> getLocations(String latitude, String longitude) {
         // anonymous requests are rate limited to 150 per hour
         // authenticated requests are rate limited to 350 per hour, so authenticate this!
-        String response = SonetHttpClient
-                .httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(getSearchUrl(), getBaseUrl(), latitude, longitude))));
+        Request request = getOAuth().signRequest(new Request.Builder()
+                .url(String.format(getSearchUrl(), getBaseUrl(), latitude, longitude))
+                .build());
+        String response = SonetHttpClient.getResponse(request);
 
         if (response != null) {
             LinkedHashMap<String, String> locations = new LinkedHashMap<String, String>();
@@ -484,19 +495,20 @@ public class Twitter extends Client {
 
             String tweet = message.substring(startTweetIndex, endTweetIndex);
 
-            httpPost = new HttpPost(String.format(getUpdateUrl(), getBaseUrl()));
-            // resolve Error 417 Expectation by Twitter
-            httpPost.getParams().setBooleanParameter("http.protocol.expect-continue", false);
-            List<NameValuePair> params = new ArrayList<>();
-            params.add(new BasicNameValuePair(Sstatus, tweet));
-            params.add(new BasicNameValuePair(Sin_reply_to_status_id, statusId));
+            FormEncodingBuilder builder = new FormEncodingBuilder()
+                    .add("http.protocol.expect-continue", Boolean.FALSE.toString())
+                    .add(Sstatus, tweet)
+                    .add(Sin_reply_to_status_id, statusId);
 
-            try {
-                httpPost.setEntity(new UrlEncodedFormEntity(params));
-                success = !TextUtils.isEmpty(SonetHttpClient.httpResponse(mContext, getOAuth().getSignedRequest(httpPost)));
-            } catch (UnsupportedEncodingException e) {
-                if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
-                return false;
+            Request request = getOAuth().signRequest(new Request.Builder()
+                    .url(String.format(getUpdateUrl(), getBaseUrl()))
+                    .post(builder.build())
+                    .build());
+
+            success = SonetHttpClient.request(request);
+
+            if (!success) {
+                break;
             }
 
             // advance the start index for the next tweet
@@ -513,8 +525,10 @@ public class Twitter extends Client {
 
     @Nullable
     private String getScreenName(String accountId) {
-        String response = SonetHttpClient
-                .httpResponse(mContext, getOAuth().getSignedRequest(new HttpGet(String.format(getUserUrl(), getBaseUrl(), accountId))));
+        Request request = getOAuth().signRequest(new Request.Builder()
+                .url(String.format(getUserUrl(), getBaseUrl(), accountId))
+                .build());
+        String response = SonetHttpClient.getResponse(request);
 
         if (response != null) {
             try {

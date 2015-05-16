@@ -27,22 +27,19 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.IBinder;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.piusvelte.sonet.provider.Accounts;
 import com.piusvelte.sonet.provider.Statuses;
 import com.piusvelte.sonet.provider.Widgets;
 import com.piusvelte.sonet.social.Facebook;
-
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.mime.HttpMultipartMode;
-import org.apache.http.entity.mime.MultipartEntity;
-import org.apache.http.entity.mime.content.ContentBody;
-import org.apache.http.entity.mime.content.FileBody;
-import org.apache.http.entity.mime.content.StringBody;
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.MultipartBuilder;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 
 import static com.piusvelte.sonet.Sonet.NOTIFY_ID;
 import static com.piusvelte.sonet.Sonet.Saccess_token;
@@ -96,31 +93,46 @@ public class PhotoUploadService extends Service {
 
                         @Override
                         protected String doInBackground(String... params) {
-                            String response = null;
                             if (params.length > 2) {
-                                Log.d(TAG, "upload file: " + params[2]);
-                                HttpPost httpPost = new HttpPost(
-                                        String.format(Facebook.FACEBOOK_PHOTOS, FACEBOOK_BASE_URL, Saccess_token, params[0]));
-                                MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
-                                File file = new File(params[2]);
-                                ContentBody fileBody = new FileBody(file);
-                                entity.addPart(Ssource, fileBody);
+                                String filename = params[2];
+                                String imageType = "jpg";
 
-                                try {
-                                    entity.addPart(Smessage, new StringBody(params[1]));
-                                    if (params[3] != null) {
-                                        entity.addPart(Splace, new StringBody(params[3]));
-                                    }
-                                    if (params[4] != null) {
-                                        entity.addPart(Stags, new StringBody(params[4]));
-                                    }
-                                    httpPost.setEntity(entity);
-                                    response = SonetHttpClient.httpResponse(getApplicationContext(), httpPost);
-                                } catch (UnsupportedEncodingException e) {
-                                    Log.e(TAG, e.toString());
+                                if (filename.endsWith("png")) {
+                                    imageType = "png";
+                                } else if (filename.endsWith("bmp")) {
+                                    imageType = "bmp";
                                 }
+
+                                if (BuildConfig.DEBUG) Log.d(TAG, "upload file: " + filename + ", type: " + imageType);
+
+                                MultipartBuilder builder = new MultipartBuilder()
+                                        .type(MultipartBuilder.FORM)
+                                        .addFormDataPart(Ssource,
+                                                filename,
+                                                RequestBody.create(MediaType.parse("image/" + imageType), new File(filename)))
+                                        .addFormDataPart(Smessage, params[1]);
+
+                                if (params.length > 3) {
+                                    if (!TextUtils.isEmpty(params[3])) {
+                                        builder.addFormDataPart(Splace, params[3]);
+                                    }
+
+                                    if (params.length > 4) {
+                                        if (!TextUtils.isEmpty(params[4])) {
+                                            builder.addFormDataPart(Stags, params[4]);
+                                        }
+                                    }
+                                }
+
+                                Request request = new Request.Builder()
+                                        .url(String.format(Facebook.FACEBOOK_PHOTOS, FACEBOOK_BASE_URL, Saccess_token, params[0]))
+                                        .post(builder.build())
+                                        .build();
+
+                                return SonetHttpClient.getResponse(request);
                             }
-                            return response;
+
+                            return null;
                         }
 
                         @Override

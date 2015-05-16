@@ -18,9 +18,8 @@ import com.piusvelte.sonet.SonetOAuth;
 import com.piusvelte.sonet.provider.Entities;
 import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.Statuses;
+import com.squareup.okhttp.Request;
 
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -231,7 +230,6 @@ public class Foursquare extends Client {
             boolean time24hr,
             int appWidgetId,
             long account,
-            HttpClient httpClient,
             Set<String> notificationSids,
             String[] notificationMessage,
             boolean doNotify) throws JSONException {
@@ -307,8 +305,8 @@ public class Foursquare extends Client {
                 appWidgetId,
                 account,
                 sid,
-                esid,
-                httpClient);
+                esid
+        );
     }
 
     @Nullable
@@ -474,19 +472,23 @@ public class Foursquare extends Client {
             }
         }
 
-        HttpPost httpPost;
+        String url;
 
         if (!TextUtils.isEmpty(placeId)) {
             if (!TextUtils.isEmpty(message)) {
-                httpPost = new HttpPost(String.format(FOURSQUARE_CHECKIN, FOURSQUARE_BASE_URL, placeId, message, latitude, longitude, mToken));
+                url = String.format(FOURSQUARE_CHECKIN, FOURSQUARE_BASE_URL, placeId, message, latitude, longitude, mToken);
             } else {
-                httpPost = new HttpPost(String.format(FOURSQUARE_CHECKIN_NO_SHOUT, FOURSQUARE_BASE_URL, placeId, latitude, longitude, mToken));
+                url = String.format(FOURSQUARE_CHECKIN_NO_SHOUT, FOURSQUARE_BASE_URL, placeId, latitude, longitude, mToken);
             }
         } else {
-            httpPost = new HttpPost(String.format(FOURSQUARE_CHECKIN_NO_VENUE, FOURSQUARE_BASE_URL, message, mToken));
+            url = String.format(FOURSQUARE_CHECKIN_NO_VENUE, FOURSQUARE_BASE_URL, message, mToken);
         }
 
-        return SonetHttpClient.httpResponse(mContext, httpPost) != null;
+        Request request = new Request.Builder()
+                .url(url)
+                .post(null)
+                .build();
+        return SonetHttpClient.request(request);
     }
 
     @Override
@@ -581,8 +583,12 @@ public class Foursquare extends Client {
     public boolean sendComment(@NonNull String statusId, @NonNull String message) {
         try {
             message = URLEncoder.encode(message, "UTF-8");
-            HttpPost httpPost = new HttpPost(String.format(FOURSQUARE_ADDCOMMENT, FOURSQUARE_BASE_URL, statusId, message, mToken));
-            return !TextUtils.isEmpty(SonetHttpClient.httpResponse(mContext, httpPost));
+            Request request = new Request.Builder()
+                    .url(String.format(FOURSQUARE_ADDCOMMENT, FOURSQUARE_BASE_URL, statusId, message, mToken))
+                    .post(null)
+                    .build();
+
+            return SonetHttpClient.request(request);
         } catch (UnsupportedEncodingException e) {
             if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
         }

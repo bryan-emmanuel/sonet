@@ -19,7 +19,11 @@
  */
 package com.piusvelte.sonet;
 
+import android.support.annotation.NonNull;
 import android.util.Log;
+
+import com.piusvelte.sonet.network.OAuthHttpRequest;
+import com.squareup.okhttp.Request;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -76,6 +80,24 @@ public class SonetOAuth {
         return false;
     }
 
+    public Request signRequest(@NonNull Request request) {
+        OAuthHttpRequest wrappedRequest = new OAuthHttpRequest(request);
+
+        try {
+            mOAuthConsumer.sign(wrappedRequest);
+            return wrappedRequest.unwrap();
+        } catch (OAuthMessageSignerException e) {
+            Log.e(TAG, e.toString());
+        } catch (OAuthExpectationFailedException e) {
+            Log.e(TAG, e.toString());
+        } catch (OAuthCommunicationException e) {
+            Log.e(TAG, e.toString());
+        }
+
+        return request;
+    }
+
+    @Deprecated
     public HttpUriRequest getSignedRequest(HttpUriRequest httpRequest) {
         try {
             mOAuthConsumer.sign(httpRequest);

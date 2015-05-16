@@ -27,9 +27,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
-import android.graphics.BitmapShader;
 import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.support.annotation.Nullable;
@@ -351,24 +349,6 @@ public class Sonet {
     @Nullable
     public static Bitmap getBitmap(Resources r, int i) {
         return BitmapFactory.decodeResource(r, i, sBFOptions);
-    }
-
-    @Nullable
-    public static Bitmap getCircleCrop(Bitmap in) {
-        if (in != null) {
-            Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            paint.setShader(new BitmapShader(in, BitmapShader.TileMode.CLAMP, BitmapShader.TileMode.CLAMP));
-            int radius = Math.min(in.getWidth(), in.getHeight()) / 2;
-
-            Bitmap out = Bitmap.createBitmap(radius * 2, radius * 2, Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(out);
-            canvas.drawCircle(radius, radius, radius, paint);
-
-            in.recycle();
-            return out;
-        }
-
-        return null;
     }
 
     @Nullable

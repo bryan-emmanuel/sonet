@@ -26,6 +26,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
@@ -36,8 +37,8 @@ import android.widget.SimpleAdapter;
 import com.piusvelte.sonet.provider.Accounts;
 import com.piusvelte.sonet.provider.Entities;
 import com.piusvelte.sonet.social.Facebook;
+import com.squareup.okhttp.Request;
 
-import org.apache.http.client.methods.HttpGet;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -176,10 +177,15 @@ public class SelectFriends extends ListActivity {
                     case TWITTER:
                         break;
                     case FACEBOOK:
-                        if ((response = SonetHttpClient.httpResponse(getApplicationContext(),
-                                new HttpGet(String.format(Facebook.FACEBOOK_FRIENDS, Facebook.FACEBOOK_BASE_URL, Saccess_token, mToken)))) != null) {
+                        Request request = new Request.Builder()
+                                .url(String.format(Facebook.FACEBOOK_FRIENDS, Facebook.FACEBOOK_BASE_URL, Saccess_token, mToken))
+                                .build();
+                        response = SonetHttpClient.getResponse(request);
+
+                        if (!TextUtils.isEmpty(response)) {
                             try {
                                 JSONArray friends = new JSONObject(response).getJSONArray(Sdata);
+
                                 for (int i = 0, l = friends.length(); i < l; i++) {
                                     JSONObject f = friends.getJSONObject(i);
                                     HashMap<String, String> newFriend = new HashMap<String, String>();

@@ -9,8 +9,6 @@ import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.SonetOAuth;
 
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -134,7 +132,6 @@ public class Pinterest extends Client {
             boolean time24hr,
             int appWidgetId,
             long account,
-            HttpClient httpClient,
             Set<String> notificationSids,
             String[] notificationMessage,
             boolean doNotify) throws JSONException {
@@ -170,8 +167,8 @@ public class Pinterest extends Client {
                 account,
                 item.getString(Sid),
                 friendObj.getString(Sid),
-                links,
-                httpClient);
+                links
+        );
     }
 
     @Nullable

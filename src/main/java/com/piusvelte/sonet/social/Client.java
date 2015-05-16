@@ -25,14 +25,15 @@ import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.StatusImages;
 import com.piusvelte.sonet.provider.StatusLinks;
 import com.piusvelte.sonet.provider.Statuses;
+import com.piusvelte.sonet.util.CircleTransformation;
+import com.squareup.picasso.Picasso;
 
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -229,8 +230,7 @@ abstract public class Client {
             int status_count,
             boolean time24hr,
             boolean display_profile,
-            int notifications,
-            HttpClient httpClient) {
+            int notifications) {
         String[] notificationMessage = new String[1];
         Set<String> notificationSids = null;
         boolean doNotify = notifications != 0;
@@ -258,7 +258,7 @@ abstract public class Client {
                             JSONObject item = feedItems.getJSONObject(itemIdx);
 
                             if (item != null) {
-                                addFeedItem(item, display_profile, time24hr, appWidgetId, account, httpClient, notificationSids, notificationMessage,
+                                addFeedItem(item, display_profile, time24hr, appWidgetId, account, notificationSids, notificationMessage,
                                         doNotify);
                             }
                         }
@@ -273,8 +273,8 @@ abstract public class Client {
                                 account,
                                 "",
                                 "",
-                                new ArrayList<String[]>(),
-                                httpClient);
+                                new ArrayList<String[]>()
+                        );
                     }
                 }
             } catch (JSONException e) {
@@ -293,8 +293,8 @@ abstract public class Client {
                     account,
                     "",
                     "",
-                    new ArrayList<String[]>(),
-                    httpClient);
+                    new ArrayList<String[]>()
+            );
         }
 
         if (doNotify) {
@@ -323,7 +323,6 @@ abstract public class Client {
             boolean time24hr,
             int appWidgetId,
             long account,
-            HttpClient httpClient,
             Set<String> notificationSids,
             String[] notificationMessage,
             boolean doNotify) throws JSONException;
@@ -505,9 +504,8 @@ abstract public class Client {
             int appWidgetId,
             long accountId,
             String sid,
-            String esid,
-            HttpClient httpClient) {
-        addStatusItem(created, friend, url, message, time24hr, appWidgetId, accountId, sid, esid, new ArrayList<String[]>(), httpClient);
+            String esid) {
+        addStatusItem(created, friend, url, message, time24hr, appWidgetId, accountId, sid, esid, new ArrayList<String[]>());
     }
 
     void addStatusItem(long created,
@@ -519,18 +517,33 @@ abstract public class Client {
             long accountId,
             String sid,
             String esid,
-            ArrayList<String[]> links,
-            HttpClient httpClient) {
+            ArrayList<String[]> links) {
         long id;
         byte[] profile = null;
 
         if (url != null) {
             // get profile
-            profile = Sonet.getBlob(Sonet.getCircleCrop(SonetHttpClient.getHttpResponse(httpClient, new HttpGet(url))));
+            try {
+                Bitmap bitmap = Picasso.with(mContext)
+                        .load(url)
+                        .transform(new CircleTransformation())
+                        .get();
+                profile = Sonet.getBlob(bitmap);
+            } catch (IOException e) {
+                if (BuildConfig.DEBUG) Log.e(mTag, "error loading image:" + url, e);
+            }
         }
 
         if (profile == null) {
-            profile = Sonet.getBlob(Sonet.getCircleCrop(Sonet.getBitmap(getResources(), R.drawable.ic_contact_picture)));
+            try {
+                Bitmap bitmap = Picasso.with(mContext)
+                        .load(R.drawable.ic_contact_picture)
+                        .transform(new CircleTransformation())
+                        .get();
+                profile = Sonet.getBlob(bitmap);
+            } catch (IOException e) {
+                if (BuildConfig.DEBUG) Log.e(mTag, "error loading ic_contact_picture", e);
+            }
         }
 
         String friend_override = getPostFriendOverride(friend);
@@ -614,7 +627,17 @@ abstract public class Client {
         boolean insertEmptyImage = true;
 
         if (!TextUtils.isEmpty(imageUrl)) {
-            byte[] image = Sonet.getBlob(SonetHttpClient.getHttpResponse(httpClient, new HttpGet(imageUrl)));
+            byte[] image;
+
+            try {
+                Bitmap bmp = Picasso.with(mContext)
+                        .load(imageUrl)
+                        .get();
+                image = Sonet.getBlob(bmp);
+            } catch (IOException e) {
+                if (BuildConfig.DEBUG) Log.e(mTag, "error loading:" + imageUrl, e);
+                image = null;
+            }
 
             if (image != null) {
                 Bitmap imageBmp = BitmapFactory.decodeByteArray(image, 0, image.length, sBFOptions);

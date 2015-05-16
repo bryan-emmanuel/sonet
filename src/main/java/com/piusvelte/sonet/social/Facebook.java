@@ -24,7 +24,6 @@ import com.piusvelte.sonet.provider.Widgets;
 import com.squareup.okhttp.FormEncodingBuilder;
 import com.squareup.okhttp.Request;
 
-import org.apache.http.client.HttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -296,7 +295,6 @@ public class Facebook extends Client {
             boolean time24hr,
             int appWidgetId,
             long account,
-            HttpClient httpClient,
             Set<String> notificationSids,
             String[] notificationMessage,
             boolean doNotify) throws JSONException {
@@ -421,8 +419,8 @@ public class Facebook extends Client {
                         account,
                         sid,
                         esid,
-                        links,
-                        httpClient);
+                        links
+                );
             }
         }
     }

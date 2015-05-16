@@ -10,8 +10,6 @@ import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.SonetOAuth;
 
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -218,12 +216,11 @@ public class Rss extends Client {
             boolean time24hr,
             int appWidgetId,
             long account,
-            HttpClient httpClient,
             Set<String> notificationSids,
             String[] notificationMessage,
             boolean doNotify) throws JSONException {
         addStatusItem(item.getLong(Spubdate), item.getString(Stitle), display_profile ? item.getString(Simage) : null, item.getString(Sdescription),
-                time24hr, appWidgetId, account, null, item.getString(Slink), new ArrayList<String[]>(), httpClient);
+                time24hr, appWidgetId, account, null, item.getString(Slink), new ArrayList<String[]>());
     }
 
     @Nullable

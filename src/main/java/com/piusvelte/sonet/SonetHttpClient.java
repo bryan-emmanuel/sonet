@@ -21,7 +21,6 @@ package com.piusvelte.sonet;
 
 import android.content.Context;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.graphics.Bitmap;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -32,12 +31,6 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
@@ -50,10 +43,7 @@ import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FilterInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.Locale;
 
@@ -76,6 +66,7 @@ public class SonetHttpClient {
         return mOkHttpClient;
     }
 
+    @Deprecated
     public static DefaultHttpClient getThreadSafeClient(Context context) {
         if (sHttpClient == null) {
             Log.d(TAG, "create http client");
@@ -128,61 +119,31 @@ public class SonetHttpClient {
     }
 
     @Nullable
-    public static Bitmap getHttpResponse(HttpClient httpClient, HttpUriRequest httpRequest) {
-        if (httpClient != null) {
-            HttpResponse httpResponse;
-            HttpEntity entity = null;
-
-            try {
-                httpResponse = httpClient.execute(httpRequest);
-                StatusLine statusLine = httpResponse.getStatusLine();
-                entity = httpResponse.getEntity();
-
-                switch (statusLine.getStatusCode()) {
-                    case 200:
-                    case 201:
-                    case 204:
-                        if (entity != null) {
-                            return Sonet.getBitmap(new FlushedInputStream(entity.getContent()));
-                        }
-                        break;
-                }
-            } catch (ClientProtocolException e) {
-                Log.e(TAG, e.toString());
-
-                try {
-                    httpRequest.abort();
-                } catch (UnsupportedOperationException ignore) {
-                    Log.e(TAG, ignore.toString());
-                }
-            } catch (IOException e) {
-                Log.e(TAG, e.toString());
-
-                try {
-                    httpRequest.abort();
-                } catch (UnsupportedOperationException ignore) {
-                    Log.e(TAG, ignore.toString());
-                }
-            } finally {
-                if (entity != null) {
-                    try {
-                        entity.consumeContent();
-                    } catch (IOException e) {
-                        Log.e(TAG, e.toString());
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
-
-    @Nullable
     public static String httpResponse(String url) {
-        OkHttpClient client = getOkHttpClientInstance();
         Request request = new Request.Builder()
                 .url(url)
                 .build();
+
+        return getResponse(request);
+    }
+
+    public static boolean request(@NonNull Request request) {
+        try {
+            return getOkHttpClientInstance()
+                    .newCall(request)
+                    .execute()
+                    .isSuccessful();
+        } catch (IOException e) {
+            if (BuildConfig.DEBUG) {
+                Log.e(TAG, "request error, request=" + request, e);
+            }
+        }
+
+        return false;
+    }
+
+    public static String getResponse(@NonNull Request request) {
+        OkHttpClient client = getOkHttpClientInstance();
         Response response;
 
         try {
@@ -190,7 +151,7 @@ public class SonetHttpClient {
                     .execute();
         } catch (IOException e) {
             if (BuildConfig.DEBUG) {
-                Log.e(TAG, "request error; url=" + url, e);
+                Log.e(TAG, "request error; url=" + request.urlString(), e);
             }
 
             response = null;
@@ -200,7 +161,12 @@ public class SonetHttpClient {
             String body;
 
             if (response.body() != null) {
-                body = response.body().toString();
+                try {
+                    body = response.body().string();
+                } catch (IOException e) {
+                    if (BuildConfig.DEBUG) Log.e(TAG, "error getting response body", e);
+                    body = null;
+                }
             } else {
                 body = null;
             }
@@ -214,132 +180,5 @@ public class SonetHttpClient {
         }
 
         return null;
-    }
-
-    public static boolean request(@NonNull Request request) {
-        try {
-            return getOkHttpClientInstance()
-                    .newCall(request)
-                    .execute()
-                    .isSuccessful();
-        } catch (IOException e) {
-            if (BuildConfig.DEBUG) {
-                Log.e(TAG, "request error", e);
-            }
-        }
-
-        return false;
-    }
-
-    @Deprecated
-    public static String httpResponse(@NonNull Context context, HttpUriRequest httpRequest) {
-        return httpResponse(getThreadSafeClient(context), httpRequest);
-    }
-
-    @Deprecated
-    private static String httpResponse(HttpClient httpClient, HttpUriRequest httpRequest) {
-        String response = null;
-        if (httpClient != null) {
-            HttpResponse httpResponse;
-            HttpEntity entity = null;
-            try {
-                httpResponse = httpClient.execute(httpRequest);
-                StatusLine statusLine = httpResponse.getStatusLine();
-                entity = httpResponse.getEntity();
-
-                switch (statusLine.getStatusCode()) {
-                    case 200:
-                    case 201:
-                    case 204:
-                        if (entity != null) {
-                            InputStream is = entity.getContent();
-                            ByteArrayOutputStream content = new ByteArrayOutputStream();
-                            byte[] sBuffer = new byte[512];
-                            int readBytes = 0;
-                            while ((readBytes = is.read(sBuffer)) != -1) {
-                                content.write(sBuffer, 0, readBytes);
-                            }
-                            response = new String(content.toByteArray());
-                        } else {
-                            response = "OK";
-                        }
-                        break;
-                    default:
-                        Log.e(TAG, httpRequest.getURI().toString());
-                        Log.e(TAG, "" + statusLine.getStatusCode() + " " + statusLine.getReasonPhrase());
-                        if (entity != null) {
-                            InputStream is = entity.getContent();
-                            ByteArrayOutputStream content = new ByteArrayOutputStream();
-                            byte[] sBuffer = new byte[512];
-                            int readBytes = 0;
-                            while ((readBytes = is.read(sBuffer)) != -1) {
-                                content.write(sBuffer, 0, readBytes);
-                            }
-                            Log.e(TAG, "response:" + new String(content.toByteArray()));
-                        }
-                        break;
-                }
-            } catch (ClientProtocolException e) {
-                Log.e(TAG, e.toString());
-                try {
-                    httpRequest.abort();
-                } catch (UnsupportedOperationException ignore) {
-                    Log.e(TAG, ignore.toString());
-                }
-            } catch (IllegalStateException e) {
-                Log.e(TAG, e.toString());
-                try {
-                    httpRequest.abort();
-                } catch (UnsupportedOperationException ignore) {
-                    Log.e(TAG, ignore.toString());
-                }
-            } catch (IOException e) {
-                Log.e(TAG, e.toString());
-                try {
-                    httpRequest.abort();
-                } catch (UnsupportedOperationException ignore) {
-                    Log.e(TAG, ignore.toString());
-                }
-            } finally {
-                if (entity != null) {
-                    try {
-                        entity.consumeContent();
-                    } catch (IOException e) {
-                        Log.e(TAG, e.toString());
-                    }
-                }
-            }
-        }
-        return response;
-    }
-
-    @Deprecated
-    protected static class FlushedInputStream extends FilterInputStream {
-        public FlushedInputStream(InputStream inputStream) {
-            super(inputStream);
-        }
-
-        @Override
-        public long skip(long n) throws IOException {
-            long totalBytesSkipped = 0L;
-
-            while (totalBytesSkipped < n) {
-                long bytesSkipped = in.skip(n - totalBytesSkipped);
-
-                if (bytesSkipped == 0L) {
-                    int nextByte = read();
-
-                    if (nextByte < 0) {
-                        break;  // we reached EOF
-                    } else {
-                        bytesSkipped = 1; // we read one byte
-                    }
-                }
-
-                totalBytesSkipped += bytesSkipped;
-            }
-
-            return totalBytesSkipped;
-        }
     }
 }
