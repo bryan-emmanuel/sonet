@@ -98,7 +98,12 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
         mDrawerToggle = new ActionBarDrawerToggle(this,
                 drawerLayout,
                 R.string.drawer_open,
-                R.string.drawer_closed);
+                R.string.drawer_closed) {
+            @Override
+            public void onDrawerSlide(View drawerView, float slideOffset) {
+                super.onDrawerSlide(drawerView, 0);
+            }
+        };
         drawerLayout.setDrawerListener(mDrawerToggle);
     }
 
@@ -108,6 +113,10 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
         mAdapter = new MenuItemAdapter(this, R.menu.navigation_about);
         drawerList.setAdapter(mAdapter);
         drawerList.setOnItemClickListener(this);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            drawerList.setFitsSystemWindows(true);
+        }
     }
 
     private void setupActionBar() {

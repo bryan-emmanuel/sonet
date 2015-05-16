@@ -12,6 +12,8 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import com.piusvelte.sonet.R;
+
 /**
  * Created by bemmanuel on 5/13/15.
  */
@@ -51,6 +53,7 @@ public class MenuItemAdapter extends BaseAdapter {
             convertView = LayoutInflater.from(mContext).inflate(android.R.layout.simple_list_item_1, parent, false);
             viewHolder = new ViewHolder();
             viewHolder.title = (TextView) convertView.findViewById(android.R.id.text1);
+            viewHolder.title.setCompoundDrawablePadding(mContext.getResources().getDimensionPixelSize(R.dimen.material_padding));
             convertView.setTag(viewHolder);
         } else {
             viewHolder = (ViewHolder) convertView.getTag();

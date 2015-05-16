@@ -35,8 +35,8 @@
         android:id="@+id/icon"
         android:layout_width="32dip"
         android:layout_height="32dip"
-        android:paddingLeft="@dimen/message_item_padding"
-        android:paddingTop="@dimen/message_item_padding"
+        android:paddingLeft="@dimen/material_padding"
+        android:paddingTop="@dimen/material_padding"
         android:scaleType="fitCenter"
         tools:src="@drawable/googleplus" />
 
@@ -47,8 +47,8 @@
         android:layout_toRightOf="@+id/icon"
         android:gravity="center_vertical"
         android:maxLines="1"
-        android:paddingLeft="@dimen/message_item_padding"
-        android:paddingTop="@dimen/message_item_padding"
+        android:paddingLeft="@dimen/material_padding"
+        android:paddingTop="@dimen/material_padding"
         android:textColor="@color/default_friend_color"
         android:textStyle="bold"
         tools:text="Hello, my name is" />
@@ -60,8 +60,8 @@
         android:layout_alignParentRight="true"
         android:gravity="center_vertical"
         android:maxLines="1"
-        android:paddingRight="@dimen/message_item_padding"
-        android:paddingTop="@dimen/message_item_padding"
+        android:paddingRight="@dimen/material_padding"
+        android:paddingTop="@dimen/material_padding"
         android:textColor="@color/default_friend_color"
         tools:text="Today" />
 
@@ -70,9 +70,9 @@
         android:layout_height="match_parent"
         android:layout_below="@id/friend"
         android:orientation="vertical"
-        android:paddingBottom="@dimen/message_item_padding"
-        android:paddingLeft="@dimen/message_item_padding"
-        android:paddingRight="@dimen/message_item_padding">
+        android:paddingBottom="@dimen/material_padding"
+        android:paddingLeft="@dimen/material_padding"
+        android:paddingRight="@dimen/material_padding">
 
         <TextView
             android:id="@+id/message"
@@ -85,7 +85,7 @@
             android:id="@+id/image"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingTop="@dimen/message_item_padding"
+            android:paddingTop="@dimen/material_padding"
             android:scaleType="fitCenter"
             tools:src="@drawable/icon" />
 

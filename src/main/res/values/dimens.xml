@@ -16,5 +16,5 @@
 
 <resources>
     <dimen name="message_item_header_height">72dip</dimen>
-    <dimen name="message_item_padding">16dip</dimen>
+    <dimen name="material_padding">16dip</dimen>
 </resources>

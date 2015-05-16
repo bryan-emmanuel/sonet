@@ -53,7 +53,7 @@
         android:layout_width="@dimen/message_item_header_height"
         android:layout_height="@dimen/message_item_header_height"
         android:layout_below="@id/settings_notification"
-        android:padding="@dimen/message_item_padding"
+        android:padding="@dimen/material_padding"
         tools:src="@drawable/icon" />
 
     <TextView
@@ -64,7 +64,7 @@
         android:layout_below="@id/settings_notification"
         android:gravity="center_vertical"
         android:maxLines="1"
-        android:padding="@dimen/message_item_padding"
+        android:padding="@dimen/material_padding"
         android:text="@string/settings_time" />
 
     <TextView
@@ -76,8 +76,8 @@
         android:layout_toRightOf="@+id/profile"
         android:gravity="center_vertical"
         android:maxLines="1"
-        android:paddingBottom="@dimen/message_item_padding"
-        android:paddingTop="@dimen/message_item_padding"
+        android:paddingBottom="@dimen/material_padding"
+        android:paddingTop="@dimen/material_padding"
         android:text="@string/settings_name"
         android:textStyle="bold" />
 
@@ -88,7 +88,7 @@
         android:layout_above="@+id/ad"
         android:layout_alignWithParentIfMissing="true"
         android:layout_below="@id/friend"
-        android:padding="@dimen/message_item_padding"
+        android:padding="@dimen/material_padding"
         android:text="@string/settings_message_extended" />
 
     <ImageView
@@ -98,8 +98,8 @@
         android:layout_above="@+id/ad"
         android:layout_alignParentRight="true"
         android:layout_alignWithParentIfMissing="true"
-        android:paddingBottom="@dimen/message_item_padding"
-        android:paddingRight="@dimen/message_item_padding"
+        android:paddingBottom="@dimen/material_padding"
+        android:paddingRight="@dimen/material_padding"
         android:scaleType="fitCenter"
         android:src="@drawable/icon" />
 
