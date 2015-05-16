@@ -17,42 +17,35 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/menu_feed"
+        android:icon="@drawable/ic_list_grey600_24dp"
+        android:title="@string/feed" />
+
     <item
         android:id="@+id/menu_about_accounts_and_settings"
         android:icon="@drawable/ic_settings_applications_grey600_24dp"
-        android:orderInCategory="0"
-        android:title="@string/accounts_and_settings"
-        app:showAsAction="ifRoom" />
+        android:title="@string/accounts_and_settings" />
     <item
         android:id="@+id/menu_about_refresh_widgets"
         android:icon="@drawable/ic_refresh_grey600_24dp"
-        android:orderInCategory="0"
-        android:title="@string/refreshallwidgets"
-        app:showAsAction="ifRoom" />
+        android:title="@string/refreshallwidgets" />
     <item
         android:id="@+id/menu_about_default_settings"
         android:icon="@drawable/ic_settings_applications_grey600_24dp"
-        android:orderInCategory="0"
-        android:title="@string/defaultsettings"
-        app:showAsAction="ifRoom" />
+        android:title="@string/defaultsettings" />
     <item
         android:id="@+id/menu_about_notifications"
-        android:icon="@drawable/ic_unfold_more_grey600_24dp"
-        android:orderInCategory="0"
-        android:title="@string/notifications"
-        app:showAsAction="ifRoom" />
+        android:icon="@drawable/ic_notifications_grey600_24dp"
+        android:title="@string/notifications" />
     <item
         android:id="@+id/menu_about_widget_settings"
         android:icon="@drawable/ic_settings_applications_grey600_24dp"
-        android:orderInCategory="0"
-        android:title="@string/widget_settings"
-        app:showAsAction="ifRoom" />
+        android:title="@string/widget_settings" />
     <item
         android:id="@+id/menu_about_about"
-        android:icon="@drawable/ic_unfold_more_grey600_24dp"
-        android:orderInCategory="0"
-        android:title="@string/about_title"
-        app:showAsAction="ifRoom" />
+        android:icon="@drawable/ic_info_grey600_24dp"
+        android:title="@string/about_title" />
 </menu>

@@ -7,7 +7,6 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ListFragment;
@@ -395,7 +394,7 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
                 ((TextView) view).setText(cursor.getString(columnIndex));
                 return true;
             } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.PROFILE)) {
-                Bitmap bmp = BitmapFactory.decodeResource(mResources, R.drawable.ic_contact_picture, sBFOptions);
+                Bitmap bmp = BitmapFactory.decodeResource(mResources, R.drawable.ic_account_box_grey600_48dp, sBFOptions);
 
                 if (bmp != null) {
                     ((ImageView) view).setImageBitmap(bmp);

@@ -28,6 +28,7 @@ import com.piusvelte.sonet.SonetComments;
 import com.piusvelte.sonet.SonetCreatePost;
 import com.piusvelte.sonet.SonetNotifications;
 import com.piusvelte.sonet.SonetService;
+import com.piusvelte.sonet.loader.ProfileUrlLoader;
 import com.piusvelte.sonet.loader.StatusLoader;
 import com.piusvelte.sonet.provider.Accounts;
 import com.piusvelte.sonet.provider.WidgetAccounts;
@@ -335,6 +336,9 @@ public class StatusOptions extends ListFragment implements LoaderManager.LoaderC
         switch (id) {
             case LOADER_STATUS:
                 return new StatusLoader(getActivity(), Uri.parse(args.getString(ARG_DATA)), args.<Rect>getParcelable(ARG_RECT));
+
+            case LOADER_PROFILE:
+                return new ProfileUrlLoader(getActivity(), args.getLong(ARG_ACCOUNT_ID), args.getString(ARG_ESID));
 
             default:
                 return null;

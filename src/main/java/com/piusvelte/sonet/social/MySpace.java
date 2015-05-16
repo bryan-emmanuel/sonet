@@ -94,6 +94,29 @@ public class MySpace extends Client {
 
     @Nullable
     @Override
+    public String getProfilePhotoUrl(String esid) {
+        Request request = getOAuth().signRequest(new Request.Builder()
+                .url(String.format(MYSPACE_URL_ME, MYSPACE_BASE_URL))
+                .build());
+        String httpResponse = SonetHttpClient.getResponse(request);
+
+        if (!TextUtils.isEmpty(httpResponse)) {
+            try {
+                JSONObject jobj = new JSONObject(httpResponse);
+                JSONObject person = jobj.getJSONObject("person");
+                return person.getString(SthumbnailUrl);
+            } catch (JSONException e) {
+                if (BuildConfig.DEBUG) {
+                    Log.d(mTag, "error parsing me response: " + httpResponse, e);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    @Nullable
+    @Override
     public Uri getCallback() {
         return Uri.parse("sonet://myspace");
     }

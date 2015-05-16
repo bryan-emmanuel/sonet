@@ -15,11 +15,11 @@ public class ProfileUrlLoader extends BaseAsyncTaskLoader {
 
     @NonNull
     private Context mContext;
-    private int mAccountId;
+    private long mAccountId;
     @NonNull
     private String mEsid;
 
-    public ProfileUrlLoader(Context context, int accountId, @NonNull String esid) {
+    public ProfileUrlLoader(Context context, long accountId, @NonNull String esid) {
         super(context);
         mContext = context.getApplicationContext();
         mAccountId = accountId;

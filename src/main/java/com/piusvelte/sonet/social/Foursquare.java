@@ -82,6 +82,27 @@ public class Foursquare extends Client {
 
     @Nullable
     @Override
+    public String getProfilePhotoUrl(String esid) {
+        String httpResponse = SonetHttpClient.httpResponse(String.format(FOURSQUARE_URL_ME, FOURSQUARE_BASE_URL, mToken));
+
+        if (!TextUtils.isEmpty(httpResponse)) {
+            JSONObject jobj;
+
+            try {
+                jobj = (new JSONObject(httpResponse)).getJSONObject("response").getJSONObject("user");
+                return jobj.getString(Sphoto);
+            } catch (JSONException e) {
+                if (BuildConfig.DEBUG) {
+                    Log.d(mTag, "error parsing foursquare me response: " + httpResponse, e);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    @Nullable
+    @Override
     public Uri getCallback() {
         return Uri.parse("sonet://foursquare");
     }

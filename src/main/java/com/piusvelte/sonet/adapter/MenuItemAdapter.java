@@ -50,7 +50,7 @@ public class MenuItemAdapter extends BaseAdapter {
         final ViewHolder viewHolder;
 
         if (convertView == null) {
-            convertView = LayoutInflater.from(mContext).inflate(android.R.layout.simple_list_item_1, parent, false);
+            convertView = LayoutInflater.from(mContext).inflate(android.R.layout.simple_list_item_activated_1, parent, false);
             viewHolder = new ViewHolder();
             viewHolder.title = (TextView) convertView.findViewById(android.R.id.text1);
             viewHolder.title.setCompoundDrawablePadding(mContext.getResources().getDimensionPixelSize(R.dimen.material_padding));

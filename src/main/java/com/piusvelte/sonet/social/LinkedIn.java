@@ -156,6 +156,28 @@ public class LinkedIn extends Client {
 
     @Nullable
     @Override
+    public String getProfilePhotoUrl(String esid) {
+        Request request = getOAuth().signRequest(addHeaders(new Request.Builder()
+                .url(String.format(LINKEDIN_URL_ME, LINKEDIN_BASE_URL)))
+                .build());
+        String httpResponse = SonetHttpClient.getResponse(request);
+
+        if (!TextUtils.isEmpty(httpResponse)) {
+            try {
+                JSONObject jobj = new JSONObject(httpResponse);
+                return jobj.getString(SpictureUrl);
+            } catch (JSONException e) {
+                if (BuildConfig.DEBUG) {
+                    Log.d(mTag, "error parsing me response: " + httpResponse, e);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    @Nullable
+    @Override
     public Uri getCallback() {
         return Uri.parse("sonet://linkedin");
     }

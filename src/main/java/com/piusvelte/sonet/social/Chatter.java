@@ -77,6 +77,30 @@ public class Chatter extends Client {
         return null;
     }
 
+    @Nullable
+    @Override
+    public String getProfilePhotoUrl(String esid) {
+        if (getChatterInstance()) {
+            Request request = new Request.Builder()
+                    .url(String.format(CHATTER_URL_ME, mChatterInstance))
+                    .addHeader("Authorization", "OAuth " + mChatterToken)
+                    .build();
+
+            String httpRespnose = SonetHttpClient.getResponse(request);
+
+            if (!TextUtils.isEmpty(httpRespnose)) {
+                try {
+                    JSONObject jobj = new JSONObject(httpRespnose);
+                    return jobj.getJSONObject(Sphoto).getString(SsmallPhotoUrl);
+                } catch (JSONException e) {
+                    if (BuildConfig.DEBUG) Log.d(mTag, "error parse chatter me: " + httpRespnose, e);
+                }
+            }
+        }
+
+        return null;
+    }
+
     private boolean hasChatterInstance() {
         return !TextUtils.isEmpty(mChatterInstance) && !TextUtils.isEmpty(mChatterToken);
     }

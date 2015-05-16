@@ -77,7 +77,7 @@ public class Facebook extends Client {
     private static final String FACEBOOK_USER = "%sv2.3/%s?format=json&sdk=android&%s=%s";
     public static final String FACEBOOK_PHOTOS = "%sv2.3/me/photos?format=json&sdk=android&%s=%s";
     public static final String FACEBOOK_FRIENDS = "%sv2.3/me/friends?format=json&sdk=android&%s=%s";
-    public static final String FACEBOOK_PICTURE = "http://graph.facebook.com/%s/picture";
+    public static final String FACEBOOK_PICTURE = "https://graph.facebook.com/v2.3/%s/picture";
 
     public Facebook(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
@@ -99,6 +99,12 @@ public class Facebook extends Client {
         }
 
         return null;
+    }
+
+    @Nullable
+    @Override
+    public String getProfilePhotoUrl(String esid) {
+        return String.format(FACEBOOK_PICTURE, "me");
     }
 
     @Nullable

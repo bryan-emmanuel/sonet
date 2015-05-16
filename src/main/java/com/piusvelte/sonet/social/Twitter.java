@@ -82,7 +82,30 @@ public class Twitter extends Client {
 
             try {
                 JSONObject user = new JSONObject(response);
-                return String.format(getUserUrl(), user.getString("screen_name"));
+                return String.format(getProfileUrl(), user.getString("screen_name"));
+            } catch (JSONException e) {
+                if (BuildConfig.DEBUG) {
+                    Log.e(mTag, "Error parsing: " + response, e);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public String getProfilePhotoUrl(String esid) {
+        Request request = getOAuth().signRequest(new Request.Builder()
+                .url(String.format(getUserUrl(), getBaseUrl(), esid))
+                .build());
+        String response = SonetHttpClient.getResponse(request);
+
+        if (!TextUtils.isEmpty(response)) {
+
+            try {
+                JSONObject user = new JSONObject(response);
+                return user.getString(Sprofile_image_url);
             } catch (JSONException e) {
                 if (BuildConfig.DEBUG) {
                     Log.e(mTag, "Error parsing: " + response, e);
@@ -197,6 +220,10 @@ public class Twitter extends Client {
 
     String getVerifyCredentialsUrl() {
         return String.format(TWITTER_VERIFY_CREDENTIALS, getBaseUrl());
+    }
+
+    String getProfileUrl() {
+        return TWITTER_PROFILE;
     }
 
     @Override

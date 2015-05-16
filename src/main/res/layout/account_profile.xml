@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="@dimen/message_item_header_height"
+    android:layout_height="@dimen/message_item_header_height">
+
+    <ImageView
+        android:id="@+id/profile"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:src="@drawable/ic_account_box_grey600_48dp" />
+
+    <ImageView
+        android:id="@+id/icon"
+        android:layout_width="16dip"
+        android:layout_height="16dip"
+        android:layout_gravity="bottom|right"
+        tools:src="@drawable/icon" />
+
+</FrameLayout>

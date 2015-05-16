@@ -118,7 +118,7 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
                 byte[] profile = mCursor.getBlob(2);
 
                 if (profile == null) {
-                    profile = Sonet.getBlob(Sonet.getBitmap(mContext.getResources(), R.drawable.ic_contact_picture));
+                    profile = Sonet.getBlob(Sonet.getBitmap(mContext.getResources(), R.drawable.ic_account_box_grey600_48dp));
                 }
 
                 setImageViewBitmap(views, R.id.profile, profile);

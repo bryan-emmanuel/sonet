@@ -309,6 +309,9 @@ abstract public class Client {
     abstract public String getProfileUrl(@NonNull String esid);
 
     @Nullable
+    abstract public String getProfilePhotoUrl(String esid);
+
+    @Nullable
     abstract public Set<String> getNotificationStatusIds(long account, String[] notificationMessage);
 
     @Nullable
@@ -537,12 +540,12 @@ abstract public class Client {
         if (profile == null) {
             try {
                 Bitmap bitmap = Picasso.with(mContext)
-                        .load(R.drawable.ic_contact_picture)
+                        .load(R.drawable.ic_account_box_grey600_48dp)
                         .transform(new CircleTransformation())
                         .get();
                 profile = Sonet.getBlob(bitmap);
             } catch (IOException e) {
-                if (BuildConfig.DEBUG) Log.e(mTag, "error loading ic_contact_picture", e);
+                if (BuildConfig.DEBUG) Log.e(mTag, "error loading ic_account_box_grey600_48dp", e);
             }
         }
 

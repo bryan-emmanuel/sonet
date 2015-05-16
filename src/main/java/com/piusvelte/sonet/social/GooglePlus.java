@@ -69,6 +69,12 @@ public class GooglePlus extends Client {
 
     @Nullable
     @Override
+    public String getProfilePhotoUrl(String esid) {
+        return null;
+    }
+
+    @Nullable
+    @Override
     public Uri getCallback() {
         return null;//Uri.parse("http://localhost")
     }

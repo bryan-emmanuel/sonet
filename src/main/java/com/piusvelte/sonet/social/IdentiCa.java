@@ -83,4 +83,9 @@ public class IdentiCa extends Twitter {
     String getVerifyCredentialsUrl() {
         return "https://identi.ca/api/account/verify_credentials.json";
     }
+
+    @Override
+    String getProfileUrl() {
+        return IDENTICA_PROFILE;
+    }
 }

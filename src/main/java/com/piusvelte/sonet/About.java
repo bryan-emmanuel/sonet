@@ -40,21 +40,28 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.GridView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.piusvelte.sonet.adapter.AccountProfileAdapter;
 import com.piusvelte.sonet.adapter.MenuItemAdapter;
 import com.piusvelte.sonet.fragment.ConfirmationDialogFragment;
 import com.piusvelte.sonet.fragment.ItemsDialogFragment;
 import com.piusvelte.sonet.fragment.WidgetsList;
+import com.piusvelte.sonet.loader.AccountsProfilesLoader;
 import com.piusvelte.sonet.provider.Accounts;
 import com.piusvelte.sonet.provider.Widgets;
 import com.piusvelte.sonet.provider.WidgetsSettings;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 
-public class About extends BaseActivity implements LoaderManager.LoaderCallbacks<Cursor>, AdapterView.OnItemClickListener {
+public class About extends BaseActivity implements LoaderManager.LoaderCallbacks, AdapterView.OnItemClickListener {
     private int[] mAppWidgetIds;
     private AppWidgetManager mAppWidgetManager;
     private boolean mUpdateWidget = false;
@@ -63,14 +70,19 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
     private static final String FRAGMENT_WIDGETS_LIST = "widgets_list";
 
     private static final int LOADER_DEFAULT_WIDGET = 0;
+    private static final int LOADER_ACCOUNTS = 1;
 
     private static final String DIALOG_ABOUT = "dialog:about";
     private static final String DIALOG_WIDGETS = "dialog:widgets";
 
     private static final int REQUEST_WIDGET = 0;
 
+    private DrawerLayout mDrawer;
+    private ListView mDrawerOptions;
+    private AccountProfileAdapter mAccountsAdapter;
     private MenuItemAdapter mAdapter;
     private ActionBarDrawerToggle mDrawerToggle;
+    List<HashMap<String, String>> mAccounts = new ArrayList<>();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -80,7 +92,6 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
 
         setupActionBar();
         setupDrawer();
-        setupDrawerList();
 
         Fragment widgetsList = getSupportFragmentManager().findFragmentByTag(FRAGMENT_WIDGETS_LIST);
 
@@ -91,12 +102,13 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
         }
 
         getSupportLoaderManager().initLoader(LOADER_DEFAULT_WIDGET, null, this);
+        getSupportLoaderManager().initLoader(LOADER_ACCOUNTS, null, this);
     }
 
     private void setupDrawer() {
-        DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         mDrawerToggle = new ActionBarDrawerToggle(this,
-                drawerLayout,
+                mDrawer,
                 R.string.drawer_open,
                 R.string.drawer_closed) {
             @Override
@@ -104,18 +116,29 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
                 super.onDrawerSlide(drawerView, 0);
             }
         };
-        drawerLayout.setDrawerListener(mDrawerToggle);
-    }
+        mDrawer.setDrawerListener(mDrawerToggle);
 
-    private void setupDrawerList() {
-        ListView drawerList = (ListView) findViewById(R.id.left_drawer);
+        GridView accounts = (GridView) findViewById(R.id.drawer_accounts);
+
+        mAccountsAdapter = new AccountProfileAdapter(this,
+                mAccounts,
+                R.layout.account_profile,
+                new String[] { Accounts.SID,
+                        Accounts.SERVICE },
+                new int[] { R.id.profile,
+                        R.id.icon });
+
+        accounts.setAdapter(mAccountsAdapter);
+
+        mDrawerOptions = (ListView) findViewById(R.id.drawer_options);
 
         mAdapter = new MenuItemAdapter(this, R.menu.navigation_about);
-        drawerList.setAdapter(mAdapter);
-        drawerList.setOnItemClickListener(this);
+        mDrawerOptions.setAdapter(mAdapter);
+        mDrawerOptions.setItemChecked(0, true);
+        mDrawerOptions.setOnItemClickListener(this);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            drawerList.setFitsSystemWindows(true);
+            mDrawerOptions.setFitsSystemWindows(true);
         }
     }
 
@@ -157,6 +180,10 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
             return true;
         } else {
             switch (item.getItemId()) {
+                case R.id.menu_feed:
+                    // TODO replace content with WidgetsList; currently the only content
+                    return true;
+
                 case R.id.menu_about_refresh:
                     // TODO handle this in WidgetsList, show loading, cleared onLoadFinished
                     startService(new Intent(this, SonetService.class)
@@ -260,14 +287,18 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
     }
 
     @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+    public Loader onCreateLoader(int id, Bundle args) {
         switch (id) {
             case LOADER_DEFAULT_WIDGET:
                 return new CursorLoader(this, WidgetsSettings.getContentUri(this),
                         new String[] { Widgets.DISPLAY_PROFILE },
                         Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
-                        new String[] { String.valueOf(AppWidgetManager.INVALID_APPWIDGET_ID), String.valueOf(Accounts.INVALID_ACCOUNT_ID) },
+                        new String[] { String.valueOf(AppWidgetManager.INVALID_APPWIDGET_ID),
+                                String.valueOf(Accounts.INVALID_ACCOUNT_ID) },
                         null);
+
+            case LOADER_ACCOUNTS:
+                return new AccountsProfilesLoader(this);
 
             default:
                 return null;
@@ -275,12 +306,22 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
     }
 
     @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+    public void onLoadFinished(Loader loader, Object result) {
         switch (loader.getId()) {
             case LOADER_DEFAULT_WIDGET:
-                if (cursor != null && cursor.moveToFirst()) {
-                    // TODO used to determine showing profile in WidgetsList
-                    //boolean showProfile = cursor.getInt(cursor.getColumnIndex(Widgets.DISPLAY_PROFILE)) != 0;
+                if (result instanceof Cursor) {
+                    Cursor cursor = (Cursor) result;
+
+                    if (cursor.moveToFirst()) {
+                        // TODO used to determine showing profile in WidgetsList
+                        //boolean showProfile = cursor.getInt(cursor.getColumnIndex(Widgets.DISPLAY_PROFILE)) != 0;
+                    } else {
+                        // initialize account settings
+                        ContentValues values = new ContentValues();
+                        values.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
+                        values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
+                        getContentResolver().insert(Widgets.getContentUri(About.this), values).getLastPathSegment();
+                    }
                 } else {
                     // initialize account settings
                     ContentValues values = new ContentValues();
@@ -289,16 +330,33 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
                     getContentResolver().insert(Widgets.getContentUri(About.this), values).getLastPathSegment();
                 }
                 break;
+
+            case LOADER_ACCOUNTS:
+                mAccounts.clear();
+
+                if (result instanceof List<?>) {
+                    mAccounts.addAll((List<HashMap<String, String>>) result);
+                }
+
+                mAccountsAdapter.notifyDataSetChanged();
+                break;
         }
     }
 
     @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-        // NO-OP
+    public void onLoaderReset(Loader loader) {
+        switch (loader.getId()) {
+            case LOADER_ACCOUNTS:
+                mAccounts.clear();
+                mAccountsAdapter.notifyDataSetChanged();
+                break;
+        }
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        mDrawerOptions.setItemChecked(position, true);
+        mDrawer.closeDrawers();
         onOptionsItemSelected(mAdapter.getItem(position));
     }
 }
