@@ -149,13 +149,13 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
         mDrawerAccounts.setOnItemLongClickListener(this);
 
         mDrawerPrimary = (ListView) drawerContainer.findViewById(R.id.drawer_primary);
-        mDrawerPrimaryAdapter = new MenuItemAdapter(this, R.menu.menu_drawer_primary);
+        mDrawerPrimaryAdapter = new MenuItemAdapter(this, R.menu.menu_drawer_primary, android.R.layout.simple_list_item_activated_1);
         mDrawerPrimary.setAdapter(mDrawerPrimaryAdapter);
         mDrawerPrimary.setItemChecked(0, true);
         mDrawerPrimary.setOnItemClickListener(this);
 
         mDrawerSecondary = (ListView) drawerContainer.findViewById(R.id.drawer_secondary);
-        mDrawerSecondaryAdapter = new MenuItemAdapter(this, R.menu.menu_drawer_secondary);
+        mDrawerSecondaryAdapter = new MenuItemAdapter(this, R.menu.menu_drawer_secondary, android.R.layout.simple_list_item_1);
         mDrawerSecondary.setAdapter(mDrawerSecondaryAdapter);
         mDrawerSecondary.setOnItemClickListener(this);
 
@@ -342,7 +342,6 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
                             .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
                             .putExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID)
                             , REQUEST_ADD_ACCOUNT);
-
                 }
                 break;
         }
@@ -432,7 +431,6 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
                 dialogFragment.show(getSupportFragmentManager(), DIALOG_CONFIRM_AUTHENTICATE_ACCOUNT);
             }
         } else if (parent == mDrawerPrimary) {
-            mDrawerPrimary.setItemChecked(position, true);
             onOptionsItemSelected(mDrawerPrimaryAdapter.getItem(position));
             mDrawer.closeDrawers();
         } else if (parent == mDrawerSecondary) {

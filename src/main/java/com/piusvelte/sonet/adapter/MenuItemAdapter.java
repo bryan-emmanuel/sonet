@@ -1,6 +1,7 @@
 package com.piusvelte.sonet.adapter;
 
 import android.content.Context;
+import android.support.annotation.LayoutRes;
 import android.support.annotation.MenuRes;
 import android.support.v7.internal.view.menu.MenuBuilder;
 import android.view.LayoutInflater;
@@ -21,10 +22,13 @@ public class MenuItemAdapter extends BaseAdapter {
 
     private final Context mContext;
     private final Menu mMenu;
+    @LayoutRes
+    private final int mItemLayoutResId;
 
-    public MenuItemAdapter(Context context, @MenuRes int menuResId) {
+    public MenuItemAdapter(Context context, @MenuRes int menuResId, @LayoutRes int itemLayoutResId) {
         mContext = context;
         mMenu = new MenuBuilder(mContext);
+        mItemLayoutResId = itemLayoutResId;
 
         MenuInflater mi = new MenuInflater(mContext);
         mi.inflate(menuResId, mMenu);
@@ -50,7 +54,7 @@ public class MenuItemAdapter extends BaseAdapter {
         final ViewHolder viewHolder;
 
         if (convertView == null) {
-            convertView = LayoutInflater.from(mContext).inflate(android.R.layout.simple_list_item_activated_1, parent, false);
+            convertView = LayoutInflater.from(mContext).inflate(mItemLayoutResId, parent, false);
             viewHolder = new ViewHolder();
             viewHolder.title = (TextView) convertView.findViewById(android.R.id.text1);
             viewHolder.title.setCompoundDrawablePadding(mContext.getResources().getDimensionPixelSize(R.dimen.material_padding));

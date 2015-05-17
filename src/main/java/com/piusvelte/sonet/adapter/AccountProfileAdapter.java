@@ -26,6 +26,7 @@ public class AccountProfileAdapter extends SimpleAdapter {
 
     private Context mContext;
     private Picasso mPicasso;
+    private CircleTransformation mCircleTransformation;
 
     public AccountProfileAdapter(Context context,
             List<? extends Map<String, ?>> data,
@@ -35,6 +36,7 @@ public class AccountProfileAdapter extends SimpleAdapter {
         super(context, data, resource, from, to);
         mContext = context;
         mPicasso = Picasso.with(context);
+        mCircleTransformation = new CircleTransformation();
     }
 
     @Override
@@ -73,16 +75,16 @@ public class AccountProfileAdapter extends SimpleAdapter {
 
             if (!TextUtils.isEmpty(url)) {
                 mPicasso.load(account.get(AccountsProfilesLoader.PROFILE))
-                        .transform(new CircleTransformation())
+                        .transform(mCircleTransformation)
                         .into(viewHolder.profile);
             } else if (Long.valueOf(account.get(Accounts._ID)) == Sonet.INVALID_ACCOUNT_ID) {
                 // add account
                 mPicasso.load(R.drawable.ic_person_add_grey600_48dp)
-                        .transform(new CircleTransformation())
+                        .transform(mCircleTransformation)
                         .into(viewHolder.profile);
             } else {
                 mPicasso.load(R.drawable.ic_account_box_grey600_48dp)
-                        .transform(new CircleTransformation())
+                        .transform(mCircleTransformation)
                         .into(viewHolder.profile);
             }
 
