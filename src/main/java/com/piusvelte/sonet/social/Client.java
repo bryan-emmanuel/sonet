@@ -85,22 +85,10 @@ abstract public class Client {
     }
 
     public enum Network {
-        Twitter, Facebook, MySpace, Foursquare, LinkedIn, Sms, Rss, IdentiCa, GooglePlus, Pinterest, Chatter;
+        Twitter, Facebook, MySpace, Buzz, Foursquare, LinkedIn, Sms, Rss, IdentiCa, GooglePlus, Pinterest, Chatter;
 
         public static Network get(int network) {
             return Network.values()[network];
-        }
-
-        public static int[] getIcons() {
-            int[] icons = new int[values().length];
-            int iconIndex = 0;
-
-            for (Network network : values()) {
-                icons[iconIndex] = network.getIcon();
-                iconIndex++;
-            }
-
-            return icons;
         }
 
         public Client getClient(Context context, String token, String secret, String accountEntityId) {
@@ -258,7 +246,13 @@ abstract public class Client {
                             JSONObject item = feedItems.getJSONObject(itemIdx);
 
                             if (item != null) {
-                                addFeedItem(item, display_profile, time24hr, appWidgetId, account, notificationSids, notificationMessage,
+                                addFeedItem(item,
+                                        display_profile,
+                                        time24hr,
+                                        appWidgetId,
+                                        account,
+                                        notificationSids,
+                                        notificationMessage,
                                         doNotify);
                             }
                         }
@@ -427,6 +421,26 @@ abstract public class Client {
     abstract boolean isOAuth10a();
 
     abstract public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl);
+
+    @Nullable
+    public String getParamValue(@Nullable String url, @NonNull String name) {
+        if (TextUtils.isEmpty(url)) return null;
+
+        name += "=";
+        int nameIndex = url.indexOf(name);
+
+        if (nameIndex < 0) return null;
+
+        String value = url.substring(nameIndex + name.length());
+
+        int nextParamIndex = value.indexOf("&");
+
+        if (nextParamIndex >= 0) {
+            value = value.substring(0, nextParamIndex);
+        }
+
+        return value;
+    }
 
     @NonNull
     public SonetOAuth getLoginOAuth() {
@@ -787,8 +801,10 @@ abstract public class Client {
             message = String.format(getString(R.string.friendcommented), name + " and others");
         }
 
-        getContentResolver()
-                .update(Notifications.getContentUri(mContext), values, Notifications._ID + "=?", new String[] { Long.toString(notificationId) });
+        getContentResolver().update(Notifications.getContentUri(mContext),
+                values,
+                Notifications._ID + "=?",
+                new String[] { Long.toString(notificationId) });
         return message;
     }
 
@@ -852,7 +868,6 @@ abstract public class Client {
     }
 
     public static class MemberAuthentication {
-
         public String username;
         public String token;
         public String secret;

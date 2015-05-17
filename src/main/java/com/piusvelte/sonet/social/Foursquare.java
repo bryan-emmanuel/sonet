@@ -56,19 +56,24 @@ import static com.piusvelte.sonet.Sonet.Svenue;
  */
 public class Foursquare extends Client {
 
+    private static final String API_VERSION = "20140101";
+    private static final String PHOTO_SIZE = "500x500";
+
     private static final String FOURSQUARE_BASE_URL = "https://api.foursquare.com/v2/";
     private static final String FOURSQUARE_URL_AUTHORIZE = "https://foursquare" +
             ".com/oauth2/authorize?client_id=%s&response_type=token&redirect_uri=%s&display=touch";
-    private static final String FOURSQUARE_URL_ME = "%susers/self?oauth_token=%s";
-    private static final String FOURSQUARE_URL_PROFILE = "https://foursquare.com/user/%s";
-    private static final String FOURSQUARE_CHECKINS = "%scheckins/recent?oauth_token=%s";
-    private static final String FOURSQUARE_CHECKIN = "%scheckins/add?venueId=%s&shout=%s&ll=%s,%s&broadcast=public&oauth_token=%s";
-    private static final String FOURSQUARE_CHECKIN_NO_VENUE = "%scheckins/add?shout=%s&broadcast=public&oauth_token=%s";
-    private static final String FOURSQUARE_CHECKIN_NO_SHOUT = "%scheckins/add?venueId=%s&ll=%s,%s&broadcast=public&oauth_token=%s";
-    private static final String FOURSQUARE_ADDCOMMENT = "%scheckins/%s/addcomment?text=%s&oauth_token=%s";
-    private static final String FOURSQUARE_SEARCH = "%svenues/search?ll=%s,%s&intent=checkin&oauth_token=%s";
-    private static final String FOURSQUARE_GET_CHECKIN = "%scheckins/%s?oauth_token=%s";
-    private static final String FOURSQUARE_URL_USER = "%susers/%s?oauth_token=%s";
+    private static final String FOURSQUARE_URL_ME = "%susers/self?oauth_token=%s&m=foursquare&v=" + API_VERSION;
+    private static final String FOURSQUARE_URL_PROFILE = "https://foursquare.com/user/%s&m=foursquare&v=" + API_VERSION;
+    private static final String FOURSQUARE_CHECKINS = "%scheckins/recent?oauth_token=%s&m=foursquare&v=" + API_VERSION;
+    private static final String FOURSQUARE_CHECKIN = "%scheckins/add?venueId=%s&shout=%s&ll=%s,%s&broadcast=public&oauth_token=%s&m=foursquare&v="
+            + API_VERSION;
+    private static final String FOURSQUARE_CHECKIN_NO_VENUE = "%scheckins/add?shout=%s&broadcast=public&oauth_token=%s&m=foursquare&v=" + API_VERSION;
+    private static final String FOURSQUARE_CHECKIN_NO_SHOUT = "%scheckins/add?venueId=%s&ll=%s,%s&broadcast=public&oauth_token=%s&m=foursquare&v="
+            + API_VERSION;
+    private static final String FOURSQUARE_ADDCOMMENT = "%scheckins/%s/addcomment?text=%s&oauth_token=%s&m=foursquare&v=" + API_VERSION;
+    private static final String FOURSQUARE_SEARCH = "%svenues/search?ll=%s,%s&intent=checkin&oauth_token=%s&m=foursquare&v=" + API_VERSION;
+    private static final String FOURSQUARE_GET_CHECKIN = "%scheckins/%s?oauth_token=%s&m=foursquare&v=" + API_VERSION;
+    private static final String FOURSQUARE_URL_USER = "%susers/%s?oauth_token=%s&m=foursquare&v=" + API_VERSION;
 
     public Foursquare(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
@@ -90,7 +95,8 @@ public class Foursquare extends Client {
 
             try {
                 jobj = (new JSONObject(httpResponse)).getJSONObject("response").getJSONObject("user");
-                return jobj.getString(Sphoto);
+                JSONObject photo = jobj.getJSONObject(Sphoto);
+                return photo.getString("prefix") + PHOTO_SIZE + photo.getString("suffix");
             } catch (JSONException e) {
                 if (BuildConfig.DEBUG) {
                     Log.d(mTag, "error parsing foursquare me response: " + httpResponse, e);
@@ -134,9 +140,7 @@ public class Foursquare extends Client {
 
     @Override
     public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
-        // get the access_token
-        Uri uri = Uri.parse(authenticatedUrl);
-        String token = uri.getQueryParameter(Saccess_token);
+        String token = getParamValue(authenticatedUrl, Saccess_token);
 
         if (!TextUtils.isEmpty(token)) {
             String httpResponse = SonetHttpClient.httpResponse(String.format(FOURSQUARE_URL_ME, FOURSQUARE_BASE_URL, token));
@@ -278,34 +282,38 @@ public class Foursquare extends Client {
         String notification = null;
 
         if (item.has(Scomments)) {
-            JSONArray commentsArray = item.getJSONObject(Scomments).getJSONArray(Sitems);
-            commentCount = commentsArray.length();
+            JSONObject commentsJObj = item.getJSONObject(Scomments);
 
-            if (!notificationSids.contains(sid) && (commentCount > 0)) {
-                // default hasCommented to whether or not these comments are for the own user's status
-                boolean hasCommented = notification != null || esid.equals(mAccountEsid);
+            if (commentsJObj.has(Sitems)) {
+                JSONArray commentsArray = item.getJSONObject(Scomments).getJSONArray(Sitems);
+                commentCount = commentsArray.length();
 
-                for (int c2 = 0; c2 < commentCount; c2++) {
-                    JSONObject commentObj = commentsArray.getJSONObject(c2);
+                if (!notificationSids.contains(sid) && commentCount > 0) {
+                    // default hasCommented to whether or not these comments are for the own user's status
+                    boolean hasCommented = notification != null || esid.equals(mAccountEsid);
 
-                    if (commentObj.has(Suser)) {
-                        JSONObject c4 = commentObj.getJSONObject(Suser);
+                    for (int c2 = 0; c2 < commentCount; c2++) {
+                        JSONObject commentObj = commentsArray.getJSONObject(c2);
 
-                        if (c4.getString(Sid).equals(mAccountEsid)) {
-                            if (!hasCommented) {
-                                // the user has commented on this thread, notify any updates
-                                hasCommented = true;
+                        if (commentObj.has(Suser)) {
+                            JSONObject c4 = commentObj.getJSONObject(Suser);
+
+                            if (c4.getString(Sid).equals(mAccountEsid)) {
+                                if (!hasCommented) {
+                                    // the user has commented on this thread, notify any updates
+                                    hasCommented = true;
+                                }
+
+                                // clear any notifications, as the user is already aware
+                                if (notification != null) {
+                                    notification = null;
+                                }
+                            } else if (hasCommented) {
+                                // don't notify about user's own comments
+                                // send the parent comment sid
+                                notification = String.format(getString(R.string.friendcommented),
+                                        c4.getString(SfirstName) + " " + c4.getString(SlastName));
                             }
-
-                            // clear any notifications, as the user is already aware
-                            if (notification != null) {
-                                notification = null;
-                            }
-                        } else if (hasCommented) {
-                            // don't notify about user's own comments
-                            // send the parent comment sid
-                            notification = String
-                                    .format(getString(R.string.friendcommented), c4.getString(SfirstName) + " " + c4.getString(SlastName));
                         }
                     }
                 }
@@ -318,9 +326,11 @@ public class Foursquare extends Client {
             updateNotificationMessage(notificationMessage, notification);
         }
 
+        JSONObject photo = friendObj.getJSONObject(Sphoto);
+
         addStatusItem(date,
                 friend,
-                display_profile ? friendObj.getString(Sphoto) : null,
+                display_profile ? photo.getString("prefix") + PHOTO_SIZE + photo.getString("suffix") : null,
                 String.format(getString(R.string.messageWithCommentCount), shout, commentCount),
                 time24hr,
                 appWidgetId,

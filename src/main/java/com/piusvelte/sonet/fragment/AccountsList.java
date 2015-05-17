@@ -203,7 +203,7 @@ public class AccountsList extends ListFragment implements LoaderManager.LoaderCa
         super.onListItemClick(l, v, position, id);
 
         boolean isEnabled = ((TextView) v.findViewById(R.id.message)).getText().toString().contains("enabled");
-        final CharSequence[] items = { getString(R.string.re_authenticate), getString(R.string.account_settings), getString(
+        final CharSequence[] items = { getString(R.string.authenticate_account), getString(R.string.account_settings), getString(
                 isEnabled ? R.string.disable : R.string.enable) };
         AccountOptionsDialogFragment.newInstance(REQUEST_ACCOUNT_OPTIONS, id, items, isEnabled)
                 .show(getChildFragmentManager(), DIALOG_ACCOUNT_OPTIONS);

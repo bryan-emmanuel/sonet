@@ -51,8 +51,8 @@ public class ManageAccounts extends BaseActivity {
             if (extras != null) {
                 appWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
                 // if called from widget, the id is set in the action, as pendingintents must have a unique action
-            } else if ((intent.getAction() != null) && (!intent.getAction().equals(ACTION_REFRESH)) && (!intent.getAction()
-                    .equals(Intent.ACTION_VIEW))) {
+            } else if (intent.getAction() != null && !intent.getAction().equals(ACTION_REFRESH)
+                    && !intent.getAction().equals(Intent.ACTION_VIEW)) {
                 appWidgetId = Integer.parseInt(intent.getAction());
             }
         }

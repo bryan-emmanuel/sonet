@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.support.annotation.NonNull;
 
+import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.provider.Accounts;
 import com.piusvelte.sonet.social.Client;
@@ -43,13 +44,14 @@ public class AccountsProfilesLoader extends BaseAsyncTaskLoader {
                 null);
 
         if (cursor.moveToFirst()) {
+            int idIndex = cursor.getColumnIndexOrThrow(Accounts._ID);
             int tokenIndex = cursor.getColumnIndexOrThrow(Accounts.TOKEN);
             int secretIndex = cursor.getColumnIndexOrThrow(Accounts.SECRET);
             int serviceIndex = cursor.getColumnIndexOrThrow(Accounts.SERVICE);
             int sidIndex = cursor.getColumnIndexOrThrow(Accounts.SID);
 
             while (!cursor.isAfterLast()) {
-                HashMap<String, String> account = new HashMap<>(2);
+                HashMap<String, String> account = new HashMap<>(4);
                 SonetCrypto sonetCrypto = SonetCrypto.getInstance(mContext);
                 String token = sonetCrypto.Decrypt(cursor.getString(tokenIndex));
                 String secret = sonetCrypto.Decrypt(cursor.getString(secretIndex));
@@ -61,6 +63,8 @@ public class AccountsProfilesLoader extends BaseAsyncTaskLoader {
                         .setCredentials(token, secret)
                         .build();
 
+                account.put(Accounts._ID, Long.toString(cursor.getLong(idIndex)));
+                account.put(Accounts.SERVICE, Integer.toString(service));
                 account.put(PROFILE, client.getProfilePhotoUrl(sid));
                 account.put(ICON, Integer.toString(Client.Network.get(service).getIcon()));
                 accounts.add(account);
@@ -70,6 +74,15 @@ public class AccountsProfilesLoader extends BaseAsyncTaskLoader {
         }
 
         cursor.close();
+
+        // always allow adding an account
+        HashMap<String, String> account = new HashMap<>(4);
+        account.put(Accounts._ID, Long.toString(Sonet.INVALID_ACCOUNT_ID));
+        account.put(Accounts.SERVICE, null);
+        account.put(PROFILE, null);
+        account.put(ICON, null);
+        accounts.add(account);
+
         return accounts;
     }
 }

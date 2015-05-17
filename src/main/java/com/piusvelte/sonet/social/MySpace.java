@@ -148,8 +148,7 @@ public class MySpace extends Client {
 
     @Override
     public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
-        Uri uri = Uri.parse(authenticatedUrl);
-        String verifier = uri.getQueryParameter(OAUTH_VERIFIER);
+        String verifier = getParamValue(authenticatedUrl, OAUTH_VERIFIER);
 
         if (!TextUtils.isEmpty(verifier)) {
             if (sonetOAuth.retrieveAccessToken(verifier)) {

@@ -64,6 +64,7 @@ public class Sonet {
     public static final int TWITTER = 0;
     public static final int FACEBOOK = 1;
     public static final int MYSPACE = 2;
+    public static final int BUZZ = 3;
     public static final int FOURSQUARE = 4;
     public static final int LINKEDIN = 5;
     public static final int SMS = 6;

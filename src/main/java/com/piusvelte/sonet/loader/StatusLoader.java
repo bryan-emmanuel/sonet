@@ -134,7 +134,6 @@ public class StatusLoader extends BaseAsyncTaskLoader {
                         result.items[Result.POST] = String.format(mContext.getString(R.string.update_status), result.serviceName);
                     }
 
-                    result.items[Result.SETTINGS] = mContext.getString(R.string.accounts_and_settings);
                     result.items[Result.NOTIFICATIONS] = mContext.getString(R.string.notifications);
                     result.items[Result.REFRESH] = mContext.getString(R.string.button_refresh);
                     result.items[Result.PROFILE] = String.format(mContext.getString(R.string.userProfile), friend);
@@ -172,10 +171,9 @@ public class StatusLoader extends BaseAsyncTaskLoader {
     public static class Result {
         public static final int COMMENT = 0;
         public static final int POST = 1;
-        public static final int SETTINGS = 2;
-        public static final int NOTIFICATIONS = 3;
-        public static final int REFRESH = 4;
-        public static final int PROFILE = 5;
+        public static final int NOTIFICATIONS = 2;
+        public static final int REFRESH = 3;
+        public static final int PROFILE = 4;
 
         public Uri data;
         public SonetCrypto sonetCrypto;

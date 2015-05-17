@@ -9,7 +9,9 @@ import android.widget.ImageView;
 import android.widget.SimpleAdapter;
 
 import com.piusvelte.sonet.R;
+import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.loader.AccountsProfilesLoader;
+import com.piusvelte.sonet.provider.Accounts;
 import com.piusvelte.sonet.util.CircleTransformation;
 import com.squareup.picasso.Picasso;
 
@@ -36,6 +38,22 @@ public class AccountProfileAdapter extends SimpleAdapter {
     }
 
     @Override
+    public HashMap<String, String> getItem(int position) {
+        return (HashMap<String, String>) super.getItem(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        HashMap<String, String> account = getItem(position);
+
+        if (account != null) {
+            return Long.valueOf(account.get(Accounts._ID));
+        }
+
+        return 0;
+    }
+
+    @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         final ViewHolder viewHolder;
 
@@ -50,11 +68,16 @@ public class AccountProfileAdapter extends SimpleAdapter {
         }
 
         if (viewHolder != null) {
-            HashMap<String, String> account = (HashMap<String, String>) getItem(position);
+            HashMap<String, String> account = getItem(position);
             String url = account.get(AccountsProfilesLoader.PROFILE);
 
             if (!TextUtils.isEmpty(url)) {
                 mPicasso.load(account.get(AccountsProfilesLoader.PROFILE))
+                        .transform(new CircleTransformation())
+                        .into(viewHolder.profile);
+            } else if (Long.valueOf(account.get(Accounts._ID)) == Sonet.INVALID_ACCOUNT_ID) {
+                // add account
+                mPicasso.load(R.drawable.ic_person_add_grey600_48dp)
                         .transform(new CircleTransformation())
                         .into(viewHolder.profile);
             } else {
@@ -63,8 +86,12 @@ public class AccountProfileAdapter extends SimpleAdapter {
                         .into(viewHolder.profile);
             }
 
-            mPicasso.load(Integer.valueOf(account.get(AccountsProfilesLoader.ICON)))
-                    .into(viewHolder.icon);
+            String icon = account.get(AccountsProfilesLoader.ICON);
+
+            if (!TextUtils.isEmpty(icon)) {
+                mPicasso.load(Integer.valueOf(icon))
+                        .into(viewHolder.icon);
+            }
         }
 
         return convertView;

@@ -140,11 +140,10 @@ public class Facebook extends Client {
 
     @Override
     public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
-        Uri uri = Uri.parse(authenticatedUrl);
-        String token = uri.getQueryParameter(Saccess_token);
+        String token = getParamValue(authenticatedUrl, Saccess_token);
 
         if (!TextUtils.isEmpty(token)) {
-            String expiryValue = uri.getQueryParameter(Sexpires_in);
+            String expiryValue = getParamValue(authenticatedUrl, Sexpires_in);
             int expiry = 0;
 
             if (!TextUtils.isEmpty(expiryValue) && !"0".equals(expiryValue)) {

@@ -48,6 +48,7 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/drawer_container"
         android:layout_width="280dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
@@ -66,8 +67,26 @@
             android:stretchMode="columnWidth"
             android:verticalSpacing="16dp" />
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/hint_foreground_material_light" />
+
         <ListView
-            android:id="@+id/drawer_options"
+            android:id="@+id/drawer_primary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:choiceMode="singleChoice"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="0dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/hint_foreground_material_light" />
+
+        <ListView
+            android:id="@+id/drawer_secondary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:choiceMode="singleChoice"

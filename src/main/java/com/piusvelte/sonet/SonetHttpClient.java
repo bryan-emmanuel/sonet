@@ -163,7 +163,7 @@ public class SonetHttpClient {
             if (response.body() != null) {
                 try {
                     body = response.body().string();
-                    if (BuildConfig.DEBUG) Log.e(TAG, "response= " + body);
+                    if (BuildConfig.DEBUG) Log.d(TAG, "response= " + body);
                 } catch (IOException e) {
                     if (BuildConfig.DEBUG) Log.e(TAG, "error getting response body", e);
                     body = null;
@@ -178,6 +178,8 @@ public class SonetHttpClient {
             }
 
             return body;
+        } else {
+            if (BuildConfig.DEBUG) Log.e(TAG, "response unsuccessful; request=" + request);
         }
 
         return null;

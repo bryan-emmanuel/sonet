@@ -78,11 +78,11 @@
     <string name="category_time">Time</string>
     <string name="about">Sonet displays statuses from Twitter, Facebook, Buzz, MySpace, Foursquare, LinkedIn, SMS, RSS, Identi.ca, and Pinterest. The statuses can be displayed in the app, or as widgets on the homescreen. The colors and fonts can be customized in the settings. Please select Accounts from the menu and add an account.\u000A\u000ASonet - Android Social Networking Widget\u000A\u000ACopyright &#169; 2009 Bryan Emmanuel\u000A\u000AThis program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\u000A\u000AThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\u000A\u000AYou should have received a copy of the GNU General Public License along with this program.  If not, see \u003C\u000Ahttp://www.gnu.org/licenses/\u003E.\u000A\u000ABryan Emmanuel piusvelte@gmail.com</string>
     <string name="widgets">Configure Widgets</string>
-    <string name="refreshallwidgets">Update Widgets</string>
+    <string name="refreshallwidgets">Refresh All Widgets</string>
     <string name="timezone">Select Timezone</string>
     <string name="nowidgets">No Sonet widgets have been created.</string>
     <string name="defaultsettings">Default settings</string>
-    <string name="re_authenticate">Re-authenticate</string>
+    <string name="authenticate_account">Authenticate Account?</string>
     <string name="account_settings">Account settings</string>
     <string name="myspace_permissions_title">Update MySpace permissions</string>
     <string name="myspace_permissions_message">Please check that you allow Sonet to access and publish your status on the MySpace website.</string>

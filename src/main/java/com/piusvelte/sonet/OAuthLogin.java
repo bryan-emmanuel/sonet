@@ -31,6 +31,7 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -117,6 +118,11 @@ public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCall
 
             if (extras != null) {
                 int service = extras.getInt(Accounts.SERVICE, Sonet.INVALID_SERVICE);
+
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "start login for service=" + service);
+                }
+
                 mServiceName = Sonet.getServiceName(getResources(), service);
                 mWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
                 mAccountId = extras.getLong(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID);
@@ -152,8 +158,8 @@ public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCall
                             args.putInt(LOADER_ARG_NETWORK, service);
                             getSupportLoaderManager().restartLoader(LOADER_OAUTH_LOGIN, args, this);
                         }
+                        break;
                     }
-                    break;
                 }
             }
         }
@@ -281,6 +287,10 @@ public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCall
                     Client.MemberAuthentication memberAuthentication = (Client.MemberAuthentication) data;
                     addAccount(memberAuthentication.username, memberAuthentication.token, memberAuthentication.secret, memberAuthentication.expiry,
                             memberAuthentication.network, memberAuthentication.id);
+                } else {
+                    if (BuildConfig.DEBUG) {
+                        Log.d(TAG, "Client.MemberAuthentication not loaded");
+                    }
                 }
 
                 finish();
@@ -294,6 +304,10 @@ public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCall
     }
 
     private String addAccount(String username, String token, String secret, int expiry, int service, String sid) {
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "add account; username=" + username + ", service=" + service + ", sid=" + sid);
+        }
+
         String accountId;
         ContentValues values = new ContentValues();
         values.put(Accounts.USERNAME, username);

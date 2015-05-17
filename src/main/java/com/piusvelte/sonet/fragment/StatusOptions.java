@@ -176,16 +176,6 @@ public class StatusOptions extends ListFragment implements LoaderManager.LoaderC
                 }
                 break;
 
-            case StatusLoader.Result.SETTINGS:
-                if (mStatusLoaderResult.appwidgetId != -1) {
-                    startActivity(new Intent(getActivity(), ManageAccounts.class)
-                            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mStatusLoaderResult.appwidgetId));
-                    getActivity().finish();
-                } else {
-                    chooseWidget(REQUEST_CHOOSE_WIDGET, DIALOG_CHOOSE_WIDGET);
-                }
-                break;
-
             case StatusLoader.Result.NOTIFICATIONS:
                 startActivity(new Intent(getActivity(), SonetNotifications.class));
                 getActivity().finish();
