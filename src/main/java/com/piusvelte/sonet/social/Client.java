@@ -5,8 +5,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.Resources;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
@@ -25,15 +23,11 @@ import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.StatusImages;
 import com.piusvelte.sonet.provider.StatusLinks;
 import com.piusvelte.sonet.provider.Statuses;
-import com.piusvelte.sonet.util.CircleTransformation;
-import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -53,9 +47,6 @@ import oauth.signpost.exception.OAuthNotAuthorizedException;
 
 import static com.piusvelte.sonet.Sonet.Simgur;
 import static com.piusvelte.sonet.Sonet.Slink;
-import static com.piusvelte.sonet.Sonet.getCropSize;
-import static com.piusvelte.sonet.Sonet.insertStatusImageBg;
-import static com.piusvelte.sonet.Sonet.sBFOptions;
 import static com.piusvelte.sonet.Sonet.sRFC822;
 import static com.piusvelte.sonet.Sonet.sTimeZone;
 
@@ -614,95 +605,17 @@ abstract public class Client {
             getContentResolver().insert(StatusLinks.getContentUri(mContext), linkValues);
         }
 
-        boolean insertEmptyImage = true;
-
         if (!TextUtils.isEmpty(imageUrl)) {
-            byte[] image;
-
-            try {
-                Bitmap bmp = Picasso.with(mContext)
-                        .load(imageUrl)
-                        .get();
-                image = Sonet.getBlob(bmp);
-            } catch (IOException e) {
-                if (BuildConfig.DEBUG) Log.e(mTag, "error loading:" + imageUrl, e);
-                image = null;
-            }
-
-            if (image != null) {
-                Bitmap imageBmp = BitmapFactory.decodeByteArray(image, 0, image.length, sBFOptions);
-
-                if (imageBmp != null) {
-                    Bitmap scaledImageBmp = null;
-                    Bitmap croppedBmp = null;
-                    int width = imageBmp.getWidth();
-                    int height = imageBmp.getHeight();
-                    // default to landscape
-                    int scaledWidth;
-                    int scaledHeight;
-                    double targetHeightRatio;
-                    double targetWidthRatio;
-
-                    if (width > height) {
-                        //landscape
-                        scaledWidth = 192;
-                        scaledHeight = 144;
-                        targetHeightRatio = 0.75;
-                        targetWidthRatio = 4.0 / 3;
-                    } else {
-                        //portrait
-                        scaledWidth = 144;
-                        scaledHeight = 192;
-                        targetHeightRatio = 4.0 / 3;
-                        targetWidthRatio = 0.75;
-                    }
-
-                    int targetSize = (int) Math.round(width * targetHeightRatio);
-
-                    if (height > targetSize) {
-                        // center crop the height
-                        targetSize = getCropSize(height, targetSize);
-                        croppedBmp = Bitmap.createBitmap(imageBmp, 0, targetSize, width, height - targetSize);
-                    } else {
-                        targetSize = (int) Math.round(height * targetWidthRatio);
-
-                        if (width > targetSize) {
-                            // center crop the width
-                            targetSize = getCropSize(width, targetSize);
-                            croppedBmp = Bitmap.createBitmap(imageBmp, targetSize, 0, width - targetSize, height);
-                        }
-                    }
-
-                    if (croppedBmp != null) {
-                        scaledImageBmp = Bitmap.createScaledBitmap(croppedBmp, scaledWidth, scaledHeight, true);
-                        croppedBmp.recycle();
-                        croppedBmp = null;
-                    } else {
-                        scaledImageBmp = Bitmap.createScaledBitmap(imageBmp, scaledWidth, scaledHeight, true);
-                    }
-
-                    imageBmp.recycle();
-                    imageBmp = null;
-
-                    if (scaledImageBmp != null) {
-                        ByteArrayOutputStream imageStream = new ByteArrayOutputStream();
-                        scaledImageBmp.compress(Bitmap.CompressFormat.PNG, 100, imageStream);
-                        image = imageStream.toByteArray();
-                        scaledImageBmp.recycle();
-                        scaledImageBmp = null;
-
-                        if (image != null) {
-                            insertEmptyImage = !insertStatusImageBg(mContext, statusId, image, scaledHeight);
-                        }
-                    }
-                }
-            }
+            addStatusImage(statusId, imageUrl);
         }
+    }
 
-        // remote views can be reused, avoid images being repeated across multiple statuses
-        if (insertEmptyImage) {
-            insertStatusImageBg(mContext, statusId, null, 1);
-        }
+    private void addStatusImage(long statusId, @NonNull String imageUrl) {
+        ContentValues imageValues = new ContentValues();
+        imageValues.put(StatusImages.STATUS_ID, statusId);
+        imageValues.put(StatusImages.URL, imageUrl);
+        mContext.getContentResolver().insert(StatusImages.getContentUri(mContext),
+                imageValues);
     }
 
     void removeOldStatuses(String widgetId, String accountId) {

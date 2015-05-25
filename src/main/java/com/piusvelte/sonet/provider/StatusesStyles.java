@@ -7,12 +7,13 @@ import android.provider.BaseColumns;
 import android.support.annotation.NonNull;
 
 import com.piusvelte.sonet.Sonet;
-import com.piusvelte.sonet.SonetProvider;
 
 /**
  * Created by bemmanuel on 3/22/15.
  */
 public final class StatusesStyles implements BaseColumns {
+
+    public static final String VIEW = "statuses_styles";
 
     // this is actually a view, joining the account/widget/default styles to the statuses
 
@@ -39,10 +40,10 @@ public final class StatusesStyles implements BaseColumns {
     // store friend and profile data in a separate table
     public static final String ENTITY = "entity";
     public static final String ESID = "esid";
-    public static final String IMAGE = "image";
+    public static final String IMAGE_URL = "image_url";
 
     public static void createView(@NonNull SQLiteDatabase db) {
-        db.execSQL("create view if not exists " + SonetProvider.VIEW_STATUSES_STYLES + " as select " +
+        db.execSQL("create view if not exists " + VIEW + " as select " +
                 "s." + Statuses._ID + " as " + StatusesStyles._ID
                 + ",s." + Statuses.CREATED + " as " + StatusesStyles.CREATED
                 + ",(case when " + "s." + Statuses.FRIEND_OVERRIDE + " != \"\" then " + "s." + Statuses.FRIEND_OVERRIDE + " else " + "e." +
@@ -56,13 +57,13 @@ public final class StatusesStyles implements BaseColumns {
                 + ",e." + Entity._ID + " as " + StatusesStyles.ENTITY
                 + ",e." + Entity.ESID + " as " + StatusesStyles.ESID
                 + ",e." + Entity.PROFILE_URL + " as " + StatusesStyles.PROFILE_URL
-                + ",i." + StatusImages.IMAGE + " as " + StatusesStyles.IMAGE
-                + " from " + SonetProvider.TABLE_STATUSES + " s,"
-                + SonetProvider.TABLE_ENTITIES + " e,"
-                + SonetProvider.TABLE_WIDGETS + " a,"
-                + SonetProvider.TABLE_WIDGETS + " b,"
-                + SonetProvider.TABLE_WIDGETS + " c"
-                + " left join " + SonetProvider.TABLE_STATUS_IMAGES + " i"
+                + ",i." + StatusImages.URL + " as " + StatusesStyles.IMAGE_URL
+                + " from " + Statuses.TABLE + " s,"
+                + Entity.TABLE + " e,"
+                + Widgets.TABLE + " a,"
+                + Widgets.TABLE + " b,"
+                + Widgets.TABLE + " c"
+                + " left join " + StatusImages.TABLE + " i"
                 + " on i." + StatusImages.STATUS_ID + "=s." + Statuses._ID
                 + " where "
                 + "e." + Entity._ID + "=s." + Statuses.ENTITY

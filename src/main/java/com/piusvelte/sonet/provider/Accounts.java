@@ -1,8 +1,10 @@
 package com.piusvelte.sonet.provider;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.provider.BaseColumns;
+import android.support.annotation.NonNull;
 
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.social.Client;
@@ -24,6 +26,8 @@ public class Accounts implements BaseColumns {
     // service id for posting and linking
     public static final String SID = "sid";
 
+    public static final String TABLE = "accounts";
+
     public static String ACCOUNTS_QUERY;
 
     static {
@@ -41,5 +45,16 @@ public class Accounts implements BaseColumns {
 
     public static Uri getContentUri(Context context) {
         return Uri.parse("content://" + Sonet.getAuthority(context) + "/accounts");
+    }
+
+    public static void createTable(@NonNull SQLiteDatabase db) {
+        db.execSQL("create table if not exists " + TABLE
+                + " (" + Accounts._ID + " integer primary key autoincrement, "
+                + Accounts.USERNAME + " text, "
+                + Accounts.TOKEN + " text, "
+                + Accounts.SECRET + " text, "
+                + Accounts.SERVICE + " integer, "
+                + Accounts.EXPIRY + " integer, "
+                + Accounts.SID + " text);");
     }
 }

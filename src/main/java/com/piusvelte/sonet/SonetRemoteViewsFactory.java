@@ -105,9 +105,13 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
             views.setTextViewText(R.id.friend, mCursor.getString(sColumnIndexFriend));
             views.setTextViewText(R.id.created, mCursor.getString(sColumnIndexCreatedText));
 
-            byte[] image = mCursor.getBlob(sColumnIndexImage);
+            String imageUrl = mCursor.getString(sColumnIndexImage);
 
-            if (!setImageViewBitmap(views, R.id.image, image)) {
+            if (!TextUtils.isEmpty(imageUrl)) {
+                views.setViewVisibility(R.id.image, View.VISIBLE);
+                mPicasso.load(imageUrl)
+                        .into(views, R.id.image, new int[] { mAppWidgetId });
+            } else {
                 views.setViewVisibility(R.id.image, View.GONE);
             }
 
@@ -155,14 +159,16 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
             Log.d(TAG, "onDataSetChanged: " + mAppWidgetId);
         }
 
-        mCursor = mContext.getContentResolver().query(Uri.withAppendedPath(StatusesStyles.getContentUri(mContext), Integer.toString(mAppWidgetId)),
+        // use INVALID_APPWIDGET_ID as accounts are no longer widget specific
+        mCursor = mContext.getContentResolver().query(Uri.withAppendedPath(StatusesStyles.getContentUri(mContext),
+                        Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID)),
                 new String[] { StatusesStyles._ID,
                         StatusesStyles.SERVICE,
                         StatusesStyles.FRIEND,
                         StatusesStyles.PROFILE_URL,
                         StatusesStyles.MESSAGE,
                         StatusesStyles.CREATEDTEXT,
-                        StatusesStyles.IMAGE },
+                        StatusesStyles.IMAGE_URL },
                 null,
                 null,
                 StatusesStyles.CREATED + " DESC");
@@ -174,7 +180,7 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
             sColumnIndexProfileUrl = mCursor.getColumnIndexOrThrow(StatusesStyles.PROFILE_URL);
             sColumnIndexMessage = mCursor.getColumnIndexOrThrow(StatusesStyles.MESSAGE);
             sColumnIndexCreatedText = mCursor.getColumnIndexOrThrow(StatusesStyles.CREATEDTEXT);
-            sColumnIndexImage = mCursor.getColumnIndexOrThrow(StatusesStyles.IMAGE);
+            sColumnIndexImage = mCursor.getColumnIndexOrThrow(StatusesStyles.IMAGE_URL);
         }
     }
 

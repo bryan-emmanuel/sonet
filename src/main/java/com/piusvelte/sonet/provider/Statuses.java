@@ -1,8 +1,10 @@
 package com.piusvelte.sonet.provider;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.provider.BaseColumns;
+import android.support.annotation.NonNull;
 
 import com.piusvelte.sonet.Sonet;
 
@@ -10,6 +12,8 @@ import com.piusvelte.sonet.Sonet;
  * Created by bemmanuel on 3/22/15.
  */
 public class Statuses implements BaseColumns {
+
+    public static final String TABLE = "statuses";
 
     private Statuses() {
     }
@@ -27,17 +31,43 @@ public class Statuses implements BaseColumns {
     public static final String CREATEDTEXT = "createdtext";
     // account specific settings per widget
     public static final String ACCOUNT = "account";
-    @Deprecated
-    public static final String STATUS_BG = "status_bg";
-    @Deprecated
-    public static final String ICON = "icon";
     // service id for posting and linking
     public static final String SID = "sid";
     // store friend and profile data in a separate table
     public static final String ENTITY = "entity";
     public static final String FRIEND_OVERRIDE = "friend_override";
-    @Deprecated
-    public static final String PROFILE_BG = "profiles_bg_color";
-    @Deprecated
-    public static final String FRIEND_BG = "friend_bg";
+
+    public static void createTable(@NonNull SQLiteDatabase db) {
+        db.execSQL("create table if not exists " + TABLE
+                + " (" + _ID + " integer primary key autoincrement, "
+                + CREATED + " integer, "
+                + MESSAGE + " text, "
+                + SERVICE + " integer, "
+                + CREATEDTEXT + " text, "
+                + WIDGET + " integer, "
+                + ACCOUNT + " integer, "
+                + SID + " text, "
+                + ENTITY + " integer, "
+                + FRIEND_OVERRIDE + " text);");
+    }
+
+    public static void migrateTable(@NonNull SQLiteDatabase db) {
+        db.execSQL("drop table if exists " + TABLE + "_bkp;");
+        db.execSQL("create temp table " + TABLE + "_bkp as select * from " + TABLE + ";");
+        db.execSQL("drop table if exists " + TABLE + ";");
+        createTable(db);
+        db.execSQL("insert into " + TABLE
+                + " select "
+                + _ID
+                + "," + CREATED
+                + "," + MESSAGE
+                + "," + SERVICE
+                + "," + CREATEDTEXT
+                + "," + WIDGET
+                + "," + ACCOUNT
+                + "," + SID
+                + "," + ENTITY
+                + "," + FRIEND_OVERRIDE + " from " + TABLE + "_bkp;");
+        db.execSQL("drop table if exists " + TABLE + "_bkp;");
+    }
 }

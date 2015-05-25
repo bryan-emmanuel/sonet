@@ -1,8 +1,10 @@
 package com.piusvelte.sonet.provider;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.provider.BaseColumns;
+import android.support.annotation.NonNull;
 
 import com.piusvelte.sonet.Sonet;
 
@@ -10,6 +12,8 @@ import com.piusvelte.sonet.Sonet;
  * Created by bemmanuel on 3/22/15.
  */
 public final class Notifications implements BaseColumns {
+    public static final String TABLE = "notifications";
+
     // store notifications
     // notifications are marked cleared when viewed
     // notifications are deleted when the feeds are updated, they are not in the new feeds and are marked cleared
@@ -30,4 +34,18 @@ public final class Notifications implements BaseColumns {
     public static final String NOTIFICATION = "notification";
     public static final String CLEARED = "cleared";
     public static final String UPDATED = "updated";
+
+    public static void createTable(@NonNull SQLiteDatabase db) {
+        db.execSQL("create table if not exists " + TABLE
+                + " (" + Notifications._ID + " integer primary key autoincrement, "
+                + Notifications.SID + " text, "
+                + Notifications.ESID + " text, "
+                + Notifications.FRIEND + " text, "
+                + Notifications.MESSAGE + " text, "
+                + Notifications.CREATED + " integer, "
+                + Notifications.NOTIFICATION + " text, "
+                + Notifications.ACCOUNT + " integer, "
+                + Notifications.CLEARED + " integer, "
+                + Notifications.UPDATED + " integer);");
+    }
 }

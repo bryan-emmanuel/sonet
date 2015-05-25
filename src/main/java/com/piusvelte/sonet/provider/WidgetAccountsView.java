@@ -1,8 +1,10 @@
 package com.piusvelte.sonet.provider;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.provider.BaseColumns;
+import android.support.annotation.NonNull;
 
 import com.piusvelte.sonet.Sonet;
 
@@ -10,6 +12,9 @@ import com.piusvelte.sonet.Sonet;
  * Created by bemmanuel on 3/22/15.
  */
 public class WidgetAccountsView implements BaseColumns {
+
+    @Deprecated
+    public static final String VIEW = "widget_accounts_view";
 
     private WidgetAccountsView() {
     }
@@ -28,4 +33,23 @@ public class WidgetAccountsView implements BaseColumns {
     public static final String SERVICE = "service";
     public static final String EXPIRY = "expiry";
     public static final String SID = "sid";
+
+    public static void createView(@NonNull SQLiteDatabase db) {
+        db.execSQL("create view if not exists " + VIEW + " as select "
+                + WidgetAccounts.TABLE + "." + WidgetAccounts._ID
+                + "," + WidgetAccounts.ACCOUNT
+                + "," + WidgetAccounts.WIDGET
+                + "," + Accounts.EXPIRY
+                + "," + Accounts.SECRET
+                + "," + Accounts.SERVICE
+                + "," + Accounts.SID
+                + "," + Accounts.TOKEN
+                + "," + Accounts.USERNAME
+                + " from "
+                + WidgetAccounts.TABLE
+                + "," + Accounts.TABLE
+                + " where "
+                + Accounts.TABLE + "." + Accounts._ID + "=" + WidgetAccounts.ACCOUNT
+                + ";");
+    }
 }

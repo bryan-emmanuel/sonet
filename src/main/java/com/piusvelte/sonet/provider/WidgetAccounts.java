@@ -1,8 +1,10 @@
 package com.piusvelte.sonet.provider;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.provider.BaseColumns;
+import android.support.annotation.NonNull;
 
 import com.piusvelte.sonet.Sonet;
 
@@ -10,6 +12,8 @@ import com.piusvelte.sonet.Sonet;
  * Created by bemmanuel on 3/22/15.
  */
 public class WidgetAccounts implements BaseColumns {
+
+    public static final String TABLE = "widget_accounts";
 
     private WidgetAccounts() {
     }
@@ -22,4 +26,11 @@ public class WidgetAccounts implements BaseColumns {
 
     public static final String ACCOUNT = "account";
     public static final String WIDGET = "widget";
+
+    public static void createTable(@NonNull SQLiteDatabase db) {
+        db.execSQL("create table if not exists " + TABLE
+                + " (" + WidgetAccounts._ID + " integer primary key autoincrement, "
+                + WidgetAccounts.ACCOUNT + " integer, "
+                + WidgetAccounts.WIDGET + " integer);");
+    }
 }

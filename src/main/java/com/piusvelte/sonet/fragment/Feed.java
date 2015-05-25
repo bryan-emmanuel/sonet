@@ -60,7 +60,7 @@ public class Feed extends ListFragment implements LoaderManager.LoaderCallbacks<
                         StatusesStyles.CREATEDTEXT,
                         StatusesStyles.PROFILE_URL,
                         StatusesStyles.SERVICE,
-                        StatusesStyles.IMAGE },
+                        StatusesStyles.IMAGE_URL },
                 new int[] { R.id.friend,
                         R.id.message,
                         R.id.created,
@@ -93,7 +93,7 @@ public class Feed extends ListFragment implements LoaderManager.LoaderCallbacks<
                                 StatusesStyles.MESSAGE,
                                 StatusesStyles.CREATEDTEXT,
                                 StatusesStyles.SERVICE,
-                                StatusesStyles.IMAGE },
+                                StatusesStyles.IMAGE_URL },
                         StatusesStyles.WIDGET + "=?",
                         new String[] { Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID) },
                         StatusesStyles.CREATED + " desc");
@@ -180,10 +180,16 @@ public class Feed extends ListFragment implements LoaderManager.LoaderCallbacks<
             } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.SERVICE)) {
                 ((ImageView) view).setImageResource(Client.Network.get(cursor.getInt(columnIndex)).getIcon());
                 return true;
-            } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.IMAGE)) {
-                if (!setImageBitmap(view, cursor.getBlob(columnIndex))) {
+            } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.IMAGE_URL)) {
+                String imageUrl = cursor.getString(columnIndex);
+
+                if (!TextUtils.isEmpty(imageUrl)) {
+                    view.setVisibility(View.VISIBLE);
+                    mPicasso.load(imageUrl).into((ImageView) view);
+                } else {
                     view.setVisibility(View.GONE);
                 }
+
                 return true;
             } else {
                 return false;

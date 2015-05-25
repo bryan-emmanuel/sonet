@@ -24,19 +24,12 @@ import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
-import android.support.annotation.Nullable;
 
-import com.piusvelte.sonet.provider.StatusImages;
 import com.piusvelte.sonet.provider.Widgets;
 
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
@@ -193,38 +186,8 @@ public class Sonet {
     public static final int INVALID_SERVICE = -1;
 
     public static final int default_interval = 3600000;
-    @Deprecated
-    protected static final int default_buttons_bg_color = 0x88000000;
-    @Deprecated
-    protected static final int default_buttons_color = 0xFFFFFFFF;
-    @Deprecated
-    public static final int default_message_bg_color = 0x88FFFFFF;
-    @Deprecated
-    public static final int default_message_color = 0xFF000000;
-    @Deprecated
-    public static final int default_friend_color = 0xFFFFFFFF;
-    @Deprecated
-    public static final int default_created_color = 0xFFFFFFFF;
-    @Deprecated
-    protected static final int default_buttons_textsize = 14;
-    @Deprecated
-    public static final int default_messages_textsize = 14;
-    @Deprecated
-    public static final int default_friend_textsize = 14;
-    @Deprecated
-    public static final int default_created_textsize = 14;
     public static final int default_statuses_per_account = 10;
-    @Deprecated
-    protected static final boolean default_include_profile = true;
-    @Deprecated
-    protected static final int default_margin = 0;
-    @Deprecated
-    public static final int default_friend_bg_color = 0x88000000;
-    @Deprecated
-    protected static final boolean default_hasButtons = false;
     public static final boolean default_time24hr = false;
-    @Deprecated
-    protected static final boolean default_hasIcon = true;
     public static final boolean default_backgroundUpdate = true;
     public static final boolean default_sound = false;
     public static final boolean default_vibrate = false;
@@ -352,45 +315,8 @@ public class Sonet {
         return hasValues;
     }
 
-    @Nullable
-    public static Bitmap getBitmap(InputStream is) {
-        return BitmapFactory.decodeStream(is, null, sBFOptions);
-    }
-
-    @Nullable
-    public static Bitmap getBitmap(Resources r, int i) {
-        return BitmapFactory.decodeResource(r, i, sBFOptions);
-    }
-
-    @Nullable
-    public static byte[] getBlob(Bitmap bmp) {
-        if (bmp != null) {
-            ByteArrayOutputStream blob = new ByteArrayOutputStream();
-            bmp.compress(Bitmap.CompressFormat.PNG, 100, blob);
-            bmp.recycle();
-            return blob.toByteArray();
-        }
-
-        return null;
-    }
-
     public static Matcher getLinksMatcher(String raw) {
         return Pattern.compile("\\bhttp(s)?://\\S+\\b", Pattern.CASE_INSENSITIVE).matcher(raw);
-    }
-
-    public static byte[] createBackground(int color) {
-        Bitmap b = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-        Canvas c = new Canvas(b);
-        c.drawColor(color);
-        ByteArrayOutputStream s = new ByteArrayOutputStream();
-        b.compress(Bitmap.CompressFormat.PNG, 100, s);
-        byte[] bg = s.toByteArray();
-
-        if (b != null) {
-            b.recycle();
-        }
-
-        return bg;
     }
 
     public static String initAccountSettings(Context context, int widget, long account) {
@@ -398,28 +324,5 @@ public class Sonet {
         values.put(Widgets.WIDGET, widget);
         values.put(Widgets.ACCOUNT, account);
         return context.getContentResolver().insert(Widgets.getContentUri(context), values).getLastPathSegment();
-    }
-
-    public static int getCropSize(int src, int dst) {
-        return (int) Math.round((src - dst) / 2.0);
-    }
-
-    @Deprecated
-    public static boolean insertStatusImageBg(Context context, long statusId, byte[] bImg, int height) {
-        Bitmap bmpBg = Bitmap.createBitmap(1, height, Config.ARGB_8888);
-        ByteArrayOutputStream baosBg = new ByteArrayOutputStream();
-        bmpBg.compress(Bitmap.CompressFormat.PNG, 100, baosBg);
-        byte[] bBg = baosBg.toByteArray();
-        bmpBg.recycle();
-
-        if (bBg != null) {
-            ContentValues imageValues = new ContentValues();
-            imageValues.put(StatusImages.STATUS_ID, statusId);
-            imageValues.put(StatusImages.IMAGE, (bImg != null ? bImg : bBg));
-            context.getContentResolver().insert(StatusImages.getContentUri(context), imageValues);
-            return true;
-        }
-
-        return false;
     }
 }

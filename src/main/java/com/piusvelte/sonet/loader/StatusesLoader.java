@@ -9,7 +9,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
@@ -24,15 +23,12 @@ import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetService;
 import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Notifications;
-import com.piusvelte.sonet.provider.StatusImages;
 import com.piusvelte.sonet.provider.Statuses;
 import com.piusvelte.sonet.provider.StatusesStyles;
 import com.piusvelte.sonet.provider.WidgetAccountsView;
 import com.piusvelte.sonet.provider.Widgets;
 import com.piusvelte.sonet.provider.WidgetsSettings;
 import com.piusvelte.sonet.social.Client;
-
-import java.io.ByteArrayOutputStream;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.NOTIFY_ID;
@@ -353,33 +349,6 @@ public class StatusesLoader extends AsyncTask<Integer, String, Integer> {
     }
 
     private void addStatusItem(String widget, String message, int appWidgetId) {
-        Cursor c = mSonetService.getContentResolver().query(WidgetsSettings.getContentUri(mSonetService),
-                new String[] { Widgets.TIME24HR,
-                        Widgets.STATUSES_PER_ACCOUNT,
-                        Widgets.SOUND,
-                        Widgets.VIBRATE,
-                        Widgets.LIGHTS },
-                Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
-                new String[] { widget,
-                        Long.toString(Sonet.INVALID_ACCOUNT_ID) },
-                null);
-
-        if (!c.moveToFirst()) {
-            // no widget settings
-            c.close();
-            c = mSonetService.getContentResolver().query(WidgetsSettings.getContentUri(mSonetService),
-                    new String[] { Widgets.TIME24HR,
-                            Widgets.STATUSES_PER_ACCOUNT,
-                            Widgets.SOUND,
-                            Widgets.VIBRATE,
-                            Widgets.LIGHTS },
-                    Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
-                    new String[] { Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID),
-                            Long.toString(Sonet.INVALID_ACCOUNT_ID) },
-                    null);
-        }
-
-        c.close();
         long id;
         long created = System.currentTimeMillis();
         int service = 0;
@@ -397,7 +366,7 @@ public class StatusesLoader extends AsyncTask<Integer, String, Integer> {
                 null);
 
         if (entity.moveToFirst()) {
-            id = entity.getLong(0);
+            id = entity.getLong(entity.getColumnIndexOrThrow(Entity._ID));
         } else {
             ContentValues entityValues = new ContentValues();
             entityValues.put(Entity.ESID, esid);
@@ -418,22 +387,9 @@ public class StatusesLoader extends AsyncTask<Integer, String, Integer> {
         values.put(Statuses.ACCOUNT, accountId);
         values.put(Statuses.SID, sid);
         values.put(Statuses.FRIEND_OVERRIDE, friend);
-        Bitmap emptyBmp = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
-        ByteArrayOutputStream imageBgStream = new ByteArrayOutputStream();
-        emptyBmp.compress(Bitmap.CompressFormat.PNG, 100, imageBgStream);
-        byte[] emptyImg = imageBgStream.toByteArray();
-        emptyBmp.recycle();
 
         long statusId = Long.parseLong(mSonetService.getContentResolver().insert(Statuses.getContentUri(mSonetService),
                 values).getLastPathSegment());
-
-        // remote views can be reused, avoid images being repeated across multiple statuses
-        if (emptyImg != null) {
-            ContentValues imageValues = new ContentValues();
-            imageValues.put(StatusImages.STATUS_ID, statusId);
-            imageValues.put(StatusImages.IMAGE, emptyImg);
-            mSonetService.getContentResolver().insert(StatusImages.getContentUri(mSonetService), imageValues);
-        }
     }
 
     private boolean updateCreatedText(String widget, String account, boolean time24hr) {

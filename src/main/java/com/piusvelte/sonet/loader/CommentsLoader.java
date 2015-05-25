@@ -49,8 +49,8 @@ public class CommentsLoader extends BaseAsyncTaskLoader<CommentsLoader.Result> {
         SonetCrypto sonetCrypto = SonetCrypto.getInstance(mContext);
         UriMatcher um = new UriMatcher(UriMatcher.NO_MATCH);
         String authority = Sonet.getAuthority(mContext);
-        um.addURI(authority, SonetProvider.VIEW_STATUSES_STYLES + "/*", SonetProvider.STATUSES_STYLES);
-        um.addURI(authority, SonetProvider.TABLE_NOTIFICATIONS + "/*", SonetProvider.NOTIFICATIONS);
+        um.addURI(authority, StatusesStyles.VIEW + "/*", SonetProvider.STATUSES_STYLES);
+        um.addURI(authority, Notifications.TABLE + "/*", SonetProvider.NOTIFICATIONS);
         Cursor status;
         long mAccount;
         boolean mTime24hr = false;
