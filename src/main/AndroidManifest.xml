@@ -54,15 +54,10 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-
-        <activity android:name=".ManageAccounts">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".Settings" />
 
         <activity android:name=".OAuthLogin" />
 
@@ -85,19 +80,6 @@
             android:windowSoftInputMode="stateVisible|adjustResize" />
 
         <activity android:name=".SelectFriends" />
-
-        <activity
-            android:name=".StatusDialog"
-            android:clearTaskOnLaunch="true"
-            android:noHistory="true"
-            android:taskAffinity=""
-            android:theme="@style/SonetDialog" />
-
-        <activity
-            android:name=".SonetNotifications"
-            android:clearTaskOnLaunch="true"
-            android:noHistory="true"
-            android:taskAffinity="" />
 
         <!-- Broadcast Receiver that will process AppWidget updates -->
         <receiver

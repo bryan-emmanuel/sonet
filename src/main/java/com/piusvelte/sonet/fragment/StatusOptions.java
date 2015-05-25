@@ -19,11 +19,11 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
+import com.piusvelte.sonet.About;
 import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetComments;
 import com.piusvelte.sonet.SonetCreatePost;
-import com.piusvelte.sonet.SonetNotifications;
 import com.piusvelte.sonet.SonetService;
 import com.piusvelte.sonet.loader.ProfileUrlLoader;
 import com.piusvelte.sonet.loader.StatusLoader;
@@ -174,7 +174,8 @@ public class StatusOptions extends ListFragment implements LoaderManager.LoaderC
                 break;
 
             case StatusLoader.Result.NOTIFICATIONS:
-                startActivity(new Intent(getActivity(), SonetNotifications.class));
+                // TODO go to Notifications *in* About
+                startActivity(new Intent(getActivity(), About.class));
                 getActivity().finish();
                 break;
 

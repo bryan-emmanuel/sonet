@@ -20,7 +20,6 @@
 package com.piusvelte.sonet;
 
 import android.appwidget.AppWidgetManager;
-import android.appwidget.AppWidgetProviderInfo;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Build;
@@ -46,9 +45,10 @@ import android.widget.Toast;
 import com.piusvelte.sonet.adapter.AccountAdapter;
 import com.piusvelte.sonet.adapter.AccountProfileAdapter;
 import com.piusvelte.sonet.adapter.MenuItemAdapter;
+import com.piusvelte.sonet.fragment.AccountsList;
 import com.piusvelte.sonet.fragment.ConfirmationDialogFragment;
 import com.piusvelte.sonet.fragment.Feed;
-import com.piusvelte.sonet.fragment.ItemsDialogFragment;
+import com.piusvelte.sonet.fragment.NotificationsList;
 import com.piusvelte.sonet.fragment.Settings;
 import com.piusvelte.sonet.loader.AccountsProfilesLoader;
 
@@ -60,8 +60,11 @@ import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 
 public class About extends BaseActivity implements AdapterView.OnItemClickListener {
+    // TODO there should be nothing widget specific here
     private int[] mAppWidgetIds;
+    // TODO there should be nothing widget specific here
     private AppWidgetManager mAppWidgetManager;
+    // TODO places which update the widgets should call startService themselves
     private boolean mUpdateWidget = false;
     private static final String TAG = "About";
 
@@ -70,11 +73,8 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
     private static final String FRAGMENT_CONTENT = "fragment:content";
 
     private static final String DIALOG_ABOUT = "dialog:about";
-    private static final String DIALOG_WIDGETS = "dialog:widgets";
 
     private static final String FRAGMENT_ACCOUNT_DETAIL = "fragment:account_detail";
-
-    private static final int REQUEST_WIDGET = 0;
 
     private DrawerLayout mDrawer;
     private GridView mDrawerAccounts;
@@ -191,9 +191,10 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
                     return true;
 
                 case R.id.menu_refresh:
-                    // TODO handle this in WidgetsList, show loading, cleared onLoadFinished
+                    // TODO handle this in Feed, show loading, cleared onLoadFinished
                     startService(new Intent(this, SonetService.class)
-                            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID).setAction(ACTION_REFRESH));
+                            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
+                            .setAction(ACTION_REFRESH));
                     return true;
 
                 case R.id.menu_about_default_settings:
@@ -212,27 +213,19 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
                     return true;
 
                 case R.id.menu_about_notifications:
-                    // TODO replace fragment instead of using Activity
-                    startActivity(new Intent(this, SonetNotifications.class));
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.content_fragment_container,
+                                    new NotificationsList(),
+                                    FRAGMENT_CONTENT)
+                            .commit();
                     return true;
 
-                case R.id.menu_about_widget_settings:
-                    // TODO replace fragment instead of using Activity
-                    if (mAppWidgetIds.length > 0) {
-                        String[] widgets = new String[mAppWidgetIds.length];
-
-                        for (int i = 0, i2 = mAppWidgetIds.length; i < i2; i++) {
-                            AppWidgetProviderInfo info = mAppWidgetManager.getAppWidgetInfo(mAppWidgetIds[i]);
-                            String providerName = info.provider.getClassName();
-                            widgets[i] = Integer.toString(mAppWidgetIds[i]) + " (" + providerName + ")";
-                        }
-
-                        ItemsDialogFragment.newInstance(widgets, REQUEST_WIDGET)
-                                .show(getSupportFragmentManager(), DIALOG_WIDGETS);
-                    } else {
-                        Toast.makeText(this, getString(R.string.nowidgets), Toast.LENGTH_LONG).show();
-                    }
-
+                case R.id.menu_accounts:
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.content_fragment_container,
+                                    AccountsList.newInstance(),
+                                    FRAGMENT_CONTENT)
+                            .commit();
                     return true;
 
                 case R.id.menu_about:
@@ -283,9 +276,8 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
     @Override
     public void onResult(int requestCode, int result, Intent data) {
         switch (requestCode) {
-            case REQUEST_WIDGET:
-                startActivity(new Intent(this, ManageAccounts.class)
-                        .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[ItemsDialogFragment.getWhich(data, 0)]));
+            default:
+                // NO-OP
                 break;
         }
     }

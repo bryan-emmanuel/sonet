@@ -268,9 +268,8 @@ public class SonetService extends Service {
             views.setEmptyView(R.id.messages, R.id.empty_messages);
             // Bind a click listener template for the contents of the message list
             final Intent onClickIntent = new Intent(this, SonetComments.class)
-                    /*.setAction(Sonet.ACTION_ON_CLICK)*/
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId); no longer widget specific
             onClickIntent.setData(Uri.parse(onClickIntent.toUri(Intent.URI_INTENT_SCHEME)));
             final PendingIntent onClickPendingIntent = PendingIntent
                     .getActivity(this,

@@ -15,10 +15,10 @@ import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.telephony.SmsMessage;
 
+import com.piusvelte.sonet.About;
 import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
-import com.piusvelte.sonet.SonetNotifications;
 import com.piusvelte.sonet.SonetService;
 import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Statuses;
@@ -260,13 +260,14 @@ public class SMSLoader extends AsyncTask<SmsMessage, String, int[]> {
 
         if (notifications != 0) {
             Notification notification = new Notification(R.drawable.notification, updates[1], System.currentTimeMillis());
+            // TODO go to Notifications *in* About
             notification.setLatestEventInfo(mSonetService.getBaseContext(),
                     "New messages",
                     updates[1],
                     PendingIntent
                             .getActivity(mSonetService,
                                     0,
-                                    new Intent(mSonetService, SonetNotifications.class),
+                                    new Intent(mSonetService, About.class),
                                     0));
             notification.defaults |= notifications;
             ((NotificationManager) mSonetService.getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);

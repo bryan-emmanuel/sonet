@@ -88,7 +88,8 @@ public class SonetUploader extends Service {
                                 protected void onPostExecute(String filepath) {
                                     // launch post activity with filepath
                                     if (filepath != null) {
-                                        startActivity(new Intent(SonetUploader.this, StatusDialog.class)
+                                        // TODO test that this loads correctly
+                                        startActivity(new Intent(SonetUploader.this, SonetCreatePost.class)
                                                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                                                 .putExtra(Widgets.INSTANT_UPLOAD, filepath));
                                     }

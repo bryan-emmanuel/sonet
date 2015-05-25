@@ -16,11 +16,11 @@ import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.piusvelte.sonet.About;
 import com.piusvelte.sonet.BuildConfig;
 import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
-import com.piusvelte.sonet.SonetNotifications;
 import com.piusvelte.sonet.SonetService;
 import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Notifications;
@@ -327,9 +327,10 @@ public class StatusesLoader extends AsyncTask<Integer, String, Integer> {
 
         if (notifications != 0) {
             Notification notification = new Notification(R.drawable.notification, mSonetService.mNotify, System.currentTimeMillis());
+            // TODO go to Notifications *in* About
             notification.setLatestEventInfo(mSonetService.getBaseContext(), "New messages", mSonetService.mNotify,
                     PendingIntent.getActivity(mSonetService, 0,
-                            (new Intent(mSonetService, SonetNotifications.class)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            (new Intent(mSonetService, About.class)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP), 0));
             notification.defaults |= notifications;
             ((NotificationManager) mSonetService.getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
