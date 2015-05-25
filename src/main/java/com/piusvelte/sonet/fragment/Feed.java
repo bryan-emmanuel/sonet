@@ -15,20 +15,26 @@ import android.support.v4.content.Loader;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.SonetComments;
+import com.piusvelte.sonet.SonetService;
 import com.piusvelte.sonet.provider.StatusLinks;
 import com.piusvelte.sonet.provider.StatusesStyles;
 import com.piusvelte.sonet.social.Client;
 import com.piusvelte.sonet.util.CircleTransformation;
 import com.squareup.picasso.Picasso;
 
+import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.sBFOptions;
 
 /**
@@ -73,6 +79,33 @@ public class Feed extends ListFragment implements LoaderManager.LoaderCallbacks<
 
         mLoadingView.setVisibility(View.VISIBLE);
         getLoaderManager().initLoader(LOADER_FEED, null, this);
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.menu_feed, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_refresh:
+                Toast.makeText(getActivity(), R.string.refreshing, Toast.LENGTH_LONG).show();
+                getActivity().startService(new Intent(getActivity(), SonetService.class)
+                        .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
+                        .setAction(ACTION_REFRESH));
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     @Override

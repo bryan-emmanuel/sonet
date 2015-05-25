@@ -32,8 +32,6 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
@@ -110,14 +108,10 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
 
     private void setupDrawer() {
         mDrawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        mDrawerToggle = new ActionBarDrawerToggle(this,
+        mDrawerToggle = new DrawerToggle(this,
                 mDrawer,
                 R.string.drawer_open,
                 R.string.drawer_closed) {
-            @Override
-            public void onDrawerSlide(View drawerView, float slideOffset) {
-                super.onDrawerSlide(drawerView, 0);
-            }
         };
         mDrawer.setDrawerListener(mDrawerToggle);
 
@@ -171,18 +165,12 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu_about, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (mDrawerToggle.onOptionsItemSelected(item)) {
             return true;
         } else {
             switch (item.getItemId()) {
+                // menu_drawer_primary
                 case R.id.menu_feed:
                     getSupportFragmentManager().beginTransaction()
                             .replace(R.id.content_fragment_container,
@@ -191,26 +179,12 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
                             .commit();
                     return true;
 
-                case R.id.menu_refresh:
-                    // TODO handle this in Feed, show loading, cleared onLoadFinished
-                    startService(new Intent(this, SonetService.class)
-                            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
-                            .setAction(ACTION_REFRESH));
-                    return true;
-
                 case R.id.menu_about_default_settings:
                     getSupportFragmentManager().beginTransaction()
                             .replace(R.id.content_fragment_container,
                                     Settings.newInstance(),
                                     FRAGMENT_CONTENT)
                             .commit();
-                    return true;
-
-                case R.id.menu_refresh_all_widgets:
-                    // TODO show loading, cleared onLoadFinished
-                    Toast.makeText(this, R.string.refreshing, Toast.LENGTH_LONG).show();
-                    startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH)
-                            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
                     return true;
 
                 case R.id.menu_about_notifications:
@@ -227,6 +201,13 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
                                     AccountsList.newInstance(),
                                     FRAGMENT_CONTENT)
                             .commit();
+                    return true;
+
+                // menu_drawer_secondary
+                case R.id.menu_refresh_all_widgets:
+                    Toast.makeText(this, R.string.refreshing, Toast.LENGTH_LONG).show();
+                    startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH)
+                            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
                     return true;
 
                 case R.id.menu_about:
@@ -313,6 +294,40 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
         }
 
         mDrawerAccountsAdapter.notifyDataSetChanged();
+    }
+
+    private void onDrawerChange() {
+        int selectedItem = mDrawerPrimary.getSelectedItemPosition();
+        MenuItem menuItem = mDrawerPrimaryAdapter.getItem(selectedItem);
+        getSupportActionBar().setTitle(menuItem.getTitle());
+        supportInvalidateOptionsMenu();
+    }
+
+    private static class DrawerToggle extends ActionBarDrawerToggle {
+
+        private About mAbout;
+
+        public DrawerToggle(About about, DrawerLayout drawerLayout, int openDrawerContentDescRes, int closeDrawerContentDescRes) {
+            super(about, drawerLayout, openDrawerContentDescRes, closeDrawerContentDescRes);
+            mAbout = about;
+        }
+
+        @Override
+        public void onDrawerOpened(View drawerView) {
+            super.onDrawerOpened(drawerView);
+            mAbout.onDrawerChange();
+        }
+
+        @Override
+        public void onDrawerClosed(View drawerView) {
+            super.onDrawerClosed(drawerView);
+            mAbout.onDrawerChange();
+        }
+
+        @Override
+        public void onDrawerSlide(View drawerView, float slideOffset) {
+            super.onDrawerSlide(drawerView, 0);
+        }
     }
 
     private static class AccountsProfilesLoaderCallback implements LoaderManager.LoaderCallbacks<List<HashMap<String, String>>> {

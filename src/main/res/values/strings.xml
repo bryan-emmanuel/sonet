@@ -29,13 +29,13 @@
     <string name="widget_loading">This widget is reloading. Please try again after it has completed or use the app to update the widget.</string>
     <string name="status_loading">Loading&#8230; If loading does not finish soon, the widget is probably reloading. Please try again after it has completed or use the app to update the widget.</string>
     <string name="updating">Updating content&#8230;</string>
-    <string name="refreshing">Updating Sonet content&#8230;</string>
+    <string name="refreshing">Refreshing&#8230;</string>
     <string name="no_connection">No connection</string>
     <string name="no_updates">No status updates</string>
     <string name="settings">Settings</string>
     <string name="accounts">Accounts</string>
     <string name="no_accounts">No accounts setup or enabled, press here to setup some.</string>
-    <string name="button_refresh">Update</string>
+    <string name="button_refresh">Refresh</string>
     <string name="button_add_account">Add Account</string>
     <string name="delete_account">Delete Account</string>
     <string name="interval">Update Interval</string>
