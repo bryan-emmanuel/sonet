@@ -1,6 +1,7 @@
-package com.piusvelte.sonet.loader;
+package com.piusvelte.sonet.service;
 
-import android.content.Context;
+import android.app.IntentService;
+import android.content.Intent;
 import android.database.Cursor;
 
 import com.piusvelte.sonet.SonetCrypto;
@@ -11,32 +12,29 @@ import com.piusvelte.sonet.provider.WidgetsSettings;
 import com.piusvelte.sonet.social.Client;
 
 /**
- * Created by bemmanuel on 5/7/15.
+ * Created by bemmanuel on 5/22/15.
  */
-public class NotificationsLoader extends BaseAsyncTaskLoader {
+public class LoadNotificationsService extends IntentService {
 
-    private Context mContext;
-
-    public NotificationsLoader(Context context) {
-        super(context);
-        mContext = context.getApplicationContext();
+    public LoadNotificationsService() {
+        super(LoadNotificationsService.class.getSimpleName());
     }
 
     @Override
-    public Object loadInBackground() {
+    protected void onHandleIntent(Intent intent) {
         // select all accounts with notifications set
-        Cursor widgets = mContext.getContentResolver().query(WidgetsSettings.getDistinctContentUri(mContext),
+        Cursor widgets = getContentResolver().query(WidgetsSettings.getDistinctContentUri(getApplicationContext()),
                 new String[] { Widgets.ACCOUNT },
                 Widgets.ACCOUNT + "!=-1 and (" + Widgets.LIGHTS + "=1 or " + Widgets.VIBRATE + "=1 or " + Widgets.SOUND + "=1)",
                 null,
                 null);
 
         if (widgets.moveToFirst()) {
-            SonetCrypto sonetCrypto = SonetCrypto.getInstance(mContext);
+            SonetCrypto sonetCrypto = SonetCrypto.getInstance(getApplicationContext());
 
             while (!widgets.isAfterLast()) {
                 long accountId = widgets.getLong(0);
-                Cursor account = mContext.getContentResolver().query(Accounts.getContentUri(mContext),
+                Cursor account = getContentResolver().query(Accounts.getContentUri(getApplicationContext()),
                         new String[] { Accounts.TOKEN,
                                 Accounts.SECRET,
                                 Accounts.SERVICE,
@@ -53,7 +51,7 @@ public class NotificationsLoader extends BaseAsyncTaskLoader {
                     int service = account.getInt(account.getColumnIndexOrThrow(Accounts.SERVICE));
                     String accountEsid = sonetCrypto.Decrypt(account.getString(account.getColumnIndexOrThrow(Accounts.SID)));
 
-                    Client client = new Client.Builder(mContext)
+                    Client client = new Client.Builder(getApplicationContext())
                             .setNetwork(service)
                             .setCredentials(token, secret)
                             .setAccount(accountEsid)
@@ -62,7 +60,7 @@ public class NotificationsLoader extends BaseAsyncTaskLoader {
                     client.getNotifications(accountId, new String[1]);
 
                     // remove old notifications
-                    mContext.getContentResolver().delete(Notifications.getContentUri(mContext),
+                    getContentResolver().delete(Notifications.getContentUri(getApplicationContext()),
                             Notifications.CLEARED + "=1 and " + Notifications.ACCOUNT + "=? and " + Notifications.CREATED + "<?",
                             new String[] { Long.toString(accountId),
                                     Long.toString(System.currentTimeMillis() - 86400000) });
@@ -74,6 +72,5 @@ public class NotificationsLoader extends BaseAsyncTaskLoader {
         }
 
         widgets.close();
-        return null;
     }
 }

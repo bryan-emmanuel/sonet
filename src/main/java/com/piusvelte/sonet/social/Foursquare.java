@@ -15,7 +15,7 @@ import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.SonetOAuth;
-import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.Statuses;
 import com.squareup.okhttp.Request;
@@ -570,7 +570,7 @@ public class Foursquare extends Client {
         JSONObject user = jsonComment.getJSONObject(Suser);
         HashMap<String, String> commentMap = new HashMap<>();
         commentMap.put(Statuses.SID, jsonComment.getString(Sid));
-        commentMap.put(Entities.FRIEND, user.getString(SfirstName) + " " + user.getString(SlastName));
+        commentMap.put(Entity.FRIEND, user.getString(SfirstName) + " " + user.getString(SlastName));
         commentMap.put(Statuses.MESSAGE, jsonComment.getString(Stext));
         commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(jsonComment.getLong(ScreatedAt) * 1000, time24hr));
         commentMap.put(getString(R.string.like), "");

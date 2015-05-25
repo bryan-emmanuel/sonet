@@ -20,7 +20,7 @@ import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.SonetOAuth;
-import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.StatusImages;
 import com.piusvelte.sonet.provider.StatusLinks;
@@ -536,49 +536,22 @@ abstract public class Client {
             String esid,
             ArrayList<String[]> links) {
         long id;
-        byte[] profile = null;
-
-        if (url != null) {
-            // get profile
-            try {
-                Bitmap bitmap = Picasso.with(mContext)
-                        .load(url)
-                        .transform(new CircleTransformation())
-                        .get();
-                profile = Sonet.getBlob(bitmap);
-            } catch (IOException e) {
-                if (BuildConfig.DEBUG) Log.e(mTag, "error loading image:" + url, e);
-            }
-        }
-
-        if (profile == null) {
-            try {
-                Bitmap bitmap = Picasso.with(mContext)
-                        .load(R.drawable.ic_account_box_grey600_48dp)
-                        .transform(new CircleTransformation())
-                        .get();
-                profile = Sonet.getBlob(bitmap);
-            } catch (IOException e) {
-                if (BuildConfig.DEBUG) Log.e(mTag, "error loading ic_account_box_grey600_48dp", e);
-            }
-        }
-
         String friend_override = getPostFriendOverride(friend);
         friend = getPostFriend(friend);
 
         Cursor entity = getContentResolver()
-                .query(Entities.getContentUri(mContext), new String[] { Entities._ID }, Entities.ACCOUNT + "=? and " + Entities.ESID + "=?",
+                .query(Entity.getContentUri(mContext), new String[] { Entity._ID }, Entity.ACCOUNT + "=? and " + Entity.ESID + "=?",
                         new String[] { Long.toString(accountId), SonetCrypto.getInstance(mContext).Encrypt(esid) }, null);
 
         if (entity.moveToFirst()) {
             id = entity.getLong(0);
         } else {
             ContentValues entityValues = new ContentValues();
-            entityValues.put(Entities.ESID, esid);
-            entityValues.put(Entities.FRIEND, friend);
-            entityValues.put(Entities.PROFILE, profile);
-            entityValues.put(Entities.ACCOUNT, accountId);
-            id = Long.parseLong(getContentResolver().insert(Entities.getContentUri(mContext), entityValues).getLastPathSegment());
+            entityValues.put(Entity.ESID, esid);
+            entityValues.put(Entity.FRIEND, friend);
+            entityValues.put(Entity.PROFILE_URL, url);
+            entityValues.put(Entity.ACCOUNT, accountId);
+            id = Long.parseLong(getContentResolver().insert(Entity.getContentUri(mContext), entityValues).getLastPathSegment());
         }
 
         entity.close();
@@ -750,7 +723,7 @@ abstract public class Client {
         getContentResolver().delete(Statuses.getContentUri(mContext), Statuses.WIDGET + "=? and " + Statuses.ACCOUNT + "=?",
                 new String[] { widgetId, accountId });
         Cursor entities = getContentResolver()
-                .query(Entities.getContentUri(mContext), new String[] { Entities._ID }, Entities.ACCOUNT + "=?", new String[] { accountId }, null);
+                .query(Entity.getContentUri(mContext), new String[] { Entity._ID }, Entity.ACCOUNT + "=?", new String[] { accountId }, null);
 
         if (entities.moveToFirst()) {
             while (!entities.isAfterLast()) {
@@ -759,7 +732,7 @@ abstract public class Client {
                 if (!s.moveToFirst()) {
                     // not in use, remove it
                     getContentResolver()
-                            .delete(Entities.getContentUri(mContext), Entities._ID + "=?", new String[] { Long.toString(entities.getLong(0)) });
+                            .delete(Entity.getContentUri(mContext), Entity._ID + "=?", new String[] { Long.toString(entities.getLong(0)) });
                 }
                 s.close();
                 entities.moveToNext();

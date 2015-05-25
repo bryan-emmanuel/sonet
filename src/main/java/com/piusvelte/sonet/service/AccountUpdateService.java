@@ -26,7 +26,9 @@ import java.lang.annotation.RetentionPolicy;
  */
 public class AccountUpdateService extends IntentService {
 
+    @Deprecated
     public static final String ACTION_ENABLE = "ACTION_ENABLE";
+    @Deprecated
     public static final String ACTION_DISABLE = "ACTION_DISABLE";
     public static final String ACTION_DELETE = "ACTION_DELETE";
 
@@ -58,6 +60,7 @@ public class AccountUpdateService extends IntentService {
 
             switch (intent.getAction()) {
                 case ACTION_ENABLE:
+                    // XXX accounts are no longer widget specific
                     ContentValues values = new ContentValues();
                     values.put(WidgetAccounts.ACCOUNT, accountId);
                     values.put(WidgetAccounts.WIDGET, appwidgetId);
@@ -65,6 +68,7 @@ public class AccountUpdateService extends IntentService {
                     break;
 
                 case ACTION_DISABLE:
+                    // XXX accounts are no longer widget specific
                     // disable the account, remove settings and statuses
                     getContentResolver().delete(Widgets.getContentUri(this),
                             Widgets.ACCOUNT + "=? and " + Widgets.WIDGET + "=?",
@@ -97,7 +101,8 @@ public class AccountUpdateService extends IntentService {
                     statuses.close();
                     getContentResolver().delete(Statuses.getContentUri(this),
                             Statuses.ACCOUNT + "=? and " + Statuses.WIDGET + "=?",
-                            new String[] { Long.toString(accountId), Integer.toString(appwidgetId) });
+                            new String[] { Long.toString(accountId),
+                                    Integer.toString(appwidgetId) });
                     break;
 
                 case ACTION_DELETE:

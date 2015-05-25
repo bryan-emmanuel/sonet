@@ -14,7 +14,7 @@ import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetProvider;
 import com.piusvelte.sonet.provider.Accounts;
-import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.Statuses;
 import com.piusvelte.sonet.provider.StatusesStyles;
@@ -32,7 +32,7 @@ import static com.piusvelte.sonet.Sonet.TWITTER;
 /**
  * Created by bemmanuel on 4/21/15.
  */
-public class CommentsLoader extends BaseAsyncTaskLoader {
+public class CommentsLoader extends BaseAsyncTaskLoader<CommentsLoader.Result> {
 
     private Context mContext;
     private Uri mData;
@@ -44,7 +44,7 @@ public class CommentsLoader extends BaseAsyncTaskLoader {
     }
 
     @Override
-    public Object loadInBackground() {
+    public CommentsLoader.Result loadInBackground() {
         Result result = new Result();
         SonetCrypto sonetCrypto = SonetCrypto.getInstance(mContext);
         UriMatcher um = new UriMatcher(UriMatcher.NO_MATCH);
@@ -113,7 +113,7 @@ public class CommentsLoader extends BaseAsyncTaskLoader {
                     widget.close();
                     HashMap<String, String> commentMap = new HashMap<>();
                     commentMap.put(Statuses.SID, result.sid);
-                    commentMap.put(Entities.FRIEND, status.getString(5));
+                    commentMap.put(Entity.FRIEND, status.getString(5));
                     commentMap.put(Statuses.MESSAGE, status.getString(6));
                     commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(status.getLong(7), mTime24hr));
                     commentMap.put(mContext.getString(R.string.like), result.service == TWITTER
@@ -168,7 +168,7 @@ public class CommentsLoader extends BaseAsyncTaskLoader {
                     account.close();
                     HashMap<String, String> commentMap = new HashMap<>();
                     commentMap.put(Statuses.SID, result.sid);
-                    commentMap.put(Entities.FRIEND, notification.getString(3));
+                    commentMap.put(Entity.FRIEND, notification.getString(3));
                     commentMap.put(Statuses.MESSAGE, notification.getString(4));
                     commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(notification.getLong(5), mTime24hr));
                     commentMap.put(mContext.getString(R.string.like),
@@ -187,7 +187,7 @@ public class CommentsLoader extends BaseAsyncTaskLoader {
                 mAccountSid = null;
                 HashMap<String, String> commentMap = new HashMap<>();
                 commentMap.put(Statuses.SID, "");
-                commentMap.put(Entities.FRIEND, "");
+                commentMap.put(Entity.FRIEND, "");
                 commentMap.put(Statuses.MESSAGE, "error, status not found");
                 commentMap.put(Statuses.CREATEDTEXT, "");
                 commentMap.put(mContext.getString(R.string.like), "");

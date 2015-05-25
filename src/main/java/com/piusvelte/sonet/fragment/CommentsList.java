@@ -6,7 +6,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
@@ -32,7 +31,7 @@ import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.loader.CommentsLoader;
 import com.piusvelte.sonet.loader.LikeCommentLoader;
 import com.piusvelte.sonet.loader.SendCommentLoader;
-import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Statuses;
 import com.piusvelte.sonet.social.Client;
 
@@ -49,7 +48,7 @@ import static com.piusvelte.sonet.Sonet.MYSPACE;
  * Created by bemmanuel on 4/21/15.
  */
 public class CommentsList extends ListFragment
-        implements TextWatcher, View.OnKeyListener, View.OnClickListener, LoaderManager.LoaderCallbacks {
+        implements TextWatcher, View.OnKeyListener, View.OnClickListener {
 
     private static final int LOADER_COMMENTS = 0;
     private static final int LOADER_SEND = 1;
@@ -60,8 +59,10 @@ public class CommentsList extends ListFragment
     private static final int REQUEST_OPTIONS = 0;
 
     private static final String ARG_DATA = "data";
+    private static final String ARG_ESID = "esid";
     private static final String ARG_SID = "sid";
     private static final String ARG_DO_LIKE = "do_like";
+    private static final String ARG_MESSAGE = "message";
 
     private static final String STATE_PENDING_LOADERS = "state:pending_loaders";
     private static final String STATE_MESSAGE = "state:message";
@@ -82,6 +83,12 @@ public class CommentsList extends ListFragment
 
     private View mLoadingView;
 
+    private CommentsLoaderCallbacks mCommentsLoaderCallbacks = new CommentsLoaderCallbacks(this);
+    private SendLoaderCallbacks mSendLoaderCallbacks = new SendLoaderCallbacks(this);
+    private LikeLoaderCallbacks mLikeLoaderCallbacks = new LikeLoaderCallbacks(this);
+
+    // TODO stop this
+    @Deprecated
     @NonNull
     private Set<Integer> mPendingLoaders = new HashSet<>();
 
@@ -122,7 +129,7 @@ public class CommentsList extends ListFragment
         mAdapter = new SimpleAdapter(getActivity(),
                 mComments,
                 R.layout.comment,
-                new String[] { Entities.FRIEND,
+                new String[] { Entity.FRIEND,
                         Statuses.MESSAGE,
                         Statuses.CREATEDTEXT,
                         getString(R.string.like) },
@@ -136,21 +143,21 @@ public class CommentsList extends ListFragment
         LoaderManager loaderManager = getLoaderManager();
 
         mLoadingView.setVisibility(View.VISIBLE);
-        getLoaderManager().initLoader(LOADER_COMMENTS, null, this);
 
         if (savedInstanceState != null) {
             mMessage.setText(savedInstanceState.getString(STATE_MESSAGE));
+        }
 
-            if (loaderManager.hasRunningLoaders()) {
-                int[] loaders = savedInstanceState.getIntArray(STATE_PENDING_LOADERS);
+        Bundle args = new Bundle();
+        args.putString(ARG_DATA, getArguments().getString(ARG_DATA));
+        getLoaderManager().initLoader(LOADER_COMMENTS, args, new CommentsLoaderCallbacks(this));
 
-                if (loaders != null) {
-                    for (int loader : loaders) {
-                        mPendingLoaders.add(loader);
-                        loaderManager.initLoader(loader, null, this);
-                    }
-                }
-            }
+        if (loaderManager.getLoader(LOADER_SEND) != null) {
+            loaderManager.initLoader(LOADER_SEND, null, mSendLoaderCallbacks);
+        }
+
+        if (loaderManager.getLoader(LOADER_LIKE) != null) {
+            loaderManager.initLoader(LOADER_LIKE, null, mLikeLoaderCallbacks);
         }
     }
 
@@ -214,7 +221,9 @@ public class CommentsList extends ListFragment
     private void refresh() {
         mMessage.setEnabled(false);
         mLoadingView.setVisibility(View.VISIBLE);
-        getLoaderManager().restartLoader(LOADER_COMMENTS, null, this);
+        Bundle args = new Bundle();
+        args.putString(ARG_DATA, getArguments().getString(ARG_DATA));
+        getLoaderManager().restartLoader(LOADER_COMMENTS, args, mCommentsLoaderCallbacks);
     }
 
     @Override
@@ -278,7 +287,10 @@ public class CommentsList extends ListFragment
                 mSend.setEnabled(false);
 
                 mLoadingView.setVisibility(View.VISIBLE);
-                getLoaderManager().restartLoader(LOADER_SEND, null, this);
+                Bundle args = new Bundle();
+                args.putString(ARG_SID, mSid);
+                args.putString(ARG_MESSAGE, mMessage.getText().toString());
+                getLoaderManager().restartLoader(LOADER_SEND, null, mSendLoaderCallbacks);
             } else {
                 (Toast.makeText(getActivity(), "error parsing message body", Toast.LENGTH_LONG)).show();
                 mMessage.setEnabled(true);
@@ -287,105 +299,68 @@ public class CommentsList extends ListFragment
         }
     }
 
-    @Override
-    public Loader onCreateLoader(int id, Bundle args) {
-        switch (id) {
-            case LOADER_COMMENTS:
-                return new CommentsLoader(getActivity(), Uri.parse(getArguments().getString(ARG_DATA)));
+    private void setComments(CommentsLoader.Result result) {
+        mLoadingView.setVisibility(View.GONE);
+        mComments.clear();
 
-            case LOADER_SEND:
-                mPendingLoaders.add(id);
-                return new SendCommentLoader(getActivity(), mClient, mSid, mMessage.getText().toString());
+        if (result != null) {
+            mClient = result.client;
+            mService = result.service;
+            mSid = result.sid;
+            mEsid = result.esid;
+            mServiceName = result.serviceName;
 
-            case LOADER_LIKE:
-                mPendingLoaders.add(id);
-                return new LikeCommentLoader(getActivity(), mClient, args.getString(ARG_SID), mEsid, args.getBoolean(ARG_DO_LIKE));
+            mMessage.setText("");
 
-            default:
-                return null;
+            if (result.isCommentable) {
+                if (!TextUtils.isEmpty(result.messagePretext)) {
+                    mMessage.append(result.messagePretext);
+                }
+            } else {
+                mSend.setEnabled(false);
+                mMessage.setEnabled(false);
+                mMessage.setText(R.string.uncommentable);
+            }
+
+            if (result.isLikeable) {
+                setCommentStatus(0, result.likeText);
+            } else {
+                setCommentStatus(0, getString(R.string.unlikable));
+            }
+
+            mMessage.setEnabled(true);
+
+            if (result.socialClientComments != null && result.socialClientComments.size() > 0) {
+                mComments.addAll(result.socialClientComments);
+            }
+        }
+
+        mAdapter.notifyDataSetChanged();
+    }
+
+    private void onSendResult(Boolean result) {
+        mLoadingView.setVisibility(View.GONE);
+
+        if (Boolean.TRUE.equals(result)) {
+            Toast.makeText(getActivity(), mServiceName + " " + getString(R.string.success), Toast.LENGTH_LONG).show();
+        } else if (mService == MYSPACE) {
+            // myspace permissions
+            Toast.makeText(getActivity(), getActivity().getResources().getStringArray(R.array.service_entries)[MYSPACE] + getString(
+                    R.string.failure) + " " + getString(R.string.myspace_permissions_message), Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(getActivity(), mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG).show();
         }
     }
 
-    @Override
-    public void onLoadFinished(Loader loader, Object data) {
-        mPendingLoaders.remove(loader.getId());
-        DialogFragment dialogFragment;
+    private void onLikeResult(LikeCommentLoader.Result result) {
+        mLoadingView.setVisibility(View.GONE);
 
-        switch (loader.getId()) {
-            case LOADER_COMMENTS:
-                mLoadingView.setVisibility(View.GONE);
-
-                if (data instanceof CommentsLoader.Result) {
-                    CommentsLoader.Result result = (CommentsLoader.Result) data;
-
-                    mClient = result.client;
-                    mService = result.service;
-                    mSid = result.sid;
-                    mEsid = result.esid;
-                    mServiceName = result.serviceName;
-
-                    mMessage.setText("");
-
-                    if (result.isCommentable) {
-                        if (!TextUtils.isEmpty(result.messagePretext)) {
-                            mMessage.append(result.messagePretext);
-                        }
-                    } else {
-                        mSend.setEnabled(false);
-                        mMessage.setEnabled(false);
-                        mMessage.setText(R.string.uncommentable);
-                    }
-
-                    if (result.isLikeable) {
-                        setCommentStatus(0, result.likeText);
-                    } else {
-                        setCommentStatus(0, getString(R.string.unlikable));
-                    }
-
-                    mMessage.setEnabled(true);
-
-                    mComments.clear();
-
-                    if (result.socialClientComments != null && result.socialClientComments.size() > 0) {
-                        mComments.addAll(result.socialClientComments);
-                    }
-
-                    mAdapter.notifyDataSetChanged();
-                }
-                break;
-
-            case LOADER_SEND:
-                mLoadingView.setVisibility(View.GONE);
-
-                if (Boolean.TRUE.equals(data)) {
-                    Toast.makeText(getActivity(), mServiceName + " " + getString(R.string.success), Toast.LENGTH_LONG).show();
-                } else if (mService == MYSPACE) {
-                    // myspace permissions
-                    Toast.makeText(getActivity(), getActivity().getResources().getStringArray(R.array.service_entries)[MYSPACE] + getString(
-                            R.string.failure) + " " + getString(R.string.myspace_permissions_message), Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(getActivity(), mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG).show();
-                }
-                break;
-
-            case LOADER_LIKE:
-                mLoadingView.setVisibility(View.GONE);
-
-                if (data instanceof LikeCommentLoader.Result) {
-                    LikeCommentLoader.Result result = (LikeCommentLoader.Result) data;
-                    Toast.makeText(getActivity(), mServiceName + " " + getString(result.wasSuccessful ? R.string.success : R.string.failure),
-                            Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(getActivity(), mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG).show();
-                }
-
-                break;
+        if (result != null) {
+            Toast.makeText(getActivity(), mServiceName + " " + getString(result.wasSuccessful ? R.string.success : R.string.failure),
+                    Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(getActivity(), mServiceName + " " + getString(R.string.failure), Toast.LENGTH_LONG).show();
         }
-    }
-
-    @Override
-    public void onLoaderReset(Loader loader) {
-        mPendingLoaders.remove(loader.getId());
     }
 
     @Override
@@ -403,10 +378,11 @@ public class CommentsList extends ListFragment
                         mLoadingView.setVisibility(View.VISIBLE);
 
                         Bundle args = new Bundle();
+                        args.putString(ARG_ESID, mEsid);
                         args.putString(ARG_SID, sid);
                         args.putBoolean(ARG_DO_LIKE, doLike);
 
-                        getLoaderManager().restartLoader(LOADER_LIKE, args, this);
+                        getLoaderManager().restartLoader(LOADER_LIKE, args, mLikeLoaderCallbacks);
                     } else {
                         String[] items = ItemsDialogFragment.getItems(data);
 
@@ -423,6 +399,122 @@ public class CommentsList extends ListFragment
             default:
                 super.onActivityResult(requestCode, resultCode, data);
                 break;
+        }
+    }
+
+    @Nullable
+    private Client getClient() {
+        return mClient;
+    }
+
+    private static class CommentsLoaderCallbacks implements LoaderManager.LoaderCallbacks<CommentsLoader.Result> {
+
+        private CommentsList mCommentsList;
+
+        public CommentsLoaderCallbacks(CommentsList commentsList) {
+            mCommentsList = commentsList;
+        }
+
+        @Override
+        public Loader<CommentsLoader.Result> onCreateLoader(int id, Bundle args) {
+            switch (id) {
+                case LOADER_COMMENTS:
+                    return new CommentsLoader(mCommentsList.getActivity(),
+                            Uri.parse(mCommentsList.getArguments().getString(ARG_DATA)));
+
+                default:
+                    return null;
+            }
+        }
+
+        @Override
+        public void onLoadFinished(Loader<CommentsLoader.Result> loader, CommentsLoader.Result data) {
+            switch (loader.getId()) {
+                case LOADER_COMMENTS:
+                    mCommentsList.setComments(data);
+                    break;
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<CommentsLoader.Result> loader) {
+            // NO-OP
+        }
+    }
+
+    private static class SendLoaderCallbacks implements LoaderManager.LoaderCallbacks<Boolean> {
+
+        private CommentsList mCommentsList;
+
+        public SendLoaderCallbacks(CommentsList commentsList) {
+            mCommentsList = commentsList;
+        }
+
+        @Override
+        public Loader<Boolean> onCreateLoader(int id, Bundle args) {
+            switch (id) {
+                case LOADER_SEND:
+                    return new SendCommentLoader(mCommentsList.getActivity(),
+                            mCommentsList.getClient(),
+                            args.getString(ARG_SID),
+                            args.getString(ARG_MESSAGE));
+
+                default:
+                    return null;
+            }
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Boolean> loader, Boolean data) {
+            switch (loader.getId()) {
+                case LOADER_SEND:
+                    mCommentsList.onSendResult(data);
+                    loader.abandon();
+                    break;
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Boolean> loader) {
+            // NO-OP
+        }
+    }
+
+    private static class LikeLoaderCallbacks implements LoaderManager.LoaderCallbacks<LikeCommentLoader.Result> {
+
+        private CommentsList mCommentsList;
+
+        public LikeLoaderCallbacks(CommentsList commentsList) {
+            mCommentsList = commentsList;
+        }
+
+        @Override
+        public Loader<LikeCommentLoader.Result> onCreateLoader(int id, Bundle args) {
+            switch (id) {
+                case LOADER_LIKE:
+                    return new LikeCommentLoader(mCommentsList.getActivity(),
+                            mCommentsList.getClient(),
+                            args.getString(ARG_SID),
+                            args.getString(ARG_ESID),
+                            args.getBoolean(ARG_DO_LIKE));
+
+                default:
+                    return null;
+            }
+        }
+
+        @Override
+        public void onLoadFinished(Loader<LikeCommentLoader.Result> loader, LikeCommentLoader.Result data) {
+            switch (loader.getId()) {
+                case LOADER_LIKE:
+                    mCommentsList.onLikeResult(data);
+                    break;
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<LikeCommentLoader.Result> loader) {
+            // NO-OP
         }
     }
 }

@@ -1,6 +1,5 @@
 package com.piusvelte.sonet.fragment;
 
-import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -22,22 +21,18 @@ import android.widget.ListView;
 
 import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.SonetComments;
-import com.piusvelte.sonet.loader.ClearNotificationLoader;
-import com.piusvelte.sonet.loader.NotificationsLoader;
 import com.piusvelte.sonet.provider.Notifications;
+import com.piusvelte.sonet.service.ClearNotificationsService;
+import com.piusvelte.sonet.service.LoadNotificationsService;
 
 import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 
 /**
  * Created by bemmanuel on 3/21/15.
  */
-public class NotificationsList extends ListFragment implements LoaderManager.LoaderCallbacks {
+public class NotificationsList extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final int LOADER_NOTIFICATIONS = 0;
-    private static final int LOADER_REFRESH = 1;
-    private static final int LOADER_CLEAR = 2;
-
-    private static final String ARG_CLEAR_ID = "clear_id";
 
     private static final int CLEAR = 1;
 
@@ -99,9 +94,8 @@ public class NotificationsList extends ListFragment implements LoaderManager.Loa
     public boolean onContextItemSelected(final MenuItem item) {
         switch (item.getItemId()) {
             case CLEAR:
-                Bundle args = new Bundle();
-                args.putLong(ARG_CLEAR_ID, ((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).id);
-                getLoaderManager().initLoader(LOADER_CLEAR, args, this);
+                getActivity().startService(ClearNotificationsService.obtainIntent(getActivity(),
+                        ((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).id));
                 return true;
 
             default:
@@ -119,13 +113,11 @@ public class NotificationsList extends ListFragment implements LoaderManager.Loa
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_notifications_refresh:
-                getLoaderManager().initLoader(LOADER_REFRESH, null, this);
+                getActivity().startService(new Intent(getActivity(), LoadNotificationsService.class));
                 return true;
 
             case R.id.menu_notifications_clear_all:
-                ContentValues values = new ContentValues();
-                values.put(Notifications.CLEARED, 1);
-                getActivity().getContentResolver().update(Notifications.getContentUri(getActivity()), values, null, null);
+                getActivity().startService(ClearNotificationsService.obtainIntent(getActivity()));
                 return true;
 
             default:
@@ -140,7 +132,7 @@ public class NotificationsList extends ListFragment implements LoaderManager.Loa
     }
 
     @Override
-    public Loader onCreateLoader(int id, Bundle args) {
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         switch (id) {
             case LOADER_NOTIFICATIONS:
                 return new CursorLoader(getActivity(),
@@ -152,33 +144,23 @@ public class NotificationsList extends ListFragment implements LoaderManager.Loa
                         null,
                         null);
 
-            case LOADER_REFRESH:
-                return new NotificationsLoader(getActivity());
-
-            case LOADER_CLEAR:
-                if (args != null && args.containsKey(ARG_CLEAR_ID)) {
-                    return new ClearNotificationLoader(getActivity(), args.getLong(ARG_CLEAR_ID));
-                } else {
-                    return new ClearNotificationLoader(getActivity());
-                }
-
             default:
                 return null;
         }
     }
 
     @Override
-    public void onLoadFinished(Loader loader, Object data) {
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         switch (loader.getId()) {
             case LOADER_NOTIFICATIONS:
                 mLoadingView.setVisibility(View.GONE);
-                mAdapter.changeCursor((Cursor) data);
+                mAdapter.changeCursor(data);
                 break;
         }
     }
 
     @Override
-    public void onLoaderReset(Loader loader) {
+    public void onLoaderReset(Loader<Cursor> loader) {
         switch (loader.getId()) {
             case LOADER_NOTIFICATIONS:
                 mAdapter.changeCursor(null);

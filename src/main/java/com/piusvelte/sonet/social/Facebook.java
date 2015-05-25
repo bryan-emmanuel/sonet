@@ -17,7 +17,7 @@ import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.SonetOAuth;
 import com.piusvelte.sonet.provider.Accounts;
-import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.Statuses;
 import com.piusvelte.sonet.provider.Widgets;
@@ -86,19 +86,7 @@ public class Facebook extends Client {
     @Nullable
     @Override
     public String getProfileUrl(@NonNull String esid) {
-        String response = SonetHttpClient.httpResponse(String.format(FACEBOOK_USER, FACEBOOK_BASE_URL, esid, Saccess_token, mToken));
-
-        if (!TextUtils.isEmpty(response)) {
-            try {
-                return new JSONObject(response).getString("link");
-            } catch (JSONException e) {
-                if (BuildConfig.DEBUG) {
-                    Log.e(mTag, "Error parsing: " + response, e);
-                }
-            }
-        }
-
-        return null;
+        return String.format(FACEBOOK_PICTURE, esid);
     }
 
     @Nullable
@@ -417,7 +405,7 @@ public class Facebook extends Client {
 
                 addStatusItem(date,
                         friend,
-                        display_profile ? String.format(FACEBOOK_PICTURE, esid) : null,
+                        getProfileUrl(esid),
                         String.format(getString(R.string.messageWithCommentCount), message.toString(), commentCount),
                         time24hr,
                         appWidgetId,
@@ -690,7 +678,7 @@ public class Facebook extends Client {
     public HashMap<String, String> parseComment(@NonNull String statusId, @NonNull JSONObject jsonComment, boolean time24hr) throws JSONException {
         HashMap<String, String> commentMap = new HashMap<>();
         commentMap.put(Statuses.SID, jsonComment.getString(Sid));
-        commentMap.put(Entities.FRIEND, jsonComment.getJSONObject(Sfrom).getString(Sname));
+        commentMap.put(Entity.FRIEND, jsonComment.getJSONObject(Sfrom).getString(Sname));
         commentMap.put(Statuses.MESSAGE, jsonComment.getString(Smessage));
         commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(jsonComment.getLong(Screated_time) * 1000, time24hr));
         commentMap.put(getString(R.string.like), getLikeText(jsonComment.has(Suser_likes) && jsonComment.getBoolean(Suser_likes)));
@@ -745,9 +733,9 @@ public class Facebook extends Client {
                 for (int i = 0, l = friendsArray.length(); i < l; i++) {
                     JSONObject f = friendsArray.getJSONObject(i);
                     HashMap<String, String> newFriend = new HashMap<String, String>();
-                    newFriend.put(Entities.ESID, f.getString(Sid));
-                    newFriend.put(Entities.PROFILE, String.format(FACEBOOK_PICTURE, f.getString(Sid)));
-                    newFriend.put(Entities.FRIEND, f.getString(Sname));
+                    newFriend.put(Entity.ESID, f.getString(Sid));
+                    newFriend.put(Entity.PROFILE_URL, getProfilePhotoUrl(f.getString(Sid)));
+                    newFriend.put(Entity.FRIEND, f.getString(Sname));
 
                     // need to alphabetize
                     if (friends.isEmpty()) {
@@ -773,7 +761,7 @@ public class Facebook extends Client {
                             if (newFriend == null) {
                                 newFriends.add(oldFriend);
                             } else {
-                                fullName = oldFriend.get(Entities.FRIEND);
+                                fullName = oldFriend.get(Entity.FRIEND);
                                 spaceIdx = fullName.lastIndexOf(" ");
                                 String oldFirstName = null;
                                 String oldLastName = null;

@@ -131,12 +131,4 @@
 		<item>90</item>
 		<item>100</item>
 	</string-array>
-	<string-array name="margin_entries">
-		<item>none</item>
-		<item>16 pixels</item>
-	</string-array>
-	<string-array name="margin_values">
-		<item>0</item>
-		<item>16</item>
-	</string-array>
 </resources>

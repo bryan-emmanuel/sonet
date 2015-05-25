@@ -10,6 +10,7 @@ import java.util.HashMap;
 /**
  * Created by bemmanuel on 4/11/15.
  */
+@Deprecated
 public class ChooseWidgetDialogFragment {
 
     private static final String ARG_IDS = "ids";

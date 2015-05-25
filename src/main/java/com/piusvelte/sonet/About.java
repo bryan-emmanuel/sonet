@@ -21,16 +21,13 @@ package com.piusvelte.sonet;
 
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
-import android.content.ContentValues;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.database.Cursor;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
-import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -46,49 +43,38 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.piusvelte.sonet.adapter.AccountAdapter;
 import com.piusvelte.sonet.adapter.AccountProfileAdapter;
 import com.piusvelte.sonet.adapter.MenuItemAdapter;
 import com.piusvelte.sonet.fragment.ConfirmationDialogFragment;
+import com.piusvelte.sonet.fragment.Feed;
 import com.piusvelte.sonet.fragment.ItemsDialogFragment;
-import com.piusvelte.sonet.fragment.WidgetsList;
+import com.piusvelte.sonet.fragment.Settings;
 import com.piusvelte.sonet.loader.AccountsProfilesLoader;
-import com.piusvelte.sonet.provider.Accounts;
-import com.piusvelte.sonet.provider.Widgets;
-import com.piusvelte.sonet.provider.WidgetsSettings;
-import com.piusvelte.sonet.service.AccountUpdateService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
-import static com.piusvelte.sonet.Sonet.INVALID_ACCOUNT_ID;
 import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 
-public class About extends BaseActivity implements LoaderManager.LoaderCallbacks, AdapterView.OnItemClickListener,
-        AdapterView.OnItemLongClickListener {
+public class About extends BaseActivity implements AdapterView.OnItemClickListener {
     private int[] mAppWidgetIds;
     private AppWidgetManager mAppWidgetManager;
     private boolean mUpdateWidget = false;
     private static final String TAG = "About";
 
-    private static final String FRAGMENT_WIDGETS_LIST = "widgets_list";
+    public static final int LOADER_ACOUNT_PROFILES = 0;
 
-    private static final int LOADER_DEFAULT_WIDGET = 0;
-    private static final int LOADER_ACCOUNTS = 1;
+    private static final String FRAGMENT_CONTENT = "fragment:content";
 
     private static final String DIALOG_ABOUT = "dialog:about";
     private static final String DIALOG_WIDGETS = "dialog:widgets";
-    private static final String DIALOG_CONFIRM_AUTHENTICATE_ACCOUNT = "dialog:confirm_authenticate_account";
-    private static final String DIALOG_CONFIRM_REMOVE_ACCOUNT = "dialog:confirm_remove_account";
-    private static final String DIALOG_CHOOSE_NETWORK = "dialog:choose_network";
+
+    private static final String FRAGMENT_ACCOUNT_DETAIL = "fragment:account_detail";
 
     private static final int REQUEST_WIDGET = 0;
-    private static final int REQUEST_CONFIRM_AUTHENTICATE_ACCOUNT = 1;
-    private static final int REQUEST_CONFIRM_REMOVE_ACCOUNT = 2;
-    private static final int REQUEST_AUTHENTICATE_ACCOUNT = 3;
-    private static final int REQUEST_CHOOSE_NETWORK = 4;
-    private static final int REQUEST_ADD_ACCOUNT = 5;
 
     private DrawerLayout mDrawer;
     private GridView mDrawerAccounts;
@@ -99,6 +85,7 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
     private MenuItemAdapter mDrawerSecondaryAdapter;
     private ActionBarDrawerToggle mDrawerToggle;
     List<HashMap<String, String>> mAccounts = new ArrayList<>();
+    private AccountsProfilesLoaderCallback mAccountsProfilesLoaderCallback = new AccountsProfilesLoaderCallback(this);
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -109,16 +96,16 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
         setupActionBar();
         setupDrawer();
 
-        Fragment widgetsList = getSupportFragmentManager().findFragmentByTag(FRAGMENT_WIDGETS_LIST);
+        Fragment content = getSupportFragmentManager().findFragmentByTag(FRAGMENT_CONTENT);
 
-        if (widgetsList == null) {
+        if (content == null) {
+            mDrawerPrimary.setItemChecked(0, true);
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.widgets_list_container, new WidgetsList(), FRAGMENT_WIDGETS_LIST)
+                    .add(R.id.content_fragment_container, new Feed(), FRAGMENT_CONTENT)
                     .commit();
         }
 
-        getSupportLoaderManager().initLoader(LOADER_DEFAULT_WIDGET, null, this);
-        getSupportLoaderManager().initLoader(LOADER_ACCOUNTS, null, this);
+        getSupportLoaderManager().initLoader(LOADER_ACOUNT_PROFILES, null, mAccountsProfilesLoaderCallback);
     }
 
     private void setupDrawer() {
@@ -138,20 +125,14 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
 
         mDrawerAccounts = (GridView) drawerContainer.findViewById(R.id.drawer_accounts);
         mDrawerAccountsAdapter = new AccountProfileAdapter(this,
-                mAccounts,
-                R.layout.account_profile,
-                new String[] { Accounts.SID,
-                        Accounts.SERVICE },
-                new int[] { R.id.profile,
-                        R.id.icon });
+                mAccounts
+        );
         mDrawerAccounts.setAdapter(mDrawerAccountsAdapter);
         mDrawerAccounts.setOnItemClickListener(this);
-        mDrawerAccounts.setOnItemLongClickListener(this);
 
         mDrawerPrimary = (ListView) drawerContainer.findViewById(R.id.drawer_primary);
         mDrawerPrimaryAdapter = new MenuItemAdapter(this, R.menu.menu_drawer_primary, android.R.layout.simple_list_item_activated_1);
         mDrawerPrimary.setAdapter(mDrawerPrimaryAdapter);
-        mDrawerPrimary.setItemChecked(0, true);
         mDrawerPrimary.setOnItemClickListener(this);
 
         mDrawerSecondary = (ListView) drawerContainer.findViewById(R.id.drawer_secondary);
@@ -203,7 +184,10 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
         } else {
             switch (item.getItemId()) {
                 case R.id.menu_feed:
-                    // TODO replace content with WidgetsList; currently the only content
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.content_fragment_container,
+                                    new Feed(),
+                                    FRAGMENT_CONTENT);
                     return true;
 
                 case R.id.menu_refresh:
@@ -213,8 +197,11 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
                     return true;
 
                 case R.id.menu_about_default_settings:
-                    // TODO replace fragment instead of using Activity
-                    startActivityForResult(new Intent(this, Settings.class), RESULT_REFRESH);
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.content_fragment_container,
+                                    Settings.newInstance(),
+                                    FRAGMENT_CONTENT)
+                            .commit();
                     return true;
 
                 case R.id.menu_refresh_all_widgets:
@@ -287,18 +274,6 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
                 }
                 break;
 
-            case REQUEST_AUTHENTICATE_ACCOUNT:
-                if (resultCode == RESULT_OK) {
-                    // TODO WidgetsList should refresh... perhaps triggered through ContentObserver
-                }
-                break;
-
-            case REQUEST_ADD_ACCOUNT:
-                if (resultCode == RESULT_OK) {
-                    // TODO WidgetsList should refresh... perhaps triggered through ContentObserver
-                }
-                break;
-
             default:
                 super.onActivityResult(requestCode, resultCode, data);
                 break;
@@ -312,124 +287,23 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
                 startActivity(new Intent(this, ManageAccounts.class)
                         .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetIds[ItemsDialogFragment.getWhich(data, 0)]));
                 break;
-
-            case REQUEST_CONFIRM_AUTHENTICATE_ACCOUNT:
-                if (result == RESULT_OK) {
-                    startActivityForResult(new Intent(this, OAuthLogin.class)
-                                    .putExtra(Accounts.SERVICE, data.getIntExtra(Accounts.SERVICE, 0))
-                                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
-                                    .putExtra(Sonet.EXTRA_ACCOUNT_ID, data.getLongExtra(Accounts._ID, INVALID_ACCOUNT_ID)),
-                            REQUEST_AUTHENTICATE_ACCOUNT);
-                }
-                break;
-
-            case REQUEST_CONFIRM_REMOVE_ACCOUNT:
-                if (result == RESULT_OK) {
-                    Toast.makeText(this, R.string.delete_account, Toast.LENGTH_LONG).show();
-                    startService(AccountUpdateService.obtainIntent(this,
-                            AccountUpdateService.ACTION_DELETE,
-                            data.getLongExtra(Accounts._ID, INVALID_ACCOUNT_ID),
-                            AppWidgetManager.INVALID_APPWIDGET_ID));
-                    // TODO WidgetsList should refresh... perhaps triggered through ContentObserver
-                }
-                break;
-
-            case REQUEST_CHOOSE_NETWORK:
-                if (result == RESULT_OK) {
-                    startActivityForResult(new Intent(this, OAuthLogin.class)
-                            .putExtra(Accounts.SERVICE,
-                                    Integer.parseInt(getResources().getStringArray(R.array.service_values)[ItemsDialogFragment.getWhich(data, 0)]))
-                            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
-                            .putExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID)
-                            , REQUEST_ADD_ACCOUNT);
-                }
-                break;
-        }
-    }
-
-    @Override
-    public Loader onCreateLoader(int id, Bundle args) {
-        switch (id) {
-            case LOADER_DEFAULT_WIDGET:
-                return new CursorLoader(this, WidgetsSettings.getContentUri(this),
-                        new String[] { Widgets.DISPLAY_PROFILE },
-                        Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
-                        new String[] { String.valueOf(AppWidgetManager.INVALID_APPWIDGET_ID),
-                                String.valueOf(Accounts.INVALID_ACCOUNT_ID) },
-                        null);
-
-            case LOADER_ACCOUNTS:
-                return new AccountsProfilesLoader(this);
-
-            default:
-                return null;
-        }
-    }
-
-    @Override
-    public void onLoadFinished(Loader loader, Object result) {
-        switch (loader.getId()) {
-            case LOADER_DEFAULT_WIDGET:
-                if (result instanceof Cursor) {
-                    Cursor cursor = (Cursor) result;
-
-                    if (cursor.moveToFirst()) {
-                        // TODO used to determine showing profile in WidgetsList
-                        //boolean showProfile = cursor.getInt(cursor.getColumnIndex(Widgets.DISPLAY_PROFILE)) != 0;
-                    } else {
-                        // initialize account settings
-                        ContentValues values = new ContentValues();
-                        values.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
-                        values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-                        getContentResolver().insert(Widgets.getContentUri(About.this), values).getLastPathSegment();
-                    }
-                } else {
-                    // initialize account settings
-                    ContentValues values = new ContentValues();
-                    values.put(Widgets.WIDGET, AppWidgetManager.INVALID_APPWIDGET_ID);
-                    values.put(Widgets.ACCOUNT, Sonet.INVALID_ACCOUNT_ID);
-                    getContentResolver().insert(Widgets.getContentUri(About.this), values).getLastPathSegment();
-                }
-                break;
-
-            case LOADER_ACCOUNTS:
-                mAccounts.clear();
-
-                if (result instanceof List<?>) {
-                    mAccounts.addAll((List<HashMap<String, String>>) result);
-                }
-
-                mDrawerAccountsAdapter.notifyDataSetChanged();
-                break;
-        }
-    }
-
-    @Override
-    public void onLoaderReset(Loader loader) {
-        switch (loader.getId()) {
-            case LOADER_ACCOUNTS:
-                mAccounts.clear();
-                mDrawerAccountsAdapter.notifyDataSetChanged();
-                break;
         }
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         if (parent == mDrawerAccounts) {
-            if (id == Sonet.INVALID_ACCOUNT_ID) {
-                // Add Account
-                String[] services = getResources().getStringArray(R.array.service_entries);
-                ItemsDialogFragment.newInstance(services, REQUEST_CHOOSE_NETWORK)
-                        .show(getSupportFragmentManager(), DIALOG_CHOOSE_NETWORK);
-            } else {
-                DialogFragment dialogFragment = ConfirmationDialogFragment.newInstance(R.string.authenticate_account,
-                        REQUEST_CONFIRM_AUTHENTICATE_ACCOUNT);
-                Bundle args = dialogFragment.getArguments();
-                args.putLong(Accounts._ID, id);
-                args.putInt(Accounts.SERVICE, Integer.valueOf(mDrawerAccountsAdapter.getItem(position).get(Accounts.SERVICE)));
-                dialogFragment.show(getSupportFragmentManager(), DIALOG_CONFIRM_AUTHENTICATE_ACCOUNT);
-            }
+            mDrawer.closeDrawers();
+            HashMap<String, String> account = mDrawerAccountsAdapter.getItem(position);
+            getSupportFragmentManager().beginTransaction()
+                    .add(Settings.newInstance(AccountAdapter.getAccountId(account),
+                                    AccountAdapter.getAccountService(account),
+                                    AccountAdapter.getAccountProfileUrl(account),
+                                    AccountAdapter.getAccountUsername(account)),
+                            FRAGMENT_ACCOUNT_DETAIL)
+                    .addToBackStack(null)
+                    .commit();
+            // TODO animate the home bars to arrow and update toolbar title
         } else if (parent == mDrawerPrimary) {
             onOptionsItemSelected(mDrawerPrimaryAdapter.getItem(position));
             mDrawer.closeDrawers();
@@ -438,20 +312,51 @@ public class About extends BaseActivity implements LoaderManager.LoaderCallbacks
         }
     }
 
-    @Override
-    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-        if (parent == mDrawerAccounts) {
-            // can't remove the Add Account option
-            if (id != Sonet.INVALID_ACCOUNT_ID) {
-                DialogFragment dialogFragment = ConfirmationDialogFragment.newInstance(R.string.delete_account,
-                        REQUEST_CONFIRM_REMOVE_ACCOUNT);
-                Bundle args = dialogFragment.getArguments();
-                args.putLong(Accounts._ID, id);
-                dialogFragment.show(getSupportFragmentManager(), DIALOG_CONFIRM_REMOVE_ACCOUNT);
-                return true;
+    private void setAccounts(List<HashMap<String, String>> accounts) {
+        mAccounts.clear();
+
+        if (accounts != null) {
+            mAccounts.addAll(accounts);
+        }
+
+        mDrawerAccountsAdapter.notifyDataSetChanged();
+    }
+
+    private static class AccountsProfilesLoaderCallback implements LoaderManager.LoaderCallbacks<List<HashMap<String, String>>> {
+
+        private About mAbout;
+
+        AccountsProfilesLoaderCallback(@NonNull About about) {
+            mAbout = about;
+        }
+
+        @Override
+        public Loader<List<HashMap<String, String>>> onCreateLoader(int id, Bundle args) {
+            switch (id) {
+                case LOADER_ACOUNT_PROFILES:
+                    return new AccountsProfilesLoader(mAbout);
+
+                default:
+                    return null;
             }
         }
 
-        return false;
+        @Override
+        public void onLoadFinished(Loader<List<HashMap<String, String>>> loader, List<HashMap<String, String>> data) {
+            switch (loader.getId()) {
+                case LOADER_ACOUNT_PROFILES:
+                    mAbout.setAccounts(data);
+                    break;
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<List<HashMap<String, String>>> loader) {
+            switch (loader.getId()) {
+                case LOADER_ACOUNT_PROFILES:
+                    mAbout.setAccounts(null);
+                    break;
+            }
+        }
     }
 }

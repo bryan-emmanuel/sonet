@@ -3,7 +3,6 @@ package com.piusvelte.sonet.loader;
 import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Rect;
 import android.net.Uri;
 import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
@@ -25,30 +24,28 @@ import static com.piusvelte.sonet.Sonet.TWITTER;
 /**
  * Created by bemmanuel on 4/22/15.
  */
-public class StatusLoader extends BaseAsyncTaskLoader {
+@Deprecated
+public class StatusLoader extends BaseAsyncTaskLoader<StatusLoader.Result> {
 
     private static String TAG = StatusLoader.class.getSimpleName();
 
     private Context mContext;
     private Uri mData;
-    private Rect mRect;
 
-    public StatusLoader(Context context, @NonNull Uri data, Rect rect) {
+    public StatusLoader(Context context, @NonNull Uri data) {
         super(context);
         mContext = context.getApplicationContext();
         mData = data;
-        mRect = rect;
     }
 
     @Override
-    public Object loadInBackground() {
+    public Result loadInBackground() {
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "get status: " + mData.getLastPathSegment());
         }
 
         Result result = new Result();
         result.data = mData;
-        result.rect = mRect;
         result.sonetCrypto = SonetCrypto.getInstance(mContext);
 
         Cursor c = mContext.getContentResolver().query(StatusesStyles.getContentUri(mContext),
@@ -98,8 +95,6 @@ public class StatusLoader extends BaseAsyncTaskLoader {
 
                     if (phones.moveToFirst()) {
                         result.esid = phones.getString(phones.getColumnIndexOrThrow(ContactsContract.PhoneLookup.LOOKUP_KEY));
-                    } else {
-                        result.rect = null;
                     }
 
                     phones.close();
@@ -185,6 +180,5 @@ public class StatusLoader extends BaseAsyncTaskLoader {
         public String sid;
         public String[] items;
         public String[] itemsData;
-        public Rect rect;
     }
 }

@@ -9,9 +9,9 @@ import com.piusvelte.sonet.Sonet;
 /**
  * Created by bemmanuel on 3/22/15.
  */
-public final class Entities implements BaseColumns {
+public final class Entity implements BaseColumns {
 
-    private Entities() {
+    private Entity() {
     }
 
     public static Uri getContentUri(Context context) {
@@ -22,6 +22,8 @@ public final class Entities implements BaseColumns {
 
     public static final String ESID = "esid";
     public static final String FRIEND = "friend";
+    @Deprecated
     public static final String PROFILE = "profile";
+    public static final String PROFILE_URL = "profile_url";
     public static final String ACCOUNT = "account";
 }

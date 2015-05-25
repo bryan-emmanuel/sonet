@@ -8,7 +8,7 @@ import com.piusvelte.sonet.social.Client;
 /**
  * Created by bemmanuel on 4/21/15.
  */
-public class LikeCommentLoader extends BaseAsyncTaskLoader {
+public class LikeCommentLoader extends BaseAsyncTaskLoader<LikeCommentLoader.Result> {
 
     private Client mClient;
     private String mSid;
@@ -24,7 +24,7 @@ public class LikeCommentLoader extends BaseAsyncTaskLoader {
     }
 
     @Override
-    public Object loadInBackground() {
+    public LikeCommentLoader.Result loadInBackground() {
         Result result = new Result();
         result.wasSuccessful = mClient.likeStatus(mSid, mEsid, mDoLike);
         result.isLiked = mDoLike == result.wasSuccessful;

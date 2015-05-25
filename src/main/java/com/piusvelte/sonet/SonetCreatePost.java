@@ -26,7 +26,6 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -52,6 +51,7 @@ import android.widget.Toast;
 import com.piusvelte.sonet.fragment.ChooseAccount;
 import com.piusvelte.sonet.fragment.ChooseLocation;
 import com.piusvelte.sonet.fragment.ChoosePostAccounts;
+import com.piusvelte.sonet.loader.PhotoPathLoader;
 import com.piusvelte.sonet.loader.SendPostLoader;
 import com.piusvelte.sonet.provider.Accounts;
 import com.piusvelte.sonet.provider.Widgets;
@@ -60,7 +60,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE;
@@ -69,7 +68,7 @@ import static com.piusvelte.sonet.Sonet.Stags;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 
 public class SonetCreatePost extends BaseActivity
-        implements OnKeyListener, OnClickListener, TextWatcher, LoaderManager.LoaderCallbacks {
+        implements OnKeyListener, OnClickListener, TextWatcher, LoaderManager.LoaderCallbacks<Cursor> {
     private static final String TAG = "SonetCreatePost";
 
     private static final int LOADER_ACCOUNT = 0;
@@ -82,12 +81,13 @@ public class SonetCreatePost extends BaseActivity
 
     private static final String LOADER_ARG_ACCOUNT_ID = "account_id";
     private static final String LOADER_ARG_PHOTO_URI = "photo_uri";
+    private static final String LOADER_ARG_ACCOUNTS = "accounts";
+    private static final String LOADER_ARG_MESSAGE = "message";
 
     private static final int REQUEST_CHOOSE_LOCATION_ACCOUNT = 0;
     private static final int REQUEST_CHOOSE_POST_ACCOUNTS = 1;
     private static final int REQUEST_CHOOSE_LOCATION = 2;
 
-    private static final String STATE_PENDING_LOADERS = "state:pending_loaders";
     private static final String STATE_MESSAGE = "state:message";
 
     private HashSet<ChoosePostAccounts.Account> mAccounts = new HashSet<>();
@@ -99,8 +99,8 @@ public class SonetCreatePost extends BaseActivity
     private static final int TAGS = 2;
     private String mPhotoPath;
 
-    @NonNull
-    private Set<Integer> mPendingLoaders = new HashSet<>();
+    private SendPostLoaderCallbacks mSendPostLoaderCallbacks = new SendPostLoaderCallbacks(this);
+    private PhotoPathLoaderCallbacks mPhotoPathLoaderCallbacks = new PhotoPathLoaderCallbacks(this);
 
     // TODO move this to Client implementations
     private static final List<Integer> sLocationSupported = new ArrayList<>();
@@ -142,13 +142,13 @@ public class SonetCreatePost extends BaseActivity
             mMessage.setText(savedInstanceState.getString(STATE_MESSAGE));
 
             if (loaderManager.hasRunningLoaders()) {
-                int[] loaders = savedInstanceState.getIntArray(STATE_PENDING_LOADERS);
-
-                if (loaders != null) {
-                    for (int loader : loaders) {
-                        mPendingLoaders.add(loader);
-                        loaderManager.initLoader(loader, null, this);
-                    }
+                // TODO test this! >_<
+                if (loaderManager.getLoader(LOADER_SEND_POST) != null) {
+                    loaderManager.initLoader(LOADER_SEND_POST, null, this);
+                } else if (loaderManager.getLoader(LOADER_PHOTO) != null) {
+                    loaderManager.initLoader(LOADER_PHOTO, null, mPhotoPathLoaderCallbacks);
+                } else if (loaderManager.getLoader(LOADER_ACCOUNT) != null) {
+                    loaderManager.initLoader(LOADER_ACCOUNT, null, this);
                 }
             }
         }
@@ -157,16 +157,6 @@ public class SonetCreatePost extends BaseActivity
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-
-        int loaderIndex = 0;
-        int[] loaders = new int[mPendingLoaders.size()];
-
-        for (Integer loader : mPendingLoaders) {
-            loaders[loaderIndex] = loader;
-            loaderIndex++;
-        }
-
-        outState.putIntArray(STATE_PENDING_LOADERS, loaders);
         outState.putString(STATE_MESSAGE, mMessage.getText().toString());
     }
 
@@ -379,7 +369,11 @@ public class SonetCreatePost extends BaseActivity
     public void onClick(View v) {
         if (v == mSend) {
             if (!mAccounts.isEmpty()) {
-                getSupportLoaderManager().restartLoader(LOADER_SEND_POST, null, this);
+                Bundle args = new Bundle();
+                args.putParcelableArrayList(LOADER_ARG_ACCOUNTS, new ArrayList<>(mAccounts));
+                args.putString(LOADER_ARG_MESSAGE, mMessage.getText().toString());
+                args.putString(LOADER_ARG_PHOTO_URI, mPhotoPath);
+                getSupportLoaderManager().restartLoader(LOADER_SEND_POST, args, this);
                 mLoadingView.setVisibility(View.VISIBLE);
             } else {
                 Toast.makeText(SonetCreatePost.this, "no accounts selected", Toast.LENGTH_LONG).show();
@@ -388,16 +382,25 @@ public class SonetCreatePost extends BaseActivity
     }
 
     protected void getPhoto(Uri uri) {
-        // TODO some file manages send the path through the uri.getPath()
         Bundle args = new Bundle();
         args.putString(LOADER_ARG_PHOTO_URI, uri.toString());
-        getSupportLoaderManager().restartLoader(LOADER_PHOTO, args, this);
+        getSupportLoaderManager().restartLoader(LOADER_PHOTO, args, mPhotoPathLoaderCallbacks);
         mLoadingView.setVisibility(View.VISIBLE);
     }
 
     protected void setPhoto(String path) {
         mPhotoPath = path;
         (Toast.makeText(SonetCreatePost.this, "Currently, the photo will only be uploaded Facebook accounts.", Toast.LENGTH_LONG)).show();
+    }
+
+    private void setPhotoPath(String path) {
+        mLoadingView.setVisibility(View.GONE);
+
+        if (!TextUtils.isEmpty(path)) {
+            setPhoto(path);
+        } else {
+            Toast.makeText(this, "error retrieving the photo path", Toast.LENGTH_LONG).show();
+        }
     }
 
     protected void selectFriends(long accountId) {
@@ -462,10 +465,18 @@ public class SonetCreatePost extends BaseActivity
     public void onTextChanged(CharSequence s, int start, int before, int count) {
     }
 
-    @Override
-    public Loader onCreateLoader(int id, Bundle args) {
-        mPendingLoaders.add(id);
+    private void onPostSendResult(Boolean result) {
+        mLoadingView.setVisibility(View.GONE);
 
+        if (Boolean.TRUE.equals(result)) {
+            Toast.makeText(this, R.string.success, Toast.LENGTH_LONG).show();
+        }
+
+        finish();
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         switch (id) {
             case LOADER_ACCOUNT:
                 return new CursorLoader(this,
@@ -475,36 +486,18 @@ public class SonetCreatePost extends BaseActivity
                         new String[] { args.getString(LOADER_ARG_ACCOUNT_ID) },
                         null);
 
-            case LOADER_SEND_POST:
-                return new SendPostLoader(this,
-                        mAccounts,
-                        mMessage.getText().toString(),
-                        mPhotoPath);
-
-            case LOADER_PHOTO:
-                return new CursorLoader(this,
-                        Uri.parse(args.getString(LOADER_ARG_PHOTO_URI)),
-                        new String[] { MediaStore.Images.Media.DATA },
-                        null,
-                        null,
-                        null);
-
             default:
                 return null;
         }
     }
 
     @Override
-    public void onLoadFinished(Loader loader, Object data) {
-        mPendingLoaders.remove(loader.getId());
-
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         switch (loader.getId()) {
             case LOADER_ACCOUNT:
                 mLoadingView.setVisibility(View.GONE);
 
-                if (data instanceof Cursor) {
-                    Cursor cursor = (Cursor) data;
-
+                if (cursor != null) {
                     if (cursor.moveToFirst()) {
                         ChoosePostAccounts.Account account = new ChoosePostAccounts.Account();
                         account.id = cursor.getLong(cursor.getColumnIndexOrThrow(Accounts._ID));
@@ -514,47 +507,14 @@ public class SonetCreatePost extends BaseActivity
                 }
                 break;
 
-            case LOADER_SEND_POST:
-                mLoadingView.setVisibility(View.GONE);
-
-                if (Boolean.TRUE.equals(data)) {
-                    Toast.makeText(this, R.string.success, Toast.LENGTH_LONG).show();
-                }
-
-                finish();
-                break;
-
-            case LOADER_PHOTO:
-                mLoadingView.setVisibility(View.GONE);
-
-                if (data instanceof Cursor) {
-                    String path = null;
-                    Cursor cursor = (Cursor) data;
-
-                    if (cursor.moveToFirst()) {
-                        path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
-                    } else {
-                        // some file manages send the path through the uri
-                        // TODO
-                        // path = imgUri[0].getPath();
-                    }
-
-                    if (!TextUtils.isEmpty(path)) {
-                        setPhoto(path);
-                    } else {
-                        Toast.makeText(this, "error retrieving the photo path", Toast.LENGTH_LONG).show();
-                    }
-                }
-                break;
-
             default:
                 break;
         }
     }
 
     @Override
-    public void onLoaderReset(Loader loader) {
-        mPendingLoaders.remove(loader.getId());
+    public void onLoaderReset(Loader<Cursor> loader) {
+        // NO-OP
     }
 
     @Override
@@ -606,6 +566,78 @@ public class SonetCreatePost extends BaseActivity
                     }
                 }
                 break;
+        }
+    }
+
+    private static class SendPostLoaderCallbacks implements LoaderManager.LoaderCallbacks<Boolean> {
+
+        private SonetCreatePost mCreatePost;
+
+        public SendPostLoaderCallbacks(@NonNull SonetCreatePost createPost) {
+            mCreatePost = createPost;
+        }
+
+        @Override
+        public Loader<Boolean> onCreateLoader(int id, Bundle args) {
+            switch (id) {
+                case LOADER_SEND_POST:
+                    ArrayList<ChoosePostAccounts.Account> accounts = args.getParcelableArrayList(LOADER_ARG_ACCOUNTS);
+                    return new SendPostLoader(mCreatePost,
+                            accounts,
+                            args.getString(LOADER_ARG_MESSAGE),
+                            args.getString(LOADER_ARG_PHOTO_URI));
+
+                default:
+                    return null;
+            }
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Boolean> loader, Boolean data) {
+            switch (loader.getId()) {
+                case LOADER_SEND_POST:
+                    mCreatePost.onPostSendResult(data);
+                    break;
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Boolean> loader) {
+            // NO-OP
+        }
+    }
+
+    private static class PhotoPathLoaderCallbacks implements LoaderManager.LoaderCallbacks<String> {
+
+        private SonetCreatePost mCreatePost;
+
+        PhotoPathLoaderCallbacks(@NonNull SonetCreatePost createPost) {
+            mCreatePost = createPost;
+        }
+
+        @Override
+        public Loader<String> onCreateLoader(int id, Bundle args) {
+            switch (id) {
+                case LOADER_PHOTO:
+                    return new PhotoPathLoader(mCreatePost, Uri.parse(args.getString(LOADER_ARG_PHOTO_URI)));
+
+                default:
+                    return null;
+            }
+        }
+
+        @Override
+        public void onLoadFinished(Loader<String> loader, String data) {
+            switch (loader.getId()) {
+                case LOADER_PHOTO:
+                    mCreatePost.setPhotoPath(data);
+                    break;
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<String> loader) {
+            // NO-OP
         }
     }
 }

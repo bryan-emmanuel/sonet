@@ -9,28 +9,42 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.RemoteViews;
 
 import com.piusvelte.sonet.provider.StatusLinks;
 import com.piusvelte.sonet.provider.StatusesStyles;
-import com.piusvelte.sonet.provider.Widgets;
+import com.piusvelte.sonet.social.Client;
+import com.piusvelte.sonet.util.CircleTransformation;
+import com.squareup.picasso.Picasso;
 
 import static com.piusvelte.sonet.Sonet.sBFOptions;
 
 @SuppressLint("NewApi")
 public class SonetRemoteViewsFactory implements android.widget.RemoteViewsService.RemoteViewsFactory {
     private static final String TAG = "SonetRemoteViewsFactory";
+
+    private static int sColumnIndexId;
+    private static int sColumnIndexService;
+    private static int sColumnIndexFriend;
+    private static int sColumnIndexProfileUrl;
+    private static int sColumnIndexMessage;
+    private static int sColumnIndexCreatedText;
+    private static int sColumnIndexImage;
+
     private Context mContext;
     private Cursor mCursor;
     private int mAppWidgetId;
-    private boolean mDisplay_profile;
+    private Picasso mPicasso;
+    private CircleTransformation mCircleTransformation;
 
     public SonetRemoteViewsFactory(Context context, Intent intent) {
         mContext = context;
         mAppWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
-        mDisplay_profile = intent.getBooleanExtra(Widgets.DISPLAY_PROFILE, true);
+        mPicasso = Picasso.with(context);
+        mCircleTransformation = new CircleTransformation();
     }
 
     @Override
@@ -72,56 +86,42 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
     @Override
     public RemoteViews getViewAt(int position) {
         // load the item
-        RemoteViews views;
+        final RemoteViews views;
 
-        if ((mCursor != null) && !mCursor.isClosed() && mCursor.moveToPosition(position)) {
-            int friend_color = mCursor.getInt(6);
-            int created_color = mCursor.getInt(7);
-            int friend_textsize = mCursor.getInt(9);
-            int created_textsize = mCursor.getInt(10);
-            int messages_color = mCursor.getInt(5);
-            int messages_textsize = mCursor.getInt(8);
-            views = new RemoteViews(mContext.getPackageName(), mDisplay_profile ? R.layout.widget_item : R.layout.widget_item_noprofile);
+        if (mCursor != null && !mCursor.isClosed() && mCursor.moveToPosition(position)) {
+            views = new RemoteViews(mContext.getPackageName(), R.layout.widget_item);
             // set icons
-            byte[] icon = mCursor.getBlob(12);
-            setImageViewBitmap(views, R.id.icon, icon);
+            views.setImageViewResource(R.id.icon, Client.Network.get(mCursor.getInt(sColumnIndexService)).getIcon());
 
-            // set messages background
-            byte[] status_bg = mCursor.getBlob(11);
-            setImageViewBitmap(views, R.id.status_bg, status_bg);
-
-            views.setTextViewText(R.id.message, mCursor.getString(3));
-            views.setTextColor(R.id.message, messages_color);
-            views.setFloat(R.id.message, "setTextSize", messages_textsize);
+            views.setTextViewText(R.id.message, mCursor.getString(sColumnIndexMessage));
 
             // Set the click intent so that we can handle it and show a toast message
             final Intent fillInIntent = new Intent();
             final Bundle extras = new Bundle();
-            extras.putString(StatusLinks.STATUS_ID, Long.toString(mCursor.getLong(0)));
+            extras.putString(StatusLinks.STATUS_ID, Long.toString(mCursor.getLong(sColumnIndexId)));
             fillInIntent.putExtras(extras);
             views.setOnClickFillInIntent(R.id.item, fillInIntent);
 
-            views.setTextViewText(R.id.friend, mCursor.getString(1));
-            views.setTextColor(R.id.friend, friend_color);
-            views.setFloat(R.id.friend, "setTextSize", friend_textsize);
-            views.setTextViewText(R.id.created, mCursor.getString(4));
-            views.setTextColor(R.id.created, created_color);
-            views.setFloat(R.id.created, "setTextSize", created_textsize);
+            views.setTextViewText(R.id.friend, mCursor.getString(sColumnIndexFriend));
+            views.setTextViewText(R.id.created, mCursor.getString(sColumnIndexCreatedText));
 
-            byte[] image = mCursor.getBlob(13);
+            byte[] image = mCursor.getBlob(sColumnIndexImage);
 
             if (!setImageViewBitmap(views, R.id.image, image)) {
                 views.setViewVisibility(R.id.image, View.GONE);
             }
 
-            if (mDisplay_profile) {
-                byte[] profile = mCursor.getBlob(2);
+            String profileUrl = mCursor.getString(sColumnIndexProfileUrl);
 
-                if (profile == null) {
-                    profile = Sonet.getBlob(Sonet.getBitmap(mContext.getResources(), R.drawable.ic_account_box_grey600_48dp));
-                }
-
-                setImageViewBitmap(views, R.id.profile, profile);
+            if (!TextUtils.isEmpty(profileUrl)) {
+                mPicasso.load(profileUrl)
+                        .transform(mCircleTransformation)
+                        .error(R.drawable.ic_account_box_grey600_48dp)
+                        .into(views, R.id.profile, new int[] { mAppWidgetId });
+            } else {
+                views.setImageViewBitmap(R.id.profile,
+                        mCircleTransformation.transform(BitmapFactory.decodeResource(mContext.getResources(),
+                                R.drawable.ic_account_box_grey600_48dp)));
             }
         } else {
             views = null;
@@ -157,22 +157,25 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
 
         mCursor = mContext.getContentResolver().query(Uri.withAppendedPath(StatusesStyles.getContentUri(mContext), Integer.toString(mAppWidgetId)),
                 new String[] { StatusesStyles._ID,
+                        StatusesStyles.SERVICE,
                         StatusesStyles.FRIEND,
-                        StatusesStyles.PROFILE,
+                        StatusesStyles.PROFILE_URL,
                         StatusesStyles.MESSAGE,
                         StatusesStyles.CREATEDTEXT,
-                        StatusesStyles.MESSAGES_COLOR,
-                        StatusesStyles.FRIEND_COLOR,
-                        StatusesStyles.CREATED_COLOR,
-                        StatusesStyles.MESSAGES_TEXTSIZE,
-                        StatusesStyles.FRIEND_TEXTSIZE,
-                        StatusesStyles.CREATED_TEXTSIZE,
-                        StatusesStyles.STATUS_BG,
-                        StatusesStyles.ICON,
                         StatusesStyles.IMAGE },
                 null,
                 null,
                 StatusesStyles.CREATED + " DESC");
+
+        if (mCursor != null) {
+            sColumnIndexId = mCursor.getColumnIndexOrThrow(StatusesStyles._ID);
+            sColumnIndexService = mCursor.getColumnIndexOrThrow(StatusesStyles.SERVICE);
+            sColumnIndexFriend = mCursor.getColumnIndexOrThrow(StatusesStyles.FRIEND);
+            sColumnIndexProfileUrl = mCursor.getColumnIndexOrThrow(StatusesStyles.PROFILE_URL);
+            sColumnIndexMessage = mCursor.getColumnIndexOrThrow(StatusesStyles.MESSAGE);
+            sColumnIndexCreatedText = mCursor.getColumnIndexOrThrow(StatusesStyles.CREATEDTEXT);
+            sColumnIndexImage = mCursor.getColumnIndexOrThrow(StatusesStyles.IMAGE);
+        }
     }
 
     @Override

@@ -33,7 +33,7 @@ import static com.piusvelte.sonet.Sonet.Surl;
 /**
  * Created by bemmanuel on 3/17/15.
  */
-public class AddRssLoader extends BaseAsyncTaskLoader {
+public class AddRssLoader extends BaseAsyncTaskLoader<String> {
 
     private static final String TAG = AddRssLoader.class.getSimpleName();
 
@@ -50,7 +50,7 @@ public class AddRssLoader extends BaseAsyncTaskLoader {
     }
 
     @Override
-    public Object loadInBackground() {
+    public String loadInBackground() {
         String httpResponse = SonetHttpClient.httpResponse(mUrl);
 
         if (!TextUtils.isEmpty(httpResponse)) {

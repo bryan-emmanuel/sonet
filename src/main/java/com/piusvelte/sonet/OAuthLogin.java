@@ -26,6 +26,7 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -41,7 +42,6 @@ import android.widget.Toast;
 
 import com.piusvelte.sonet.fragment.RssNameDialogFragment;
 import com.piusvelte.sonet.fragment.RssUrlDialogFragment;
-import com.piusvelte.sonet.loader.AddRssLoader;
 import com.piusvelte.sonet.loader.MemberAuthenticationLoader;
 import com.piusvelte.sonet.loader.OAuthLoginLoader;
 import com.piusvelte.sonet.provider.Accounts;
@@ -49,14 +49,11 @@ import com.piusvelte.sonet.provider.WidgetAccounts;
 import com.piusvelte.sonet.social.Client;
 import com.piusvelte.sonet.social.GooglePlus;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import static com.piusvelte.sonet.Sonet.PINTEREST;
 import static com.piusvelte.sonet.Sonet.RSS;
 import static com.piusvelte.sonet.Sonet.SMS;
 
-public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCallbacks {
+public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCallbacks<Cursor> {
     private static final String TAG = "OAuthLogin";
 
     private static final String DIALOG_RSS_URL = "dialog:rss_url";
@@ -65,28 +62,24 @@ public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCall
     private static final int REQUEST_RSS_URL = 0;
     private static final int REQUEST_RSS_NAME = 1;
 
-    private static final String STATE_PENDING_LOADERS = "state:pending_loaders";
-
     private int mWidgetId;
     private long mAccountId;
     private String mServiceName = "unknown";
     private SonetWebView mSonetWebView;
     private View mLoadingView;
 
-    private Set<Integer> mPendingLoaders = new HashSet<>();
-
     @Nullable
     private OAuthLoginLoader.OAuthLoginLoaderResult mOAuthLoginLoaderResult;
 
     private static final int LOADER_OAUTH_LOGIN = 0;
     private static final int LOADER_SMS = 1;
-    private static final int LOADER_RSS = 2;
-    private static final int LOADER_PINTEREST = 3;
-    private static final int LOADER_MEMBER_AUTHENTICATION = 4;
+    private static final int LOADER_PINTEREST = 2;
+    private static final int LOADER_MEMBER_AUTHENTICATION = 3;
 
     private static final String LOADER_ARG_NETWORK = "network";
-    private static final String LOADER_ARG_RSS_URL = "rss_url";
     private static final String LOADER_ARG_AUTHENTICATED_URL = "authenticated_url";
+
+    private OAuthLoginLoaderCallbacks mOAuthLoginLoaderCallbacks = new OAuthLoginLoaderCallbacks(this);
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -97,19 +90,6 @@ public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCall
         mLoadingView = findViewById(R.id.loading);
 
         setResult(RESULT_CANCELED);
-
-        LoaderManager loaderManager = getSupportLoaderManager();
-
-        if (loaderManager.hasRunningLoaders() && savedInstanceState != null) {
-            int[] loaders = savedInstanceState.getIntArray(STATE_PENDING_LOADERS);
-
-            if (loaders != null) {
-                for (int loader : loaders) {
-                    mPendingLoaders.add(loader);
-                    loaderManager.initLoader(loader, null, this);
-                }
-            }
-        }
 
         Intent intent = getIntent();
 
@@ -131,10 +111,7 @@ public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCall
                 switch (service) {
                     case SMS:
                         mLoadingView.setVisibility(View.VISIBLE);
-
-                        if (!mPendingLoaders.contains(LOADER_SMS)) {
-                            getSupportLoaderManager().restartLoader(LOADER_SMS, null, this);
-                        }
+                        getSupportLoaderManager().initLoader(LOADER_SMS, null, this);
                         break;
 
                     case RSS:
@@ -144,20 +121,14 @@ public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCall
 
                     case PINTEREST:
                         mLoadingView.setVisibility(View.VISIBLE);
-
-                        if (!mPendingLoaders.contains(LOADER_PINTEREST)) {
-                            getSupportLoaderManager().restartLoader(LOADER_PINTEREST, null, this);
-                        }
+                        getSupportLoaderManager().initLoader(LOADER_PINTEREST, null, this);
                         break;
 
                     default: {
                         mLoadingView.setVisibility(View.VISIBLE);
-
-                        if (!mPendingLoaders.contains(LOADER_OAUTH_LOGIN)) {
-                            Bundle args = new Bundle();
-                            args.putInt(LOADER_ARG_NETWORK, service);
-                            getSupportLoaderManager().restartLoader(LOADER_OAUTH_LOGIN, args, this);
-                        }
+                        Bundle args = new Bundle();
+                        args.putInt(LOADER_ARG_NETWORK, service);
+                        getSupportLoaderManager().initLoader(LOADER_OAUTH_LOGIN, args, mOAuthLoginLoaderCallbacks);
                         break;
                     }
                 }
@@ -166,41 +137,15 @@ public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCall
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-
-        int loaderIndex = 0;
-        int[] loaders = new int[mPendingLoaders.size()];
-
-        for (Integer loader : mPendingLoaders) {
-            loaders[loaderIndex] = loader;
-            loaderIndex++;
-        }
-
-        outState.putIntArray(STATE_PENDING_LOADERS, loaders);
-    }
-
-    @Override
-    public Loader onCreateLoader(int id, Bundle args) {
-        mPendingLoaders.add(id);
-
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         switch (id) {
-            case LOADER_OAUTH_LOGIN:
-                return new OAuthLoginLoader(this, args.getInt(LOADER_ARG_NETWORK));
-
             case LOADER_SMS:
                 return new CursorLoader(this, Accounts.getContentUri(this), new String[] { Accounts._ID }, Accounts.SERVICE + "=?",
                         new String[] { Integer.toString(SMS) }, null);
 
-            case LOADER_RSS:
-                return new AddRssLoader(this, args.getString(LOADER_ARG_RSS_URL));
-
             case LOADER_PINTEREST:
                 return new CursorLoader(this, Accounts.getContentUri(this), new String[] { Accounts._ID }, Accounts.SERVICE + "=?",
                         new String[] { Integer.toString(PINTEREST) }, null);
-
-            case LOADER_MEMBER_AUTHENTICATION:
-                return new MemberAuthenticationLoader(this, mOAuthLoginLoaderResult, args.getString(LOADER_ARG_AUTHENTICATED_URL));
 
             default:
                 return null;
@@ -208,33 +153,13 @@ public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCall
     }
 
     @Override
-    public void onLoadFinished(Loader loader, Object data) {
-        mPendingLoaders.remove(loader.getId());
-
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         switch (loader.getId()) {
-            case LOADER_OAUTH_LOGIN:
-                mLoadingView.setVisibility(View.GONE);
-
-                if (data instanceof OAuthLoginLoader.OAuthLoginLoaderResult) {
-                    mOAuthLoginLoaderResult = (OAuthLoginLoader.OAuthLoginLoaderResult) data;
-
-                    if (!TextUtils.isEmpty(mOAuthLoginLoaderResult.authUrl)) {
-                        mSonetWebView.open(mOAuthLoginLoaderResult.authUrl);
-                    } else {
-                        Toast.makeText(OAuthLogin.this, String.format(getString(R.string.oauth_error), mServiceName), Toast.LENGTH_LONG).show();
-                        finish();
-                    }
-                } else {
-                    Toast.makeText(OAuthLogin.this, String.format(getString(R.string.oauth_error), mServiceName), Toast.LENGTH_LONG).show();
-                    finish();
-                }
-                break;
-
             case LOADER_SMS:
                 mLoadingView.setVisibility(View.GONE);
 
-                if (data instanceof Cursor) {
-                    if (((Cursor) data).moveToFirst()) {
+                if (data != null) {
+                    if (data.moveToFirst()) {
                         (Toast.makeText(OAuthLogin.this, "SMS has already been added.", Toast.LENGTH_LONG)).show();
                     } else {
                         addAccount(getResources().getStringArray(R.array.service_entries)[SMS], null, null, 0, SMS, null);
@@ -244,23 +169,11 @@ public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCall
                 finish();
                 break;
 
-            case LOADER_RSS:
-                mLoadingView.setVisibility(View.GONE);
-
-                if (data instanceof String) {
-                    final String rssUrl = (String) data;
-
-                    RssNameDialogFragment.newInstance(REQUEST_RSS_NAME, rssUrl)
-                            .show(getSupportFragmentManager(), DIALOG_RSS_NAME);
-                }
-
-                break;
-
             case LOADER_PINTEREST:
                 mLoadingView.setVisibility(View.GONE);
 
-                if (data instanceof Cursor) {
-                    if (((Cursor) data).moveToFirst()) {
+                if (data != null) {
+                    if (data.moveToFirst()) {
                         (Toast.makeText(OAuthLogin.this, "Pinterest has already been added.", Toast.LENGTH_LONG)).show();
                     } else {
                         Toast.makeText(OAuthLogin.this, "Pinterest currently allows only public, non-authenticated viewing.", Toast.LENGTH_LONG)
@@ -279,28 +192,12 @@ public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCall
 
                 finish();
                 break;
-
-            case LOADER_MEMBER_AUTHENTICATION:
-                mLoadingView.setVisibility(View.GONE);
-
-                if (data instanceof Client.MemberAuthentication) {
-                    Client.MemberAuthentication memberAuthentication = (Client.MemberAuthentication) data;
-                    addAccount(memberAuthentication.username, memberAuthentication.token, memberAuthentication.secret, memberAuthentication.expiry,
-                            memberAuthentication.network, memberAuthentication.id);
-                } else {
-                    if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "Client.MemberAuthentication not loaded");
-                    }
-                }
-
-                finish();
-                break;
         }
     }
 
     @Override
-    public void onLoaderReset(Loader loader) {
-        mPendingLoaders.remove(loader.getId());
+    public void onLoaderReset(Loader<Cursor> loader) {
+        // NO-OP
     }
 
     private String addAccount(String username, String token, String secret, int expiry, int service, String sid) {
@@ -339,10 +236,8 @@ public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCall
         switch (requestCode) {
             case REQUEST_RSS_URL:
                 if (result == RESULT_OK) {
-                    mLoadingView.setVisibility(View.VISIBLE);
-                    Bundle args = new Bundle();
-                    args.putString(LOADER_ARG_RSS_URL, RssUrlDialogFragment.getUrl(data, null));
-                    getSupportLoaderManager().restartLoader(LOADER_RSS, args, OAuthLogin.this);
+                    RssNameDialogFragment.newInstance(REQUEST_RSS_NAME, RssUrlDialogFragment.getUrl(data, null))
+                            .show(getSupportFragmentManager(), DIALOG_RSS_NAME);
                 } else {
                     finish();
                 }
@@ -360,7 +255,7 @@ public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCall
         }
     }
 
-    private class SonetWebView {
+    private static class SonetWebView {
 
         private OAuthLogin mOAuthLogin;
         private WebView mWebView;
@@ -374,16 +269,18 @@ public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCall
                 @Override
                 public void onPageFinished(WebView view, String url) {
                     // just google here
-                    if (url != null && mOAuthLoginLoaderResult.client instanceof GooglePlus) {
+                    if (url != null && mOAuthLogin.mOAuthLoginLoaderResult.client instanceof GooglePlus) {
                         Uri uri = Uri.parse(url);
                         UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
                         matcher.addURI("accounts.google.com", "o/oauth2/approval", 1);
 
                         if (matcher.match(uri) == 1) {
-                            mLoadingView.setVisibility(View.VISIBLE);
+                            mOAuthLogin.mLoadingView.setVisibility(View.VISIBLE);
                             Bundle args = new Bundle();
                             args.putString(LOADER_ARG_AUTHENTICATED_URL, view.getTitle());
-                            getSupportLoaderManager().restartLoader(LOADER_MEMBER_AUTHENTICATION, args, mOAuthLogin);
+                            mOAuthLogin.getSupportLoaderManager().restartLoader(LOADER_MEMBER_AUTHENTICATION,
+                                    args,
+                                    new MemberAuthenticationLoaderCallbacks(mOAuthLogin, mOAuthLogin.mOAuthLoginLoaderResult));
                         }
                     }
                 }
@@ -394,13 +291,15 @@ public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCall
                         Uri uri = Uri.parse(url);
                         String host = uri.getHost();
 
-                        Uri callback = mOAuthLoginLoaderResult.client.getCallback();
+                        Uri callback = mOAuthLogin.mOAuthLoginLoaderResult.client.getCallback();
 
                         if (callback != null && callback.getHost().equals(host)) {
-                            mLoadingView.setVisibility(View.VISIBLE);
+                            mOAuthLogin.mLoadingView.setVisibility(View.VISIBLE);
                             Bundle args = new Bundle();
                             args.putString(LOADER_ARG_AUTHENTICATED_URL, url);
-                            getSupportLoaderManager().restartLoader(LOADER_MEMBER_AUTHENTICATION, args, mOAuthLogin);
+                            mOAuthLogin.getSupportLoaderManager().restartLoader(LOADER_MEMBER_AUTHENTICATION,
+                                    args,
+                                    new MemberAuthenticationLoaderCallbacks(mOAuthLogin, mOAuthLogin.mOAuthLoginLoaderResult));
                         } else {
                             return false;// allow google to redirect
                         }
@@ -420,6 +319,119 @@ public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCall
             } else {
                 mOAuthLogin.finish();
             }
+        }
+    }
+
+    private void setOAuthLoginLoaderResult(OAuthLoginLoader.OAuthLoginLoaderResult data) {
+        mLoadingView.setVisibility(View.GONE);
+
+        if (data != null) {
+            mOAuthLoginLoaderResult = data;
+
+            if (!TextUtils.isEmpty(mOAuthLoginLoaderResult.authUrl)) {
+                mSonetWebView.open(mOAuthLoginLoaderResult.authUrl);
+            } else {
+                Toast.makeText(OAuthLogin.this, String.format(getString(R.string.oauth_error), mServiceName), Toast.LENGTH_LONG).show();
+                finish();
+            }
+        } else {
+            Toast.makeText(OAuthLogin.this, String.format(getString(R.string.oauth_error), mServiceName), Toast.LENGTH_LONG).show();
+            finish();
+        }
+    }
+
+    private void setMemberAuthentication(Client.MemberAuthentication memberAuthentication) {
+        mLoadingView.setVisibility(View.GONE);
+
+        if (memberAuthentication != null) {
+            // TODO IntentService?
+            addAccount(memberAuthentication.username,
+                    memberAuthentication.token,
+                    memberAuthentication.secret,
+                    memberAuthentication.expiry,
+                    memberAuthentication.network,
+                    memberAuthentication.id);
+        } else {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Client.MemberAuthentication not loaded");
+            }
+        }
+
+        finish();
+    }
+
+    private static class OAuthLoginLoaderCallbacks implements LoaderManager.LoaderCallbacks<OAuthLoginLoader.OAuthLoginLoaderResult> {
+
+        @NonNull
+        private OAuthLogin mOAuthLogin;
+
+        OAuthLoginLoaderCallbacks(@NonNull OAuthLogin OAuthLogin) {
+            mOAuthLogin = OAuthLogin;
+        }
+
+        @Override
+        public Loader<OAuthLoginLoader.OAuthLoginLoaderResult> onCreateLoader(int id, Bundle args) {
+            switch (id) {
+                case LOADER_OAUTH_LOGIN:
+                    return new OAuthLoginLoader(mOAuthLogin, args.getInt(LOADER_ARG_NETWORK));
+
+                default:
+                    return null;
+            }
+        }
+
+        @Override
+        public void onLoadFinished(Loader<OAuthLoginLoader.OAuthLoginLoaderResult> loader, OAuthLoginLoader.OAuthLoginLoaderResult data) {
+            switch (loader.getId()) {
+                case LOADER_OAUTH_LOGIN:
+                    mOAuthLogin.setOAuthLoginLoaderResult(data);
+                    break;
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<OAuthLoginLoader.OAuthLoginLoaderResult> loader) {
+            // NO-OP
+        }
+    }
+
+    private static class MemberAuthenticationLoaderCallbacks implements LoaderManager.LoaderCallbacks<Client.MemberAuthentication> {
+
+        @NonNull
+        private OAuthLogin mOAuthLogin;
+        @NonNull
+        private OAuthLoginLoader.OAuthLoginLoaderResult mOAuthLoginLoaderResult;
+
+        MemberAuthenticationLoaderCallbacks(@NonNull OAuthLogin oAuthLogin, @NonNull OAuthLoginLoader.OAuthLoginLoaderResult oAuthLoginLoaderResult) {
+            mOAuthLogin = oAuthLogin;
+            mOAuthLoginLoaderResult = oAuthLoginLoaderResult;
+        }
+
+        @Override
+        public Loader<Client.MemberAuthentication> onCreateLoader(int id, Bundle args) {
+            switch (id) {
+                case LOADER_MEMBER_AUTHENTICATION:
+                    return new MemberAuthenticationLoader(mOAuthLogin,
+                            mOAuthLoginLoaderResult,
+                            args.getString(LOADER_ARG_AUTHENTICATED_URL));
+
+                default:
+                    return null;
+            }
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Client.MemberAuthentication> loader, Client.MemberAuthentication data) {
+            switch (loader.getId()) {
+                case LOADER_MEMBER_AUTHENTICATION:
+                    mOAuthLogin.setMemberAuthentication(data);
+                    break;
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Client.MemberAuthentication> loader) {
+            // NO-OP
         }
     }
 }

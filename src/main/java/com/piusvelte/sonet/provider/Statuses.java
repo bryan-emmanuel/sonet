@@ -27,7 +27,9 @@ public class Statuses implements BaseColumns {
     public static final String CREATEDTEXT = "createdtext";
     // account specific settings per widget
     public static final String ACCOUNT = "account";
+    @Deprecated
     public static final String STATUS_BG = "status_bg";
+    @Deprecated
     public static final String ICON = "icon";
     // service id for posting and linking
     public static final String SID = "sid";
@@ -36,5 +38,6 @@ public class Statuses implements BaseColumns {
     public static final String FRIEND_OVERRIDE = "friend_override";
     @Deprecated
     public static final String PROFILE_BG = "profiles_bg_color";
+    @Deprecated
     public static final String FRIEND_BG = "friend_bg";
 }

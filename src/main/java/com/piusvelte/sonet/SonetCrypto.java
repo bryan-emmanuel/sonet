@@ -29,7 +29,7 @@ import android.util.Base64;
 import android.util.Log;
 
 import com.piusvelte.sonet.provider.Accounts;
-import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Statuses;
 
 import java.io.FileInputStream;
@@ -123,12 +123,12 @@ public class SonetCrypto {
                 accounts.close();
                 // encrypt the SIDs and ESIDs everywhere
                 Cursor entities = context.getContentResolver()
-                        .query(Entities.getContentUri(context), new String[] { Entities._ID, Entities.ESID }, null, null, null);
+                        .query(Entity.getContentUri(context), new String[] { Entity._ID, Entity.ESID }, null, null, null);
                 if (entities.moveToFirst()) {
                     while (!entities.isAfterLast()) {
                         ContentValues values = new ContentValues();
-                        values.put(Entities.ESID, RemoveUnderscore(entities.getString(1)));
-                        context.getContentResolver().update(Entities.getContentUri(context), values, Entities._ID + "=?",
+                        values.put(Entity.ESID, RemoveUnderscore(entities.getString(1)));
+                        context.getContentResolver().update(Entity.getContentUri(context), values, Entity._ID + "=?",
                                 new String[] { Long.toString(entities.getLong(0)) });
                         entities.moveToNext();
                     }

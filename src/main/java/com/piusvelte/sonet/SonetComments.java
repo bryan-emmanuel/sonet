@@ -26,6 +26,7 @@ import android.support.v7.widget.Toolbar;
 import android.widget.Toast;
 
 import com.piusvelte.sonet.fragment.CommentsList;
+import com.piusvelte.sonet.provider.StatusLinks;
 
 public class SonetComments extends BaseActivity {
 
@@ -55,11 +56,15 @@ public class SonetComments extends BaseActivity {
                 Toast.makeText(this, getString(R.string.failure), Toast.LENGTH_LONG).show();
                 finish();
             } else {
+                if (intent.hasExtra(StatusLinks.STATUS_ID)) {
+                    data = Uri.withAppendedPath(data, intent.getStringExtra(StatusLinks.STATUS_ID));
+                }
+
                 CommentsList fragment = (CommentsList) getSupportFragmentManager().findFragmentByTag(FRAGMENT_COMMENTS_LIST);
 
                 if (fragment == null) {
                     getSupportFragmentManager().beginTransaction()
-                            .add(R.id.comments_list_container, new CommentsList(), FRAGMENT_COMMENTS_LIST)
+                            .add(R.id.comments_list_container, CommentsList.newInstance(data), FRAGMENT_COMMENTS_LIST)
                             .commit();
                 }
             }
@@ -76,6 +81,10 @@ public class SonetComments extends BaseActivity {
             Toast.makeText(this, getString(R.string.failure), Toast.LENGTH_LONG).show();
             finish();
         } else {
+            if (intent.hasExtra(StatusLinks.STATUS_ID)) {
+                data = Uri.withAppendedPath(data, intent.getStringExtra(StatusLinks.STATUS_ID));
+            }
+
             CommentsList fragment = (CommentsList) getSupportFragmentManager().findFragmentByTag(FRAGMENT_COMMENTS_LIST);
 
             if (fragment != null) {

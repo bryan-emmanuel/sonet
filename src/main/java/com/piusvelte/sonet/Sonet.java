@@ -50,16 +50,12 @@ public class Sonet {
     public static final String Saccess_token = "access_token";
     public static final String Sexpires_in = "expires_in";
     public static final String ACTION_REFRESH = "com.piusvelte.sonet.Sonet.REFRESH";
-    protected static final String ACTION_PAGE_UP = "com.piusvelte.sonet.Sonet.PAGE_UP";
-    protected static final String ACTION_PAGE_DOWN = "com.piusvelte.sonet.Sonet.PAGE_DOWN";
-    public static final String ACTION_ON_CLICK = "com.piusvelte.sonet.Sonet.ON_CLICK";
     public static final String ACTION_UPLOAD = "com.piusvelte.sonet.Sonet.UPLOAD";
     protected static final String SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED";
     public static final String EXTRA_ACCOUNT_ID = "com.piusvelte.sonet.Sonet.ACCOUNT_ID";
-    public static final String EXTRA_SCROLLABLE_VERSION = "com.piusvelte.sonet.Sonet.SCROLLABLE_VERSION";
     public static final long INVALID_ACCOUNT_ID = -1;
     public static final int RESULT_REFRESH = 1;
-    protected static int NOTIFY_ID = 1;
+    public static int NOTIFY_ID = 1;
 
     public static final int TWITTER = 0;
     public static final int FACEBOOK = 1;
@@ -187,7 +183,7 @@ public class Sonet {
         sWakeLock.acquire();
     }
 
-    static void release() {
+    public static void release() {
         if (hasLock()) {
             sWakeLock.release();
             sWakeLock = null;
@@ -196,30 +192,44 @@ public class Sonet {
 
     public static final int INVALID_SERVICE = -1;
 
-    protected static final int default_interval = 3600000;
+    public static final int default_interval = 3600000;
+    @Deprecated
     protected static final int default_buttons_bg_color = 0x88000000;
+    @Deprecated
     protected static final int default_buttons_color = 0xFFFFFFFF;
+    @Deprecated
     public static final int default_message_bg_color = 0x88FFFFFF;
+    @Deprecated
     public static final int default_message_color = 0xFF000000;
+    @Deprecated
     public static final int default_friend_color = 0xFFFFFFFF;
+    @Deprecated
     public static final int default_created_color = 0xFFFFFFFF;
+    @Deprecated
     protected static final int default_buttons_textsize = 14;
+    @Deprecated
     public static final int default_messages_textsize = 14;
+    @Deprecated
     public static final int default_friend_textsize = 14;
+    @Deprecated
     public static final int default_created_textsize = 14;
-    protected static final int default_statuses_per_account = 10;
+    public static final int default_statuses_per_account = 10;
+    @Deprecated
     protected static final boolean default_include_profile = true;
+    @Deprecated
     protected static final int default_margin = 0;
     @Deprecated
     public static final int default_friend_bg_color = 0x88000000;
+    @Deprecated
     protected static final boolean default_hasButtons = false;
-    protected static final boolean default_time24hr = false;
+    public static final boolean default_time24hr = false;
+    @Deprecated
     protected static final boolean default_hasIcon = true;
-    protected static final boolean default_backgroundUpdate = true;
-    protected static final boolean default_sound = false;
-    protected static final boolean default_vibrate = false;
-    protected static final boolean default_lights = false;
-    protected static final boolean default_instantUpload = false;
+    public static final boolean default_backgroundUpdate = true;
+    public static final boolean default_sound = false;
+    public static final boolean default_vibrate = false;
+    public static final boolean default_lights = false;
+    public static final boolean default_instantUpload = false;
 
     private Sonet() {
         // not instantiable
@@ -394,6 +404,7 @@ public class Sonet {
         return (int) Math.round((src - dst) / 2.0);
     }
 
+    @Deprecated
     public static boolean insertStatusImageBg(Context context, long statusId, byte[] bImg, int height) {
         Bitmap bmpBg = Bitmap.createBitmap(1, height, Config.ARGB_8888);
         ByteArrayOutputStream baosBg = new ByteArrayOutputStream();
@@ -405,7 +416,6 @@ public class Sonet {
             ContentValues imageValues = new ContentValues();
             imageValues.put(StatusImages.STATUS_ID, statusId);
             imageValues.put(StatusImages.IMAGE, (bImg != null ? bImg : bBg));
-            imageValues.put(StatusImages.IMAGE_BG, bBg);
             context.getContentResolver().insert(StatusImages.getContentUri(context), imageValues);
             return true;
         }

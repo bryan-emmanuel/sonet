@@ -25,13 +25,6 @@
     android:layout_height="wrap_content">
 
     <ImageView
-        android:id="@+id/status_bg"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="fitXY"
-        android:src="@android:color/white" />
-
-    <ImageView
         android:id="@+id/profile"
         android:layout_width="@dimen/message_item_header_height"
         android:layout_height="@dimen/message_item_header_height"
@@ -40,12 +33,12 @@
 
     <ImageView
         android:id="@+id/icon"
-        android:layout_width="@dimen/message_item_header_height"
-        android:layout_height="@dimen/message_item_header_height"
+        android:layout_width="32dip"
+        android:layout_height="32dip"
+        android:layout_alignBottom="@+id/profile"
+        android:layout_alignRight="@+id/profile"
         android:paddingBottom="@dimen/material_padding"
-        android:paddingLeft="40dip"
         android:paddingRight="@dimen/material_padding"
-        android:paddingTop="40dip"
         android:scaleType="fitCenter"
         tools:src="@drawable/googleplus" />
 

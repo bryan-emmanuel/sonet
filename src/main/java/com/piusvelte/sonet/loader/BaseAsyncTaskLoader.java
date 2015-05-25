@@ -6,16 +6,16 @@ import android.support.v4.content.AsyncTaskLoader;
 /**
  * Created by bemmanuel on 3/17/15.
  */
-abstract public class BaseAsyncTaskLoader extends AsyncTaskLoader<Object> {
+abstract public class BaseAsyncTaskLoader<ResultType> extends AsyncTaskLoader<ResultType> {
 
-    Object mData;
+    ResultType mData;
 
     public BaseAsyncTaskLoader(Context context) {
         super(context);
     }
 
     @Override
-    public void deliverResult(Object data) {
+    public void deliverResult(ResultType data) {
         mData = data;
 
         if (isStarted()) {

@@ -8,7 +8,7 @@ import com.piusvelte.sonet.social.Client;
 /**
  * Created by bemmanuel on 4/21/15.
  */
-public class SendCommentLoader extends BaseAsyncTaskLoader {
+public class SendCommentLoader extends BaseAsyncTaskLoader<Boolean> {
 
     private Client mClient;
     private String mSid;
@@ -22,7 +22,7 @@ public class SendCommentLoader extends BaseAsyncTaskLoader {
     }
 
     @Override
-    public Object loadInBackground() {
+    public Boolean loadInBackground() {
         return mClient.sendComment(mSid, mMessage);
     }
 }

@@ -15,7 +15,7 @@ import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.SonetOAuth;
-import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.Statuses;
 import com.squareup.okhttp.MediaType;
@@ -529,7 +529,7 @@ public class MySpace extends Client {
     public HashMap<String, String> parseComment(@NonNull String statusId, @NonNull JSONObject jsonComment, boolean time24hr) throws JSONException {
         HashMap<String, String> commentMap = new HashMap<String, String>();
         commentMap.put(Statuses.SID, jsonComment.getString(ScommentId));
-        commentMap.put(Entities.FRIEND, jsonComment.getJSONObject(Sauthor).getString(SdisplayName));
+        commentMap.put(Entity.FRIEND, jsonComment.getJSONObject(Sauthor).getString(SdisplayName));
         commentMap.put(Statuses.MESSAGE, jsonComment.getString(Sbody));
         commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(parseDate(jsonComment.getString(SpostedDate), MYSPACE_DATE_FORMAT), time24hr));
         commentMap.put(getString(R.string.like), "");

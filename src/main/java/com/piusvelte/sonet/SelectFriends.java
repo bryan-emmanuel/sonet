@@ -35,7 +35,7 @@ import android.widget.RelativeLayout;
 import android.widget.SimpleAdapter;
 
 import com.piusvelte.sonet.provider.Accounts;
-import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.social.Facebook;
 import com.squareup.okhttp.Request;
 
@@ -129,7 +129,7 @@ public class SelectFriends extends ListActivity {
         // add to/remove from return list, update check mark
         if (mFriends.size() > position) {
             HashMap<String, String> friend = mFriends.get(position);
-            String esid = friend.get(Entities.ESID);
+            String esid = friend.get(Entity.ESID);
             boolean checked = false;
             if (mSelectedFriends.contains(esid)) {
                 mSelectedFriends.remove(esid);
@@ -153,7 +153,7 @@ public class SelectFriends extends ListActivity {
         mFriends.clear();
 //		SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend, new String[]{Entities.PROFILE, Entities.FRIEND, Entities
 // .ESID}, new int[]{R.id.profile, R.id.name, R.id.selected});
-        SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend, new String[] { Entities.FRIEND, Entities.ESID },
+        SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend, new String[] { Entity.FRIEND, Entity.ESID },
                 new int[] { R.id.name, R.id.selected });
         setListAdapter(sa);
         final ProgressDialog loadingDialog = new ProgressDialog(this);
@@ -189,9 +189,9 @@ public class SelectFriends extends ListActivity {
                                 for (int i = 0, l = friends.length(); i < l; i++) {
                                     JSONObject f = friends.getJSONObject(i);
                                     HashMap<String, String> newFriend = new HashMap<String, String>();
-                                    newFriend.put(Entities.ESID, f.getString(Sid));
-                                    newFriend.put(Entities.PROFILE, String.format(Facebook.FACEBOOK_PICTURE, f.getString(Sid)));
-                                    newFriend.put(Entities.FRIEND, f.getString(Sname));
+                                    newFriend.put(Entity.ESID, f.getString(Sid));
+                                    newFriend.put(Entity.PROFILE_URL, String.format(Facebook.FACEBOOK_PICTURE, f.getString(Sid)));
+                                    newFriend.put(Entity.FRIEND, f.getString(Sname));
                                     // need to alphabetize
                                     if (mFriends.isEmpty()) {
                                         mFriends.add(newFriend);
@@ -212,7 +212,7 @@ public class SelectFriends extends ListActivity {
                                             if (newFriend == null) {
                                                 newFriends.add(oldFriend);
                                             } else {
-                                                fullName = oldFriend.get(Entities.FRIEND);
+                                                fullName = oldFriend.get(Entity.FRIEND);
                                                 spaceIdx = fullName.lastIndexOf(" ");
                                                 String oldFirstName = null;
                                                 String oldLastName = null;
@@ -284,7 +284,7 @@ public class SelectFriends extends ListActivity {
 //					SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend, new String[]{Entities.PROFILE, Entities
 // .FRIEND}, new int[]{R.id.profile, R.id.name});
                     SimpleAdapter sa = new SimpleAdapter(SelectFriends.this, mFriends, R.layout.friend,
-                            new String[] { Entities.FRIEND, Entities.ESID }, new int[] { R.id.name, R.id.selected });
+                            new String[] { Entity.FRIEND, Entity.ESID }, new int[] { R.id.name, R.id.selected });
                     sa.setViewBinder(mViewBinder);
                     setListAdapter(sa);
                 }

@@ -19,12 +19,10 @@
  */
 package com.piusvelte.sonet;
 
-import android.app.WallpaperManager;
 import android.appwidget.AppWidgetManager;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -35,16 +33,10 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.piusvelte.sonet.fragment.ButtonSettingsDialogFragment;
-import com.piusvelte.sonet.fragment.MessageSettingsDialogFragment;
-import com.piusvelte.sonet.fragment.NameSettingsDialogFragment;
 import com.piusvelte.sonet.fragment.NotificationSettingsDialogFragment;
-import com.piusvelte.sonet.fragment.ProfileSettingsDialogFragment;
-import com.piusvelte.sonet.fragment.SingleChoiceDialogFragment;
 import com.piusvelte.sonet.fragment.TimeSettingsDialogFragment;
 import com.piusvelte.sonet.fragment.UpdateSettingsDialogFragment;
 import com.piusvelte.sonet.provider.Widgets;
@@ -52,6 +44,7 @@ import com.piusvelte.sonet.provider.WidgetsSettings;
 
 import static com.piusvelte.sonet.Sonet.initAccountSettings;
 
+@Deprecated
 public class Settings extends BaseActivity
         implements View.OnClickListener, LoaderManager.LoaderCallbacks<Cursor> {
 
@@ -59,55 +52,27 @@ public class Settings extends BaseActivity
 
     private static final int REQUEST_UPDATE_SETTINGS = 0;
     private static final int REQUEST_NOTIFICATIONS = 1;
-    private static final int REQUEST_MARGIN = 2;
-    private static final int REQUEST_BUTTON_SETTINGS = 3;
-    private static final int REQUEST_NAME_SETTINGS = 4;
-    private static final int REQUEST_TIME_SETTINGS = 5;
-    private static final int REQUEST_PROFILE_SETTINGS = 6;
-    private static final int REQUEST_MESSAGE_SETTINGS = 7;
+    private static final int REQUEST_TIME_SETTINGS = 2;
 
     private static final String DIALOG_UPDATE_SETTINGS = "dialog:update_settings";
     private static final String DIALOG_NOTIFICATIONS = "dialog:notifications";
-    private static final String DIALOG_MARGIN = "dialog:margin";
-    private static final String DIALOG_BUTTON_SETTINGS = "dialog:button_settings";
-    private static final String DIALOG_NAME_SETTINGS = "dialog:name_settings";
     private static final String DIALOG_TIME_SETTINGS = "dialog:time_settings";
-    private static final String DIALOG_PROFILE_SETTINGS = "dialog:profile_settings";
-    private static final String DIALOG_MESSAGE_SETTINGS = "dialog:message_settings";
 
     private int mInterval_value = Sonet.default_interval;
-    private int mButtons_bg_color_value = Sonet.default_buttons_bg_color;
-    private int mButtons_color_value = Sonet.default_buttons_color;
-    private int mButtons_textsize_value = Sonet.default_buttons_textsize;
-    private int mMessages_bg_color_value = Sonet.default_message_bg_color;
-    private int mMessages_color_value = Sonet.default_message_color;
-    private int mMessages_textsize_value = Sonet.default_messages_textsize;
-    private int mFriend_color_value = Sonet.default_friend_color;
-    private int mFriend_textsize_value = Sonet.default_friend_textsize;
-    private int mCreated_color_value = Sonet.default_created_color;
-    private int mCreated_textsize_value = Sonet.default_created_textsize;
     private int mStatuses_per_account_value = Sonet.default_statuses_per_account;
-    private int mMargin_value = Sonet.default_margin;
-    private int mScrollable_version = 0;
-    private boolean mHasButtons_value = Sonet.default_hasButtons;
     private boolean mTime24hr_value = Sonet.default_time24hr;
-    private boolean mIcon_value = Sonet.default_hasIcon;
     private boolean mBackgroundUpdate_value = Sonet.default_backgroundUpdate;
     private boolean mSound_value = Sonet.default_sound;
     private boolean mVibrate_value = Sonet.default_vibrate;
     private boolean mLights_value = Sonet.default_lights;
-    private boolean mDisplay_profile_value = Sonet.default_include_profile;
     private boolean mInstantUpload_value = Sonet.default_instantUpload;
     private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
     private String mWidgetSettingsId = null;
     private Button mBtn_update;
     private Button mBtn_notification;
     private CheckBox mChk_instantUpload;
-    private Button mBtn_margin;
-    private Button mBtn_buttons;
     private TextView mBtn_name;
     private TextView mBtn_time;
-    private ImageView mBtn_profile;
     private TextView mBtn_message;
     private View mLoadingView;
 
@@ -128,19 +93,10 @@ public class Settings extends BaseActivity
         mBtn_update = (Button) findViewById(R.id.settings_update);
         mBtn_notification = (Button) findViewById(R.id.settings_notification);
         mChk_instantUpload = (CheckBox) findViewById(R.id.instantupload);
-        mBtn_margin = (Button) findViewById(R.id.margin);
-        mBtn_buttons = (Button) findViewById(R.id.settings_buttons);
         mBtn_name = (TextView) findViewById(R.id.friend);
         mBtn_time = (TextView) findViewById(R.id.created);
-        mBtn_profile = (ImageView) findViewById(R.id.profile);
         mBtn_message = (TextView) findViewById(R.id.message);
         mLoadingView = findViewById(R.id.loading);
-
-        Drawable wp = WallpaperManager.getInstance(getApplicationContext()).getDrawable();
-
-        if (wp != null) {
-            findViewById(R.id.ad).getRootView().setBackgroundDrawable(wp);
-        }
 
         mLoadingView.setVisibility(View.VISIBLE);
         getSupportLoaderManager().initLoader(LOADER_SETTINGS, null, this);
@@ -162,28 +118,13 @@ public class Settings extends BaseActivity
                         new String[] { Widgets._ID,
                                 Widgets.WIDGET,
                                 Widgets.INTERVAL,
-                                Widgets.BUTTONS_BG_COLOR,
-                                Widgets.BUTTONS_COLOR,
-                                Widgets.BUTTONS_TEXTSIZE,
-                                Widgets.MESSAGES_BG_COLOR,
-                                Widgets.MESSAGES_COLOR,
-                                Widgets.MESSAGES_TEXTSIZE,
-                                Widgets.FRIEND_COLOR,
-                                Widgets.FRIEND_TEXTSIZE,
-                                Widgets.CREATED_COLOR,
-                                Widgets.CREATED_TEXTSIZE,
-                                Widgets.HASBUTTONS,
                                 Widgets.TIME24HR,
-                                Widgets.ICON,
                                 Widgets.STATUSES_PER_ACCOUNT,
                                 Widgets.BACKGROUND_UPDATE,
-                                Widgets.SCROLLABLE,
                                 Widgets.SOUND,
                                 Widgets.VIBRATE,
                                 Widgets.LIGHTS,
-                                Widgets.DISPLAY_PROFILE,
-                                Widgets.INSTANT_UPLOAD,
-                                Widgets.MARGIN },
+                                Widgets.INSTANT_UPLOAD },
                         "(" + Widgets.WIDGET + "=? or " + Widgets.WIDGET + "=?) and " + Widgets.ACCOUNT + "=?",
                         new String[] { Integer.toString(mAppWidgetId), Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long
                                 .toString(Sonet.INVALID_ACCOUNT_ID) },
@@ -215,28 +156,13 @@ public class Settings extends BaseActivity
 
                         // get the settings
                         mInterval_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.INTERVAL));
-                        mButtons_bg_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.BUTTONS_BG_COLOR));
-                        mButtons_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.BUTTONS_COLOR));
-                        mButtons_textsize_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.BUTTONS_TEXTSIZE));
-                        mMessages_bg_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.MESSAGES_BG_COLOR));
-                        mMessages_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.MESSAGES_COLOR));
-                        mMessages_textsize_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.MESSAGES_TEXTSIZE));
-                        mFriend_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.FRIEND_COLOR));
-                        mFriend_textsize_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.FRIEND_TEXTSIZE));
-                        mCreated_color_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.CREATED_COLOR));
-                        mCreated_textsize_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.CREATED_TEXTSIZE));
-                        mHasButtons_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.HASBUTTONS)) == 1;
                         mTime24hr_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.TIME24HR)) == 1;
-                        mIcon_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.ICON)) == 1;
                         mStatuses_per_account_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.STATUSES_PER_ACCOUNT));
                         mBackgroundUpdate_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.BACKGROUND_UPDATE)) == 1;
-                        mScrollable_version = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.SCROLLABLE));
                         mSound_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.SOUND)) == 1;
                         mVibrate_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.VIBRATE)) == 1;
                         mLights_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.LIGHTS)) == 1;
-                        mDisplay_profile_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.DISPLAY_PROFILE)) == 1;
                         mInstantUpload_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.INSTANT_UPLOAD)) == 1;
-                        mMargin_value = cursor.getInt(cursor.getColumnIndexOrThrow(Widgets.MARGIN));
 
                         mBtn_update.setOnClickListener(this);
                         mBtn_notification.setOnClickListener(this);
@@ -256,27 +182,7 @@ public class Settings extends BaseActivity
                             }
                         });
 
-                        mBtn_margin.setOnClickListener(this);
-
-                        mBtn_buttons.setBackgroundColor(mButtons_bg_color_value);
-                        mBtn_buttons.setTextColor(mButtons_color_value);
-                        mBtn_buttons.setTextSize(mButtons_textsize_value);
-                        mBtn_buttons.setOnClickListener(this);
-
-                        mBtn_name.setTextColor(mFriend_color_value);
-                        mBtn_name.setTextSize(mFriend_textsize_value);
-                        mBtn_name.setOnClickListener(this);
-
-                        mBtn_time.setTextColor(mCreated_color_value);
-                        mBtn_time.setTextSize(mCreated_textsize_value);
                         mBtn_time.setOnClickListener(this);
-
-                        mBtn_profile.setOnClickListener(this);
-
-                        mBtn_message.setBackgroundColor(mMessages_bg_color_value);
-                        mBtn_message.setTextColor(mMessages_color_value);
-                        mBtn_message.setTextSize(mMessages_textsize_value);
-                        mBtn_message.setOnClickListener(this);
                     } else {
                         // got nothing, init all, Loader should requery
                         initAccountSettings(this, AppWidgetManager.INVALID_APPWIDGET_ID, Sonet.INVALID_ACCOUNT_ID);
@@ -300,7 +206,7 @@ public class Settings extends BaseActivity
             // interval
             // statuses per account
             // background
-            UpdateSettingsDialogFragment.newInstance(REQUEST_UPDATE_SETTINGS, mInterval_value, mStatuses_per_account_value, mBackgroundUpdate_value)
+            UpdateSettingsDialogFragment.newInstance(REQUEST_UPDATE_SETTINGS, mInterval_value, mBackgroundUpdate_value)
                     .show(getSupportFragmentManager(), DIALOG_UPDATE_SETTINGS);
         } else if (v == mBtn_notification) {
             // sound
@@ -308,51 +214,11 @@ public class Settings extends BaseActivity
             // vibrate
             NotificationSettingsDialogFragment.newInstance(mSound_value, mVibrate_value, mLights_value, REQUEST_NOTIFICATIONS)
                     .show(getSupportFragmentManager(), DIALOG_NOTIFICATIONS);
-        } else if (v == mBtn_margin) {
-            int which = 0;
-            String[] items = getResources().getStringArray(R.array.margin_values);
-
-            for (int i = 0; i < items.length; i++) {
-                if (Integer.parseInt(items[i]) == mMargin_value) {
-                    which = i;
-                    break;
-                }
-            }
-
-            SingleChoiceDialogFragment.newInstance(items, which, REQUEST_MARGIN)
-                    .show(getSupportFragmentManager(), DIALOG_MARGIN);
-        } else if (v == mBtn_buttons) {
-            // enabled
-            // bg color
-            // color
-            // textsize
-            ButtonSettingsDialogFragment
-                    .newInstance(REQUEST_BUTTON_SETTINGS, mButtons_color_value, mButtons_textsize_value, mButtons_bg_color_value, mHasButtons_value)
-                    .show(getSupportFragmentManager(), DIALOG_BUTTON_SETTINGS);
-        } else if (v == mBtn_name) {
-            // bg color
-            // color
-            // textsize
-            NameSettingsDialogFragment.newInstance(REQUEST_NAME_SETTINGS, mFriend_color_value, mFriend_textsize_value)
-                    .show(getSupportFragmentManager(), DIALOG_NAME_SETTINGS);
         } else if (v == mBtn_time) {
             // color
             // textsize
-            TimeSettingsDialogFragment.newInstance(REQUEST_TIME_SETTINGS, mCreated_color_value, mCreated_textsize_value, mTime24hr_value)
+            TimeSettingsDialogFragment.newInstance(REQUEST_TIME_SETTINGS, mTime24hr_value)
                     .show(getSupportFragmentManager(), DIALOG_TIME_SETTINGS);
-        } else if (v == mBtn_profile) {
-            // enabled
-            // bg color
-            ProfileSettingsDialogFragment.newInstance(REQUEST_PROFILE_SETTINGS, mDisplay_profile_value)
-                    .show(getSupportFragmentManager(), DIALOG_PROFILE_SETTINGS);
-        } else if (v == mBtn_message) {
-            // color
-            // bg color
-            // text size
-            // icon enabled
-            MessageSettingsDialogFragment
-                    .newInstance(REQUEST_MESSAGE_SETTINGS, mMessages_color_value, mMessages_textsize_value, mMessages_bg_color_value, mIcon_value)
-                    .show(getSupportFragmentManager(), DIALOG_MESSAGE_SETTINGS);
         }
     }
 
@@ -409,142 +275,13 @@ public class Settings extends BaseActivity
                 }
                 break;
 
-            case REQUEST_MARGIN:
-                if (result == RESULT_OK) {
-                    int which = SingleChoiceDialogFragment.getWhich(data, 0);
-                    int value = Integer.parseInt(getResources().getStringArray(R.array.margin_values)[which]);
-
-                    if (value != mMargin_value) {
-                        mMargin_value = value;
-                        updateDatabase(Widgets.MARGIN, mMargin_value);
-                    }
-                }
-                break;
-
-            case REQUEST_BUTTON_SETTINGS:
-                if (result == RESULT_OK) {
-                    int color = ButtonSettingsDialogFragment.getColor(data, mButtons_color_value);
-
-                    if (color != mButtons_color_value) {
-                        mButtons_color_value = color;
-                        updateDatabase(Widgets.BUTTONS_COLOR, mButtons_color_value);
-                        mBtn_buttons.setTextColor(mButtons_color_value);
-                    }
-
-                    int size = ButtonSettingsDialogFragment.getSize(data, mButtons_textsize_value);
-
-                    if (size != mButtons_textsize_value) {
-                        mButtons_textsize_value = size;
-                        updateDatabase(Widgets.BUTTONS_TEXTSIZE, mButtons_textsize_value);
-                        mBtn_buttons.setTextSize(mButtons_textsize_value);
-                    }
-
-                    int background = ButtonSettingsDialogFragment.getBackground(data, mButtons_bg_color_value);
-
-                    if (background != mButtons_bg_color_value) {
-                        mButtons_bg_color_value = background;
-                        updateDatabase(Widgets.BUTTONS_BG_COLOR, mButtons_bg_color_value);
-                        mBtn_buttons.setBackgroundColor(mButtons_bg_color_value);
-                    }
-
-                    boolean hasButtons = ButtonSettingsDialogFragment.hasButtons(data, mHasButtons_value);
-
-                    if (hasButtons != mHasButtons_value) {
-                        mHasButtons_value = hasButtons;
-                        updateDatabase(Widgets.HASBUTTONS, mHasButtons_value ? 1 : 0);
-                    }
-                }
-                break;
-
-            case REQUEST_NAME_SETTINGS:
-                if (result == RESULT_OK) {
-                    int value = NameSettingsDialogFragment.getColor(data, mFriend_color_value);
-
-                    if (value != mFriend_color_value) {
-                        mFriend_color_value = value;
-                        updateDatabase(Widgets.FRIEND_COLOR, value);
-                        mBtn_name.setTextColor(mFriend_color_value);
-                    }
-
-                    value = NameSettingsDialogFragment.getSize(data, mFriend_textsize_value);
-
-                    if (value != mFriend_textsize_value) {
-                        mFriend_textsize_value = value;
-                        updateDatabase(Widgets.FRIEND_TEXTSIZE, mFriend_textsize_value);
-                        mBtn_name.setTextSize(mFriend_textsize_value);
-                    }
-                }
-                break;
-
             case REQUEST_TIME_SETTINGS:
                 if (result == RESULT_OK) {
-                    int value = TimeSettingsDialogFragment.getColor(data, mCreated_color_value);
-
-                    if (value != mCreated_color_value) {
-                        mCreated_color_value = value;
-                        updateDatabase(Widgets.CREATED_COLOR, value);
-                        mBtn_time.setTextColor(mCreated_color_value);
-                    }
-
-                    value = TimeSettingsDialogFragment.getSize(data, mCreated_textsize_value);
-
-                    if (value != mCreated_textsize_value) {
-                        mCreated_textsize_value = value;
-                        updateDatabase(Widgets.CREATED_TEXTSIZE, mCreated_textsize_value);
-                        mBtn_time.setTextSize(mCreated_textsize_value);
-                    }
-
                     boolean time24hr = TimeSettingsDialogFragment.is24hr(data, mTime24hr_value);
 
                     if (time24hr != mTime24hr_value) {
                         mTime24hr_value = time24hr;
                         updateDatabase(Widgets.TIME24HR, time24hr ? 1 : 0);
-                    }
-                }
-                break;
-
-            case REQUEST_PROFILE_SETTINGS:
-                if (result == RESULT_OK) {
-                    boolean profile = ProfileSettingsDialogFragment.hasProfile(data, mDisplay_profile_value);
-
-                    if (profile != mDisplay_profile_value) {
-                        mDisplay_profile_value = profile;
-                        updateDatabase(Widgets.DISPLAY_PROFILE, profile ? 1 : 0);
-                    }
-                }
-                break;
-
-            case REQUEST_MESSAGE_SETTINGS:
-                if (result == RESULT_OK) {
-                    int value = MessageSettingsDialogFragment.getColor(data, mMessages_color_value);
-
-                    if (value != mMessages_color_value) {
-                        mMessages_color_value = value;
-                        updateDatabase(Widgets.MESSAGES_COLOR, value);
-                        mBtn_message.setTextColor(mMessages_color_value);
-                    }
-
-                    value = MessageSettingsDialogFragment.getSize(data, mMessages_textsize_value);
-
-                    if (value != mMessages_textsize_value) {
-                        mMessages_textsize_value = value;
-                        updateDatabase(Widgets.MESSAGES_TEXTSIZE, mMessages_textsize_value);
-                        mBtn_message.setTextSize(mMessages_textsize_value);
-                    }
-
-                    value = MessageSettingsDialogFragment.getBackground(data, mMessages_bg_color_value);
-
-                    if (value != mMessages_bg_color_value) {
-                        mMessages_bg_color_value = value;
-                        updateDatabase(Widgets.MESSAGES_BG_COLOR, value);
-                        mBtn_message.setBackgroundColor(mMessages_bg_color_value);
-                    }
-
-                    boolean icon = MessageSettingsDialogFragment.hasIcon(data, mIcon_value);
-
-                    if (icon != mIcon_value) {
-                        mIcon_value = icon;
-                        updateDatabase(Widgets.ICON, icon ? 1 : 0);
                     }
                 }
                 break;

@@ -15,7 +15,7 @@ import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.SonetOAuth;
-import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.Statuses;
 import com.squareup.okhttp.MediaType;
@@ -867,7 +867,7 @@ public class LinkedIn extends Client {
         JSONObject person = jsonComment.getJSONObject(Sperson);
         HashMap<String, String> commentMap = new HashMap<>();
         commentMap.put(Statuses.SID, jsonComment.getString(Sid));
-        commentMap.put(Entities.FRIEND, person.getString(SfirstName) + " " + person.getString(SlastName));
+        commentMap.put(Entity.FRIEND, person.getString(SfirstName) + " " + person.getString(SlastName));
         commentMap.put(Statuses.MESSAGE, jsonComment.getString(Scomment));
         commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(jsonComment.getLong(Stimestamp), time24hr));
         commentMap.put(getString(R.string.like), "");

@@ -1,18 +1,19 @@
 package com.piusvelte.sonet.fragment;
 
 import android.appwidget.AppWidgetManager;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Rect;
-import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SimpleCursorAdapter;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,21 +22,21 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.piusvelte.sonet.R;
-import com.piusvelte.sonet.SonetService;
-import com.piusvelte.sonet.StatusDialog;
+import com.piusvelte.sonet.SonetComments;
+import com.piusvelte.sonet.provider.StatusLinks;
 import com.piusvelte.sonet.provider.StatusesStyles;
+import com.piusvelte.sonet.social.Client;
+import com.piusvelte.sonet.util.CircleTransformation;
+import com.squareup.picasso.Picasso;
 
-import mobi.intuitit.android.content.LauncherIntent;
-
-import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.sBFOptions;
 
 /**
  * Created by bemmanuel on 3/21/15.
  */
-public class WidgetsList extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class Feed extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
-    private static final int LOADER_WIDGETS = 0;
+    private static final int LOADER_FEED = 0;
 
     private SimpleCursorAdapter mAdapter;
     private View mLoadingView;
@@ -57,8 +58,8 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
                 new String[] { StatusesStyles.FRIEND,
                         StatusesStyles.MESSAGE,
                         StatusesStyles.CREATEDTEXT,
-                        StatusesStyles.PROFILE,
-                        StatusesStyles.ICON,
+                        StatusesStyles.PROFILE_URL,
+                        StatusesStyles.SERVICE,
                         StatusesStyles.IMAGE },
                 new int[] { R.id.friend,
                         R.id.message,
@@ -67,11 +68,11 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
                         R.id.icon,
                         R.id.image },
                 0);
-        mAdapter.setViewBinder(new WidgetsViewBinder());
+        mAdapter.setViewBinder(new WidgetsViewBinder(getActivity()));
         setListAdapter(mAdapter);
 
         mLoadingView.setVisibility(View.VISIBLE);
-        getLoaderManager().initLoader(LOADER_WIDGETS, null, this);
+        getLoaderManager().initLoader(LOADER_FEED, null, this);
     }
 
     @Override
@@ -83,15 +84,15 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         switch (id) {
-            case LOADER_WIDGETS:
+            case LOADER_FEED:
                 return new CursorLoader(getActivity(),
                         StatusesStyles.getContentUri(getActivity()),
                         new String[] { StatusesStyles._ID,
                                 StatusesStyles.FRIEND,
-                                StatusesStyles.PROFILE,
+                                StatusesStyles.PROFILE_URL,
                                 StatusesStyles.MESSAGE,
                                 StatusesStyles.CREATEDTEXT,
-                                StatusesStyles.ICON,
+                                StatusesStyles.SERVICE,
                                 StatusesStyles.IMAGE },
                         StatusesStyles.WIDGET + "=?",
                         new String[] { Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID) },
@@ -105,18 +106,15 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
-        Rect r = new Rect();
-        v.getHitRect(r);
-        startActivity(new Intent(getActivity(), StatusDialog.class)
-                .setData(Uri.withAppendedPath(StatusesStyles.getContentUri(getActivity()), Long.toString(id)))
-                .putExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS, r)
+        startActivity(new Intent(getActivity(), SonetComments.class)
+                .putExtra(StatusLinks.STATUS_ID, Long.toString(id))
                 .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         switch (loader.getId()) {
-            case LOADER_WIDGETS:
+            case LOADER_FEED:
                 mLoadingView.setVisibility(View.GONE);
                 mAdapter.changeCursor(cursor);
                 break;
@@ -126,13 +124,21 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
         switch (loader.getId()) {
-            case LOADER_WIDGETS:
+            case LOADER_FEED:
                 mAdapter.changeCursor(null);
                 break;
         }
     }
 
     private static class WidgetsViewBinder implements SimpleCursorAdapter.ViewBinder {
+
+        private Picasso mPicasso;
+        private CircleTransformation mCircleTransformation;
+
+        WidgetsViewBinder(@NonNull Context context) {
+            mPicasso = Picasso.with(context);
+            mCircleTransformation = new CircleTransformation();
+        }
 
         private static boolean setImageBitmap(View view, byte[] data) {
             if (data != null) {
@@ -149,8 +155,18 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
 
         @Override
         public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
-            if (columnIndex == cursor.getColumnIndex(StatusesStyles.PROFILE)) {
-                setImageBitmap(view, cursor.getBlob(columnIndex));
+            if (columnIndex == cursor.getColumnIndex(StatusesStyles.PROFILE_URL)) {
+                String profileUrl = cursor.getString(columnIndex);
+
+                if (TextUtils.isEmpty(profileUrl)) {
+                    mPicasso.load(R.drawable.ic_account_box_grey600_48dp)
+                            .transform(mCircleTransformation)
+                            .into((ImageView) view);
+                } else {
+                    mPicasso.load(cursor.getString(columnIndex))
+                            .transform(mCircleTransformation)
+                            .into((ImageView) view);
+                }
                 return true;
             } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.FRIEND)) {
                 ((TextView) view).setText(cursor.getString(columnIndex));
@@ -161,8 +177,8 @@ public class WidgetsList extends ListFragment implements LoaderManager.LoaderCal
             } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.MESSAGE)) {
                 ((TextView) view).setText(cursor.getString(columnIndex));
                 return true;
-            } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.ICON)) {
-                setImageBitmap(view, cursor.getBlob(columnIndex));
+            } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.SERVICE)) {
+                ((ImageView) view).setImageResource(Client.Network.get(cursor.getInt(columnIndex)).getIcon());
                 return true;
             } else if (columnIndex == cursor.getColumnIndex(StatusesStyles.IMAGE)) {
                 if (!setImageBitmap(view, cursor.getBlob(columnIndex))) {

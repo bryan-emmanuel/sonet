@@ -27,17 +27,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Bundle;
-import android.text.TextUtils;
-import android.util.Log;
 
 import com.piusvelte.sonet.provider.StatusLinks;
 import com.piusvelte.sonet.provider.Statuses;
 import com.piusvelte.sonet.provider.StatusesStyles;
 import com.piusvelte.sonet.provider.WidgetAccounts;
 import com.piusvelte.sonet.provider.Widgets;
-
-import mobi.intuitit.android.content.LauncherIntent;
 
 public class SonetWidget extends AppWidgetProvider {
     private static final String TAG = "SonetWidget";
@@ -58,6 +53,7 @@ public class SonetWidget extends AppWidgetProvider {
             Sonet.acquire(context);
             // this should reload the widget
             int[] appWidgetIds;
+
             if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
                 appWidgetIds = new int[] { intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID) };
             } else if (intent.hasExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)) {
@@ -65,7 +61,9 @@ public class SonetWidget extends AppWidgetProvider {
             } else {
                 appWidgetIds = new int[] { AppWidgetManager.INVALID_APPWIDGET_ID };
             }
-            context.startService(new Intent(context, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds)
+
+            context.startService(new Intent(context, SonetService.class)
+                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds)
                     .setAction(action));
         } else if (AppWidgetManager.ACTION_APPWIDGET_DELETED.equals(action)) {
             final int appWidgetId = intent.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
@@ -74,21 +72,6 @@ public class SonetWidget extends AppWidgetProvider {
             } else {
                 super.onReceive(context, intent);
             }
-        } else if (TextUtils.equals(action, LauncherIntent.Action.ACTION_READY)) {
-            Sonet.acquire(context);
-            // ACTION_READY is sent on screen rotation and on boot
-            // this should only ever requery...
-            final Bundle extras = intent.getExtras();
-            context.startService(new Intent(context, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,
-                    extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID))
-                    .putExtra(Sonet.EXTRA_SCROLLABLE_VERSION, extras.getInt(LauncherIntent.Extra.EXTRA_API_VERSION, 1)).setAction(action));
-        } else if (action.equals(LauncherIntent.Action.ACTION_FINISH)) {
-        } else if (action.equals(Sonet.ACTION_ON_CLICK) || action.equals(LauncherIntent.Action.ACTION_VIEW_CLICK) || action
-                .equals(LauncherIntent.Action.ACTION_ITEM_CLICK)) {
-            onClick(context, intent);
-        } else if (action.equals(LauncherIntent.Error.ERROR_SCROLL_CURSOR)) {
-            Log.d(TAG, intent.getStringExtra(LauncherIntent.Extra.EXTRA_ERROR_MESSAGE) + "");
-        } else if (action.equals("com.motorola.blur.home.ACTION_SET_WIDGET_SIZE")) {
         } else {
             super.onReceive(context, intent);
         }
@@ -120,20 +103,5 @@ public class SonetWidget extends AppWidgetProvider {
             context.getContentResolver()
                     .delete(Statuses.getContentUri(context), Statuses.WIDGET + "=?", new String[] { Integer.toString(appWidgetId) });
         }
-    }
-
-    private void onClick(Context context, Intent intent) {
-        // send all onClick events to StatusDialog
-        String statusId = "";
-
-        if (intent.hasExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS)) {
-            statusId = intent.getStringExtra(LauncherIntent.Extra.Scroll.EXTRA_ITEM_POS);
-        } else if (intent.hasExtra(StatusLinks.STATUS_ID)) {
-            statusId = intent.getStringExtra(StatusLinks.STATUS_ID);
-        }
-
-        context.startActivity(
-                intent.setClass(context, StatusDialog.class).setData(Uri.withAppendedPath(StatusesStyles.getContentUri(context), statusId))
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
     }
 }

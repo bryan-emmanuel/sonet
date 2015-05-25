@@ -16,7 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
-
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -25,18 +24,20 @@
     android:layout_height="wrap_content">
 
     <ImageView
-        android:id="@+id/status_bg"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="fitXY"
-        android:src="@android:color/white" />
+        android:id="@+id/profile"
+        android:layout_width="@dimen/message_item_header_height"
+        android:layout_height="@dimen/message_item_header_height"
+        android:padding="@dimen/material_padding"
+        tools:src="@drawable/icon" />
 
     <ImageView
         android:id="@+id/icon"
         android:layout_width="32dip"
         android:layout_height="32dip"
-        android:paddingLeft="@dimen/material_padding"
-        android:paddingTop="@dimen/material_padding"
+        android:layout_alignBottom="@+id/profile"
+        android:layout_alignRight="@+id/profile"
+        android:paddingBottom="@dimen/material_padding"
+        android:paddingRight="@dimen/material_padding"
         android:scaleType="fitCenter"
         tools:src="@drawable/googleplus" />
 
@@ -44,50 +45,30 @@
         android:id="@+id/friend"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_toRightOf="@+id/icon"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/profile"
         android:gravity="center_vertical"
         android:maxLines="1"
-        android:paddingLeft="@dimen/material_padding"
         android:paddingTop="@dimen/material_padding"
         android:textColor="@color/default_friend_color"
         android:textStyle="bold"
         tools:text="Hello, my name is" />
 
-    <TextView
-        android:id="@+id/created"
+    <ListView
+        android:id="@android:id/list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/profile"
+        android:choiceMode="multipleChoice"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="0dp" />
+
+    <ProgressBar
+        android:id="@+id/loading"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:gravity="center_vertical"
-        android:maxLines="1"
-        android:paddingRight="@dimen/material_padding"
-        android:paddingTop="@dimen/material_padding"
-        android:textColor="@color/default_friend_color"
-        tools:text="Today" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/friend"
-        android:orientation="vertical"
-        android:paddingBottom="@dimen/material_padding"
-        android:paddingLeft="@dimen/material_padding"
-        android:paddingRight="@dimen/material_padding">
-
-        <TextView
-            android:id="@+id/message"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@color/default_message_color"
-            tools:text="Message goes here" />
-
-        <ImageView
-            android:id="@+id/image"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:paddingTop="@dimen/material_padding"
-            android:scaleType="fitCenter"
-            tools:src="@drawable/icon" />
-
-    </LinearLayout>
+        android:layout_centerInParent="true"
+        android:indeterminate="true"
+        android:visibility="gone"
+        tools:visibility="visible" />
 </RelativeLayout>

@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
  * Sonet - Android Social Networking Widget
  * Copyright (C) 2009 Bryan Emmanuel
  * 
@@ -19,12 +18,20 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="match_parent" android:layout_height="match_parent"
-	android:orientation="vertical">
-	<Button android:id="@+id/interval" android:text="@string/interval"
-		android:layout_width="match_parent" android:layout_height="wrap_content" />
-	<Button android:id="@+id/statuses_per_account" android:text="@string/statuses_per_account"
-		android:layout_width="match_parent" android:layout_height="wrap_content" />
-	<CheckBox android:id="@+id/background_update" android:text="@string/background_update"
-		android:layout_width="match_parent" android:layout_height="wrap_content" android:checked="true" />
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <Button
+        android:id="@+id/interval"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/interval" />
+
+    <CheckBox
+        android:id="@+id/background_update"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:checked="true"
+        android:text="@string/background_update" />
 </LinearLayout>

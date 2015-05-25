@@ -22,22 +22,10 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <Button
-        android:id="@+id/color"
-        android:text="@string/created_color"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <Button
-        android:id="@+id/size"
-        android:text="@string/created_textsize"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
     <CheckBox
         android:id="@+id/time24hr"
-        android:text="@string/time24hr"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:checked="false" />
+        android:checked="false"
+        android:text="@string/time24hr" />
 </LinearLayout>

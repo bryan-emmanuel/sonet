@@ -19,7 +19,6 @@
  */
 package com.piusvelte.sonet;
 
-import android.appwidget.AppWidgetManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -27,8 +26,7 @@ import android.support.v7.widget.Toolbar;
 
 import com.piusvelte.sonet.fragment.AccountsList;
 
-import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
-
+@Deprecated
 public class ManageAccounts extends BaseActivity {
     private static final String TAG = "ManageAccounts";
 
@@ -41,31 +39,11 @@ public class ManageAccounts extends BaseActivity {
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
         setupAd();
 
-        int appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
-
-        Intent intent = getIntent();
-
-        if (intent != null) {
-            Bundle extras = intent.getExtras();
-
-            if (extras != null) {
-                appWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
-                // if called from widget, the id is set in the action, as pendingintents must have a unique action
-            } else if (intent.getAction() != null && !intent.getAction().equals(ACTION_REFRESH)
-                    && !intent.getAction().equals(Intent.ACTION_VIEW)) {
-                appWidgetId = Integer.parseInt(intent.getAction());
-            }
-        }
-
-        Intent resultValue = new Intent();
-        resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-        setResult(RESULT_OK, resultValue);
-
         Fragment fragment = getSupportFragmentManager().findFragmentByTag(FRAGMENT_ACCOUNTS_LIST);
 
         if (fragment == null) {
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.accounts_list_container, AccountsList.newInstance(appWidgetId), FRAGMENT_ACCOUNTS_LIST)
+                    .add(R.id.accounts_list_container, AccountsList.newInstance(), FRAGMENT_ACCOUNTS_LIST)
                     .commit();
         }
     }

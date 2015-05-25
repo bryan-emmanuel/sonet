@@ -21,5 +21,6 @@ public final class StatusImages implements BaseColumns {
     public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.status_images";
     public static final String STATUS_ID = "status_id";
     public static final String IMAGE = "image";
+    @Deprecated
     public static final String IMAGE_BG = "image_bg";
 }

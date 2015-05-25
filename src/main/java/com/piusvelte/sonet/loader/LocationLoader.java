@@ -12,7 +12,7 @@ import java.util.HashMap;
 /**
  * Created by bemmanuel on 3/27/15.
  */
-public class LocationLoader extends BaseAsyncTaskLoader {
+public class LocationLoader extends BaseAsyncTaskLoader<LocationLoader.LocationResult> {
 
     private Context mContext;
     private long mAccountId;
@@ -28,7 +28,7 @@ public class LocationLoader extends BaseAsyncTaskLoader {
     }
 
     @Override
-    public Object loadInBackground() {
+    public LocationLoader.LocationResult loadInBackground() {
         LocationResult result = null;
         Cursor account = mContext.getContentResolver().query(Accounts.getContentUri(mContext),
                 new String[] { Accounts._ID, Accounts.TOKEN, Accounts.SERVICE, Accounts.SECRET },

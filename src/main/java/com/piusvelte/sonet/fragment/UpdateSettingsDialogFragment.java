@@ -14,6 +14,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 
 import com.piusvelte.sonet.R;
+import com.piusvelte.sonet.Sonet;
 
 /**
  * Created by bemmanuel on 4/20/15.
@@ -22,21 +23,17 @@ public class UpdateSettingsDialogFragment extends BaseDialogFragment
         implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
 
     private static final String ARG_UPDATE_INTERVAL = "update_interval";
-    private static final String ARG_STATUS_COUNT = "status_count";
     private static final String ARG_BACKGROUND_UPDATE = "background_update";
 
     private static final int REQUEST_INTERVAL = 0;
-    private static final int REQUEST_STATUS_COUNT = 1;
 
     private static final String DIALOG_INTERVAL = "dialog:interval";
-    private static final String DIALOG_STATUS_COUNT = "dialog:status_count";
 
-    public static UpdateSettingsDialogFragment newInstance(int requestCode, int updateInterval, int statusCount, boolean updateInBackground) {
+    public static UpdateSettingsDialogFragment newInstance(int requestCode, int updateInterval, boolean updateInBackground) {
         UpdateSettingsDialogFragment dialogFragment = new UpdateSettingsDialogFragment();
         dialogFragment.setRequestCode(requestCode);
         Bundle args = dialogFragment.getArguments();
         args.putInt(ARG_UPDATE_INTERVAL, updateInterval);
-        args.putInt(ARG_STATUS_COUNT, statusCount);
         args.putBoolean(ARG_BACKGROUND_UPDATE, updateInBackground);
         return dialogFragment;
     }
@@ -54,7 +51,6 @@ public class UpdateSettingsDialogFragment extends BaseDialogFragment
         View root = inflater.inflate(R.layout.settings_update, container, false);
 
         root.findViewById(R.id.interval).setOnClickListener(this);
-        root.findViewById(R.id.statuses_per_account).setOnClickListener(this);
 
         CheckBox hasBackgroundUpdate = (CheckBox) root.findViewById(R.id.background_update);
         hasBackgroundUpdate.setChecked(getArguments().getBoolean(ARG_BACKGROUND_UPDATE));
@@ -89,21 +85,6 @@ public class UpdateSettingsDialogFragment extends BaseDialogFragment
                 SingleChoiceDialogFragment.newInstance(items, which, REQUEST_INTERVAL)
                         .show(getChildFragmentManager(), DIALOG_INTERVAL);
                 break;
-
-            case R.id.statuses_per_account:
-                int count = getArguments().getInt(ARG_STATUS_COUNT);
-                items = getResources().getStringArray(R.array.status_counts);
-
-                for (int i = 0; i < items.length; i++) {
-                    if (Integer.parseInt(items[i]) == count) {
-                        which = i;
-                        break;
-                    }
-                }
-
-                SingleChoiceDialogFragment.newInstance(items, which, REQUEST_STATUS_COUNT)
-                        .show(getChildFragmentManager(), DIALOG_STATUS_COUNT);
-                break;
         }
     }
 
@@ -126,13 +107,6 @@ public class UpdateSettingsDialogFragment extends BaseDialogFragment
                 }
                 break;
 
-            case REQUEST_STATUS_COUNT:
-                if (resultCode == Activity.RESULT_OK) {
-                    int which = SingleChoiceDialogFragment.getWhich(data, 0);
-                    getArguments().putInt(ARG_STATUS_COUNT, Integer.parseInt(getResources().getStringArray(R.array.status_counts)[which]));
-                }
-                break;
-
             default:
                 super.onActivityResult(requestCode, resultCode, data);
                 break;
@@ -147,12 +121,9 @@ public class UpdateSettingsDialogFragment extends BaseDialogFragment
         return intent.getIntExtra(ARG_UPDATE_INTERVAL, defaultValue);
     }
 
+    @Deprecated
     public static int getStatusCount(@Nullable Intent intent, int defaultValue) {
-        if (intent == null) {
-            return defaultValue;
-        }
-
-        return intent.getIntExtra(ARG_STATUS_COUNT, defaultValue);
+        return Sonet.default_interval;
     }
 
     public static boolean hasBackgroundUpdate(@Nullable Intent intent, boolean defaultValue) {

@@ -4,9 +4,9 @@ import android.content.Context;
 import android.database.Cursor;
 import android.support.annotation.NonNull;
 
-import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.provider.Accounts;
+import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.social.Client;
 
 import java.util.ArrayList;
@@ -16,10 +16,7 @@ import java.util.List;
 /**
  * Created by bemmanuel on 4/26/15.
  */
-public class AccountsProfilesLoader extends BaseAsyncTaskLoader {
-
-    public static final String PROFILE = "profile";
-    public static final String ICON = "icon";
+public class AccountsProfilesLoader extends BaseAsyncTaskLoader<List<HashMap<String, String>>> {
 
     @NonNull
     private Context mContext;
@@ -30,7 +27,7 @@ public class AccountsProfilesLoader extends BaseAsyncTaskLoader {
     }
 
     @Override
-    public Object loadInBackground() {
+    public List<HashMap<String, String>> loadInBackground() {
         List<HashMap<String, String>> accounts = new ArrayList<>();
 
         Cursor cursor = mContext.getContentResolver().query(Accounts.getContentUri(mContext),
@@ -38,6 +35,7 @@ public class AccountsProfilesLoader extends BaseAsyncTaskLoader {
                         Accounts.TOKEN,
                         Accounts.SECRET,
                         Accounts.SERVICE,
+                        Accounts.USERNAME,
                         Accounts.SID },
                 null,
                 null,
@@ -49,6 +47,7 @@ public class AccountsProfilesLoader extends BaseAsyncTaskLoader {
             int secretIndex = cursor.getColumnIndexOrThrow(Accounts.SECRET);
             int serviceIndex = cursor.getColumnIndexOrThrow(Accounts.SERVICE);
             int sidIndex = cursor.getColumnIndexOrThrow(Accounts.SID);
+            int usernameIndex = cursor.getColumnIndexOrThrow(Accounts.USERNAME);
 
             while (!cursor.isAfterLast()) {
                 HashMap<String, String> account = new HashMap<>(4);
@@ -65,8 +64,8 @@ public class AccountsProfilesLoader extends BaseAsyncTaskLoader {
 
                 account.put(Accounts._ID, Long.toString(cursor.getLong(idIndex)));
                 account.put(Accounts.SERVICE, Integer.toString(service));
-                account.put(PROFILE, client.getProfilePhotoUrl(sid));
-                account.put(ICON, Integer.toString(Client.Network.get(service).getIcon()));
+                account.put(Entity.PROFILE_URL, client.getProfilePhotoUrl(sid));
+                account.put(Accounts.USERNAME, cursor.getString(usernameIndex));
                 accounts.add(account);
 
                 cursor.moveToNext();
@@ -74,15 +73,6 @@ public class AccountsProfilesLoader extends BaseAsyncTaskLoader {
         }
 
         cursor.close();
-
-        // always allow adding an account
-        HashMap<String, String> account = new HashMap<>(4);
-        account.put(Accounts._ID, Long.toString(Sonet.INVALID_ACCOUNT_ID));
-        account.put(Accounts.SERVICE, null);
-        account.put(PROFILE, null);
-        account.put(ICON, null);
-        accounts.add(account);
-
         return accounts;
     }
 }

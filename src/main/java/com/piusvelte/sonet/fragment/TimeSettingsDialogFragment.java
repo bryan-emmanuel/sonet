@@ -1,7 +1,9 @@
 package com.piusvelte.sonet.fragment;
 
+import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,30 +16,28 @@ import com.piusvelte.sonet.R;
 /**
  * Created by bemmanuel on 4/11/15.
  */
-public class TimeSettingsDialogFragment extends BaseColorSizeBackgroundSettingsDialogFragment implements CompoundButton.OnCheckedChangeListener {
+public class TimeSettingsDialogFragment extends BaseDialogFragment implements CompoundButton.OnCheckedChangeListener {
 
     private static final String ARG_24HR = "24hr";
 
-    public static TimeSettingsDialogFragment newInstance(int requestCode, int color, int size, boolean time24hr) {
+    public static TimeSettingsDialogFragment newInstance(int requestCode, boolean time24hr) {
         TimeSettingsDialogFragment dialogFragment = new TimeSettingsDialogFragment();
-        dialogFragment.setArguments(requestCode, color, size, 0);
+        dialogFragment.setRequestCode(requestCode);
         dialogFragment.getArguments().putBoolean(ARG_24HR, time24hr);
         return dialogFragment;
     }
 
+    @NonNull
     @Override
-    protected int getTitle() {
-        return R.string.settings_time;
-    }
-
-    @Override
-    protected int getLayout() {
-        return R.layout.settings_time;
+    public Dialog onCreateDialog(Bundle savedInstanceState) {
+        Dialog dialog = super.onCreateDialog(savedInstanceState);
+        dialog.setTitle(R.string.settings_time);
+        return dialog;
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View root = super.onCreateView(inflater, container, savedInstanceState);
+        View root = inflater.inflate(R.layout.settings_time, container, false);
         CheckBox time24hr = (CheckBox) root.findViewById(R.id.time24hr);
         time24hr.setChecked(getArguments().getBoolean(ARG_24HR));
         time24hr.setOnCheckedChangeListener(this);

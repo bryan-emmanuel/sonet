@@ -9,7 +9,7 @@ import com.piusvelte.sonet.social.Client;
 /**
  * Created by bemmanuel on 3/17/15.
  */
-public class OAuthLoginLoader extends BaseAsyncTaskLoader {
+public class OAuthLoginLoader extends BaseAsyncTaskLoader<OAuthLoginLoader.OAuthLoginLoaderResult> {
 
     Context mContext;
     int mNetwork;
@@ -21,7 +21,7 @@ public class OAuthLoginLoader extends BaseAsyncTaskLoader {
     }
 
     @Override
-    public Object loadInBackground() {
+    public OAuthLoginLoader.OAuthLoginLoaderResult loadInBackground() {
         OAuthLoginLoaderResult oAuthLoginLoaderResult = new OAuthLoginLoaderResult(mContext, mNetwork);
         oAuthLoginLoaderResult.loadAuthUrl();
         return oAuthLoginLoaderResult;

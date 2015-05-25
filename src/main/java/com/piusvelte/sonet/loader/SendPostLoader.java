@@ -10,24 +10,24 @@ import com.piusvelte.sonet.fragment.ChoosePostAccounts;
 import com.piusvelte.sonet.provider.Accounts;
 import com.piusvelte.sonet.social.Client;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 
 /**
  * Created by bemmanuel on 3/29/15.
  */
-public class SendPostLoader extends BaseAsyncTaskLoader {
+public class SendPostLoader extends BaseAsyncTaskLoader<Boolean> {
 
     @NonNull
     private Context mContext;
     @NonNull
-    private HashSet<ChoosePostAccounts.Account> mAccounts;
+    private ArrayList<ChoosePostAccounts.Account> mAccounts;
     @NonNull
     private String mMessage;
     @Nullable
     private String mPhoto;
 
     public SendPostLoader(@NonNull Context context,
-            @NonNull HashSet<ChoosePostAccounts.Account> accounts,
+            @NonNull ArrayList<ChoosePostAccounts.Account> accounts,
             @NonNull String message,
             @Nullable String photo) {
         super(context);
@@ -38,7 +38,7 @@ public class SendPostLoader extends BaseAsyncTaskLoader {
     }
 
     @Override
-    public Object loadInBackground() {
+    public Boolean loadInBackground() {
         Boolean success = null;
 
         for (ChoosePostAccounts.Account account : mAccounts) {

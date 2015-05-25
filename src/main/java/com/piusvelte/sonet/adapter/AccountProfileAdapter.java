@@ -6,53 +6,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.SimpleAdapter;
 
 import com.piusvelte.sonet.R;
-import com.piusvelte.sonet.Sonet;
-import com.piusvelte.sonet.loader.AccountsProfilesLoader;
-import com.piusvelte.sonet.provider.Accounts;
-import com.piusvelte.sonet.util.CircleTransformation;
-import com.squareup.picasso.Picasso;
+import com.piusvelte.sonet.social.Client;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by bemmanuel on 5/16/15.
  */
-public class AccountProfileAdapter extends SimpleAdapter {
+public class AccountProfileAdapter extends AccountAdapter {
 
-    private Context mContext;
-    private Picasso mPicasso;
-    private CircleTransformation mCircleTransformation;
-
-    public AccountProfileAdapter(Context context,
-            List<? extends Map<String, ?>> data,
-            int resource,
-            String[] from,
-            int[] to) {
-        super(context, data, resource, from, to);
-        mContext = context;
-        mPicasso = Picasso.with(context);
-        mCircleTransformation = new CircleTransformation();
-    }
-
-    @Override
-    public HashMap<String, String> getItem(int position) {
-        return (HashMap<String, String>) super.getItem(position);
-    }
-
-    @Override
-    public long getItemId(int position) {
-        HashMap<String, String> account = getItem(position);
-
-        if (account != null) {
-            return Long.valueOf(account.get(Accounts._ID));
-        }
-
-        return 0;
+    public AccountProfileAdapter(Context context, List<HashMap<String, String>> account) {
+        super(context, account);
     }
 
     @Override
@@ -71,15 +38,10 @@ public class AccountProfileAdapter extends SimpleAdapter {
 
         if (viewHolder != null) {
             HashMap<String, String> account = getItem(position);
-            String url = account.get(AccountsProfilesLoader.PROFILE);
+            String url = getAccountProfileUrl(account);
 
             if (!TextUtils.isEmpty(url)) {
-                mPicasso.load(account.get(AccountsProfilesLoader.PROFILE))
-                        .transform(mCircleTransformation)
-                        .into(viewHolder.profile);
-            } else if (Long.valueOf(account.get(Accounts._ID)) == Sonet.INVALID_ACCOUNT_ID) {
-                // add account
-                mPicasso.load(R.drawable.ic_person_add_grey600_48dp)
+                mPicasso.load(url)
                         .transform(mCircleTransformation)
                         .into(viewHolder.profile);
             } else {
@@ -88,12 +50,10 @@ public class AccountProfileAdapter extends SimpleAdapter {
                         .into(viewHolder.profile);
             }
 
-            String icon = account.get(AccountsProfilesLoader.ICON);
-
-            if (!TextUtils.isEmpty(icon)) {
-                mPicasso.load(Integer.valueOf(icon))
-                        .into(viewHolder.icon);
-            }
+            int service = getAccountService(account);
+            Client.Network network = Client.Network.get(service);
+            mPicasso.load(network.getIcon())
+                    .into(viewHolder.icon);
         }
 
         return convertView;

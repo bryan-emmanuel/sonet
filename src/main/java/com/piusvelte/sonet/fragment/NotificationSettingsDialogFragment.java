@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,32 +37,27 @@ public class NotificationSettingsDialogFragment extends BaseDialogFragment imple
         return dialogFragment;
     }
 
-    @NonNull
+    @Nullable
     @Override
-    public Dialog onCreateDialog(Bundle savedInstanceState) {
-        Dialog dialog = super.onCreateDialog(savedInstanceState);
-        dialog.setTitle(R.string.settings_notification);
-        return dialog;
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.settings_notification, container, false);
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         Bundle args = getArguments();
-        View root = inflater.inflate(R.layout.settings_notification, container, false);
 
-        CheckBox chk_sound = (CheckBox) root.findViewById(R.id.sound);
+        CheckBox chk_sound = (CheckBox) view.findViewById(R.id.sound);
         chk_sound.setChecked(args.getBoolean(ARG_SOUND));
         chk_sound.setOnCheckedChangeListener(this);
 
-        CheckBox chk_vibrate = (CheckBox) root.findViewById(R.id.vibrate);
+        CheckBox chk_vibrate = (CheckBox) view.findViewById(R.id.vibrate);
         chk_vibrate.setChecked(args.getBoolean(ARG_VIBRATE));
         chk_vibrate.setOnCheckedChangeListener(this);
 
-        CheckBox chk_lights = (CheckBox) root.findViewById(R.id.lights);
+        CheckBox chk_lights = (CheckBox) view.findViewById(R.id.lights);
         chk_lights.setChecked(args.getBoolean(ARG_LIGHTS));
         chk_lights.setOnCheckedChangeListener(this);
-
-        return root;
     }
 
     @Override

@@ -30,10 +30,9 @@ import com.piusvelte.sonet.fragment.ConfirmationDialogFragment;
 import com.piusvelte.sonet.fragment.StatusOptions;
 import com.piusvelte.sonet.provider.Widgets;
 
-import mobi.intuitit.android.content.LauncherIntent;
-
 import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 
+@Deprecated
 public class StatusDialog extends BaseActivity {
     private static final String TAG = "StatusDialog";
 
@@ -75,14 +74,12 @@ public class StatusDialog extends BaseActivity {
             if (fragment == null) {
                 Rect rect;
 
-                if (intent.hasExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS)) {
-                    rect = intent.getParcelableExtra(LauncherIntent.Extra.Scroll.EXTRA_SOURCE_BOUNDS);
-                } else {
-                    rect = intent.getSourceBounds();
-                }
+                rect = intent.getSourceBounds();
 
                 getSupportFragmentManager().beginTransaction()
-                        .add(android.R.id.content, StatusOptions.newInstance(getIntent().getData().toString(), rect), FRAGMENT_STATUS_OPTIONS)
+                        .add(android.R.id.content,
+                                StatusOptions.newInstance(getIntent().getData().toString()),
+                                FRAGMENT_STATUS_OPTIONS)
                         .commit();
             }
         }

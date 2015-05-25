@@ -12,7 +12,7 @@ import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.SonetOAuth;
-import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Statuses;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -324,7 +324,7 @@ public class Chatter extends Client {
     public HashMap<String, String> parseComment(@NonNull String statusId, @NonNull JSONObject jsonComment, boolean time24hr) throws JSONException {
         HashMap<String, String> commentMap = new HashMap<String, String>();
         commentMap.put(Statuses.SID, jsonComment.getString(Sid));
-        commentMap.put(Entities.FRIEND, jsonComment.getJSONObject(Suser).getString(Sname));
+        commentMap.put(Entity.FRIEND, jsonComment.getJSONObject(Suser).getString(Sname));
         commentMap.put(Statuses.MESSAGE, jsonComment.getJSONObject(Sbody).getString(Stext));
         commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(parseDate(jsonComment.getString(ScreatedDate), CHATTER_DATE_FORMAT), time24hr));
         // TODO does this have the like id for unliking?

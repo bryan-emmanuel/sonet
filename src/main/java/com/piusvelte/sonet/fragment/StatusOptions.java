@@ -4,10 +4,8 @@ import android.app.Activity;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Intent;
-import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.support.annotation.IntDef;
 import android.support.annotation.StringDef;
 import android.support.v4.app.Fragment;
@@ -21,7 +19,6 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
-import com.piusvelte.sonet.ManageAccounts;
 import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetComments;
@@ -51,6 +48,7 @@ import static com.piusvelte.sonet.Sonet.SMS;
 /**
  * Created by bemmanuel on 5/8/15.
  */
+@Deprecated
 public class StatusOptions extends ListFragment implements LoaderManager.LoaderCallbacks {
 
     private static final String OPTION_NAME = "name";
@@ -61,27 +59,27 @@ public class StatusOptions extends ListFragment implements LoaderManager.LoaderC
     private static final int REQUEST_LOADING_STATUS = 0;
     private static final int REQUEST_CHOOSE_ACCOUNT = 1;
     private static final int REQUEST_LOADING_ACCOUNTS = 2;
-    private static final int REQUEST_CHOOSE_WIDGET = 3;
-    private static final int REQUEST_REFRESH_WIDGET = 4;
-    private static final int REQUEST_LOADING_PROFILE = 5;
+    private static final int REQUEST_REFRESH_WIDGET = 3;
+    private static final int REQUEST_LOADING_PROFILE = 4;
 
-    @IntDef({ REQUEST_LOADING_STATUS, REQUEST_CHOOSE_ACCOUNT, REQUEST_LOADING_ACCOUNTS,
-            REQUEST_CHOOSE_WIDGET, REQUEST_REFRESH_WIDGET, REQUEST_LOADING_PROFILE })
+    @IntDef({ REQUEST_LOADING_STATUS,
+            REQUEST_CHOOSE_ACCOUNT,
+            REQUEST_LOADING_ACCOUNTS,
+            REQUEST_REFRESH_WIDGET,
+            REQUEST_LOADING_PROFILE })
     @Retention(RetentionPolicy.SOURCE)
     private @interface RequestCode {
     }
 
     private static final String DIALOG_CHOOSE_ACCOUNT = "dialog:choose_account";
-    private static final String DIALOG_CHOOSE_WIDGET = "dialog:choose_widget";
     private static final String DIALOG_REFRESH_WIDGET = "dialog:refresh_widget";
 
-    @StringDef({ DIALOG_CHOOSE_ACCOUNT, DIALOG_CHOOSE_WIDGET, DIALOG_REFRESH_WIDGET })
+    @StringDef({ DIALOG_CHOOSE_ACCOUNT, DIALOG_REFRESH_WIDGET })
     @Retention(RetentionPolicy.SOURCE)
     private @interface DialogTag {
     }
 
     private static final String ARG_DATA = "data";
-    private static final String ARG_RECT = "rect";
     private static final String ARG_ACCOUNT_ID = "account_id";
     private static final String ARG_ESID = "esid";
 
@@ -94,11 +92,10 @@ public class StatusOptions extends ListFragment implements LoaderManager.LoaderC
     private SimpleAdapter mAdapter;
     private List<HashMap<String, String>> mOptions = new ArrayList<>();
 
-    public static StatusOptions newInstance(String data, Rect rect) {
+    public static StatusOptions newInstance(String data) {
         StatusOptions statusOptions = new StatusOptions();
         Bundle args = new Bundle();
         args.putString(ARG_DATA, data);
-        args.putParcelable(ARG_RECT, rect);
         statusOptions.setArguments(args);
         return statusOptions;
     }
@@ -245,16 +242,6 @@ public class StatusOptions extends ListFragment implements LoaderManager.LoaderC
                 }
                 break;
 
-            case REQUEST_CHOOSE_WIDGET:
-                if (resultCode == Activity.RESULT_OK) {
-                    int id = ChooseWidgetDialogFragment.getSelectedId(data);
-                    startActivity(new Intent(getActivity(), ManageAccounts.class)
-                            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id));
-                }
-
-                getActivity().finish();
-                break;
-
             case REQUEST_REFRESH_WIDGET:
                 if (resultCode == Activity.RESULT_OK) {
                     int id = ChooseWidgetDialogFragment.getSelectedId(data);
@@ -325,7 +312,7 @@ public class StatusOptions extends ListFragment implements LoaderManager.LoaderC
     public Loader onCreateLoader(int id, Bundle args) {
         switch (id) {
             case LOADER_STATUS:
-                return new StatusLoader(getActivity(), Uri.parse(args.getString(ARG_DATA)), args.<Rect>getParcelable(ARG_RECT));
+                return new StatusLoader(getActivity(), Uri.parse(args.getString(ARG_DATA)));
 
             case LOADER_PROFILE:
                 return new ProfileUrlLoader(getActivity(), args.getLong(ARG_ACCOUNT_ID), args.getString(ARG_ESID));
@@ -346,15 +333,8 @@ public class StatusOptions extends ListFragment implements LoaderManager.LoaderC
                     mStatusLoaderResult = (StatusLoader.Result) data;
 
                     if (mStatusLoaderResult.service == SMS) {
-                        // if mRect go straight to message app...
-                        if (mStatusLoaderResult.rect != null) {
-                            ContactsContract.QuickContact.showQuickContact(getActivity(), mStatusLoaderResult.rect,
-                                    Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, mStatusLoaderResult.esid),
-                                    ContactsContract.QuickContact.MODE_LARGE, null);
-                        } else {
-                            startActivity(new Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + mStatusLoaderResult.esid)));
-                            getActivity().finish();
-                        }
+                        startActivity(new Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + mStatusLoaderResult.esid)));
+                        getActivity().finish();
                     } else if (mStatusLoaderResult.service == RSS) {
                         if (mStatusLoaderResult.esid != null) {
                             startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(mStatusLoaderResult.esid)));
@@ -374,17 +354,10 @@ public class StatusOptions extends ListFragment implements LoaderManager.LoaderC
 
                         mAdapter.notifyDataSetChanged();
                     } else {
-                        if (mStatusLoaderResult.appwidgetId != Sonet.INVALID_ACCOUNT_ID) {
-                            // informational messages go to settings
-                            startActivity(new Intent(getActivity(), ManageAccounts.class)
-                                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mStatusLoaderResult.appwidgetId));
-                            getActivity().finish();
-                        } else {
-                            (Toast.makeText(getActivity(), R.string.widget_loading, Toast.LENGTH_LONG)).show();
-                            // force widgets rebuild
-                            getActivity().startService(new Intent(getActivity(), SonetService.class).setAction(ACTION_REFRESH));
-                            getActivity().finish();
-                        }
+                        (Toast.makeText(getActivity(), R.string.widget_loading, Toast.LENGTH_LONG)).show();
+                        // force widgets rebuild
+                        getActivity().startService(new Intent(getActivity(), SonetService.class).setAction(ACTION_REFRESH));
+                        getActivity().finish();
                     }
                 }
                 break;

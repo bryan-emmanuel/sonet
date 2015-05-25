@@ -64,8 +64,6 @@
 
         <activity android:name=".Settings" />
 
-        <activity android:name=".AccountSettings" />
-
         <activity android:name=".OAuthLogin" />
 
         <activity
@@ -221,6 +219,12 @@
         <service android:name=".PhotoUploadService" />
         <service
             android:name=".service.AccountUpdateService"
+            android:exported="false" />
+        <service
+            android:name=".service.LoadNotificationsService"
+            android:exported="false" />
+        <service
+            android:name=".service.ClearNotificationsService"
             android:exported="false" />
 
         <receiver android:name=".SonetSMSReceiver">

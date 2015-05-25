@@ -14,7 +14,7 @@ import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.SonetOAuth;
-import com.piusvelte.sonet.provider.Entities;
+import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.Statuses;
 import com.squareup.okhttp.FormEncodingBuilder;
@@ -470,7 +470,7 @@ public class Twitter extends Client {
         if (statusId.equals(replyId)) {
             HashMap<String, String> commentMap = new HashMap<>();
             commentMap.put(Statuses.SID, jsonComment.getString(Sid));
-            commentMap.put(Entities.FRIEND, jsonComment.getJSONObject(Suser).getString(Sname));
+            commentMap.put(Entity.FRIEND, jsonComment.getJSONObject(Suser).getString(Sname));
             commentMap.put(Statuses.MESSAGE, jsonComment.getString(Stext));
             commentMap.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(parseDate(jsonComment.getString(Screated_at), TWITTER_DATE_FORMAT), time24hr));
             commentMap.put(getString(R.string.like), getLikeText(true));

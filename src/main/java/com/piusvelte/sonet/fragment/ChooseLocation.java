@@ -20,7 +20,6 @@ import com.piusvelte.sonet.loader.LocationLoader;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +28,7 @@ import static com.piusvelte.sonet.Sonet.INVALID_ACCOUNT_ID;
 /**
  * Created by bemmanuel on 4/30/15.
  */
-public class ChooseLocation extends ListFragment implements LoaderManager.LoaderCallbacks {
+public class ChooseLocation extends ListFragment implements LoaderManager.LoaderCallbacks<LocationLoader.LocationResult> {
 
     private static final String ARG_REQUEST_CODE = "request_code";
     private static final String ARG_ID = "id";
@@ -111,7 +110,7 @@ public class ChooseLocation extends ListFragment implements LoaderManager.Loader
     }
 
     @Override
-    public Loader onCreateLoader(int id, Bundle args) {
+    public Loader<LocationLoader.LocationResult> onCreateLoader(int id, Bundle args) {
         switch (id) {
             case LOADER_LOCATIONS:
                 return new LocationLoader(getActivity(),
@@ -125,18 +124,13 @@ public class ChooseLocation extends ListFragment implements LoaderManager.Loader
     }
 
     @Override
-    public void onLoadFinished(Loader loader, Object data) {
+    public void onLoadFinished(Loader<LocationLoader.LocationResult> loader, LocationLoader.LocationResult data) {
         switch (loader.getId()) {
             case LOADER_LOCATIONS:
                 mLoadingView.setVisibility(View.GONE);
 
-                if (data instanceof LocationLoader.LocationResult) {
-
-                    final LocationLoader.LocationResult result = (LocationLoader.LocationResult) data;
-                    Iterator<Map.Entry<String, String>> iterator = result.locations.entrySet().iterator();
-
-                    while (iterator.hasNext()) {
-                        Map.Entry<String, String> location = iterator.next();
+                if (data != null) {
+                    for (Map.Entry<String, String> location : data.locations.entrySet()) {
                         HashMap<String, String> adapterLocation = new HashMap<>();
                         adapterLocation.put(ARG_ID, location.getKey());
                         adapterLocation.put(ARG_LOCATION, location.getValue());
@@ -153,7 +147,7 @@ public class ChooseLocation extends ListFragment implements LoaderManager.Loader
     }
 
     @Override
-    public void onLoaderReset(Loader loader) {
+    public void onLoaderReset(Loader<LocationLoader.LocationResult> loader) {
         // NO-OP
     }
 

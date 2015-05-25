@@ -7,6 +7,7 @@ import android.support.annotation.Nullable;
 /**
  * Created by bemmanuel on 4/19/15.
  */
+@Deprecated
 public class AccountOptionsDialogFragment {
 
     private static final String ARG_ACCOUNT_ID = "account_id";

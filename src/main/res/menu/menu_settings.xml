@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+ * Sonet - Android Social Networking Widget
+ * Copyright (C) 2009 Bryan Emmanuel
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *  
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  
+ *  Bryan Emmanuel piusvelte@gmail.com
+-->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/menu_background_update"
+        android:icon="@drawable/ic_refresh_grey600_24dp"
+        android:title="@string/background_update" />
+    <item
+        android:id="@+id/menu_instant_upload"
+        android:icon="@drawable/ic_refresh_grey600_24dp"
+        android:title="@string/instantupload" />
+    <item
+        android:id="@+id/menu_notifications"
+        android:icon="@drawable/ic_notifications_grey600_24dp"
+        android:title="@string/notifications" />
+    <item
+        android:id="@+id/menu_time"
+        android:icon="@drawable/ic_settings_applications_grey600_24dp"
+        android:title="@string/settings_time" />
+    <item
+        android:id="@+id/menu_authenticate"
+        android:icon="@drawable/ic_info_grey600_24dp"
+        android:title="@string/authenticate_account" />
+</menu>
