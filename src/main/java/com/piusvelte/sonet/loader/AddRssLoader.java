@@ -8,7 +8,6 @@ import android.util.Log;
 import com.piusvelte.sonet.BuildConfig;
 import com.piusvelte.sonet.SonetHttpClient;
 
-import org.apache.http.client.methods.HttpGet;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;

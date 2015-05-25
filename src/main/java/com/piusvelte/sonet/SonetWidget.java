@@ -26,11 +26,9 @@ import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.net.Uri;
 
 import com.piusvelte.sonet.provider.StatusLinks;
 import com.piusvelte.sonet.provider.Statuses;
-import com.piusvelte.sonet.provider.StatusesStyles;
 import com.piusvelte.sonet.provider.WidgetAccounts;
 import com.piusvelte.sonet.provider.Widgets;
 

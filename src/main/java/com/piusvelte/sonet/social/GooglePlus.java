@@ -482,6 +482,8 @@ public class GooglePlus extends Client {
                 if (BuildConfig.DEBUG) Log.e(mTag, e.toString());
             }
         }
+
+        currentNotifications.close();
     }
 
     @Override

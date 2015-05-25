@@ -103,7 +103,7 @@ public class SonetCrypto {
                 // store the password
                 SharedPreferences.Editor editor = prefs.edit();
                 editor.putString(PASSWORD, password);
-                editor.commit();
+                editor.apply();
                 // encrypt the oauth data
                 Cursor accounts = context.getContentResolver()
                         .query(Accounts.getContentUri(context), new String[] { Accounts._ID, Accounts.TOKEN, Accounts.SECRET, Accounts.SID },

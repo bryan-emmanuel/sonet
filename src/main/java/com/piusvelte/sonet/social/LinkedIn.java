@@ -747,6 +747,8 @@ public class LinkedIn extends Client {
                 }
             }
         }
+
+        currentNotifications.close();
     }
 
     @Override
@@ -783,11 +785,7 @@ public class LinkedIn extends Client {
     }
 
     private boolean isLikeable(@Nullable JSONObject jsonStatus) {
-        if (jsonStatus != null) {
-            return jsonStatus.has(IS_LIKABLE);
-        }
-
-        return false;
+        return jsonStatus != null && jsonStatus.has(IS_LIKABLE);
     }
 
     @Override

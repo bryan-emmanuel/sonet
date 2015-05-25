@@ -187,7 +187,8 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
                     getSupportFragmentManager().beginTransaction()
                             .replace(R.id.content_fragment_container,
                                     new Feed(),
-                                    FRAGMENT_CONTENT);
+                                    FRAGMENT_CONTENT)
+                            .commit();
                     return true;
 
                 case R.id.menu_refresh:

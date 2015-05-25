@@ -468,6 +468,8 @@ public class MySpace extends Client {
                 }
             }
         }
+
+        currentNotifications.close();
     }
 
     @Override

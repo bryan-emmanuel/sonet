@@ -50,14 +50,7 @@ public class DatabaseUtils {
             db.execSQL("create temp table " + tableName + "_bkp as select * from " + tableName + ";");
             db.execSQL("drop table if exists " + tableName + ";");
             // create new table
-            StringBuilder createTable = new StringBuilder();
-            createTable.append(sql.substring(0, sql.length() - 1));
-            createTable.append(", ");
-            createTable.append(columnName);
-            createTable.append(" ");
-            createTable.append(columnType);
-            createTable.append(");");
-            db.execSQL(createTable.toString());
+            db.execSQL(sql.substring(0, sql.length() - 1) + ", " + columnName + " " + columnType + ");");
             // restore data
             String columnData = sql.substring(sql.indexOf("(") + 1);
 

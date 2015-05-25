@@ -98,11 +98,7 @@ public class CommentsLoader extends BaseAsyncTaskLoader<CommentsLoader.Result> {
                                     new String[] { Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID) },
                                     null);
 
-                            if (c.moveToFirst()) {
-                                mTime24hr = c.getInt(0) == 1;
-                            } else {
-                                mTime24hr = false;
-                            }
+                            mTime24hr = c.moveToFirst() && c.getInt(0) == 1;
 
                             c.close();
                         }

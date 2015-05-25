@@ -491,6 +491,8 @@ public class Foursquare extends Client {
                 }
             }
         }
+
+        currentNotifications.close();
     }
 
     @Override
