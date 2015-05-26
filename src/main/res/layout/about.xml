@@ -67,6 +67,15 @@
             android:stretchMode="columnWidth"
             tools:listitem="@layout/account_profile" />
 
+        <ImageView
+            android:id="@+id/empty_accounts"
+            android:layout_width="@dimen/message_item_header_height"
+            android:layout_height="@dimen/message_item_header_height"
+            android:padding="4dip"
+            android:src="@drawable/ic_person_add_grey600_48dp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
