@@ -52,6 +52,7 @@
         android:id="@+id/drawer_container"
         android:layout_width="280dp"
         android:layout_height="match_parent"
+        android:layout_gravity="start"
         android:orientation="vertical"
         android:theme="@style/NavigationDrawer">
 
