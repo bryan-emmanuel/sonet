@@ -33,11 +33,13 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -49,6 +51,8 @@ import com.piusvelte.sonet.fragment.Feed;
 import com.piusvelte.sonet.fragment.NotificationsList;
 import com.piusvelte.sonet.fragment.Settings;
 import com.piusvelte.sonet.loader.AccountsProfilesLoader;
+import com.piusvelte.sonet.util.TintTransformation;
+import com.squareup.picasso.Picasso;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -89,6 +93,7 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
     private DrawerLayout mDrawerLayout;
     private View mDrawerContainer;
     private GridView mDrawerAccounts;
+    private ImageView mDrawerAccountsBackground;
     private ListView mDrawerPrimary;
     private ListView mDrawerSecondary;
     private AccountProfileAdapter mDrawerAccountsAdapter;
@@ -97,6 +102,7 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
     private ActionBarDrawerToggle mDrawerToggle;
     List<HashMap<String, String>> mAccounts = new ArrayList<>();
     private AccountsProfilesLoaderCallback mAccountsProfilesLoaderCallback = new AccountsProfilesLoaderCallback(this);
+    private TintTransformation mTintTransformation;
 
     public static Intent createIntent(@NonNull Context context) {
         return new Intent(context, About.class);
@@ -152,6 +158,8 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
         );
         mDrawerAccounts.setAdapter(mDrawerAccountsAdapter);
         mDrawerAccounts.setOnItemClickListener(this);
+
+        mDrawerAccountsBackground = (ImageView) mDrawerContainer.findViewById(R.id.drawer_account_background);
 
         View emptyAccounts = mDrawerContainer.findViewById(R.id.empty_accounts);
         emptyAccounts.setOnClickListener(this);
@@ -328,6 +336,21 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
 
         if (accounts != null) {
             mAccounts.addAll(accounts);
+
+            if (!accounts.isEmpty()) {
+                String url = AccountProfileAdapter.getAccountProfileUrl(accounts.get(0));
+
+                if (!TextUtils.isEmpty(url)) {
+                    if (mTintTransformation == null) {
+                        mTintTransformation = new TintTransformation(getResources().getColor(R.color.colorAccent));
+                    }
+
+                    Picasso.with(this)
+                            .load(url)
+                            .transform(mTintTransformation)
+                            .into(mDrawerAccountsBackground);
+                }
+            }
         }
 
         mDrawerAccountsAdapter.notifyDataSetChanged();

@@ -56,25 +56,40 @@
         android:orientation="vertical"
         android:theme="@style/NavigationDrawer">
 
-        <GridView
-            android:id="@+id/drawer_accounts"
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:columnWidth="56dp"
-            android:gravity="center"
-            android:numColumns="auto_fit"
-            android:padding="4dip"
-            android:stretchMode="columnWidth"
-            tools:listitem="@layout/account_profile" />
+            android:layout_height="wrap_content">
 
-        <ImageView
-            android:id="@+id/empty_accounts"
-            android:layout_width="@dimen/message_item_header_height"
-            android:layout_height="@dimen/message_item_header_height"
-            android:padding="4dip"
-            android:src="@drawable/ic_person_add_grey600_48dp"
-            android:visibility="gone"
-            tools:visibility="visible" />
+            <ImageView
+                android:id="@+id/drawer_account_background"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_alignBottom="@+id/drawer_accounts"
+                android:layout_alignTop="@+id/drawer_accounts"
+                android:minHeight="@dimen/message_item_header_height"
+                android:scaleType="centerCrop" />
+
+            <GridView
+                android:id="@+id/drawer_accounts"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:columnWidth="56dp"
+                android:gravity="center"
+                android:numColumns="auto_fit"
+                android:padding="4dip"
+                android:stretchMode="columnWidth"
+                tools:listitem="@layout/account_profile" />
+
+            <ImageView
+                android:id="@+id/empty_accounts"
+                android:layout_width="@dimen/message_item_header_height"
+                android:layout_height="@dimen/message_item_header_height"
+                android:padding="4dip"
+                android:src="@drawable/ic_person_add_grey600_48dp"
+                android:visibility="gone"
+                tools:visibility="visible" />
+        </RelativeLayout>
 
         <View
             android:layout_width="match_parent"

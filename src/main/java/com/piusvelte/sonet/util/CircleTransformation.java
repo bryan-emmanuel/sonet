@@ -32,6 +32,6 @@ public class CircleTransformation implements Transformation {
 
     @Override
     public String key() {
-        return "circle";
+        return CircleTransformation.class.getSimpleName();
     }
 }
