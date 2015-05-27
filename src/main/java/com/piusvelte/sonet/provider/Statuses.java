@@ -64,7 +64,7 @@ public class Statuses implements BaseColumns {
                 + "," + MESSAGE
                 + "," + SERVICE
                 + "," + CREATEDTEXT
-                + ",\"" + AppWidgetManager.INVALID_APPWIDGET_ID + "\""
+                + ",\"" + AppWidgetManager.INVALID_APPWIDGET_ID + "\""// this now uses statuses across all widgets
                 + "," + ACCOUNT
                 + "," + SID
                 + "," + ENTITY

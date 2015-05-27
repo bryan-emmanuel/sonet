@@ -70,7 +70,7 @@ public class SonetProvider extends ContentProvider {
     protected static final int STATUS_IMAGES = 12;
 
     protected static final String DATABASE_NAME = "sonet.db";
-    private static final int DATABASE_VERSION = 28;
+    private static final int DATABASE_VERSION = 30;
 
     private static HashMap<String, String> accountsProjectionMap;
 
@@ -1140,7 +1140,9 @@ public class SonetProvider extends ContentProvider {
                 } else {
                     update = true;
                 }
+
                 c.close();
+
                 if (update) {
                     // add updated column, this will clear all current notifications, to avoid duplicates
                     db.execSQL("drop table if exists " + Notifications.TABLE + "_bkp;");
@@ -1183,9 +1185,13 @@ public class SonetProvider extends ContentProvider {
 
             if (oldVersion < 23) {
                 // clean up duplicate widget settings
-                Cursor c = db
-                        .query(Widgets.TABLE, new String[] { Widgets._ID }, Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1", null, null, null,
-                                null);
+                Cursor c = db.query(Widgets.TABLE,
+                        new String[] { Widgets._ID },
+                        Widgets.WIDGET + "=0 and " + Widgets.ACCOUNT + "=-1",
+                        null,
+                        null,
+                        null,
+                        null);
                 if (c.moveToFirst()) {
                     if (c.moveToNext()) {
                         while (!c.isAfterLast()) {
@@ -1249,28 +1255,30 @@ public class SonetProvider extends ContentProvider {
                 StatusesStyles.createView(db);
             }
 
+            // 27, 28, 29 were used during development
+
             // add profile_url
-            if (oldVersion < 27) {
+            if (oldVersion < 30) {
                 DatabaseUtils.growTable(db,
                         Entity.TABLE,
                         Entity.PROFILE_URL,
                         "text",
                         "null",
                         false);
-                db.execSQL("drop view if exists " + StatusesStyles.VIEW + ";");
-                StatusesStyles.createView(db);
-            }
-
-            // remove deprecated style columns everywhere
-            // load images as needed by Picasso with url, instead of storing a blob
-            if (oldVersion < 28) {
-                // drop Entity.PROFILE
+                // drop Entity.PROFILE blob
                 Entity.migrateTable(db);
                 // drop styles columns
                 Widgets.migrateTable(db);
                 db.execSQL("drop view if exists " + WidgetsSettings.VIEW + ";");
                 WidgetsSettings.createView(db);
-                // move to url for image, instead of blob
+                // add url
+                DatabaseUtils.growTable(db,
+                        StatusImages.TABLE,
+                        StatusImages.URL,
+                        "text",
+                        "null",
+                        false);
+                // drop the image blob
                 StatusImages.migrateTable(db);
                 Statuses.migrateTable(db);
                 db.execSQL("drop view if exists " + StatusesStyles.VIEW + ";");

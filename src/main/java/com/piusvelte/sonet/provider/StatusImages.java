@@ -38,11 +38,11 @@ public final class StatusImages implements BaseColumns {
         db.execSQL("create temp table " + TABLE + "_bkp as select * from " + TABLE + ";");
         db.execSQL("drop table if exists " + TABLE + ";");
         createTable(db);
-        // URL is new, so it's not available
         db.execSQL("insert into " + TABLE
                 + " select "
                 + _ID
-                + "," + STATUS_ID + " from " + TABLE + "_bkp;");
+                + "," + STATUS_ID
+                + "," + URL + " from " + TABLE + "_bkp;");
         db.execSQL("drop table if exists " + TABLE + "_bkp;");
     }
 }
