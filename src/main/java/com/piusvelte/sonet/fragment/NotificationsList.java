@@ -39,6 +39,10 @@ public class NotificationsList extends ListFragment implements LoaderManager.Loa
     private SimpleCursorAdapter mAdapter;
     private View mLoadingView;
 
+    public NotificationsList() {
+        setRetainInstance(true);
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.loading_list, container, false);

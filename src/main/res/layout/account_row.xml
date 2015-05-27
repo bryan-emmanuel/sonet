@@ -45,31 +45,12 @@
         android:id="@+id/friend"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/profile"
-        android:layout_alignTop="@+id/profile"
+        android:layout_centerVertical="true"
         android:layout_toRightOf="@+id/profile"
         android:gravity="center_vertical"
         android:maxLines="1"
         android:paddingTop="@dimen/material_padding"
         android:textColor="@color/default_friend_color"
         android:textStyle="bold"
-        tools:text="Hello, my name is" />
-
-    <ListView
-        android:id="@android:id/list"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/profile"
-        android:choiceMode="multipleChoice"
-        android:divider="@android:color/transparent"
-        android:dividerHeight="0dp" />
-
-    <ProgressBar
-        android:id="@+id/loading"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:indeterminate="true"
-        android:visibility="gone"
-        tools:visibility="visible" />
+        tools:text="twitter: piusvelte" />
 </RelativeLayout>

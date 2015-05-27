@@ -32,7 +32,6 @@ import com.piusvelte.sonet.social.Client;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.NOTIFY_ID;
-import static com.piusvelte.sonet.Sonet.initAccountSettings;
 
 /**
  * Created by bemmanuel on 5/18/15.
@@ -58,16 +57,10 @@ public class StatusesLoader extends AsyncTask<Integer, String, Integer> {
             Log.d(TAG, "StatusesLoader;widget:" + widget + ",reload:" + reload);
         }
 
-        int refreshInterval = Sonet.default_interval;
-        boolean backgroundUpdate = true;
-        Cursor settings = mSonetService.getSettingsCursor(appWidgetId);
+        WidgetsSettings.Settings settings = WidgetsSettings.getSettings(mSonetService, appWidgetId);
+        int refreshInterval = settings.interval;
+        boolean backgroundUpdate = settings.isBackgroundUpdate;
 
-        if (settings.moveToFirst()) {
-            refreshInterval = settings.getInt(settings.getColumnIndexOrThrow(Widgets.INTERVAL));
-            backgroundUpdate = settings.getInt(settings.getColumnIndexOrThrow(Widgets.BACKGROUND_UPDATE)) == 1;
-        }
-
-        settings.close();
         // the widget will start out as the default widget.xml, which simply says "loading..."
         // if there's a cache, that should be quickly reloaded while new updates come down
         // otherwise, replace the widget with "loading..."
@@ -142,74 +135,11 @@ public class StatusesLoader extends AsyncTask<Integer, String, Integer> {
                 while (!accounts.isAfterLast()) {
                     long account = accounts.getLong(accountIndex);
                     int service = accounts.getInt(serviceIndex);
-                    // get the settings form time24hr and bg_color
-                    boolean time24hr = false;
+
+                    WidgetsSettings.Settings accountSettings = WidgetsSettings.getSettings(mSonetService, appWidgetId, account);
+                    boolean time24hr = accountSettings.isTime24hr;
                     int status_count = Sonet.default_statuses_per_account;
-                    Cursor c = mSonetService.getContentResolver().query(WidgetsSettings.getContentUri(mSonetService),
-                            new String[] { Widgets.TIME24HR,
-                                    Widgets.SOUND,
-                                    Widgets.VIBRATE,
-                                    Widgets.LIGHTS },
-                            Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
-                            new String[] { widget,
-                                    Long.toString(account) },
-                            null);
-
-                    if (!c.moveToFirst()) {
-                        // no account settings
-                        c.close();
-                        c = mSonetService.getContentResolver().query(WidgetsSettings.getContentUri(mSonetService),
-                                new String[] { Widgets.TIME24HR,
-                                        Widgets.SOUND,
-                                        Widgets.VIBRATE,
-                                        Widgets.LIGHTS },
-                                Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
-                                new String[] { widget,
-                                        Long.toString(Sonet.INVALID_ACCOUNT_ID) },
-                                null);
-
-                        if (!c.moveToFirst()) {
-                            // no widget settings
-                            c.close();
-                            c = mSonetService.getContentResolver().query(WidgetsSettings.getContentUri(mSonetService),
-                                    new String[] { Widgets.TIME24HR,
-                                            Widgets.SOUND,
-                                            Widgets.VIBRATE,
-                                            Widgets.LIGHTS },
-                                    Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
-                                    new String[] { Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID),
-                                            Long.toString(Sonet.INVALID_ACCOUNT_ID) },
-                                    null);
-
-                            if (!c.moveToFirst()) {
-                                initAccountSettings(mSonetService, AppWidgetManager.INVALID_APPWIDGET_ID, Sonet.INVALID_ACCOUNT_ID);
-                            }
-
-                            if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-                                initAccountSettings(mSonetService, appWidgetId, Sonet.INVALID_ACCOUNT_ID);
-                            }
-                        }
-
-                        initAccountSettings(mSonetService, appWidgetId, account);
-                    }
-
-                    if (c.moveToFirst()) {
-                        time24hr = c.getInt(c.getColumnIndexOrThrow(Widgets.TIME24HR)) == 1;
-
-                        if (c.getInt(c.getColumnIndexOrThrow(Widgets.SOUND)) == 1) {
-                            notifications |= Notification.DEFAULT_SOUND;
-                        }
-
-                        if (c.getInt(c.getColumnIndexOrThrow(Widgets.VIBRATE)) == 1) {
-                            notifications |= Notification.DEFAULT_VIBRATE;
-                        }
-
-                        if (c.getInt(c.getColumnIndexOrThrow(Widgets.LIGHTS)) == 1) {
-                            notifications |= Notification.DEFAULT_LIGHTS;
-                        }
-                    }
-
-                    c.close();
+                    notifications = accountSettings.notificationsMask();
 
                     // if no connection, only update the status_bg and icons
                     if (mSonetService.mConnectivityManager.getActiveNetworkInfo() != null && mSonetService.mConnectivityManager
@@ -323,10 +253,9 @@ public class StatusesLoader extends AsyncTask<Integer, String, Integer> {
 
         if (notifications != 0) {
             Notification notification = new Notification(R.drawable.notification, mSonetService.mNotify, System.currentTimeMillis());
-            // TODO go to Notifications *in* About
             notification.setLatestEventInfo(mSonetService.getBaseContext(), "New messages", mSonetService.mNotify,
                     PendingIntent.getActivity(mSonetService, 0,
-                            (new Intent(mSonetService, About.class)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            About.createIntent(mSonetService, About.DRAWER_NOTIFICATIONS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP), 0));
             notification.defaults |= notifications;
             ((NotificationManager) mSonetService.getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);

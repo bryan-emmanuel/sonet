@@ -81,7 +81,9 @@ public class Settings extends ListFragment implements LoaderManager.LoaderCallba
 
     /** app-wide settings */
     public static Settings newInstance() {
-        return newInstance(Sonet.INVALID_ACCOUNT_ID, INVALID_SERVICE, null, null);
+        Settings settings = newInstance(Sonet.INVALID_ACCOUNT_ID, INVALID_SERVICE, null, null);
+        settings.setRetainInstance(true);
+        return settings;
     }
 
     @Override
@@ -168,7 +170,7 @@ public class Settings extends ListFragment implements LoaderManager.LoaderCallba
                 break;
 
             case R.id.menu_instant_upload:
-                // TODO
+                // TODO make this change visible
                 mInstantUpload_value = !mInstantUpload_value;
                 l.setItemChecked(position, mInstantUpload_value);
                 updateDatabase(Widgets.INSTANT_UPLOAD, mInstantUpload_value);

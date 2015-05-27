@@ -53,6 +53,10 @@ public class AccountsList extends ListFragment {
     List<HashMap<String, String>> mAccounts = new ArrayList<>();
     private AccountAdapter mAdapter;
 
+    public AccountsList() {
+        setRetainInstance(true);
+    }
+
     public static AccountsList newInstance() {
         return new AccountsList();
     }

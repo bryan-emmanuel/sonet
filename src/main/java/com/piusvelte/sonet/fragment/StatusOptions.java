@@ -174,8 +174,7 @@ public class StatusOptions extends ListFragment implements LoaderManager.LoaderC
                 break;
 
             case StatusLoader.Result.NOTIFICATIONS:
-                // TODO go to Notifications *in* About
-                startActivity(new Intent(getActivity(), About.class));
+                startActivity(About.createIntent(getActivity(), About.DRAWER_NOTIFICATIONS));
                 getActivity().finish();
                 break;
 

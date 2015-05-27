@@ -5,7 +5,6 @@ import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
@@ -19,8 +18,6 @@ import com.piusvelte.sonet.provider.StatusesStyles;
 import com.piusvelte.sonet.social.Client;
 import com.piusvelte.sonet.util.CircleTransformation;
 import com.squareup.picasso.Picasso;
-
-import static com.piusvelte.sonet.Sonet.sBFOptions;
 
 @SuppressLint("NewApi")
 public class SonetRemoteViewsFactory implements android.widget.RemoteViewsService.RemoteViewsFactory {
@@ -68,19 +65,6 @@ public class SonetRemoteViewsFactory implements android.widget.RemoteViewsServic
     @Override
     public RemoteViews getLoadingView() {
         return null;
-    }
-
-    private static boolean setImageViewBitmap(RemoteViews remoteViews, int viewId, byte[] blob) {
-        if (blob != null) {
-            Bitmap bmp = BitmapFactory.decodeByteArray(blob, 0, blob.length, sBFOptions);
-
-            if (bmp != null) {
-                remoteViews.setImageViewBitmap(viewId, bmp);
-                return true;
-            }
-        }
-
-        return false;
     }
 
     @Override

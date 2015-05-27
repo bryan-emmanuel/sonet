@@ -142,7 +142,7 @@ public class PhotoUploadService extends Service {
                             Notification notification = new Notification(R.drawable.notification, "photo upload " + message,
                                     System.currentTimeMillis());
                             notification.setLatestEventInfo(getBaseContext(), "photo upload", message, PendingIntent
-                                    .getActivity(PhotoUploadService.this, 0, new Intent(PhotoUploadService.this, About.class), 0));
+                                    .getActivity(PhotoUploadService.this, 0, About.createIntent(PhotoUploadService.this), 0));
                             ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
                             stopSelfResult(mStartId);
                         }

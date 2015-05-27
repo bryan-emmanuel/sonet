@@ -1,6 +1,5 @@
 package com.piusvelte.sonet.loader;
 
-import android.appwidget.AppWidgetManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.UriMatcher;
@@ -18,7 +17,6 @@ import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.Statuses;
 import com.piusvelte.sonet.provider.StatusesStyles;
-import com.piusvelte.sonet.provider.Widgets;
 import com.piusvelte.sonet.provider.WidgetsSettings;
 import com.piusvelte.sonet.social.Client;
 
@@ -74,39 +72,17 @@ public class CommentsLoader extends BaseAsyncTaskLoader<CommentsLoader.Result> {
                         null);
 
                 if (status.moveToFirst()) {
-                    result.service = status.getInt(4);
+                    result.service = status.getInt(status.getColumnIndexOrThrow(StatusesStyles.SERVICE));
                     result.serviceName = mContext.getResources().getStringArray(R.array.service_entries)[result.service];
-                    mAccount = status.getLong(0);
-                    result.sid = sonetCrypto.Decrypt(status.getString(1));
-                    result.esid = sonetCrypto.Decrypt(status.getString(2));
-                    Cursor widget = mContext.getContentResolver().query(WidgetsSettings.getContentUri(mContext), new String[] { Widgets.TIME24HR },
-                            Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
-                            new String[] { Integer.toString(status.getInt(3)), Long.toString(mAccount) }, null);
+                    mAccount = status.getLong(status.getColumnIndexOrThrow(StatusesStyles.ACCOUNT));
+                    result.sid = sonetCrypto.Decrypt(status.getString(status.getColumnIndexOrThrow(StatusesStyles.SID)));
+                    result.esid = sonetCrypto.Decrypt(status.getString(status.getColumnIndexOrThrow(StatusesStyles.ESID)));
 
-                    if (widget.moveToFirst()) {
-                        mTime24hr = widget.getInt(0) == 1;
-                    } else {
-                        Cursor b = mContext.getContentResolver().query(WidgetsSettings.getContentUri(mContext), new String[] { Widgets.TIME24HR },
-                                Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
-                                new String[] { Integer.toString(status.getInt(3)), Long.toString(Sonet.INVALID_ACCOUNT_ID) }, null);
+                    WidgetsSettings.Settings settings = WidgetsSettings.getSettings(mContext,
+                            status.getInt(status.getColumnIndexOrThrow(StatusesStyles.WIDGET)),
+                            mAccount);
+                    mTime24hr = settings.isTime24hr;
 
-                        if (b.moveToFirst()) {
-                            mTime24hr = b.getInt(0) == 1;
-                        } else {
-                            Cursor c = mContext.getContentResolver().query(WidgetsSettings.getContentUri(mContext), new String[] { Widgets.TIME24HR },
-                                    Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
-                                    new String[] { Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID), Long.toString(Sonet.INVALID_ACCOUNT_ID) },
-                                    null);
-
-                            mTime24hr = c.moveToFirst() && c.getInt(0) == 1;
-
-                            c.close();
-                        }
-
-                        b.close();
-                    }
-
-                    widget.close();
                     HashMap<String, String> commentMap = new HashMap<>();
                     commentMap.put(Statuses.SID, result.sid);
                     commentMap.put(Entity.FRIEND, status.getString(5));

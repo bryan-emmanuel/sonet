@@ -66,7 +66,7 @@ public class AccountAdapter extends BaseAdapter {
         final ViewHolder viewHolder;
 
         if (convertView == null) {
-            convertView = LayoutInflater.from(mContext).inflate(R.layout.account_profile, parent, false);
+            convertView = LayoutInflater.from(mContext).inflate(R.layout.account_row, parent, false);
             viewHolder = new ViewHolder();
             viewHolder.profile = (ImageView) convertView.findViewById(R.id.profile);
             viewHolder.icon = (ImageView) convertView.findViewById(R.id.icon);
@@ -95,7 +95,9 @@ public class AccountAdapter extends BaseAdapter {
             mPicasso.load(network.getIcon())
                     .into(viewHolder.icon);
 
-            viewHolder.friend.setText(network + ": " + getAccountUsername(account));
+            if (viewHolder.friend != null) {
+                viewHolder.friend.setText(network + ": " + getAccountUsername(account));
+            }
         }
 
         return convertView;

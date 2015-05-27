@@ -1,5 +1,6 @@
 package com.piusvelte.sonet.provider;
 
+import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
@@ -63,7 +64,7 @@ public class Statuses implements BaseColumns {
                 + "," + MESSAGE
                 + "," + SERVICE
                 + "," + CREATEDTEXT
-                + "," + WIDGET
+                + ",\"" + AppWidgetManager.INVALID_APPWIDGET_ID + "\""
                 + "," + ACCOUNT
                 + "," + SID
                 + "," + ENTITY

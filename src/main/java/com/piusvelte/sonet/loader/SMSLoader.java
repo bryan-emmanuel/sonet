@@ -3,11 +3,9 @@ package com.piusvelte.sonet.loader;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.appwidget.AppWidgetManager;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -23,12 +21,10 @@ import com.piusvelte.sonet.SonetService;
 import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Statuses;
 import com.piusvelte.sonet.provider.WidgetAccountsView;
-import com.piusvelte.sonet.provider.Widgets;
 import com.piusvelte.sonet.provider.WidgetsSettings;
 
 import static com.piusvelte.sonet.Sonet.NOTIFY_ID;
 import static com.piusvelte.sonet.Sonet.SMS;
-import static com.piusvelte.sonet.Sonet.initAccountSettings;
 
 /**
  * Created by bemmanuel on 5/18/15.
@@ -146,76 +142,10 @@ public class SMSLoader extends AsyncTask<SmsMessage, String, int[]> {
             while (!widgets.isAfterLast()) {
                 int widget = widgets.getInt(widgetIndex);
                 appWidgetIds[widgets.getPosition()] = widget;
-                // get settings
-                boolean time24hr = true;
-                int status_count = Sonet.default_statuses_per_account;
-                int notifications = 0;
+                WidgetsSettings.Settings settings = WidgetsSettings.getSettings(mSonetService, widget, accountId);
+                int notifications = settings.notificationsMask();
 
-                Cursor c = mSonetService.getContentResolver().query(WidgetsSettings.getContentUri(mSonetService),
-                        new String[] { Widgets.TIME24HR,
-                                Widgets.SOUND,
-                                Widgets.VIBRATE,
-                                Widgets.LIGHTS },
-                        Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
-                        new String[] { Integer.toString(widget),
-                                Long.toString(accountId) },
-                        null);
-
-                if (!c.moveToFirst()) {
-                    c.close();
-                    c = mSonetService.getContentResolver().query(WidgetsSettings.getContentUri(mSonetService),
-                            new String[] { Widgets.TIME24HR,
-                                    Widgets.SOUND,
-                                    Widgets.VIBRATE,
-                                    Widgets.LIGHTS },
-                            Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
-                            new String[] { Integer.toString(widget),
-                                    Long.toString(Sonet.INVALID_ACCOUNT_ID) },
-                            null);
-
-                    if (!c.moveToFirst()) {
-                        c.close();
-                        c = mSonetService.getContentResolver().query(WidgetsSettings.getContentUri(mSonetService),
-                                new String[] { Widgets.TIME24HR,
-                                        Widgets.SOUND,
-                                        Widgets.VIBRATE,
-                                        Widgets.LIGHTS },
-                                Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
-                                new String[] { Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID),
-                                        Long.toString(Sonet.INVALID_ACCOUNT_ID) },
-                                null);
-
-                        if (!c.moveToFirst()) {
-                            initAccountSettings(mSonetService, AppWidgetManager.INVALID_APPWIDGET_ID,
-                                    Sonet.INVALID_ACCOUNT_ID);
-                        }
-
-                        if (widget != AppWidgetManager.INVALID_APPWIDGET_ID) {
-                            initAccountSettings(mSonetService, widget, Sonet.INVALID_ACCOUNT_ID);
-                        }
-                    }
-
-                    initAccountSettings(mSonetService, widget, accountId);
-                }
-
-                if (c.moveToFirst()) {
-                    time24hr = c.getInt(c.getColumnIndexOrThrow(Widgets.TIME24HR)) == 1;
-
-                    if (c.getInt(c.getColumnIndexOrThrow(Widgets.SOUND)) == 1) {
-                        notifications |= Notification.DEFAULT_SOUND;
-                    }
-
-                    if (c.getInt(c.getColumnIndexOrThrow(Widgets.VIBRATE)) == 1) {
-                        notifications |= Notification.DEFAULT_VIBRATE;
-                    }
-
-                    if (c.getInt(c.getColumnIndexOrThrow(Widgets.LIGHTS)) == 1) {
-                        notifications |= Notification.DEFAULT_LIGHTS;
-                    }
-                }
-
-                c.close();
-                values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(created, time24hr));
+                values.put(Statuses.CREATEDTEXT, Sonet.getCreatedText(created, settings.isTime24hr));
                 // insert the message
                 values.put(Statuses.WIDGET, widget);
                 values.put(Statuses.ACCOUNT, accountId);
@@ -230,7 +160,7 @@ public class SMSLoader extends AsyncTask<SmsMessage, String, int[]> {
 
                 if (statuses.moveToFirst()) {
                     while (!statuses.isAfterLast()) {
-                        if (statuses.getPosition() >= status_count) {
+                        if (statuses.getPosition() >= Sonet.default_statuses_per_account) {
                             mSonetService.getContentResolver().delete(Statuses.getContentUri(mSonetService),
                                     Statuses._ID + "=?",
                                     new String[] { Long.toString(statuses.getLong(statuses.getColumnIndex(Statuses._ID))) });
@@ -260,14 +190,13 @@ public class SMSLoader extends AsyncTask<SmsMessage, String, int[]> {
 
         if (notifications != 0) {
             Notification notification = new Notification(R.drawable.notification, updates[1], System.currentTimeMillis());
-            // TODO go to Notifications *in* About
             notification.setLatestEventInfo(mSonetService.getBaseContext(),
                     "New messages",
                     updates[1],
                     PendingIntent
                             .getActivity(mSonetService,
                                     0,
-                                    new Intent(mSonetService, About.class),
+                                    About.createIntent(mSonetService, About.DRAWER_NOTIFICATIONS),
                                     0));
             notification.defaults |= notifications;
             ((NotificationManager) mSonetService.getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);

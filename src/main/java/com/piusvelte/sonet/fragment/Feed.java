@@ -4,8 +4,6 @@ import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ListFragment;
@@ -35,7 +33,6 @@ import com.piusvelte.sonet.util.CircleTransformation;
 import com.squareup.picasso.Picasso;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
-import static com.piusvelte.sonet.Sonet.sBFOptions;
 
 /**
  * Created by bemmanuel on 3/21/15.
@@ -46,6 +43,10 @@ public class Feed extends ListFragment implements LoaderManager.LoaderCallbacks<
 
     private SimpleCursorAdapter mAdapter;
     private View mLoadingView;
+
+    public Feed() {
+        setRetainInstance(true);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -171,19 +172,6 @@ public class Feed extends ListFragment implements LoaderManager.LoaderCallbacks<
         WidgetsViewBinder(@NonNull Context context) {
             mPicasso = Picasso.with(context);
             mCircleTransformation = new CircleTransformation();
-        }
-
-        private static boolean setImageBitmap(View view, byte[] data) {
-            if (data != null) {
-                Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length, sBFOptions);
-
-                if (bmp != null) {
-                    ((ImageView) view).setImageBitmap(bmp);
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         @Override

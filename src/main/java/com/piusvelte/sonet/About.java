@@ -27,22 +27,20 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.piusvelte.sonet.adapter.AccountAdapter;
 import com.piusvelte.sonet.adapter.AccountProfileAdapter;
 import com.piusvelte.sonet.adapter.MenuItemAdapter;
 import com.piusvelte.sonet.fragment.AccountsList;
@@ -59,15 +57,12 @@ import java.util.HashMap;
 import java.util.List;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
-import static com.piusvelte.sonet.Sonet.RESULT_REFRESH;
 
 public class About extends BaseActivity implements AdapterView.OnItemClickListener, View.OnClickListener {
     // TODO there should be nothing widget specific here
     private int[] mAppWidgetIds;
     // TODO there should be nothing widget specific here
     private AppWidgetManager mAppWidgetManager;
-    // TODO places which update the widgets should call startService themselves
-    private boolean mUpdateWidget = false;
 
     private static final String TAG = "About";
 
@@ -91,7 +86,8 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
 
     private static final String FRAGMENT_ACCOUNT_DETAIL = "fragment:account_detail";
 
-    private DrawerLayout mDrawer;
+    private DrawerLayout mDrawerLayout;
+    private View mDrawerContainer;
     private GridView mDrawerAccounts;
     private ListView mDrawerPrimary;
     private ListView mDrawerSecondary;
@@ -119,55 +115,11 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
 
         setupActionBar();
         setupDrawer();
-
-        Fragment content = getSupportFragmentManager().findFragmentByTag(FRAGMENT_CONTENT);
-
-        if (content == null) {
-            mDrawerPrimary.setItemChecked(0, true);
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.content_fragment_container, new Feed(), FRAGMENT_CONTENT)
-                    .commit();
-        }
-
+        setupContent();
         getSupportLoaderManager().initLoader(LOADER_ACOUNT_PROFILES, null, mAccountsProfilesLoaderCallback);
     }
 
-    private void setupDrawer() {
-        mDrawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        mDrawerToggle = new DrawerToggle(this,
-                mDrawer,
-                R.string.drawer_open,
-                R.string.drawer_closed) {
-        };
-        mDrawer.setDrawerListener(mDrawerToggle);
-
-        LinearLayout drawerContainer = (LinearLayout) mDrawer.findViewById(R.id.drawer_container);
-
-        mDrawerAccounts = (GridView) drawerContainer.findViewById(R.id.drawer_accounts);
-        mDrawerAccountsAdapter = new AccountProfileAdapter(this,
-                mAccounts
-        );
-        mDrawerAccounts.setAdapter(mDrawerAccountsAdapter);
-        mDrawerAccounts.setOnItemClickListener(this);
-
-        View emptyAccounts = drawerContainer.findViewById(R.id.empty_accounts);
-        emptyAccounts.setOnClickListener(this);
-        mDrawerAccounts.setEmptyView(emptyAccounts);
-
-        mDrawerPrimary = (ListView) drawerContainer.findViewById(R.id.drawer_primary);
-        mDrawerPrimaryAdapter = new MenuItemAdapter(this, R.menu.menu_drawer_primary, android.R.layout.simple_list_item_activated_1);
-        mDrawerPrimary.setAdapter(mDrawerPrimaryAdapter);
-        mDrawerPrimary.setOnItemClickListener(this);
-
-        mDrawerSecondary = (ListView) drawerContainer.findViewById(R.id.drawer_secondary);
-        mDrawerSecondaryAdapter = new MenuItemAdapter(this, R.menu.menu_drawer_secondary, android.R.layout.simple_list_item_1);
-        mDrawerSecondary.setAdapter(mDrawerSecondaryAdapter);
-        mDrawerSecondary.setOnItemClickListener(this);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            drawerContainer.setFitsSystemWindows(true);
-        }
-
+    private void setupContent() {
         int selectedPosition;
         Intent intent = getIntent();
 
@@ -181,6 +133,43 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
         setContent(selectedPosition);
         MenuItem selectedItem = mDrawerPrimaryAdapter.getItem(selectedPosition);
         onOptionsItemSelected(selectedItem);
+    }
+
+    private void setupDrawer() {
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerToggle = new DrawerToggle(this,
+                mDrawerLayout,
+                R.string.drawer_open,
+                R.string.drawer_closed) {
+        };
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+
+        mDrawerContainer = mDrawerLayout.findViewById(R.id.drawer_container);
+
+        mDrawerAccounts = (GridView) mDrawerContainer.findViewById(R.id.drawer_accounts);
+        mDrawerAccountsAdapter = new AccountProfileAdapter(this,
+                mAccounts
+        );
+        mDrawerAccounts.setAdapter(mDrawerAccountsAdapter);
+        mDrawerAccounts.setOnItemClickListener(this);
+
+        View emptyAccounts = mDrawerContainer.findViewById(R.id.empty_accounts);
+        emptyAccounts.setOnClickListener(this);
+        mDrawerAccounts.setEmptyView(emptyAccounts);
+
+        mDrawerPrimary = (ListView) mDrawerContainer.findViewById(R.id.drawer_primary);
+        mDrawerPrimaryAdapter = new MenuItemAdapter(this, R.menu.menu_drawer_primary, android.R.layout.simple_list_item_activated_1);
+        mDrawerPrimary.setAdapter(mDrawerPrimaryAdapter);
+        mDrawerPrimary.setOnItemClickListener(this);
+
+        mDrawerSecondary = (ListView) mDrawerContainer.findViewById(R.id.drawer_secondary);
+        mDrawerSecondaryAdapter = new MenuItemAdapter(this, R.menu.menu_drawer_secondary, android.R.layout.simple_list_item_1);
+        mDrawerSecondary.setAdapter(mDrawerSecondaryAdapter);
+        mDrawerSecondary.setOnItemClickListener(this);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            mDrawerContainer.setFitsSystemWindows(true);
+        }
     }
 
     private void setupActionBar() {
@@ -206,6 +195,15 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        if (mDrawerLayout.isDrawerOpen(mDrawerContainer)) {
+            menu.clear();
+        }
+
+        return super.onPrepareOptionsMenu(menu);
     }
 
     @Override
@@ -275,31 +273,6 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
     }
 
     @Override
-    protected void onPause() {
-        if (mUpdateWidget) {
-            (Toast.makeText(getApplicationContext(), getString(R.string.refreshing), Toast.LENGTH_LONG)).show();
-            startService(new Intent(this, SonetService.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
-        }
-
-        super.onPause();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch (requestCode) {
-            case RESULT_REFRESH:
-                if (resultCode == RESULT_OK) {
-                    mUpdateWidget = true;
-                }
-                break;
-
-            default:
-                super.onActivityResult(requestCode, resultCode, data);
-                break;
-        }
-    }
-
-    @Override
     public void onResult(int requestCode, int result, Intent data) {
         switch (requestCode) {
             default:
@@ -311,25 +284,27 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
     private void setContent(int position) {
         MenuItem selectedItem = mDrawerPrimaryAdapter.getItem(position);
         onOptionsItemSelected(selectedItem);
-        mDrawer.closeDrawers();
+        mDrawerLayout.closeDrawers();
         getSupportActionBar().setTitle(selectedItem.getTitle());
-        supportInvalidateOptionsMenu();
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         if (parent == mDrawerAccounts) {
-            mDrawer.closeDrawers();
-            HashMap<String, String> account = mDrawerAccountsAdapter.getItem(position);
-            getSupportFragmentManager().beginTransaction()
-                    .add(Settings.newInstance(AccountAdapter.getAccountId(account),
-                                    AccountAdapter.getAccountService(account),
-                                    AccountAdapter.getAccountProfileUrl(account),
-                                    AccountAdapter.getAccountUsername(account)),
-                            FRAGMENT_ACCOUNT_DETAIL)
-                    .addToBackStack(null)
-                    .commit();
-            // TODO animate the home bars to arrow and update toolbar title
+            mDrawerLayout.closeDrawers();
+            mDrawerPrimary.setItemChecked(DRAWER_ACCOUNTS, true);
+            setContent(DRAWER_ACCOUNTS);
+            supportInvalidateOptionsMenu();
+            // TODO got directly to account settings; animate the home bars to arrow and update toolbar title
+//            HashMap<String, String> account = mDrawerAccountsAdapter.getItem(position);
+//            getSupportFragmentManager().beginTransaction()
+//                    .add(Settings.newInstance(AccountAdapter.getAccountId(account),
+//                                    AccountAdapter.getAccountService(account),
+//                                    AccountAdapter.getAccountProfileUrl(account),
+//                                    AccountAdapter.getAccountUsername(account)),
+//                            FRAGMENT_ACCOUNT_DETAIL)
+//                    .addToBackStack(null)
+//                    .commit();
         } else if (parent == mDrawerPrimary) {
             setContent(position);
         } else if (parent == mDrawerSecondary) {
@@ -343,6 +318,7 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
             case R.id.empty_accounts:
                 mDrawerPrimary.setItemChecked(DRAWER_ACCOUNTS, true);
                 setContent(DRAWER_ACCOUNTS);
+                supportInvalidateOptionsMenu();
                 break;
         }
     }
@@ -364,6 +340,18 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
         public DrawerToggle(About about, DrawerLayout drawerLayout, int openDrawerContentDescRes, int closeDrawerContentDescRes) {
             super(about, drawerLayout, openDrawerContentDescRes, closeDrawerContentDescRes);
             mAbout = about;
+        }
+
+        @Override
+        public void onDrawerOpened(View drawerView) {
+            super.onDrawerOpened(drawerView);
+            mAbout.supportInvalidateOptionsMenu();
+        }
+
+        @Override
+        public void onDrawerClosed(View drawerView) {
+            super.onDrawerClosed(drawerView);
+            mAbout.supportInvalidateOptionsMenu();
         }
 
         @Override

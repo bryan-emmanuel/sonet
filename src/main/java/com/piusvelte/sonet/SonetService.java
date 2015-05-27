@@ -27,7 +27,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -43,14 +42,12 @@ import com.piusvelte.sonet.loader.StatusesLoader;
 import com.piusvelte.sonet.provider.Statuses;
 import com.piusvelte.sonet.provider.WidgetAccounts;
 import com.piusvelte.sonet.provider.Widgets;
-import com.piusvelte.sonet.provider.WidgetsSettings;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 import static com.piusvelte.sonet.Sonet.SMS_RECEIVED;
-import static com.piusvelte.sonet.Sonet.initAccountSettings;
 
 public class SonetService extends Service {
     private static final String TAG = "SonetService";
@@ -210,38 +207,6 @@ public class SonetService extends Service {
         super.onDestroy();
     }
 
-    public Cursor getSettingsCursor(int appWidgetId) {
-        Cursor settings = getContentResolver().query(WidgetsSettings.getContentUri(this),
-                new String[] { Widgets.INTERVAL,
-                        Widgets.BACKGROUND_UPDATE },
-                Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
-                new String[] { Integer.toString(appWidgetId),
-                        Long.toString(Sonet.INVALID_ACCOUNT_ID) },
-                null);
-
-        if (!settings.moveToFirst()) {
-            settings.close();
-            settings = getContentResolver().query(WidgetsSettings.getContentUri(this),
-                    new String[] { Widgets.INTERVAL,
-                            Widgets.BACKGROUND_UPDATE },
-                    Widgets.WIDGET + "=? and " + Widgets.ACCOUNT + "=?",
-                    new String[] { Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID),
-                            Long.toString(Sonet.INVALID_ACCOUNT_ID) },
-                    null);
-
-            if (!settings.moveToFirst()) {
-                initAccountSettings(this, AppWidgetManager.INVALID_APPWIDGET_ID, Sonet.INVALID_ACCOUNT_ID);
-            }
-
-            // don't insert a duplicate row
-            if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-                initAccountSettings(this, appWidgetId, Sonet.INVALID_ACCOUNT_ID);
-            }
-        }
-
-        return settings;
-    }
-
     public void buildWidgetButtons(Integer appWidgetId) {
         final String widget = Integer.toString(appWidgetId);
         // Push update for this widget to the home screen
@@ -254,7 +219,7 @@ public class SonetService extends Service {
                         .setData(Uri.withAppendedPath(Widgets.getContentUri(this), widget)),
                 0));
         views.setOnClickPendingIntent(R.id.button_configure, PendingIntent
-                .getActivity(this, 0, new Intent(this, About.class).setAction(widget), 0));
+                .getActivity(this, 0, About.createIntent(this, About.DRAWER_SETTINGS), 0));
         views.setOnClickPendingIntent(R.id.button_refresh, PendingIntent
                 .getService(this, 0, new Intent(this, SonetService.class).setAction(widget), 0));
 

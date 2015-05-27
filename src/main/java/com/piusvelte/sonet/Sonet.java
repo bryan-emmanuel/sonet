@@ -24,7 +24,6 @@ import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.Resources;
-import android.graphics.BitmapFactory;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 
@@ -293,26 +292,18 @@ public class Sonet {
         return false;
     }
 
-    public static BitmapFactory.Options sBFOptions = new BitmapFactory.Options();
-
-    static {
-        sBFOptions.inDither = false;
-        sBFOptions.inPurgeable = true; // allow this memory to be reclaimed
-        sBFOptions.inInputShareable = true; // share the reference, rather than copy
-        sBFOptions.inTempStorage = new byte[32 * 1024]; // allocate temporary memory
-    }
-
     public static boolean HasValues(String[] values) {
-        boolean hasValues = values != null;
-        if (hasValues) {
+        if (values != null) {
             for (String value : values) {
                 if (value == null) {
-                    hasValues = false;
-                    break;
+                    return false;
                 }
             }
+
+            return true;
         }
-        return hasValues;
+
+        return false;
     }
 
     public static Matcher getLinksMatcher(String raw) {
