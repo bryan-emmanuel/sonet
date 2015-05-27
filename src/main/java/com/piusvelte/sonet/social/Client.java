@@ -530,17 +530,27 @@ abstract public class Client {
         String friend_override = getPostFriendOverride(friend);
         friend = getPostFriend(friend);
 
-        Cursor entity = getContentResolver()
-                .query(Entity.getContentUri(mContext), new String[] { Entity._ID }, Entity.ACCOUNT + "=? and " + Entity.ESID + "=?",
-                        new String[] { Long.toString(accountId), SonetCrypto.getInstance(mContext).Encrypt(esid) }, null);
+        ContentValues entityValues = new ContentValues();
+        entityValues.put(Entity.FRIEND, friend);
+        entityValues.put(Entity.PROFILE_URL, url);
+
+        Cursor entity = getContentResolver().query(Entity.getContentUri(mContext),
+                new String[] { Entity._ID },
+                Entity.ACCOUNT + "=? and " + Entity.ESID + "=?",
+                new String[] { Long.toString(accountId),
+                        SonetCrypto.getInstance(mContext).Encrypt(esid) },
+                null);
 
         if (entity.moveToFirst()) {
             id = entity.getLong(0);
+            // update friend and profile_url if changed
+            getContentResolver().update(Entity.getContentUri(mContext),
+                    entityValues,
+                    Entity.ACCOUNT + "=? and " + Entity.ESID + "=?",
+                    new String[] { Long.toString(accountId),
+                            SonetCrypto.getInstance(mContext).Encrypt(esid) });
         } else {
-            ContentValues entityValues = new ContentValues();
             entityValues.put(Entity.ESID, esid);
-            entityValues.put(Entity.FRIEND, friend);
-            entityValues.put(Entity.PROFILE_URL, url);
             entityValues.put(Entity.ACCOUNT, accountId);
             id = Long.parseLong(getContentResolver().insert(Entity.getContentUri(mContext), entityValues).getLastPathSegment());
         }
