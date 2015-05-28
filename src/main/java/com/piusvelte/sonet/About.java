@@ -188,7 +188,7 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
             actionBar.setDisplayHomeAsUpEnabled(true);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-                actionBar.setHomeButtonEnabled(true);
+//                actionBar.setHomeButtonEnabled(true);
             }
         }
     }
