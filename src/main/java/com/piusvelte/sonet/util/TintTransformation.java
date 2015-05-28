@@ -20,7 +20,7 @@ public class TintTransformation implements Transformation {
 
     public TintTransformation(@ColorRes int colorRes) {
         mKey = TintTransformation.class.getSimpleName() + ":" + colorRes;
-        ColorFilter tint = new PorterDuffColorFilter(colorRes, PorterDuff.Mode.MULTIPLY);
+        ColorFilter tint = new PorterDuffColorFilter(colorRes, PorterDuff.Mode.SCREEN);
         mTintPaint.setColorFilter(tint);
     }
 

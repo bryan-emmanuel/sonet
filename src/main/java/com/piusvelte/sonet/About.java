@@ -342,7 +342,7 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
 
                 if (!TextUtils.isEmpty(url)) {
                     if (mTintTransformation == null) {
-                        mTintTransformation = new TintTransformation(getResources().getColor(R.color.colorAccent));
+                        mTintTransformation = new TintTransformation(getResources().getColor(R.color.colorPrimaryDark));
                     }
 
                     Picasso.with(this)
