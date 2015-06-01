@@ -141,8 +141,7 @@ public class Feed extends ListFragment implements LoaderManager.LoaderCallbacks<
     public void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
         startActivity(new Intent(getActivity(), SonetComments.class)
-                .putExtra(StatusLinks.STATUS_ID, Long.toString(id))
-                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+                .putExtra(StatusLinks.STATUS_ID, Long.toString(id)));
     }
 
     @Override

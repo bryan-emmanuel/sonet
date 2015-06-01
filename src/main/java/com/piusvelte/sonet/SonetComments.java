@@ -27,6 +27,7 @@ import android.widget.Toast;
 
 import com.piusvelte.sonet.fragment.CommentsList;
 import com.piusvelte.sonet.provider.StatusLinks;
+import com.piusvelte.sonet.provider.StatusesStyles;
 
 public class SonetComments extends BaseActivity {
 
@@ -50,23 +51,20 @@ public class SonetComments extends BaseActivity {
             Toast.makeText(this, getString(R.string.failure), Toast.LENGTH_LONG).show();
             finish();
         } else {
-            Uri data = intent.getData();
-
-            if (data == null) {
-                Toast.makeText(this, getString(R.string.failure), Toast.LENGTH_LONG).show();
-                finish();
-            } else {
-                if (intent.hasExtra(StatusLinks.STATUS_ID)) {
-                    data = Uri.withAppendedPath(data, intent.getStringExtra(StatusLinks.STATUS_ID));
-                }
-
+            if (intent.hasExtra(StatusLinks.STATUS_ID)) {
                 CommentsList fragment = (CommentsList) getSupportFragmentManager().findFragmentByTag(FRAGMENT_COMMENTS_LIST);
 
                 if (fragment == null) {
                     getSupportFragmentManager().beginTransaction()
-                            .add(R.id.comments_list_container, CommentsList.newInstance(data), FRAGMENT_COMMENTS_LIST)
+                            .add(R.id.comments_list_container,
+                                    CommentsList.newInstance(Uri.withAppendedPath(StatusesStyles.getContentUri(this),
+                                            intent.getStringExtra(StatusLinks.STATUS_ID))),
+                                    FRAGMENT_COMMENTS_LIST)
                             .commit();
                 }
+            } else {
+                Toast.makeText(this, getString(R.string.failure), Toast.LENGTH_LONG).show();
+                finish();
             }
         }
     }
@@ -75,21 +73,16 @@ public class SonetComments extends BaseActivity {
     public void onNewIntent(Intent intent) {
         setIntent(intent);
 
-        Uri data = intent.getData();
-
-        if (data == null) {
-            Toast.makeText(this, getString(R.string.failure), Toast.LENGTH_LONG).show();
-            finish();
-        } else {
-            if (intent.hasExtra(StatusLinks.STATUS_ID)) {
-                data = Uri.withAppendedPath(data, intent.getStringExtra(StatusLinks.STATUS_ID));
-            }
-
+        if (intent.hasExtra(StatusLinks.STATUS_ID)) {
             CommentsList fragment = (CommentsList) getSupportFragmentManager().findFragmentByTag(FRAGMENT_COMMENTS_LIST);
 
             if (fragment != null) {
-                fragment.setData(data);
+                fragment.setData(Uri.withAppendedPath(StatusesStyles.getContentUri(this),
+                        intent.getStringExtra(StatusLinks.STATUS_ID)));
             }
+        } else {
+            Toast.makeText(this, getString(R.string.failure), Toast.LENGTH_LONG).show();
+            finish();
         }
     }
 
