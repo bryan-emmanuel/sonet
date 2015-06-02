@@ -5,13 +5,12 @@ import android.appwidget.AppWidgetManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,7 +36,7 @@ import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 /**
  * Created by bemmanuel on 4/19/15.
  */
-public class AccountsList extends ListFragment {
+public class AccountsList extends ListFragment implements View.OnClickListener {
 
     private static final int LOADER_ACCOUNT_PROFILES = 0;
 
@@ -52,6 +51,7 @@ public class AccountsList extends ListFragment {
 
     List<HashMap<String, String>> mAccounts = new ArrayList<>();
     private AccountAdapter mAdapter;
+    private FloatingActionButton mFloatingActionButton;
 
     public AccountsList() {
         setRetainInstance(true);
@@ -67,38 +67,45 @@ public class AccountsList extends ListFragment {
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        setHasOptionsMenu(true);
-    }
-
-    @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         registerForContextMenu(getListView());
+
+        mFloatingActionButton = (FloatingActionButton) view.findViewById(R.id.fab);
+        mFloatingActionButton.setOnClickListener(this);
+
         mAdapter = new AccountAdapter(getActivity(), mAccounts);
         setListAdapter(mAdapter);
         getLoaderManager().initLoader(LOADER_ACCOUNT_PROFILES, null, new AccountsProfilesLoaderCallback(this));
     }
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.menu_manageaccounts, menu);
+    public void onResume() {
+        super.onResume();
+        setFABVisibility();
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.button_add_account:
-                // add a new account
-                String[] services = getResources().getStringArray(R.array.service_entries);
-                ItemsDialogFragment.newInstance(services, REQUEST_ADD_ACCOUNT)
-                        .show(getChildFragmentManager(), DIALOG_ADD_ACCOUNT);
-                return true;
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
 
-            default:
-                return super.onOptionsItemSelected(item);
+        if (isResumed() && !isRemoving()) {
+            setFABVisibility();
+        }
+    }
+
+    private void setFABVisibility() {
+        if (getUserVisibleHint()) {
+            if (mFloatingActionButton.getVisibility() != View.VISIBLE) {
+                mFloatingActionButton.setTranslationY(getResources().getDimension(R.dimen.fab_animation_height));
+                mFloatingActionButton.setVisibility(View.VISIBLE);
+                mFloatingActionButton.animate()
+                        .translationY(0)
+                        .setDuration(getResources().getInteger(android.R.integer.config_shortAnimTime))
+                        .start();
+            }
+        } else if (mFloatingActionButton.getVisibility() == View.VISIBLE) {
+            mFloatingActionButton.setVisibility(View.GONE);
         }
     }
 
@@ -173,6 +180,16 @@ public class AccountsList extends ListFragment {
         }
 
         mAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v == mFloatingActionButton) {
+            // add a new account
+            String[] services = getResources().getStringArray(R.array.service_entries);
+            ItemsDialogFragment.newInstance(services, REQUEST_ADD_ACCOUNT)
+                    .show(getChildFragmentManager(), DIALOG_ADD_ACCOUNT);
+        }
     }
 
     private static class AccountsProfilesLoaderCallback implements LoaderManager.LoaderCallbacks<List<HashMap<String, String>>> {

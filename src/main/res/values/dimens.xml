@@ -20,4 +20,5 @@
     <dimen name="nav_drawer_width">260dip</dimen>
     <dimen name="nav_drawer_accounts_padding">30dip</dimen>
     <dimen name="nav_drawer_accounts_min_height">132dip</dimen>
+    <dimen name="fab_animation_height">72dip</dimen>
 </resources>

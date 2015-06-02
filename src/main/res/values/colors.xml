@@ -19,13 +19,8 @@
 -->
 <resources>
 
-    <color name="default_buttons_color">#FFFFFFFF</color>
-    <color name="default_message_color">#FF000000</color>
-    <color name="default_friend_color">#FF000000</color>
-    <color name="default_created_color">#FF000000</color>
-
     <color name="colorPrimary">#FF8BA9FF</color>
     <color name="colorPrimaryDark">#FF4B7BFF</color>
-    <color name="colorAccent">#FFC9D8FF</color>
+    <color name="colorAccent">#FF536DFE</color>
 
 </resources>

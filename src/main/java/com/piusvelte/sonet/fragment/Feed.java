@@ -6,10 +6,12 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.view.ViewPropertyAnimatorCompat;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -25,6 +27,7 @@ import android.widget.Toast;
 
 import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.SonetComments;
+import com.piusvelte.sonet.SonetCreatePost;
 import com.piusvelte.sonet.SonetService;
 import com.piusvelte.sonet.provider.StatusLinks;
 import com.piusvelte.sonet.provider.StatusesStyles;
@@ -37,11 +40,12 @@ import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 /**
  * Created by bemmanuel on 3/21/15.
  */
-public class Feed extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class Feed extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor>, View.OnClickListener {
 
     private static final int LOADER_FEED = 0;
 
     private SimpleCursorAdapter mAdapter;
+    private FloatingActionButton mFloatingActionButton;
     private View mLoadingView;
 
     public Feed() {
@@ -56,6 +60,9 @@ public class Feed extends ListFragment implements LoaderManager.LoaderCallbacks<
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        mFloatingActionButton = (FloatingActionButton) view.findViewById(R.id.fab);
+        mFloatingActionButton.setOnClickListener(this);
 
         mLoadingView = view.findViewById(R.id.loading);
 
@@ -110,6 +117,36 @@ public class Feed extends ListFragment implements LoaderManager.LoaderCallbacks<
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        setFABVisibility();
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+
+        if (isResumed() && !isRemoving()) {
+            setFABVisibility();
+        }
+    }
+
+    private void setFABVisibility() {
+        if (getUserVisibleHint()) {
+            if (mFloatingActionButton.getVisibility() != View.VISIBLE) {
+                mFloatingActionButton.setTranslationY(getResources().getDimension(R.dimen.fab_animation_height));
+                mFloatingActionButton.setVisibility(View.VISIBLE);
+                mFloatingActionButton.animate()
+                        .translationY(0)
+                        .setDuration(getResources().getInteger(android.R.integer.config_shortAnimTime))
+                        .start();
+            }
+        } else if (mFloatingActionButton.getVisibility() == View.VISIBLE) {
+            mFloatingActionButton.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
     public void onDestroyView() {
         mLoadingView.setVisibility(View.GONE);
         super.onDestroyView();
@@ -160,6 +197,13 @@ public class Feed extends ListFragment implements LoaderManager.LoaderCallbacks<
             case LOADER_FEED:
                 mAdapter.changeCursor(null);
                 break;
+        }
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v == mFloatingActionButton) {
+            startActivity(new Intent(getActivity(), SonetCreatePost.class));
         }
     }
 

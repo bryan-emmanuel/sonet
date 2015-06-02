@@ -27,7 +27,7 @@ android {
     defaultConfig {
         versionCode 326
         versionName '3.2.6'
-        minSdkVersion 11
+        minSdkVersion 14
         targetSdkVersion 22
         // keys
         buildConfigField "String", "TWITTER_KEY", '"' + project.property('twitter.key') + '"'
@@ -92,6 +92,7 @@ dependencies {
     compile 'com.android.support:support-annotations:+'
     compile 'com.android.support:support-v4:22.1.1'
     compile 'com.android.support:appcompat-v7:22.1.1'
+    compile 'com.android.support:design:22.2.0'
     compile 'com.google.android.gms:play-services-ads:7.3.0'
     compile 'com.squareup.okhttp:okhttp:2.3.0'
     compile 'com.squareup.picasso:picasso:2.5.2'

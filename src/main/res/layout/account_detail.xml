@@ -51,7 +51,6 @@
         android:gravity="center_vertical"
         android:maxLines="1"
         android:paddingTop="@dimen/material_padding"
-        android:textColor="@color/default_friend_color"
         android:textStyle="bold"
         tools:text="Hello, my name is" />
 

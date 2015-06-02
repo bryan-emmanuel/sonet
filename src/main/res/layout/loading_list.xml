@@ -33,6 +33,17 @@
         android:layout_height="match_parent"
         android:text="@string/loading" />
 
+    <FloatingActionButton
+        android:id="@+id/fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|right"
+        android:layout_marginBottom="@dimen/material_padding"
+        android:layout_marginRight="@dimen/material_padding"
+        android:src="@drawable/ic_add_white_24dp"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
     <ProgressBar
         android:id="@+id/loading"
         android:layout_width="wrap_content"
