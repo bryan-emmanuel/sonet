@@ -1,6 +1,9 @@
 package com.piusvelte.sonet;
 
+import android.os.Build;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.widget.FrameLayout;
 
 import com.google.android.gms.ads.AdRequest;
@@ -17,10 +20,27 @@ public abstract class BaseActivity extends AppCompatActivity implements BaseDial
     protected void setupAd() {
         if (!getPackageName().toLowerCase().contains(PRO)) {
             AdView adView = new AdView(this);
-            ((FrameLayout) findViewById(R.id.ad)).addView(adView);
-            adView.setAdUnitId(BuildConfig.GOOGLEAD_ID);
-            adView.setAdSize(com.google.android.gms.ads.AdSize.BANNER);
-            adView.loadAd(new AdRequest.Builder().build());
+            FrameLayout adContainer = (FrameLayout) findViewById(R.id.ad);
+
+            if (adContainer != null) {
+                adContainer.addView(adView);
+                adView.setAdUnitId(BuildConfig.GOOGLEAD_ID);
+                adView.setAdSize(com.google.android.gms.ads.AdSize.BANNER);
+                adView.loadAd(new AdRequest.Builder().build());
+            }
+        }
+    }
+
+    void setupActionBar() {
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        ActionBar actionBar = getSupportActionBar();
+
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+                actionBar.setHomeButtonEnabled(true);
+            }
         }
     }
 }

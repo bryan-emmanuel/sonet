@@ -22,7 +22,7 @@ package com.piusvelte.sonet;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.piusvelte.sonet.fragment.CommentsList;
@@ -40,7 +40,7 @@ public class SonetComments extends BaseActivity {
         // allow selecting which accounts to use
         // get existing comments, allow liking|unliking those comments
         setContentView(R.layout.comments);
-        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        setupActionBar();
         setupAd();
 
         setResult(RESULT_OK);
@@ -83,6 +83,18 @@ public class SonetComments extends BaseActivity {
         } else {
             Toast.makeText(this, getString(R.string.failure), Toast.LENGTH_LONG).show();
             finish();
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
         }
     }
 

@@ -25,6 +25,6 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <style name="AppTheme" parent="AppTheme.Base"></style>
+    <style name="NavigationDrawerTheme" parent="AppTheme.Base"></style>
 
 </resources>

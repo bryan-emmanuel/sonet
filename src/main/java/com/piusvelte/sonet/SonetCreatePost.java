@@ -32,7 +32,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -122,7 +121,7 @@ public class SonetCreatePost extends BaseActivity
         // allow selecting which accounts to use
         // get existing comments, allow liking|unliking those comments
         setContentView(R.layout.post);
-        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        setupActionBar();
         setupAd();
 
         mMessage = (EditText) findViewById(R.id.message);
@@ -144,7 +143,7 @@ public class SonetCreatePost extends BaseActivity
             if (loaderManager.hasRunningLoaders()) {
                 // TODO test this! >_<
                 if (loaderManager.getLoader(LOADER_SEND_POST) != null) {
-                    loaderManager.initLoader(LOADER_SEND_POST, null, this);
+                    loaderManager.initLoader(LOADER_SEND_POST, null, mSendPostLoaderCallbacks);
                 } else if (loaderManager.getLoader(LOADER_PHOTO) != null) {
                     loaderManager.initLoader(LOADER_PHOTO, null, mPhotoPathLoaderCallbacks);
                 } else if (loaderManager.getLoader(LOADER_ACCOUNT) != null) {
@@ -208,29 +207,79 @@ public class SonetCreatePost extends BaseActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        int itemId = item.getItemId();
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                return true;
 
-        if (itemId == R.id.menu_post_accounts) {
-            chooseAccounts();
-        } else if (itemId == R.id.menu_post_photo) {
-            boolean supported = false;
+            case R.id.menu_post_accounts:
+                chooseAccounts();
+                return true;
 
-            for (ChoosePostAccounts.Account account : mAccounts) {
-                supported = sPhotoSupported.contains(account.service);
+            case R.id.menu_post_photo:
+                boolean supported = false;
+
+                for (ChoosePostAccounts.Account account : mAccounts) {
+                    supported = sPhotoSupported.contains(account.service);
+
+                    if (supported) {
+                        break;
+                    }
+                }
 
                 if (supported) {
-                    break;
+                    Intent intent = new Intent();
+                    intent.setType("image/*");
+                    intent.setAction(Intent.ACTION_GET_CONTENT);
+                    startActivityForResult(Intent.createChooser(intent, "Select Picture"), PHOTO);
+                } else {
+                    unsupportedToast(sPhotoSupported);
                 }
-            }
+                return true;
 
-            if (supported) {
-                Intent intent = new Intent();
-                intent.setType("image/*");
-                intent.setAction(Intent.ACTION_GET_CONTENT);
-                startActivityForResult(Intent.createChooser(intent, "Select Picture"), PHOTO);
-            } else {
-                unsupportedToast(sPhotoSupported);
-            }
+            case R.id.menu_post_location:
+                LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
+                Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+                if (location != null) {
+                    if (mAccounts.size() == 1) {
+                        ChoosePostAccounts.Account account = mAccounts.iterator().next();
+                        if (sLocationSupported.contains(account.service)) {
+                            setLocation(account.id);
+                        } else {
+                            unsupportedToast(sLocationSupported);
+                        }
+                    } else {
+                        int index = 0;
+                        List<Long> supportedAccounts = new ArrayList<>();
+
+                        for (ChoosePostAccounts.Account account : mAccounts) {
+                            if (sLocationSupported.contains(account.service)) {
+                                supportedAccounts.add(account.id);
+                            }
+                        }
+
+                        long[] ids = new long[supportedAccounts.size()];
+
+                        for (Long id : supportedAccounts) {
+                            ids[index] = id;
+                            index++;
+                        }
+
+                        getSupportFragmentManager().beginTransaction()
+                                .add(ChooseAccount.newInstance(REQUEST_CHOOSE_LOCATION_ACCOUNT, ids), DIALOG_CHOOSE_LOCATION_ACCOUNT)
+                                .addToBackStack(null)
+                                .commit();
+                    }
+                } else {
+                    (Toast.makeText(this, getString(R.string.location_unavailable), Toast.LENGTH_LONG)).show();
+                }
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+
 //		} else if (itemId == R.id.menu_post_tags) {
 //			if (mAccountsService.size() == 1) {
 //				if (sTaggingSupported.contains(mAccountsService.values().iterator().next()))
@@ -279,46 +328,6 @@ public class SonetCreatePost extends BaseActivity
 //				} else
 //					unsupportedToast(sTaggingSupported);
 //			}
-        } else if (itemId == R.id.menu_post_location) {
-            LocationManager locationManager = (LocationManager) SonetCreatePost.this.getSystemService(Context.LOCATION_SERVICE);
-            Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-
-            if (location != null) {
-                if (mAccounts.size() == 1) {
-                    ChoosePostAccounts.Account account = mAccounts.iterator().next();
-                    if (sLocationSupported.contains(account.service)) {
-                        setLocation(account.id);
-                    } else {
-                        unsupportedToast(sLocationSupported);
-                    }
-                } else {
-                    int index = 0;
-                    List<Long> supportedAccounts = new ArrayList<>();
-
-                    for (ChoosePostAccounts.Account account : mAccounts) {
-                        if (sLocationSupported.contains(account.service)) {
-                            supportedAccounts.add(account.id);
-                        }
-                    }
-
-                    long[] ids = new long[supportedAccounts.size()];
-
-                    for (Long id : supportedAccounts) {
-                        ids[index] = id;
-                        index++;
-                    }
-
-                    getSupportFragmentManager().beginTransaction()
-                            .add(ChooseAccount.newInstance(REQUEST_CHOOSE_LOCATION_ACCOUNT, ids), DIALOG_CHOOSE_LOCATION_ACCOUNT)
-                            .addToBackStack(null)
-                            .commit();
-                }
-            } else {
-                (Toast.makeText(this, getString(R.string.location_unavailable), Toast.LENGTH_LONG)).show();
-            }
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
     private void setLocation(final long accountId) {
@@ -373,7 +382,7 @@ public class SonetCreatePost extends BaseActivity
                 args.putParcelableArrayList(LOADER_ARG_ACCOUNTS, new ArrayList<>(mAccounts));
                 args.putString(LOADER_ARG_MESSAGE, mMessage.getText().toString());
                 args.putString(LOADER_ARG_PHOTO_URI, mPhotoPath);
-                getSupportLoaderManager().restartLoader(LOADER_SEND_POST, args, this);
+                getSupportLoaderManager().restartLoader(LOADER_SEND_POST, args, mSendPostLoaderCallbacks);
                 mLoadingView.setVisibility(View.VISIBLE);
             } else {
                 Toast.makeText(SonetCreatePost.this, "no accounts selected", Toast.LENGTH_LONG).show();

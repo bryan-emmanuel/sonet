@@ -19,7 +19,7 @@
 -->
 <resources>
 
-    <style name="AppTheme" parent="AppTheme.Base">
+    <style name="NavigationDrawerTheme" parent="AppTheme.Base">
         <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 

@@ -180,19 +180,6 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
         }
     }
 
-    private void setupActionBar() {
-        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
-        ActionBar actionBar = getSupportActionBar();
-
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-                actionBar.setHomeButtonEnabled(true);
-            }
-        }
-    }
-
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
