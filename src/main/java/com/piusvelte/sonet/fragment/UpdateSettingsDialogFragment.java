@@ -121,11 +121,6 @@ public class UpdateSettingsDialogFragment extends BaseDialogFragment
         return intent.getIntExtra(ARG_UPDATE_INTERVAL, defaultValue);
     }
 
-    @Deprecated
-    public static int getStatusCount(@Nullable Intent intent, int defaultValue) {
-        return Sonet.default_interval;
-    }
-
     public static boolean hasBackgroundUpdate(@Nullable Intent intent, boolean defaultValue) {
         if (intent == null) {
             return defaultValue;

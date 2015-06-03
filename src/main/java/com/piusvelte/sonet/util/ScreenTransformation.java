@@ -6,20 +6,19 @@ import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.support.annotation.ColorRes;
 
 import com.squareup.picasso.Transformation;
 
 /**
  * Created by bemmanuel on 5/27/15.
  */
-public class TintTransformation implements Transformation {
+public class ScreenTransformation implements Transformation {
 
     private Paint mTintPaint = new Paint();
     private String mKey;
 
-    public TintTransformation(@ColorRes int colorRes) {
-        mKey = TintTransformation.class.getSimpleName() + ":" + colorRes;
+    public ScreenTransformation(int colorRes) {
+        mKey = ScreenTransformation.class.getSimpleName() + ":" + colorRes;
         ColorFilter tint = new PorterDuffColorFilter(colorRes, PorterDuff.Mode.SCREEN);
         mTintPaint.setColorFilter(tint);
     }

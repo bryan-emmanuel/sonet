@@ -63,7 +63,7 @@ public class ChoosePostAccounts extends ListFragment implements LoaderManager.Lo
     private View mLoadingView;
     private MultiChoiceAdapter mAdapter;
 
-    public static ChoosePostAccounts newInstance(int requestCode, HashSet<Account> selectedAccounts) {
+    public static ChoosePostAccounts newInstance(int requestCode, @NonNull HashSet<Account> selectedAccounts) {
         ChoosePostAccounts fragment = new ChoosePostAccounts();
         Bundle args = new Bundle();
         args.putInt(ARG_REQUEST_CODE, requestCode);
@@ -83,7 +83,9 @@ public class ChoosePostAccounts extends ListFragment implements LoaderManager.Lo
 
         mLoadingView = view.findViewById(R.id.loading);
 
-        mAdapter = new MultiChoiceAdapter(getActivity(), null, getListView());
+        ListView listView = getListView();
+        mAdapter = new MultiChoiceAdapter(getActivity(), null, listView);
+        listView.setAdapter(mAdapter);
 
         List<Long> selectedIds = mAdapter.getSelectedIds();
         List<Account> selectedAccounts = getArguments().getParcelableArrayList(ARG_SELECTED_ACCOUNTS);

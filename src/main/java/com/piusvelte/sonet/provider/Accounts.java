@@ -34,7 +34,7 @@ public class Accounts implements BaseColumns {
         ACCOUNTS_QUERY = "(case";
 
         for (Client.Network network : Client.Network.values()) {
-            ACCOUNTS_QUERY += " when " + SERVICE + network.ordinal() + " then '" + network.name() + ": '";
+            ACCOUNTS_QUERY += " when " + SERVICE + "=" + network.ordinal() + " then '" + network.name() + ": '";
         }
 
         ACCOUNTS_QUERY += " else '' end)||" + USERNAME + " as " + USERNAME;

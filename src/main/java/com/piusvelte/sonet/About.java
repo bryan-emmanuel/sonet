@@ -30,9 +30,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -51,7 +49,7 @@ import com.piusvelte.sonet.fragment.Feed;
 import com.piusvelte.sonet.fragment.NotificationsList;
 import com.piusvelte.sonet.fragment.Settings;
 import com.piusvelte.sonet.loader.AccountsProfilesLoader;
-import com.piusvelte.sonet.util.TintTransformation;
+import com.piusvelte.sonet.util.ScreenTransformation;
 import com.squareup.picasso.Picasso;
 
 import java.lang.annotation.Retention;
@@ -102,7 +100,7 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
     private ActionBarDrawerToggle mDrawerToggle;
     List<HashMap<String, String>> mAccounts = new ArrayList<>();
     private AccountsProfilesLoaderCallback mAccountsProfilesLoaderCallback = new AccountsProfilesLoaderCallback(this);
-    private TintTransformation mTintTransformation;
+    private ScreenTransformation mScreenTransformation;
 
     public static Intent createIntent(@NonNull Context context) {
         return new Intent(context, About.class);
@@ -328,13 +326,13 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
                 String url = AccountProfileAdapter.getAccountProfileUrl(accounts.get(0));
 
                 if (!TextUtils.isEmpty(url)) {
-                    if (mTintTransformation == null) {
-                        mTintTransformation = new TintTransformation(getResources().getColor(R.color.colorPrimaryDark));
+                    if (mScreenTransformation == null) {
+                        mScreenTransformation = new ScreenTransformation(getResources().getColor(R.color.colorPrimaryDark));
                     }
 
                     Picasso.with(this)
                             .load(url)
-                            .transform(mTintTransformation)
+                            .transform(mScreenTransformation)
                             .into(mDrawerAccountsBackground);
                 }
             }
