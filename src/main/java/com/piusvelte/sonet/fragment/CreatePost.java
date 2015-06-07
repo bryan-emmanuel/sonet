@@ -201,9 +201,16 @@ public class CreatePost extends Fragment implements TextWatcher, View.OnKeyListe
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        Fragment fragment;
         switch (item.getItemId()) {
             case android.R.id.home:
-                getActivity().finish();
+                fragment = getFragmentManager().findFragmentByTag(FRAGMENT_CHOOSE_POST_ACCOUNTS);
+
+                if (fragment != null) {
+                    getFragmentManager().popBackStack();
+                } else {
+                    getActivity().finish();
+                }
                 return true;
 
             case R.id.menu_post_accounts:
@@ -260,9 +267,11 @@ public class CreatePost extends Fragment implements TextWatcher, View.OnKeyListe
                             index++;
                         }
 
+                        fragment = ChooseAccount.newInstance(REQUEST_CHOOSE_LOCATION_ACCOUNT, ids);
+                        fragment.setTargetFragment(this, REQUEST_CHOOSE_LOCATION_ACCOUNT);
                         getFragmentManager().beginTransaction()
                                 .add(R.id.fragment_container,
-                                        ChooseAccount.newInstance(REQUEST_CHOOSE_LOCATION_ACCOUNT, ids),
+                                        fragment,
                                         DIALOG_CHOOSE_LOCATION_ACCOUNT)
                                 .addToBackStack(null)
                                 .commit();
@@ -330,9 +339,11 @@ public class CreatePost extends Fragment implements TextWatcher, View.OnKeyListe
         InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
         inputMethodManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
 
+        Fragment fragment = ChoosePostAccounts.newInstance(REQUEST_CHOOSE_POST_ACCOUNTS, mAccounts);
+        fragment.setTargetFragment(this, REQUEST_CHOOSE_POST_ACCOUNTS);
         getFragmentManager().beginTransaction()
                 .add(R.id.fragment_container,
-                        ChoosePostAccounts.newInstance(REQUEST_CHOOSE_POST_ACCOUNTS, mAccounts),
+                        fragment,
                         FRAGMENT_CHOOSE_POST_ACCOUNTS)
                 .addToBackStack(null)
                 .commit();
@@ -472,9 +483,11 @@ public class CreatePost extends Fragment implements TextWatcher, View.OnKeyListe
         }
 
         if (!TextUtils.isEmpty(latitude) && !TextUtils.isEmpty(longitude)) {
+            Fragment fragment = ChooseLocation.newInstance(REQUEST_CHOOSE_LOCATION, accountId, latitude, longitude);
+            fragment.setTargetFragment(this, REQUEST_CHOOSE_LOCATION);
             getFragmentManager().beginTransaction()
                     .add(R.id.fragment_container,
-                            ChooseLocation.newInstance(REQUEST_CHOOSE_LOCATION, accountId, latitude, longitude),
+                            fragment,
                             DIALOG_CHOOSE_LOCATION)
                     .addToBackStack(null)
                     .commit();
