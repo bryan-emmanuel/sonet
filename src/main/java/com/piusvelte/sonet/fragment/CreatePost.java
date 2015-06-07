@@ -153,6 +153,15 @@ public class CreatePost extends Fragment implements TextWatcher, View.OnKeyListe
         setHasOptionsMenu(true);
     }
 
+    @Override
+    public void onDestroyView() {
+        mMessage = null;
+        mSend = null;
+        mCount = null;
+        mLoadingView = null;
+        super.onDestroyView();
+    }
+
     // TODO support passing in arguments
     private void handleIntent(@Nullable Intent intent) {
         if (intent != null) {
