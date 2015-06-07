@@ -18,6 +18,7 @@ import com.piusvelte.sonet.util.CircleTransformation;
 import com.squareup.picasso.Picasso;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -29,11 +30,12 @@ public class AccountAdapter extends BaseAdapter {
     Picasso mPicasso;
     CircleTransformation mCircleTransformation;
     List<HashMap<String, String>> mAccounts;
+    HashSet<Integer> mSelection = new HashSet<>();
 
     public AccountAdapter(Context context,
-            List<HashMap<String, String>> account) {
+            List<HashMap<String, String>> accounts) {
         mContext = context;
-        mAccounts = account;
+        mAccounts = accounts;
         mPicasso = Picasso.with(context);
         mCircleTransformation = new CircleTransformation();
     }
@@ -71,6 +73,7 @@ public class AccountAdapter extends BaseAdapter {
             viewHolder.profile = (ImageView) convertView.findViewById(R.id.profile);
             viewHolder.icon = (ImageView) convertView.findViewById(R.id.icon);
             viewHolder.friend = (TextView) convertView.findViewById(R.id.friend);
+            viewHolder.check = convertView.findViewById(R.id.check);
             convertView.setTag(viewHolder);
         } else {
             viewHolder = (ViewHolder) convertView.getTag();
@@ -98,9 +101,28 @@ public class AccountAdapter extends BaseAdapter {
             if (viewHolder.friend != null) {
                 viewHolder.friend.setText(network + ": " + getAccountUsername(account));
             }
+
+            // TODO animations
+            if (mSelection.contains(position)) {
+                viewHolder.check.setVisibility(View.VISIBLE);
+            } else {
+                viewHolder.check.setVisibility(View.GONE);
+            }
         }
 
         return convertView;
+    }
+
+    public void setSelection(int position, boolean isSelected) {
+        if (isSelected) {
+            mSelection.add(position);
+        } else {
+            mSelection.remove(position);
+        }
+    }
+
+    public void clearSelection() {
+        mSelection.clear();
     }
 
     public static long getAccountId(HashMap<String, String> account) {
@@ -139,5 +161,6 @@ public class AccountAdapter extends BaseAdapter {
         ImageView profile;
         ImageView icon;
         TextView friend;
+        View check;
     }
 }

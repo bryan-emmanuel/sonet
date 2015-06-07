@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="oval">
+            <size
+                android:width="@dimen/message_item_header_height"
+                android:height="@dimen/message_item_header_height" />
+            <solid android:color="@color/colorPrimary" />
+        </shape>
+    </item>
+    <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/ic_check_white_24dp" />
+    </item>
+</layer-list>

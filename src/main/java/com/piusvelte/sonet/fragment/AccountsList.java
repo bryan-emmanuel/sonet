@@ -2,13 +2,11 @@ package com.piusvelte.sonet.fragment;
 
 import android.app.Activity;
 import android.appwidget.AppWidgetManager;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ListFragment;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -23,7 +21,7 @@ import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetService;
 import com.piusvelte.sonet.adapter.AccountAdapter;
-import com.piusvelte.sonet.loader.AccountsProfilesLoader;
+import com.piusvelte.sonet.loader.AccountsProfilesLoaderCallback;
 import com.piusvelte.sonet.provider.Accounts;
 import com.piusvelte.sonet.service.AccountUpdateService;
 
@@ -36,7 +34,8 @@ import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 /**
  * Created by bemmanuel on 4/19/15.
  */
-public class AccountsList extends ListFragment implements View.OnClickListener {
+public class AccountsList extends ListFragment implements View.OnClickListener,
+        AccountsProfilesLoaderCallback.OnAccountsLoadedListener {
 
     private static final int LOADER_ACCOUNT_PROFILES = 0;
 
@@ -49,7 +48,7 @@ public class AccountsList extends ListFragment implements View.OnClickListener {
     private static final int REQUEST_ADD_ACCOUNT = 1;
     private static final int REQUEST_REFRESH = 2;
 
-    List<HashMap<String, String>> mAccounts = new ArrayList<>();
+    private List<HashMap<String, String>> mAccounts = new ArrayList<>();
     private AccountAdapter mAdapter;
     private FloatingActionButton mFloatingActionButton;
 
@@ -76,7 +75,9 @@ public class AccountsList extends ListFragment implements View.OnClickListener {
 
         mAdapter = new AccountAdapter(getActivity(), mAccounts);
         setListAdapter(mAdapter);
-        getLoaderManager().initLoader(LOADER_ACCOUNT_PROFILES, null, new AccountsProfilesLoaderCallback(this));
+        getLoaderManager().initLoader(LOADER_ACCOUNT_PROFILES,
+                null,
+                new AccountsProfilesLoaderCallback(this, LOADER_ACCOUNT_PROFILES));
     }
 
     @Override
@@ -162,7 +163,9 @@ public class AccountsList extends ListFragment implements View.OnClickListener {
                     getActivity().startService(new Intent(getActivity(), SonetService.class)
                             .setAction(ACTION_REFRESH)
                             .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[] { AppWidgetManager.INVALID_APPWIDGET_ID }));
-                    getLoaderManager().restartLoader(LOADER_ACCOUNT_PROFILES, null, new AccountsProfilesLoaderCallback(this));
+                    getLoaderManager().restartLoader(LOADER_ACCOUNT_PROFILES,
+                            null,
+                            new AccountsProfilesLoaderCallback(this, LOADER_ACCOUNT_PROFILES));
                 }
                 break;
 
@@ -170,16 +173,6 @@ public class AccountsList extends ListFragment implements View.OnClickListener {
                 super.onActivityResult(requestCode, resultCode, data);
                 break;
         }
-    }
-
-    public void setAccounts(List<HashMap<String, String>> accounts) {
-        mAccounts.clear();
-
-        if (accounts != null) {
-            mAccounts.addAll(accounts);
-        }
-
-        mAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -192,41 +185,19 @@ public class AccountsList extends ListFragment implements View.OnClickListener {
         }
     }
 
-    private static class AccountsProfilesLoaderCallback implements LoaderManager.LoaderCallbacks<List<HashMap<String, String>>> {
+    @Override
+    public Context getContext() {
+        return getActivity();
+    }
 
-        private AccountsList mAccountsList;
+    @Override
+    public void onAccountsLoaded(List<HashMap<String, String>> accounts) {
+        mAccounts.clear();
 
-        AccountsProfilesLoaderCallback(@NonNull AccountsList accountsList) {
-            mAccountsList = accountsList;
+        if (accounts != null) {
+            mAccounts.addAll(accounts);
         }
 
-        @Override
-        public Loader<List<HashMap<String, String>>> onCreateLoader(int id, Bundle args) {
-            switch (id) {
-                case LOADER_ACCOUNT_PROFILES:
-                    return new AccountsProfilesLoader(mAccountsList.getActivity());
-
-                default:
-                    return null;
-            }
-        }
-
-        @Override
-        public void onLoadFinished(Loader<List<HashMap<String, String>>> loader, List<HashMap<String, String>> data) {
-            switch (loader.getId()) {
-                case LOADER_ACCOUNT_PROFILES:
-                    mAccountsList.setAccounts(data);
-                    break;
-            }
-        }
-
-        @Override
-        public void onLoaderReset(Loader<List<HashMap<String, String>>> loader) {
-            switch (loader.getId()) {
-                case LOADER_ACCOUNT_PROFILES:
-                    mAccountsList.setAccounts(null);
-                    break;
-            }
-        }
+        mAdapter.notifyDataSetChanged();
     }
 }

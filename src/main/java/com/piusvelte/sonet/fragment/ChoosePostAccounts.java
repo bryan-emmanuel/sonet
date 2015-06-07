@@ -3,7 +3,6 @@ package com.piusvelte.sonet.fragment;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -13,21 +12,23 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.CursorLoader;
-import android.support.v4.content.Loader;
 import android.text.TextUtils;
+import android.view.ActionMode;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckedTextView;
-import android.widget.CursorAdapter;
+import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.piusvelte.sonet.R;
-import com.piusvelte.sonet.provider.Accounts;
+import com.piusvelte.sonet.adapter.AccountAdapter;
+import com.piusvelte.sonet.loader.AccountsProfilesLoaderCallback;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
@@ -38,12 +39,13 @@ import static com.piusvelte.sonet.Sonet.TWITTER;
 /**
  * Created by bemmanuel on 4/30/15.
  */
-public class ChoosePostAccounts extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class ChoosePostAccounts extends ListFragment implements AccountsProfilesLoaderCallback.OnAccountsLoadedListener,
+        AdapterView.OnItemLongClickListener, AbsListView.MultiChoiceModeListener {
 
     private static final String ARG_REQUEST_CODE = "request_code";
     private static final String ARG_SELECTED_ACCOUNTS = "selected_accounts";
 
-    private static final int LOADER_ACCOUNT_NAMES = 0;
+    private static final int LOADER_ACCOUNTS = 0;
 
     private static final String DIALOG_CONFIRM_SET_LOCATION = "dialog:confirm_set_location";
     private static final String DIALOG_CHOOSE_LOCATION = "dialog:choose_location";
@@ -61,7 +63,8 @@ public class ChoosePostAccounts extends ListFragment implements LoaderManager.Lo
     }
 
     private View mLoadingView;
-    private MultiChoiceAdapter mAdapter;
+    private List<HashMap<String, String>> mAccounts = new ArrayList<>();
+    private AccountAdapter mAdapter;
 
     public static ChoosePostAccounts newInstance(int requestCode, @NonNull HashSet<Account> selectedAccounts) {
         ChoosePostAccounts fragment = new ChoosePostAccounts();
@@ -84,18 +87,16 @@ public class ChoosePostAccounts extends ListFragment implements LoaderManager.Lo
         mLoadingView = view.findViewById(R.id.loading);
 
         ListView listView = getListView();
-        mAdapter = new MultiChoiceAdapter(getActivity(), null, listView);
+        listView.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE_MODAL);
+        listView.setOnItemLongClickListener(this);
+        listView.setMultiChoiceModeListener(this);
+        mAdapter = new AccountAdapter(getActivity(), mAccounts);
         listView.setAdapter(mAdapter);
 
-        List<Long> selectedIds = mAdapter.getSelectedIds();
-        List<Account> selectedAccounts = getArguments().getParcelableArrayList(ARG_SELECTED_ACCOUNTS);
-
-        for (Account account : selectedAccounts) {
-            selectedIds.add(account.id);
-        }
-
         mLoadingView.setVisibility(View.VISIBLE);
-        getLoaderManager().initLoader(LOADER_ACCOUNT_NAMES, null, this);
+        getLoaderManager().initLoader(LOADER_ACCOUNTS,
+                null,
+                new AccountsProfilesLoaderCallback(this, LOADER_ACCOUNTS));
     }
 
     @Override
@@ -145,26 +146,107 @@ public class ChoosePostAccounts extends ListFragment implements LoaderManager.Lo
     }
 
     @Override
-    public void onListItemClick(ListView l, View v, int position, long id) {
-        boolean wasChecked = l.isItemChecked(position);
-        List<Long> selectedIds = mAdapter.getSelectedIds();
-        List<Account> selectedAccounts = getArguments().getParcelableArrayList(ARG_SELECTED_ACCOUNTS);
+    public Context getContext() {
+        return getActivity();
+    }
 
-        if (wasChecked) {
-            selectedIds.remove(id);
-            ArrayList<Account> newSelectedAccounts = new ArrayList<>(selectedIds.size());
+    @Override
+    public void onAccountsLoaded(List<HashMap<String, String>> accounts) {
+        mLoadingView.setVisibility(View.GONE);
+        mAccounts.clear();
 
-            for (Account account : selectedAccounts) {
-                if (account.id != id) {
-                    newSelectedAccounts.add(account);
+        if (accounts != null) {
+            mAccounts.addAll(accounts);
+            List<Account> selection = getArguments().getParcelableArrayList(ARG_SELECTED_ACCOUNTS);
+
+            if (selection != null) {
+                int position = 0;
+
+                for (HashMap<String, String> account : accounts) {
+                    for (ChoosePostAccounts.Account selectedAccount : selection) {
+                        if (AccountAdapter.getAccountId(account) == selectedAccount.id) {
+                            mAdapter.setSelection(position, true);
+                        }
+                    }
+
+                    position++;
                 }
             }
-
-            getArguments().putParcelableArrayList(ARG_SELECTED_ACCOUNTS, newSelectedAccounts);
         } else {
-            selectedIds.add(id);
+            mAdapter.clearSelection();
+        }
+
+        mAdapter.notifyDataSetChanged();
+
+        // TODO start action mode any selected accounts;
+    }
+
+//    private static class MultiChoiceAdapter extends CursorAdapter {
+//
+//        private List<Long> selectedIds = new ArrayList<>();
+//        private LayoutInflater mInflater;
+//        private int mIdIndex;
+//        private int mUsernameIndex;
+//        private ListView mListView;
+//
+//        public MultiChoiceAdapter(Context context, Cursor c, ListView listView) {
+//            super(context, c, false);
+//            mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+//            mListView = listView;
+//        }
+//
+//        @Override
+//        public Cursor swapCursor(Cursor newCursor) {
+//            Cursor oldCursor = super.swapCursor(newCursor);
+//
+//            if (newCursor != null) {
+//                mIdIndex = newCursor.getColumnIndexOrThrow(Accounts._ID);
+//                mUsernameIndex = newCursor.getColumnIndexOrThrow(Accounts.USERNAME);
+//            } else {
+//                mIdIndex = 0;
+//                mUsernameIndex = 0;
+//            }
+//
+//            return oldCursor;
+//        }
+//
+//        @Override
+//        public void bindView(View view, Context context, Cursor cursor) {
+//            CheckedTextView text = (CheckedTextView) view.findViewById(android.R.id.text1);
+//            text.setText(cursor.getString(mUsernameIndex));
+//            mListView.setItemChecked(cursor.getPosition(),
+//                    selectedIds.contains(cursor.getLong(mIdIndex)));
+//        }
+//
+//        @Override
+//        public View newView(Context context, Cursor cursor, ViewGroup parent) {
+//            return mInflater.inflate(R.layout.multichoice_item, parent, false);
+//        }
+//
+//        public List<Long> getSelectedIds() {
+//            return selectedIds;
+//        }
+//    }
+
+    public static List<Account> getAccounts(@NonNull Intent intent) {
+        return intent.getParcelableArrayListExtra(ARG_SELECTED_ACCOUNTS);
+    }
+
+    @Override
+    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+        ListView listView = (ListView) parent;
+        listView.setItemChecked(position, listView.isItemChecked(position));
+        return false;
+    }
+
+    @Override
+    public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
+        List<Account> selectedAccounts = getArguments().getParcelableArrayList(ARG_SELECTED_ACCOUNTS);
+
+        if (checked) {
             Account account = new Account();
             account.id = id;
+            account.service = AccountAdapter.getAccountService(mAdapter.getItem(position));
             selectedAccounts.add(account);
 
             if (sLocationSupported.contains(account.service)) {
@@ -192,123 +274,61 @@ public class ChoosePostAccounts extends ListFragment implements LoaderManager.Lo
                             .show(getChildFragmentManager(), DIALOG_CONFIRM_SET_LOCATION);
                 }
             }
+        } else {
+            ArrayList<Account> newSelectedAccounts = new ArrayList<>(selectedAccounts.size());
+
+            for (Account account : selectedAccounts) {
+                if (account.id != id) {
+                    newSelectedAccounts.add(account);
+                }
+            }
+
+            getArguments().putParcelableArrayList(ARG_SELECTED_ACCOUNTS, newSelectedAccounts);
+            selectedAccounts = newSelectedAccounts;
         }
 
-        l.setItemChecked(position, !wasChecked);
+        mAdapter.setSelection(position, checked);
+        mAdapter.notifyDataSetChanged();
+        mode.setTitle(selectedAccounts.size() + " accounts");
     }
 
     @Override
-    public void onPause() {
-        super.onPause();
+    public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+        return true;
+    }
 
-        if (isRemoving()) {
-            int requestCode = getArguments().getInt(ARG_REQUEST_CODE);
-            Intent intent = new Intent().putExtra(ARG_SELECTED_ACCOUNTS, getArguments().getParcelableArrayList(ARG_SELECTED_ACCOUNTS));
+    @Override
+    public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+        return false;
+    }
 
-            Fragment target = getTargetFragment();
+    @Override
+    public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+        return false;
+    }
 
-            if (target != null) {
-                target.onActivityResult(requestCode, Activity.RESULT_OK, intent);
+    @Override
+    public void onDestroyActionMode(ActionMode mode) {
+        int requestCode = getArguments().getInt(ARG_REQUEST_CODE);
+        Intent intent = new Intent().putExtra(ARG_SELECTED_ACCOUNTS, getArguments().getParcelableArrayList(ARG_SELECTED_ACCOUNTS));
+
+        Fragment target = getTargetFragment();
+
+        if (target != null) {
+            target.onActivityResult(requestCode, Activity.RESULT_OK, intent);
+        } else {
+            Fragment parent = getParentFragment();
+
+            if (parent != null) {
+                parent.onActivityResult(requestCode, Activity.RESULT_OK, intent);
             } else {
-                Fragment parent = getParentFragment();
+                Activity activity = getActivity();
 
-                if (parent != null) {
-                    parent.onActivityResult(requestCode, Activity.RESULT_OK, intent);
-                } else {
-                    Activity activity = getActivity();
-
-                    if (activity instanceof BaseDialogFragment.OnResultListener) {
-                        ((BaseDialogFragment.OnResultListener) activity).onResult(requestCode, Activity.RESULT_OK, intent);
-                    }
+                if (activity instanceof BaseDialogFragment.OnResultListener) {
+                    ((BaseDialogFragment.OnResultListener) activity).onResult(requestCode, Activity.RESULT_OK, intent);
                 }
             }
         }
-    }
-
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        switch (id) {
-            case LOADER_ACCOUNT_NAMES:
-                return new CursorLoader(getActivity(),
-                        Accounts.getContentUri(getActivity()),
-                        new String[] { Accounts._ID, Accounts.SERVICE, Accounts.ACCOUNTS_QUERY },
-                        null,
-                        null,
-                        null);
-
-            default:
-                return null;
-        }
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-        switch (loader.getId()) {
-            case LOADER_ACCOUNT_NAMES:
-                mLoadingView.setVisibility(View.GONE);
-                mAdapter.changeCursor(cursor);
-                break;
-        }
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-        switch (loader.getId()) {
-            case LOADER_ACCOUNT_NAMES:
-                mAdapter.changeCursor(null);
-                break;
-        }
-    }
-
-    private static class MultiChoiceAdapter extends CursorAdapter {
-
-        private List<Long> selectedIds = new ArrayList<>();
-        private LayoutInflater mInflater;
-        private int mIdIndex;
-        private int mUsernameIndex;
-        private ListView mListView;
-
-        public MultiChoiceAdapter(Context context, Cursor c, ListView listView) {
-            super(context, c, false);
-            mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            mListView = listView;
-        }
-
-        @Override
-        public Cursor swapCursor(Cursor newCursor) {
-            Cursor oldCursor = super.swapCursor(newCursor);
-
-            if (newCursor != null) {
-                mIdIndex = newCursor.getColumnIndexOrThrow(Accounts._ID);
-                mUsernameIndex = newCursor.getColumnIndexOrThrow(Accounts.USERNAME);
-            } else {
-                mIdIndex = 0;
-                mUsernameIndex = 0;
-            }
-
-            return oldCursor;
-        }
-
-        @Override
-        public void bindView(View view, Context context, Cursor cursor) {
-            CheckedTextView text = (CheckedTextView) view.findViewById(android.R.id.text1);
-            text.setText(cursor.getString(mUsernameIndex));
-            mListView.setItemChecked(cursor.getPosition(),
-                    selectedIds.contains(cursor.getLong(mIdIndex)));
-        }
-
-        @Override
-        public View newView(Context context, Cursor cursor, ViewGroup parent) {
-            return mInflater.inflate(R.layout.multichoice_item, parent, false);
-        }
-
-        public List<Long> getSelectedIds() {
-            return selectedIds;
-        }
-    }
-
-    public static List<Account> getAccounts(@NonNull Intent intent) {
-        return intent.getParcelableArrayListExtra(ARG_SELECTED_ACCOUNTS);
     }
 
     public static class Account implements Parcelable {

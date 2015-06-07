@@ -31,6 +31,15 @@
         tools:src="@drawable/icon" />
 
     <ImageView
+        android:id="@+id/check"
+        android:layout_width="@dimen/message_item_header_height"
+        android:layout_height="@dimen/message_item_header_height"
+        android:padding="@dimen/material_padding"
+        android:src="@drawable/checked_circle"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+    <ImageView
         android:id="@+id/icon"
         android:layout_width="32dip"
         android:layout_height="32dip"
