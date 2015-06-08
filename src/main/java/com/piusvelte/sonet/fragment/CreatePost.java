@@ -10,7 +10,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -38,20 +37,17 @@ import com.piusvelte.sonet.provider.Accounts;
 import com.piusvelte.sonet.provider.Widgets;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
 import static com.piusvelte.sonet.Sonet.FOURSQUARE;
-import static com.piusvelte.sonet.Sonet.INVALID_ACCOUNT_ID;
-import static com.piusvelte.sonet.Sonet.Stags;
 import static com.piusvelte.sonet.Sonet.TWITTER;
 
 /**
  * Created by bemmanuel on 6/4/15.
  */
-public class CreatePost extends Fragment implements TextWatcher, View.OnKeyListener, View.OnClickListener, LoaderManager.LoaderCallbacks<Cursor> {
+public class CreatePost extends Fragment implements TextWatcher, View.OnKeyListener, LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final int LOADER_ACCOUNT = 0;
     private static final int LOADER_SEND_POST = 1;
@@ -67,11 +63,10 @@ public class CreatePost extends Fragment implements TextWatcher, View.OnKeyListe
     private static final String LOADER_ARG_ACCOUNTS = "accounts";
     private static final String LOADER_ARG_MESSAGE = "message";
 
-    private static final int REQUEST_CHOOSE_LOCATION_ACCOUNT = 0;
-    private static final int REQUEST_CHOOSE_POST_ACCOUNTS = 1;
-    private static final int REQUEST_CHOOSE_LOCATION = 2;
-    private static final int REQUEST_PHOTO = 3;
-    private static final int REQUEST_TAGS = 4;
+    private static final int REQUEST_CHOOSE_POST_ACCOUNTS = 0;
+    private static final int REQUEST_CHOOSE_LOCATION = 1;
+    private static final int REQUEST_PHOTO = 2;
+//    private static final int REQUEST_TAGS = 3;
 
     private static final String STATE_MESSAGE = "state:message";
 
@@ -90,7 +85,6 @@ public class CreatePost extends Fragment implements TextWatcher, View.OnKeyListe
 
     private HashSet<ChoosePostAccounts.Account> mAccounts = new HashSet<>();
     private EditText mMessage;
-    private FloatingActionButton mSend;
     private TextView mCount;
     private View mLoadingView;
     private String mPhotoPath;
@@ -121,13 +115,11 @@ public class CreatePost extends Fragment implements TextWatcher, View.OnKeyListe
         super.onViewCreated(view, savedInstanceState);
 
         mMessage = (EditText) view.findViewById(R.id.message);
-        mSend = (FloatingActionButton) view.findViewById(R.id.send);
         mCount = (TextView) view.findViewById(R.id.count);
         mLoadingView = view.findViewById(R.id.loading);
 
         mMessage.addTextChangedListener(this);
         mMessage.setOnKeyListener(this);
-        mSend.setOnClickListener(this);
 
         LoaderManager loaderManager = getLoaderManager();
 
@@ -156,7 +148,6 @@ public class CreatePost extends Fragment implements TextWatcher, View.OnKeyListe
     @Override
     public void onDestroyView() {
         mMessage = null;
-        mSend = null;
         mCount = null;
         mLoadingView = null;
         super.onDestroyView();
@@ -247,46 +238,16 @@ public class CreatePost extends Fragment implements TextWatcher, View.OnKeyListe
                 }
                 return true;
 
-            case R.id.menu_post_location:
-                LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-                Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-
-                if (location != null) {
-                    if (mAccounts.size() == 1) {
-                        ChoosePostAccounts.Account account = mAccounts.iterator().next();
-                        if (sLocationSupported.contains(account.service)) {
-                            setLocation(account.id);
-                        } else {
-                            unsupportedToast(sLocationSupported);
-                        }
-                    } else {
-                        int index = 0;
-                        List<Long> supportedAccounts = new ArrayList<>();
-
-                        for (ChoosePostAccounts.Account account : mAccounts) {
-                            if (sLocationSupported.contains(account.service)) {
-                                supportedAccounts.add(account.id);
-                            }
-                        }
-
-                        long[] ids = new long[supportedAccounts.size()];
-
-                        for (Long id : supportedAccounts) {
-                            ids[index] = id;
-                            index++;
-                        }
-
-                        fragment = ChooseAccount.newInstance(REQUEST_CHOOSE_LOCATION_ACCOUNT, ids);
-                        fragment.setTargetFragment(this, REQUEST_CHOOSE_LOCATION_ACCOUNT);
-                        getFragmentManager().beginTransaction()
-                                .add(R.id.fragment_container,
-                                        fragment,
-                                        DIALOG_CHOOSE_LOCATION_ACCOUNT)
-                                .addToBackStack(null)
-                                .commit();
-                    }
+            case R.id.menu_send:
+                if (!mAccounts.isEmpty()) {
+                    Bundle args = new Bundle();
+                    args.putParcelableArrayList(LOADER_ARG_ACCOUNTS, new ArrayList<>(mAccounts));
+                    args.putString(LOADER_ARG_MESSAGE, mMessage.getText().toString());
+                    args.putString(LOADER_ARG_PHOTO_URI, mPhotoPath);
+                    getLoaderManager().restartLoader(LOADER_SEND_POST, args, mSendPostLoaderCallbacks);
+                    mLoadingView.setVisibility(View.VISIBLE);
                 } else {
-                    Toast.makeText(getActivity(), getString(R.string.location_unavailable), Toast.LENGTH_LONG).show();
+                    Toast.makeText(getActivity(), "no accounts selected", Toast.LENGTH_LONG).show();
                 }
                 return true;
 
@@ -377,22 +338,6 @@ public class CreatePost extends Fragment implements TextWatcher, View.OnKeyListe
     public boolean onKey(View v, int keyCode, KeyEvent event) {
         mCount.setText(Integer.toString(mMessage.getText().toString().length()));
         return false;
-    }
-
-    @Override
-    public void onClick(View v) {
-        if (v == mSend) {
-            if (!mAccounts.isEmpty()) {
-                Bundle args = new Bundle();
-                args.putParcelableArrayList(LOADER_ARG_ACCOUNTS, new ArrayList<>(mAccounts));
-                args.putString(LOADER_ARG_MESSAGE, mMessage.getText().toString());
-                args.putString(LOADER_ARG_PHOTO_URI, mPhotoPath);
-                getLoaderManager().restartLoader(LOADER_SEND_POST, args, mSendPostLoaderCallbacks);
-                mLoadingView.setVisibility(View.VISIBLE);
-            } else {
-                Toast.makeText(getActivity(), "no accounts selected", Toast.LENGTH_LONG).show();
-            }
-        }
     }
 
     @Override
@@ -563,36 +508,18 @@ public class CreatePost extends Fragment implements TextWatcher, View.OnKeyListe
                 }
                 break;
 
-            case REQUEST_TAGS:
-                if (resultCode == Activity.RESULT_OK && data.hasExtra(Stags) && data.hasExtra(Accounts.SID)) {
-                    long id = data.getLongExtra(Accounts.SID, Sonet.INVALID_ACCOUNT_ID);
-
-                    for (ChoosePostAccounts.Account account : mAccounts) {
-                        if (account.id == id) {
-                            account.tags = Arrays.asList(data.getStringArrayExtra(Stags));
-                            break;
-                        }
-                    }
-                }
-                break;
-
-            case REQUEST_CHOOSE_LOCATION_ACCOUNT:
-                if (resultCode == Activity.RESULT_OK) {
-                    long accountId = ChooseAccount.getSelectedId(data);
-
-                    if (accountId != INVALID_ACCOUNT_ID) {
-                        setLocation(accountId);
-                    }
-                }
-
-                Fragment fragment = getFragmentManager().findFragmentByTag(DIALOG_CHOOSE_LOCATION_ACCOUNT);
-
-                if (fragment != null) {
-                    getFragmentManager().beginTransaction()
-                            .remove(fragment)
-                            .commit();
-                }
-                break;
+//            case REQUEST_TAGS:
+//                if (resultCode == Activity.RESULT_OK && data.hasExtra(Stags) && data.hasExtra(Accounts.SID)) {
+//                    long id = data.getLongExtra(Accounts.SID, Sonet.INVALID_ACCOUNT_ID);
+//
+//                    for (ChoosePostAccounts.Account account : mAccounts) {
+//                        if (account.id == id) {
+//                            account.tags = Arrays.asList(data.getStringArrayExtra(Stags));
+//                            break;
+//                        }
+//                    }
+//                }
+//                break;
 
             case REQUEST_CHOOSE_POST_ACCOUNTS:
                 if (resultCode == Activity.RESULT_OK) {

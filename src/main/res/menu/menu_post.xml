@@ -32,11 +32,11 @@
         android:title="@string/add_photo"
         app:showAsAction="ifRoom" />
     <item
-        android:id="@+id/menu_post_location"
-        android:icon="@drawable/ic_my_location_white_24dp"
+        android:id="@+id/menu_send"
+        android:icon="@drawable/ic_send_white_24dp"
         android:orderInCategory="2"
-        android:title="@string/add_location"
-        app:showAsAction="ifRoom" />
+        android:title="@string/send"
+        app:showAsAction="always" />
     <!--     <item android:id="@+id/menu_post_tags" -->
     <!--         android:title="@string/add_tags" -->
     <!--         android:icon="@drawable/ic_person_add_white_24dp" -->

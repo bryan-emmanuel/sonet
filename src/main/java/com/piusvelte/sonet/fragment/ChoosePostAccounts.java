@@ -25,6 +25,7 @@ import android.widget.ListView;
 
 import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.adapter.AccountAdapter;
+import com.piusvelte.sonet.adapter.PostAccountsAdapter;
 import com.piusvelte.sonet.loader.AccountsProfilesLoaderCallback;
 
 import java.util.ArrayList;
@@ -40,7 +41,8 @@ import static com.piusvelte.sonet.Sonet.TWITTER;
  * Created by bemmanuel on 4/30/15.
  */
 public class ChoosePostAccounts extends ListFragment
-        implements AccountsProfilesLoaderCallback.OnAccountsLoadedListener, AbsListView.MultiChoiceModeListener {
+        implements AccountsProfilesLoaderCallback.OnAccountsLoadedListener, AbsListView.MultiChoiceModeListener,
+        PostAccountsAdapter.OnLocationClickListener {
 
     private static final String ARG_REQUEST_CODE = "request_code";
     private static final String ARG_SELECTED_ACCOUNTS = "selected_accounts";
@@ -50,8 +52,7 @@ public class ChoosePostAccounts extends ListFragment
     private static final String DIALOG_CONFIRM_SET_LOCATION = "dialog:confirm_set_location";
     private static final String DIALOG_CHOOSE_LOCATION = "dialog:choose_location";
 
-    private static final int REQUEST_CONFIRM_SET_LOCATION = 0;
-    private static final int REQUEST_CHOOSE_LOCATION = 1;
+    private static final int REQUEST_CHOOSE_LOCATION = 0;
 
     // TODO move this to Client implementations
     private static final List<Integer> sLocationSupported = new ArrayList<>();
@@ -64,7 +65,7 @@ public class ChoosePostAccounts extends ListFragment
 
     private View mLoadingView;
     private List<HashMap<String, String>> mAccounts = new ArrayList<>();
-    private AccountAdapter mAdapter;
+    private PostAccountsAdapter mAdapter;
 
     public static ChoosePostAccounts newInstance(int requestCode, @NonNull HashSet<Account> selectedAccounts) {
         ChoosePostAccounts fragment = new ChoosePostAccounts();
@@ -89,7 +90,7 @@ public class ChoosePostAccounts extends ListFragment
         ListView listView = getListView();
         listView.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE_MODAL);
         listView.setMultiChoiceModeListener(this);
-        mAdapter = new AccountAdapter(getActivity(), mAccounts);
+        mAdapter = new PostAccountsAdapter(getActivity(), mAccounts, this);
         listView.setAdapter(mAdapter);
 
         mLoadingView.setVisibility(View.VISIBLE);
@@ -119,18 +120,6 @@ public class ChoosePostAccounts extends ListFragment
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
-            case REQUEST_CONFIRM_SET_LOCATION:
-                if (resultCode == Activity.RESULT_OK) {
-                    long accountId = ConfirmSetLocationDialogFragment.getAccountId(data);
-                    String latitude = ConfirmSetLocationDialogFragment.getLatitude(data);
-                    String longitude = ConfirmSetLocationDialogFragment.getLongitude(data);
-                    getChildFragmentManager().beginTransaction()
-                            .add(ChooseLocation.newInstance(REQUEST_CHOOSE_LOCATION, accountId, latitude, longitude), DIALOG_CHOOSE_LOCATION)
-                            .addToBackStack(null)
-                            .commit();
-                }
-                break;
-
             case REQUEST_CHOOSE_LOCATION:
                 if (resultCode == Activity.RESULT_OK) {
                     long accountId = ChooseLocation.getAccountId(data);
@@ -271,32 +260,6 @@ public class ChoosePostAccounts extends ListFragment
                 account.id = id;
                 account.service = AccountAdapter.getAccountService(mAdapter.getItem(position));
                 selectedAccounts.add(account);
-
-                if (sLocationSupported.contains(account.service)) {
-                    String latitude;
-                    String longitude;
-
-                    // TODO FusedLocationProvider
-                    LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-                    Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-
-                    if (location != null) {
-                        latitude = Double.toString(location.getLatitude());
-                        longitude = Double.toString(location.getLongitude());
-                    } else {
-                        latitude = null;
-                        longitude = null;
-                    }
-
-                    if (!TextUtils.isEmpty(latitude) && !TextUtils.isEmpty(longitude)) {
-                        ConfirmSetLocationDialogFragment.newInstance(account.id,
-                                latitude,
-                                longitude,
-                                R.string.set_location,
-                                REQUEST_CONFIRM_SET_LOCATION)
-                                .show(getChildFragmentManager(), DIALOG_CONFIRM_SET_LOCATION);
-                    }
-                }
             }
         } else {
             ArrayList<Account> newSelectedAccounts = new ArrayList<>(selectedAccounts.size());
@@ -355,6 +318,37 @@ public class ChoosePostAccounts extends ListFragment
         }
 
         getFragmentManager().popBackStack();
+    }
+
+    @Override
+    public void onLocationClick(int position) {
+        HashMap<String, String> account = mAdapter.getItem(position);
+
+        if (sLocationSupported.contains(AccountAdapter.getAccountService(account))) {
+            String latitude;
+            String longitude;
+
+            // TODO FusedLocationProvider
+            LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+            Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+            if (location != null) {
+                latitude = Double.toString(location.getLatitude());
+                longitude = Double.toString(location.getLongitude());
+            } else {
+                latitude = null;
+                longitude = null;
+            }
+
+            if (!TextUtils.isEmpty(latitude) && !TextUtils.isEmpty(longitude)) {
+                long accountId = AccountAdapter.getAccountId(account);
+                // TODO DialogFragment here? This isn't visible
+                getFragmentManager().beginTransaction()
+                        .add(ChooseLocation.newInstance(REQUEST_CHOOSE_LOCATION, accountId, latitude, longitude), DIALOG_CHOOSE_LOCATION)
+                        .addToBackStack(null)
+                        .commit();
+            }
+        }
     }
 
     public static class Account implements Parcelable {

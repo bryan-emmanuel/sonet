@@ -18,22 +18,27 @@ import com.piusvelte.sonet.util.CircleTransformation;
 import com.squareup.picasso.Picasso;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 /**
  * Created by bemmanuel on 5/16/15.
  */
-public class AccountAdapter extends BaseAdapter {
+public class PostAccountsAdapter extends BaseAdapter {
 
     Context mContext;
     Picasso mPicasso;
     CircleTransformation mCircleTransformation;
     List<HashMap<String, String>> mAccounts;
+    HashSet<Integer> mSelection = new HashSet<>();
+    OnLocationClickListener mOnLocationClickListener;
 
-    public AccountAdapter(Context context,
-            List<HashMap<String, String>> accounts) {
+    public PostAccountsAdapter(Context context,
+            List<HashMap<String, String>> accounts,
+            OnLocationClickListener onLocationClickListener) {
         mContext = context;
         mAccounts = accounts;
+        mOnLocationClickListener = onLocationClickListener;
         mPicasso = Picasso.with(context);
         mCircleTransformation = new CircleTransformation();
     }
@@ -66,11 +71,13 @@ public class AccountAdapter extends BaseAdapter {
         final ViewHolder viewHolder;
 
         if (convertView == null) {
-            convertView = LayoutInflater.from(mContext).inflate(R.layout.account_row, parent, false);
+            convertView = LayoutInflater.from(mContext).inflate(R.layout.post_account_row, parent, false);
             viewHolder = new ViewHolder();
             viewHolder.profile = (ImageView) convertView.findViewById(R.id.profile);
             viewHolder.icon = (ImageView) convertView.findViewById(R.id.icon);
             viewHolder.friend = (TextView) convertView.findViewById(R.id.friend);
+            viewHolder.check = convertView.findViewById(R.id.check);
+            viewHolder.location = convertView.findViewById(R.id.location);
             convertView.setTag(viewHolder);
         } else {
             viewHolder = (ViewHolder) convertView.getTag();
@@ -98,9 +105,32 @@ public class AccountAdapter extends BaseAdapter {
             if (viewHolder.friend != null) {
                 viewHolder.friend.setText(network + ": " + getAccountUsername(account));
             }
+
+            // TODO animations
+            if (mSelection.contains(position)) {
+                viewHolder.check.setVisibility(View.VISIBLE);
+                // TODO if supported
+                viewHolder.location.setVisibility(View.VISIBLE);
+                viewHolder.location.setOnClickListener(new LocationClickListener(mOnLocationClickListener, position));
+            } else {
+                viewHolder.check.setVisibility(View.GONE);
+                viewHolder.location.setVisibility(View.GONE);
+            }
         }
 
         return convertView;
+    }
+
+    public void setSelection(int position, boolean isSelected) {
+        if (isSelected) {
+            mSelection.add(position);
+        } else {
+            mSelection.remove(position);
+        }
+    }
+
+    public void clearSelection() {
+        mSelection.clear();
     }
 
     public static long getAccountId(HashMap<String, String> account) {
@@ -139,5 +169,27 @@ public class AccountAdapter extends BaseAdapter {
         ImageView profile;
         ImageView icon;
         TextView friend;
+        View check;
+        View location;
+    }
+
+    private class LocationClickListener implements View.OnClickListener {
+
+        OnLocationClickListener listener;
+        int position;
+
+        LocationClickListener(OnLocationClickListener listener, int position) {
+            this.listener = listener;
+            this.position = position;
+        }
+
+        @Override
+        public void onClick(View v) {
+            listener.onLocationClick(position);
+        }
+    }
+
+    public interface OnLocationClickListener {
+        void onLocationClick(int position);
     }
 }
