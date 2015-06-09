@@ -135,8 +135,9 @@ public class AccountsList extends ListFragment implements View.OnClickListener,
     public void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
         HashMap<String, String> account = mAdapter.getItem(position);
-        getChildFragmentManager().beginTransaction()
-                .add(Settings.newInstance(AccountAdapter.getAccountId(account),
+        getFragmentManager().beginTransaction()
+                .add(R.id.fragment_container,
+                        Settings.newInstance(AccountAdapter.getAccountId(account),
                                 AccountAdapter.getAccountService(account),
                                 AccountAdapter.getAccountProfileUrl(account),
                                 AccountAdapter.getAccountUsername(account)),
@@ -152,7 +153,7 @@ public class AccountsList extends ListFragment implements View.OnClickListener,
                 startActivityForResult(new Intent(getActivity(), OAuthLogin.class)
                         .putExtra(Accounts.SERVICE,
                                 Integer.parseInt(getResources().getStringArray(R.array.service_values)[ItemsDialogFragment.getWhich(data, 0)]))
-                        .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, Sonet.INVALID_ACCOUNT_ID)
+                        .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
                         .putExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID)
                         , REQUEST_REFRESH);
                 break;

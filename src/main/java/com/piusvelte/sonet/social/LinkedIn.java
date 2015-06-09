@@ -18,11 +18,11 @@ import com.piusvelte.sonet.SonetOAuth;
 import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.Statuses;
+import com.squareup.okhttp.FormEncodingBuilder;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 
-import org.apache.http.client.methods.HttpUriRequest;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -60,7 +60,6 @@ import static com.piusvelte.sonet.Sonet.SupdateContent;
 import static com.piusvelte.sonet.Sonet.SupdateKey;
 import static com.piusvelte.sonet.Sonet.SupdateType;
 import static com.piusvelte.sonet.Sonet.Svalues;
-import static oauth.signpost.OAuth.OAUTH_VERIFIER;
 
 /**
  * Created by bemmanuel on 2/15/15.
@@ -68,13 +67,12 @@ import static oauth.signpost.OAuth.OAUTH_VERIFIER;
 public class LinkedIn extends Client {
 
     private static final String LINKEDIN_BASE_URL = "https://api.linkedin.com/v1/people/~";
-    private static final String LINKEDIN_URL_REQUEST = "https://api.linkedin.com/uas/oauth/requestToken";
-    private static final String LINKEDIN_URL_AUTHORIZE = "https://www.linkedin.com/uas/oauth/authorize";
-    private static final String LINKEDIN_URL_ACCESS = "https://api.linkedin.com/uas/oauth/accessToken";
-    private static final String LINKEDIN_URL_ME = "%s:(id,first-name,last-name)";
+    private static final String LINKEDIN_URL_ACCESS = "https://www.linkedin.com/uas/oauth2/accessToken";
+    private static final String LINKEDIN_URL_ME = "%s:(id,first-name,last-name,picture-url)";
     private static final String LINKEDIN_URL_USER = "https://api.linkedin.com/v1/people/id=%s";
     private static final String LINKEDIN_UPDATES = "%s/network/updates?type=APPS&type=CMPY&type=CONN&type=JOBS&type=JGRP&type=PICT&type=PRFU&type" +
             "=RECU&type=PRFX&type=ANSW&type=QSTN&type=SHAR&type=VIRL";
+    // TODO append &format=json instead
     private static final String[][] LINKEDIN_HEADERS = new String[][] { { "x-li-format", "json" } };
     private static final String LINKEDIN_IS_LIKED = "%s/network/updates/key=%s/is-liked";
     private static final String LINKEDIN_UPDATE = "%s/network/updates/key=%s";
@@ -106,7 +104,7 @@ public class LinkedIn extends Client {
 
         public String message = null;
 
-        private LinkedIn_UpdateTypes(String message) {
+        LinkedIn_UpdateTypes(String message) {
             this.message = message;
         }
 
@@ -136,9 +134,8 @@ public class LinkedIn extends Client {
     @Nullable
     @Override
     public String getProfileUrl(@NonNull String esid) {
-        Request request = getOAuth().signRequest(addHeaders(new Request.Builder()
-                .url(String.format(LINKEDIN_URL_USER, esid)))
-                .build());
+        Request request = signRequest(new Request.Builder()
+                .url(String.format(LINKEDIN_URL_USER, esid)));
         String response = SonetHttpClient.getResponse(request);
 
         if (!TextUtils.isEmpty(response)) {
@@ -157,9 +154,8 @@ public class LinkedIn extends Client {
     @Nullable
     @Override
     public String getProfilePhotoUrl(String esid) {
-        Request request = getOAuth().signRequest(addHeaders(new Request.Builder()
-                .url(String.format(LINKEDIN_URL_ME, LINKEDIN_BASE_URL)))
-                .build());
+        Request request = signRequest(new Request.Builder()
+                .url(String.format(LINKEDIN_URL_ME, LINKEDIN_BASE_URL)));
         String httpResponse = SonetHttpClient.getResponse(request);
 
         if (!TextUtils.isEmpty(httpResponse)) {
@@ -179,22 +175,22 @@ public class LinkedIn extends Client {
     @Nullable
     @Override
     public Uri getCallback() {
-        return Uri.parse("sonet://linkedin");
+        return Uri.parse("http://www.piusvelte.com/sonet/linkedin/callback");
     }
 
     @Override
     String getRequestUrl() {
-        return LINKEDIN_URL_REQUEST;
+        return null;
     }
 
     @Override
     String getAccessUrl() {
-        return LINKEDIN_URL_ACCESS;
+        return null;
     }
 
     @Override
     String getAuthorizeUrl() {
-        return LINKEDIN_URL_AUTHORIZE;
+        return null;
     }
 
     @Override
@@ -204,36 +200,77 @@ public class LinkedIn extends Client {
 
     @Override
     boolean isOAuth10a() {
-        return true;
+        return false;
+    }
+
+    @Nullable
+    @Override
+    public String getAuthUrl(@NonNull SonetOAuth sonetOAuth) {
+        return "https://www.linkedin.com/uas/oauth2/authorization?"
+                + "response_type=code&client_id=" + BuildConfig.LINKEDIN_KEY
+                + "&redirect_uri=" + getCallbackUrl()
+                + "&state=" + Long.toString(System.currentTimeMillis())
+                + "&scope=r_basicprofile%20r_emailaddress%20w_share";
     }
 
     @Override
     public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
-        String verifier = getParamValue(authenticatedUrl, OAUTH_VERIFIER);
+        String code = getParamValue(authenticatedUrl, "code");
 
-        if (!TextUtils.isEmpty(verifier) && sonetOAuth.retrieveAccessToken(verifier)) {
-            Request request = getOAuth().signRequest(addHeaders(new Request.Builder()
-                    .url(String.format(LINKEDIN_URL_ME, LINKEDIN_BASE_URL)))
-                    .build());
-            String httpResponse = SonetHttpClient.getResponse(request);
+        if (!TextUtils.isEmpty(code)) {
+            Request request = new Request.Builder()
+                    .url(LINKEDIN_URL_ACCESS)
+                    .post(new FormEncodingBuilder()
+                            .add("grant_type", "authorization_code")
+                            .add("code", code)
+                            .add("redirect_uri", getCallbackUrl())
+                            .add("client_id", BuildConfig.LINKEDIN_KEY)
+                            .add("client_secret", BuildConfig.LINKEDIN_SECRET)
+                            .build())
+                    .build();
 
-            if (!TextUtils.isEmpty(httpResponse)) {
+            String accessTokenResponse = SonetHttpClient.getResponse(request);
+
+            if (!TextUtils.isEmpty(accessTokenResponse)) {
+
                 try {
-                    JSONObject jobj = new JSONObject(httpResponse);
+                    JSONObject accessTokenResponseJobj = new JSONObject(accessTokenResponse);
 
-                    if (jobj.has("firstName") && jobj.has(Sid)) {
-                        MemberAuthentication memberAuthentication = new MemberAuthentication();
-                        memberAuthentication.username = jobj.getString("firstName") + " " + jobj.getString("lastName");
-                        memberAuthentication.token = sonetOAuth.getToken();
-                        memberAuthentication.secret = sonetOAuth.getTokenSecret();
-                        memberAuthentication.expiry = 0;
-                        memberAuthentication.network = mNetwork;
-                        memberAuthentication.id = jobj.getString(Sid);
-                        return memberAuthentication;
+                    if (accessTokenResponseJobj.has("access_token") && accessTokenResponseJobj.has("expires_in")) {
+                        mToken = accessTokenResponseJobj.getString("access_token");
+                        int expiry = accessTokenResponseJobj.getInt("expires_in");
+
+                        if (!TextUtils.isEmpty(mToken)) {
+                            Request meRequest = signRequest(new Request.Builder()
+                                    .url(String.format(LINKEDIN_URL_ME, LINKEDIN_BASE_URL)));
+
+                            String meResponse = SonetHttpClient.getResponse(meRequest);
+
+                            if (!TextUtils.isEmpty(meResponse)) {
+                                try {
+                                    JSONObject jobj = new JSONObject(meResponse);
+
+                                    if (jobj.has("firstName") && jobj.has(Sid)) {
+                                        MemberAuthentication memberAuthentication = new MemberAuthentication();
+                                        memberAuthentication.username = jobj.getString("firstName") + " " + jobj.getString("lastName");
+                                        memberAuthentication.token = mToken;
+                                        memberAuthentication.secret = "";
+                                        memberAuthentication.expiry = expiry;
+                                        memberAuthentication.network = mNetwork;
+                                        memberAuthentication.id = jobj.getString(Sid);
+                                        return memberAuthentication;
+                                    }
+                                } catch (JSONException e) {
+                                    if (BuildConfig.DEBUG) {
+                                        Log.d(mTag, "error parsing me response: " + meResponse, e);
+                                    }
+                                }
+                            }
+                        }
                     }
                 } catch (JSONException e) {
                     if (BuildConfig.DEBUG) {
-                        Log.d(mTag, "error parsing me response: " + httpResponse, e);
+                        Log.d(mTag, "error parsing access token response: " + accessTokenResponse, e);
                     }
                 }
             }
@@ -242,21 +279,14 @@ public class LinkedIn extends Client {
         return null;
     }
 
-    @Deprecated
-    private static final <T extends HttpUriRequest> T addHeaders(@NonNull T httpUriRequest) {
-        for (String[] header : LINKEDIN_HEADERS) {
-            httpUriRequest.setHeader(header[0], header[1]);
-        }
-
-        return httpUriRequest;
-    }
-
-    private static Request.Builder addHeaders(Request.Builder builder) {
+    private Request signRequest(Request.Builder builder) {
         for (String[] header : LINKEDIN_HEADERS) {
             builder.addHeader(header[0], header[1]);
         }
 
-        return builder;
+        builder.addHeader("Authorization", "Bearer " + mToken);
+
+        return builder.build();
     }
 
     @Nullable
@@ -279,9 +309,8 @@ public class LinkedIn extends Client {
                 notificationSids.add(sid);
 
                 // get comments for current notifications
-                Request request = getOAuth().signRequest(addHeaders(new Request.Builder()
-                        .url(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, sid)))
-                        .build());
+                Request request = signRequest(new Request.Builder()
+                        .url(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, sid)));
 
                 String response = SonetHttpClient.getResponse(request);
 
@@ -324,9 +353,8 @@ public class LinkedIn extends Client {
     @Nullable
     @Override
     public String getFeedResponse(int status_count) {
-        Request request = getOAuth().signRequest(addHeaders(new Request.Builder()
-                .url(String.format(LINKEDIN_UPDATES, LINKEDIN_BASE_URL)))
-                .build());
+        Request request = signRequest(new Request.Builder()
+                .url(String.format(LINKEDIN_UPDATES, LINKEDIN_BASE_URL)));
         return SonetHttpClient.getResponse(request);
     }
 
@@ -529,9 +557,8 @@ public class LinkedIn extends Client {
                 // store sids, to avoid duplicates when requesting the latest feed
                 notificationSids.add(sid);
                 // get comments for current notifications
-                Request request = getOAuth().signRequest(addHeaders(new Request.Builder()
-                        .url(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, sid)))
-                        .build());
+                Request request = signRequest(new Request.Builder()
+                        .url(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, sid)));
                 String response = SonetHttpClient.getResponse(request);
 
                 if (!TextUtils.isEmpty(response)) {
@@ -574,9 +601,8 @@ public class LinkedIn extends Client {
                 currentNotifications.moveToNext();
             }
             // check the latest feed
-            Request request = getOAuth().signRequest(addHeaders(new Request.Builder()
-                    .url(String.format(LINKEDIN_UPDATES, LINKEDIN_BASE_URL)))
-                    .build());
+            Request request = signRequest(new Request.Builder()
+                    .url(String.format(LINKEDIN_UPDATES, LINKEDIN_BASE_URL)));
             String response = SonetHttpClient.getResponse(request);
 
             if (!TextUtils.isEmpty(response)) {
@@ -753,19 +779,17 @@ public class LinkedIn extends Client {
 
     @Override
     public boolean createPost(String message, String placeId, String latitude, String longitude, String photoPath, String[] tags) {
-        Request request = getOAuth().signRequest(new Request.Builder()
+        Request request = signRequest(new Request.Builder()
                 .url(String.format(LINKEDIN_POST, LINKEDIN_BASE_URL))
                 .addHeader("Content-Type", "application/xml")
-                .post(RequestBody.create(MediaType.parse("application/xml"), String.format(LINKEDIN_POST_BODY, "", message)))
-                .build());
+                .post(RequestBody.create(MediaType.parse("application/xml"), String.format(LINKEDIN_POST_BODY, "", message))));
         return SonetHttpClient.request(request);
     }
 
     @Nullable
     private JSONObject getStatus(String statusId) {
-        Request request = getOAuth().signRequest(addHeaders(new Request.Builder()
-                .url(String.format(LINKEDIN_UPDATE, LINKEDIN_BASE_URL, statusId)))
-                .build());
+        Request request = signRequest(new Request.Builder()
+                .url(String.format(LINKEDIN_UPDATE, LINKEDIN_BASE_URL, statusId)));
         String response = SonetHttpClient.getResponse(request);
 
         if (response != null) {
@@ -805,11 +829,10 @@ public class LinkedIn extends Client {
 
     @Override
     public boolean likeStatus(String statusId, String accountId, boolean doLike) {
-        Request request = getOAuth().signRequest(new Request.Builder()
+        Request request = signRequest(new Request.Builder()
                 .url(String.format(LINKEDIN_IS_LIKED, LINKEDIN_BASE_URL, statusId))
                 .addHeader("Content-Type", "application/xml")
-                .put(RequestBody.create(MediaType.parse("application/xml"), String.format(LINKEDIN_LIKE_BODY, Boolean.toString(doLike))))
-                .build());
+                .put(RequestBody.create(MediaType.parse("application/xml"), String.format(LINKEDIN_LIKE_BODY, Boolean.toString(doLike)))));
         return SonetHttpClient.request(request);
     }
 
@@ -841,9 +864,8 @@ public class LinkedIn extends Client {
     @Nullable
     @Override
     public String getCommentsResponse(String statusId) {
-        Request request = getOAuth().signRequest(addHeaders(new Request.Builder()
-                .url(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, statusId)))
-                .build());
+        Request request = signRequest(new Request.Builder()
+                .url(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, statusId)));
         return SonetHttpClient.getResponse(request);
     }
 
@@ -879,11 +901,10 @@ public class LinkedIn extends Client {
 
     @Override
     public boolean sendComment(@NonNull String statusId, @NonNull String message) {
-        Request request = getOAuth().signRequest(new Request.Builder()
+        Request request = signRequest(new Request.Builder()
                 .url(String.format(LINKEDIN_UPDATE_COMMENTS, LINKEDIN_BASE_URL, statusId))
                 .addHeader("Content-Type", "application/xml")
-                .post(RequestBody.create(MediaType.parse("application/xml"), String.format(LINKEDIN_COMMENT_BODY, message)))
-                .build());
+                .post(RequestBody.create(MediaType.parse("application/xml"), String.format(LINKEDIN_COMMENT_BODY, message))));
         return SonetHttpClient.request(request);
     }
 

@@ -287,25 +287,18 @@ public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCall
 
                 @Override
                 public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                    if (url != null) {
-                        Uri uri = Uri.parse(url);
-                        String host = uri.getHost();
+                    if (!TextUtils.isEmpty(url) && url.startsWith(mOAuthLogin.mOAuthLoginLoaderResult.client.getCallbackUrl())) {
+                        mOAuthLogin.mLoadingView.setVisibility(View.VISIBLE);
+                        Bundle args = new Bundle();
+                        args.putString(LOADER_ARG_AUTHENTICATED_URL, url);
+                        mOAuthLogin.getSupportLoaderManager().restartLoader(LOADER_MEMBER_AUTHENTICATION,
+                                args,
+                                new MemberAuthenticationLoaderCallbacks(mOAuthLogin, mOAuthLogin.mOAuthLoginLoaderResult));
 
-                        Uri callback = mOAuthLogin.mOAuthLoginLoaderResult.client.getCallback();
-
-                        if (callback != null && callback.getHost().equals(host)) {
-                            mOAuthLogin.mLoadingView.setVisibility(View.VISIBLE);
-                            Bundle args = new Bundle();
-                            args.putString(LOADER_ARG_AUTHENTICATED_URL, url);
-                            mOAuthLogin.getSupportLoaderManager().restartLoader(LOADER_MEMBER_AUTHENTICATION,
-                                    args,
-                                    new MemberAuthenticationLoaderCallbacks(mOAuthLogin, mOAuthLogin.mOAuthLoginLoaderResult));
-                        } else {
-                            return false;// allow google to redirect
-                        }
+                        return true;
                     }
 
-                    return true;
+                    return false;
                 }
             });
             WebSettings webSettings = mWebView.getSettings();

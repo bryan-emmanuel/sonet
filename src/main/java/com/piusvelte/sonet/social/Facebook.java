@@ -118,7 +118,7 @@ public class Facebook extends Client {
 
     @Override
     public String getCallbackUrl() {
-        return null;
+        return getCallback().toString();
     }
 
     @Override
