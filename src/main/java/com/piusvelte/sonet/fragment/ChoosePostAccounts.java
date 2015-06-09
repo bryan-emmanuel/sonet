@@ -27,15 +27,12 @@ import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.adapter.AccountAdapter;
 import com.piusvelte.sonet.adapter.PostAccountsAdapter;
 import com.piusvelte.sonet.loader.AccountsProfilesLoaderCallback;
+import com.piusvelte.sonet.social.Client;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-
-import static com.piusvelte.sonet.Sonet.FACEBOOK;
-import static com.piusvelte.sonet.Sonet.FOURSQUARE;
-import static com.piusvelte.sonet.Sonet.TWITTER;
 
 /**
  * Created by bemmanuel on 4/30/15.
@@ -49,19 +46,9 @@ public class ChoosePostAccounts extends ListFragment
 
     private static final int LOADER_ACCOUNTS = 0;
 
-    private static final String DIALOG_CONFIRM_SET_LOCATION = "dialog:confirm_set_location";
     private static final String DIALOG_CHOOSE_LOCATION = "dialog:choose_location";
 
     private static final int REQUEST_CHOOSE_LOCATION = 0;
-
-    // TODO move this to Client implementations
-    private static final List<Integer> sLocationSupported = new ArrayList<>();
-
-    static {
-        sLocationSupported.add(TWITTER);
-        sLocationSupported.add(FACEBOOK);
-        sLocationSupported.add(FOURSQUARE);
-    }
 
     private View mLoadingView;
     private List<HashMap<String, String>> mAccounts = new ArrayList<>();
@@ -324,7 +311,7 @@ public class ChoosePostAccounts extends ListFragment
     public void onLocationClick(int position) {
         HashMap<String, String> account = mAdapter.getItem(position);
 
-        if (sLocationSupported.contains(AccountAdapter.getAccountService(account))) {
+        if (Client.Network.get(AccountAdapter.getAccountService(account)).isLocationSupported()) {
             String latitude;
             String longitude;
 
@@ -342,11 +329,9 @@ public class ChoosePostAccounts extends ListFragment
 
             if (!TextUtils.isEmpty(latitude) && !TextUtils.isEmpty(longitude)) {
                 long accountId = AccountAdapter.getAccountId(account);
-                // TODO DialogFragment here? This isn't visible
-                getFragmentManager().beginTransaction()
-                        .add(ChooseLocation.newInstance(REQUEST_CHOOSE_LOCATION, accountId, latitude, longitude), DIALOG_CHOOSE_LOCATION)
-                        .addToBackStack(null)
-                        .commit();
+
+                ChooseLocation.newInstance(REQUEST_CHOOSE_LOCATION, accountId, latitude, longitude)
+                        .show(getChildFragmentManager(), DIALOG_CHOOSE_LOCATION);
             }
         }
     }

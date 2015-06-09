@@ -71,14 +71,10 @@ public class CreatePost extends Fragment implements TextWatcher, View.OnKeyListe
     private static final String STATE_MESSAGE = "state:message";
 
     // TODO move this to Client implementations
-    private static final List<Integer> sLocationSupported = new ArrayList<>();
     private static final List<Integer> sPhotoSupported = new ArrayList<>();
     private static final List<Integer> sTaggingSupported = new ArrayList<>();
 
     static {
-        sLocationSupported.add(TWITTER);
-        sLocationSupported.add(FACEBOOK);
-        sLocationSupported.add(FOURSQUARE);
         sPhotoSupported.add(FACEBOOK);
         sTaggingSupported.add(FACEBOOK);
     }
@@ -418,34 +414,6 @@ public class CreatePost extends Fragment implements TextWatcher, View.OnKeyListe
         public void onLoaderReset(Loader<Boolean> loader) {
             // NO-OP
         }
-    }
-
-    private void setLocation(final long accountId) {
-        String latitude;
-        String longitude;
-
-        // TODO FusedLocationProvider
-        LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-        Location location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-
-        if (location != null) {
-            latitude = Double.toString(location.getLatitude());
-            longitude = Double.toString(location.getLongitude());
-        } else {
-            latitude = null;
-            longitude = null;
-        }
-
-        if (!TextUtils.isEmpty(latitude) && !TextUtils.isEmpty(longitude)) {
-            Fragment fragment = ChooseLocation.newInstance(REQUEST_CHOOSE_LOCATION, accountId, latitude, longitude);
-            fragment.setTargetFragment(this, REQUEST_CHOOSE_LOCATION);
-            getFragmentManager().beginTransaction()
-                    .add(R.id.fragment_container,
-                            fragment,
-                            DIALOG_CHOOSE_LOCATION)
-                    .addToBackStack(null)
-                    .commit();
-        }// TODO else, no location available
     }
 
     private void unsupportedToast(List<Integer> supportedServices) {

@@ -1,16 +1,16 @@
 package com.piusvelte.sonet.fragment;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
@@ -28,7 +28,8 @@ import static com.piusvelte.sonet.Sonet.INVALID_ACCOUNT_ID;
 /**
  * Created by bemmanuel on 4/30/15.
  */
-public class ChooseLocation extends ListFragment implements LoaderManager.LoaderCallbacks<LocationLoader.LocationResult> {
+public class ChooseLocation extends BaseDialogFragment implements LoaderManager.LoaderCallbacks<LocationLoader.LocationResult>,
+        AdapterView.OnItemClickListener {
 
     private static final String ARG_REQUEST_CODE = "request_code";
     private static final String ARG_ID = "id";
@@ -44,13 +45,21 @@ public class ChooseLocation extends ListFragment implements LoaderManager.Loader
 
     public static ChooseLocation newInstance(int requestCode, long accountId, String latitude, String longitude) {
         ChooseLocation fragment = new ChooseLocation();
-        Bundle args = new Bundle();
+        fragment.setRequestCode(requestCode);
+        Bundle args = fragment.getArguments();
         args.putInt(ARG_REQUEST_CODE, requestCode);
         args.putLong(ARG_ID, accountId);
         args.putString(ARG_LATITUDE, latitude);
         args.putString(ARG_LONGITUDE, longitude);
-        fragment.setArguments(args);
         return fragment;
+    }
+
+    @NonNull
+    @Override
+    public Dialog onCreateDialog(Bundle savedInstanceState) {
+        Dialog dialog = super.onCreateDialog(savedInstanceState);
+        dialog.setTitle(R.string.add_location);
+        return dialog;
     }
 
     @Override
@@ -70,7 +79,10 @@ public class ChooseLocation extends ListFragment implements LoaderManager.Loader
                 new String[] { ARG_LOCATION },
                 new int[] { android.R.id.text1 });
 
-        setListAdapter(mAdapter);
+        ListView listView = (ListView) view.findViewById(android.R.id.list);
+        listView.setEmptyView(view.findViewById(android.R.id.empty));
+        listView.setOnItemClickListener(this);
+        listView.setAdapter(mAdapter);
 
         mLoadingView.setVisibility(View.VISIBLE);
         getLoaderManager().initLoader(LOADER_LOCATIONS, getArguments(), this);
@@ -83,30 +95,11 @@ public class ChooseLocation extends ListFragment implements LoaderManager.Loader
     }
 
     @Override
-    public void onListItemClick(ListView l, View v, int position, long id) {
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         HashMap<String, String> selectedLocation = mLocations.get(position);
-
-        int requestCode = getArguments().getInt(ARG_REQUEST_CODE);
-        Intent intent = new Intent().putExtras(getArguments())
-                .putExtra(ARG_LOCATION, selectedLocation.get(ARG_ID));
-
-        Fragment target = getTargetFragment();
-
-        if (target != null) {
-            target.onActivityResult(requestCode, Activity.RESULT_OK, intent);
-        } else {
-            Fragment parent = getParentFragment();
-
-            if (parent != null) {
-                parent.onActivityResult(requestCode, Activity.RESULT_OK, intent);
-            } else {
-                Activity activity = getActivity();
-
-                if (activity instanceof BaseDialogFragment.OnResultListener) {
-                    ((BaseDialogFragment.OnResultListener) activity).onResult(requestCode, Activity.RESULT_OK, intent);
-                }
-            }
-        }
+        getArguments().putString(ARG_LOCATION, selectedLocation.get(ARG_ID));
+        deliverResult(Activity.RESULT_OK);
+        dismiss();
     }
 
     @Override
@@ -140,7 +133,7 @@ public class ChooseLocation extends ListFragment implements LoaderManager.Loader
                     mAdapter.notifyDataSetChanged();
                 } else {
                     Toast.makeText(getActivity(), getString(R.string.failure), Toast.LENGTH_LONG).show();
-                    // TODO remove fragment, RESULT_CANCELLED
+                    dismiss();
                 }
                 break;
         }

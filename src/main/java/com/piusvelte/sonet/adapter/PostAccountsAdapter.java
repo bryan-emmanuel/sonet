@@ -109,9 +109,11 @@ public class PostAccountsAdapter extends BaseAdapter {
             // TODO animations
             if (mSelection.contains(position)) {
                 viewHolder.check.setVisibility(View.VISIBLE);
-                // TODO if supported
-                viewHolder.location.setVisibility(View.VISIBLE);
-                viewHolder.location.setOnClickListener(new LocationClickListener(mOnLocationClickListener, position));
+
+                if (Client.Network.get(getAccountService(account)).isLocationSupported()) {
+                    viewHolder.location.setVisibility(View.VISIBLE);
+                    viewHolder.location.setOnClickListener(new LocationClickListener(mOnLocationClickListener, position));
+                }
             } else {
                 viewHolder.check.setVisibility(View.GONE);
                 viewHolder.location.setVisibility(View.GONE);

@@ -122,6 +122,18 @@ abstract public class Client {
             }
         }
 
+        public boolean isLocationSupported() {
+            switch (this) {
+                case Twitter:
+                case Facebook:
+                case Foursquare:
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
         @DrawableRes
         public int getIcon() {
             switch (this) {

@@ -1,6 +1,7 @@
 package com.piusvelte.sonet.fragment;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -47,6 +48,14 @@ public class RssNameDialogFragment extends BaseDialogFragment implements LoaderM
         args.putString(ARG_URL, url);
 
         return dialogFragment;
+    }
+
+    @NonNull
+    @Override
+    public Dialog onCreateDialog(Bundle savedInstanceState) {
+        Dialog dialog = super.onCreateDialog(savedInstanceState);
+        dialog.setTitle(R.string.rss_channel);
+        return dialog;
     }
 
     @Nullable
