@@ -202,7 +202,7 @@ public class OAuthLogin extends BaseActivity implements LoaderManager.LoaderCall
 
     private String addAccount(String username, String token, String secret, int expiry, int service, String sid) {
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "add account; username=" + username + ", service=" + service + ", sid=" + sid);
+            Log.d(TAG, "add account; username=" + username + ", service=" + service + ", sid=" + sid + ", mAccountId=" + mAccountId);
         }
 
         String accountId;

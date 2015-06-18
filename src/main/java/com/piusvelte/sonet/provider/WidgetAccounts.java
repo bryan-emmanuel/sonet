@@ -11,6 +11,7 @@ import com.piusvelte.sonet.Sonet;
 /**
  * Created by bemmanuel on 3/22/15.
  */
+@Deprecated
 public class WidgetAccounts implements BaseColumns {
 
     public static final String TABLE = "widget_accounts";

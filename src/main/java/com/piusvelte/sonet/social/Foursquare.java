@@ -14,7 +14,6 @@ import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
-import com.piusvelte.sonet.SonetOAuth;
 import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.Statuses;
@@ -134,12 +133,7 @@ public class Foursquare extends Client {
     }
 
     @Override
-    boolean isOAuth10a() {
-        return false;
-    }
-
-    @Override
-    public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
+    public MemberAuthentication getMemberAuthentication(@NonNull String authenticatedUrl) {
         String token = getParamValue(authenticatedUrl, Saccess_token);
 
         if (!TextUtils.isEmpty(token)) {
@@ -174,7 +168,7 @@ public class Foursquare extends Client {
 
     @Nullable
     @Override
-    public String getAuthUrl(@NonNull SonetOAuth sonetOAuth) {
+    public String getAuthUrl() {
         return String.format(FOURSQUARE_URL_AUTHORIZE, BuildConfig.FOURSQUARE_KEY, getCallback().toString());
     }
 

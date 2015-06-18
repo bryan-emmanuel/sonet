@@ -15,7 +15,6 @@ import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
-import com.piusvelte.sonet.SonetOAuth;
 import com.piusvelte.sonet.provider.Accounts;
 import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Notifications;
@@ -122,12 +121,7 @@ public class Facebook extends Client {
     }
 
     @Override
-    boolean isOAuth10a() {
-        return false;
-    }
-
-    @Override
-    public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
+    public MemberAuthentication getMemberAuthentication(@NonNull String authenticatedUrl) {
         String token = getParamValue(authenticatedUrl, Saccess_token);
 
         if (!TextUtils.isEmpty(token)) {
@@ -167,7 +161,7 @@ public class Facebook extends Client {
 
     @Nullable
     @Override
-    public String getAuthUrl(@NonNull SonetOAuth sonetOAuth) {
+    public String getAuthUrl() {
         return String.format(FACEBOOK_URL_AUTHORIZE, FACEBOOK_BASE_URL, BuildConfig.FACEBOOK_ID, getCallback().toString());
     }
 

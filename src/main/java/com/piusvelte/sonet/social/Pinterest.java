@@ -7,7 +7,6 @@ import android.support.annotation.Nullable;
 
 import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.SonetHttpClient;
-import com.piusvelte.sonet.SonetOAuth;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -90,12 +89,7 @@ public class Pinterest extends Client {
     }
 
     @Override
-    boolean isOAuth10a() {
-        return false;
-    }
-
-    @Override
-    public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
+    public MemberAuthentication getMemberAuthentication(@NonNull String authenticatedUrl) {
         return null;
     }
 

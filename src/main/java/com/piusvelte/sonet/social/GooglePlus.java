@@ -12,7 +12,6 @@ import com.piusvelte.sonet.BuildConfig;
 import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
-import com.piusvelte.sonet.SonetOAuth;
 import com.piusvelte.sonet.provider.Notifications;
 import com.squareup.okhttp.FormEncodingBuilder;
 import com.squareup.okhttp.Request;
@@ -99,11 +98,6 @@ public class GooglePlus extends Client {
         return null;
     }
 
-    @Override
-    boolean isOAuth10a() {
-        return false;
-    }
-
     @Nullable
     private String getAccessToken(@NonNull String refreshToken) {
         RequestBody form = new FormEncodingBuilder()
@@ -136,7 +130,7 @@ public class GooglePlus extends Client {
     }
 
     @Override
-    public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
+    public MemberAuthentication getMemberAuthentication(@NonNull String authenticatedUrl) {
         // get the access_token
         String[] title = authenticatedUrl.split("=");
 
@@ -207,7 +201,7 @@ public class GooglePlus extends Client {
 
     @Nullable
     @Override
-    public String getAuthUrl(@NonNull SonetOAuth sonetOAuth) {
+    public String getAuthUrl() {
         return String.format(GOOGLEPLUS_AUTHORIZE, BuildConfig.GOOGLECLIENT_ID, "urn:ietf:wg:oauth:2.0:oob");
     }
 

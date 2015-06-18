@@ -59,19 +59,10 @@ public final class StatusesStyles implements BaseColumns {
                 + ",e." + Entity.PROFILE_URL + " as " + StatusesStyles.PROFILE_URL
                 + ",i." + StatusImages.URL + " as " + StatusesStyles.IMAGE_URL
                 + " from " + Statuses.TABLE + " s,"
-                + Entity.TABLE + " e,"
-                + Widgets.TABLE + " a,"
-                + Widgets.TABLE + " b,"
-                + Widgets.TABLE + " c"
+                + Entity.TABLE + " e"
                 + " left join " + StatusImages.TABLE + " i"
                 + " on i." + StatusImages.STATUS_ID + "=s." + Statuses._ID
                 + " where "
-                + "e." + Entity._ID + "=s." + Statuses.ENTITY
-                + " and a." + Widgets.WIDGET + "=s." + Statuses.WIDGET
-                + " and a." + Widgets.ACCOUNT + "=s." + Statuses.ACCOUNT
-                + " and b." + Widgets.WIDGET + "=s." + Statuses.WIDGET
-                + " and b." + Widgets.ACCOUNT + "=-1"
-                + " and c." + Widgets.WIDGET + "=0"
-                + " and c." + Widgets.ACCOUNT + "=-1;");
+                + "e." + Entity._ID + "=s." + Statuses.ENTITY + ";");
     }
 }

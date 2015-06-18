@@ -54,7 +54,7 @@ public class StatusesLoader extends AsyncTask<Integer, String, Integer> {
         final boolean reload = params[1] != 0;
 
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "StatusesLoader;widget:" + widget + ",reload:" + reload);
+            Log.d(TAG, "loading widget:" + widget + ",reload:" + reload);
         }
 
         WidgetsSettings.Settings settings = WidgetsSettings.getSettings(mSonetService, appWidgetId);
@@ -105,18 +105,25 @@ public class StatusesLoader extends AsyncTask<Integer, String, Integer> {
                 new String[] { Integer.toString(AppWidgetManager.INVALID_APPWIDGET_ID) },// use invalid appwidget to get all accounts
                 null);
 
+        // TODO remove this, and indicate loading using the empty view
         if (!hasCache || !accounts.moveToFirst()) {
             // if no cache inform the user that the widget is loading
             addStatusItem(widget, mSonetService.getString(R.string.updating), appWidgetId);
         }
 
+        // TODO remove all of this "loading"
         // loading takes time, so don't leave an empty widget sitting there
         if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
             // build the widget
             mSonetService.buildWidgetButtons(appWidgetId);
         } else {
+            // TODO this isn't necessary
             // update the About.java for in-app viewing
             mSonetService.getContentResolver().notifyChange(StatusesStyles.getContentUri(mSonetService), null);
+        }
+
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "loading widget=" + widget + "; accounts count=" + accounts.getCount());
         }
 
         if (accounts.moveToFirst()) {
@@ -135,6 +142,10 @@ public class StatusesLoader extends AsyncTask<Integer, String, Integer> {
                 while (!accounts.isAfterLast()) {
                     long account = accounts.getLong(accountIndex);
                     int service = accounts.getInt(serviceIndex);
+
+                    if (BuildConfig.DEBUG) {
+                        Log.d(TAG, "loading account=" + account + "; service=" + service);
+                    }
 
                     WidgetsSettings.Settings accountSettings = WidgetsSettings.getSettings(mSonetService, appWidgetId, account);
                     boolean time24hr = accountSettings.isTime24hr;
@@ -180,6 +191,7 @@ public class StatusesLoader extends AsyncTask<Integer, String, Integer> {
                             // update created text
                             updateCreatedText(widget, Long.toString(account), time24hr);
                         } else {
+                            // TODO remove
                             // clear the "loading" message and display "no connection"
                             mSonetService.getContentResolver()
                                     .delete(Statuses.getContentUri(mSonetService),
@@ -197,6 +209,7 @@ public class StatusesLoader extends AsyncTask<Integer, String, Integer> {
                 }
             }
 
+            // TODO remove
             // delete the existing loading and informational messages
             mSonetService.getContentResolver()
                     .delete(Statuses.getContentUri(mSonetService),
@@ -213,6 +226,7 @@ public class StatusesLoader extends AsyncTask<Integer, String, Integer> {
             hasCache = statusesCheck.moveToFirst();
             statusesCheck.close();
 
+            // TODO remove
             if (!hasCache) {
                 // there should be a loading message displaying
                 // if no updates have been loaded, display "no updates"
@@ -277,6 +291,7 @@ public class StatusesLoader extends AsyncTask<Integer, String, Integer> {
         }
     }
 
+    // TODO remove this generic item used for status messages
     private void addStatusItem(String widget, String message, int appWidgetId) {
         long id;
         long created = System.currentTimeMillis();

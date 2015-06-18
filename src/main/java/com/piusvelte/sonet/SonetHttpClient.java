@@ -179,7 +179,7 @@ public class SonetHttpClient {
 
             return body;
         } else {
-            if (BuildConfig.DEBUG) Log.e(TAG, "response unsuccessful; request=" + request);
+            if (BuildConfig.DEBUG) Log.e(TAG, "response unsuccessful; request=" + request + "; response=" + response.toString());
         }
 
         return null;

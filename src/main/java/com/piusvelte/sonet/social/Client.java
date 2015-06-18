@@ -16,8 +16,7 @@ import com.piusvelte.sonet.BuildConfig;
 import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
-import com.piusvelte.sonet.SonetHttpClient;
-import com.piusvelte.sonet.SonetOAuth;
+import com.piusvelte.sonet.network.oauth10.OAuth10Helper;
 import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.StatusImages;
@@ -40,11 +39,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import oauth.signpost.exception.OAuthCommunicationException;
-import oauth.signpost.exception.OAuthExpectationFailedException;
-import oauth.signpost.exception.OAuthMessageSignerException;
-import oauth.signpost.exception.OAuthNotAuthorizedException;
-
 import static com.piusvelte.sonet.Sonet.Simgur;
 import static com.piusvelte.sonet.Sonet.Slink;
 import static com.piusvelte.sonet.Sonet.sRFC822;
@@ -62,7 +56,7 @@ abstract public class Client {
     String mSecret;
     String mAccountEsid;
     int mNetwork;
-    SonetOAuth mOAuth;
+    OAuth10Helper mOAuth10Helper;
 
     private SimpleDateFormat mSimpleDateFormat = null;
 
@@ -241,6 +235,10 @@ abstract public class Client {
 
                 if (feedItems != null) {
                     parseCount = Math.min(feedItems.length(), status_count);
+
+                    if (BuildConfig.DEBUG) {
+                        Log.d(mTag, "got feed for account=" + account + "; count=" + parseCount);
+                    }
 
                     if (parseCount > 0) {
                         removeOldStatuses(widget, Long.toString(account));
@@ -421,9 +419,7 @@ abstract public class Client {
 
     abstract public String getCallbackUrl();
 
-    abstract boolean isOAuth10a();
-
-    abstract public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl);
+    abstract public MemberAuthentication getMemberAuthentication(@NonNull String authenticatedUrl);
 
     @Nullable
     public String getParamValue(@Nullable String url, @NonNull String name) {
@@ -445,39 +441,24 @@ abstract public class Client {
         return value;
     }
 
-    @NonNull
-    public SonetOAuth getLoginOAuth() {
-        return new SonetOAuth(getApiKey(), getApiSecret());
-    }
-
     @Nullable
-    public String getAuthUrl(@NonNull SonetOAuth sonetOAuth) {
-        try {
-            return sonetOAuth.getAuthUrl(getRequestUrl(),
-                    getAccessUrl(),
-                    getAuthorizeUrl(),
-                    getCallbackUrl(),
-                    isOAuth10a(),
-                    SonetHttpClient.getThreadSafeClient(mContext));
-        } catch (OAuthMessageSignerException e) {
-            if (BuildConfig.DEBUG) Log.d(mTag, e.toString());
-        } catch (OAuthNotAuthorizedException e) {
-            if (BuildConfig.DEBUG) Log.d(mTag, e.toString());
-        } catch (OAuthExpectationFailedException e) {
-            if (BuildConfig.DEBUG) Log.d(mTag, e.toString());
-        } catch (OAuthCommunicationException e) {
-            if (BuildConfig.DEBUG) Log.d(mTag, e.toString());
-        }
-
-        return null;
+    public String getAuthUrl() {
+        return getOAuth10Helper().getTokenAuthorizationUrl();
     }
 
-    SonetOAuth getOAuth() {
-        if (mOAuth == null) {
-            mOAuth = new SonetOAuth(getApiKey(), getApiSecret(), mToken, mSecret);
+    OAuth10Helper getOAuth10Helper() {
+        if (mOAuth10Helper == null) {
+            mOAuth10Helper = new OAuth10Helper(getApiKey(),
+                    getApiSecret(),
+                    mToken,
+                    mSecret,
+                    getRequestUrl(),
+                    getAuthorizeUrl(),
+                    getAccessUrl(),
+                    getCallbackUrl());
         }
 
-        return mOAuth;
+        return mOAuth10Helper;
     }
 
     String getString(int resId) {

@@ -11,7 +11,6 @@ import com.piusvelte.sonet.BuildConfig;
 import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetHttpClient;
-import com.piusvelte.sonet.SonetOAuth;
 import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Statuses;
 import com.squareup.okhttp.OkHttpClient;
@@ -393,12 +392,7 @@ public class Chatter extends Client {
     }
 
     @Override
-    boolean isOAuth10a() {
-        return false;
-    }
-
-    @Override
-    public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
+    public MemberAuthentication getMemberAuthentication(@NonNull String authenticatedUrl) {
         // get the access_token
         Uri uri = Uri.parse(authenticatedUrl);
         String token = uri.getQueryParameter(Saccess_token);
@@ -435,7 +429,7 @@ public class Chatter extends Client {
 
     @Nullable
     @Override
-    public String getAuthUrl(@NonNull SonetOAuth sonetOAuth) {
+    public String getAuthUrl() {
         return String.format(CHATTER_URL_AUTHORIZE, BuildConfig.CHATTER_KEY, getCallback().toString());
     }
 }

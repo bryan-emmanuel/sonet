@@ -25,6 +25,6 @@ public class MemberAuthenticationLoader extends BaseAsyncTaskLoader<Client.Membe
 
     @Override
     public Client.MemberAuthentication loadInBackground() {
-        return mOAuthLoginLoaderResult.client.getMemberAuthentication(mOAuthLoginLoaderResult.sonetOAuth, mAuthenticatedUrl);
+        return mOAuthLoginLoaderResult.client.getMemberAuthentication(mAuthenticatedUrl);
     }
 }

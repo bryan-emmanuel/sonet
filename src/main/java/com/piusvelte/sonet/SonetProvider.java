@@ -70,7 +70,7 @@ public class SonetProvider extends ContentProvider {
     protected static final int STATUS_IMAGES = 12;
 
     protected static final String DATABASE_NAME = "sonet.db";
-    private static final int DATABASE_VERSION = 30;
+    private static final int DATABASE_VERSION = 31;
 
     private static HashMap<String, String> accountsProjectionMap;
 
@@ -1281,6 +1281,12 @@ public class SonetProvider extends ContentProvider {
                 // drop the image blob
                 StatusImages.migrateTable(db);
                 Statuses.migrateTable(db);
+                db.execSQL("drop view if exists " + StatusesStyles.VIEW + ";");
+                StatusesStyles.createView(db);
+            }
+
+            // remove widget dependency for accounts
+            if (oldVersion < 31) {
                 db.execSQL("drop view if exists " + StatusesStyles.VIEW + ";");
                 StatusesStyles.createView(db);
             }

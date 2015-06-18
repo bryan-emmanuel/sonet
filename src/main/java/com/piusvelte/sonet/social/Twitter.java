@@ -13,7 +13,6 @@ import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
-import com.piusvelte.sonet.SonetOAuth;
 import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.Statuses;
@@ -44,7 +43,6 @@ import static com.piusvelte.sonet.Sonet.Sscreen_name;
 import static com.piusvelte.sonet.Sonet.Sstatus;
 import static com.piusvelte.sonet.Sonet.Stext;
 import static com.piusvelte.sonet.Sonet.Suser;
-import static oauth.signpost.OAuth.OAUTH_VERIFIER;
 
 /**
  * Created by bemmanuel on 2/15/15.
@@ -73,9 +71,10 @@ public class Twitter extends Client {
     @Nullable
     @Override
     public String getProfileUrl(@NonNull String esid) {
-        Request request = getOAuth().signRequest(new Request.Builder()
+        Request request = getOAuth10Helper().getBuilder()
                 .url(String.format(getUserUrl(), getBaseUrl(), esid))
-                .build());
+                .build();
+
         String response = SonetHttpClient.getResponse(request);
 
         if (!TextUtils.isEmpty(response)) {
@@ -96,9 +95,10 @@ public class Twitter extends Client {
     @Nullable
     @Override
     public String getProfilePhotoUrl(String esid) {
-        Request request = getOAuth().signRequest(new Request.Builder()
+        Request request = getOAuth10Helper().getBuilder()
                 .url(String.format(getUserUrl(), getBaseUrl(), esid))
-                .build());
+                .build();
+
         String response = SonetHttpClient.getResponse(request);
 
         if (!TextUtils.isEmpty(response)) {
@@ -143,18 +143,11 @@ public class Twitter extends Client {
     }
 
     @Override
-    boolean isOAuth10a() {
-        return true;
-    }
-
-    @Override
-    public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
-        String verifier = getParamValue(authenticatedUrl, OAUTH_VERIFIER);
-
-        if (!TextUtils.isEmpty(verifier) && sonetOAuth.retrieveAccessToken(verifier)) {
-            Request request = sonetOAuth.signRequest(new Request.Builder()
+    public MemberAuthentication getMemberAuthentication(@NonNull String authenticatedUrl) {
+        if (getOAuth10Helper().getAccessToken(authenticatedUrl)) {
+            Request request = getOAuth10Helper().getBuilder()
                     .url(getVerifyCredentialsUrl())
-                    .build());
+                    .build();
             String httpResponse = SonetHttpClient.getResponse(request);
 
             if (!TextUtils.isEmpty(httpResponse)) {
@@ -162,8 +155,8 @@ public class Twitter extends Client {
                     JSONObject jobj = new JSONObject(httpResponse);
                     MemberAuthentication memberAuthentication = new MemberAuthentication();
                     memberAuthentication.username = jobj.getString(Sscreen_name);
-                    memberAuthentication.token = sonetOAuth.getToken();
-                    memberAuthentication.secret = sonetOAuth.getTokenSecret();
+                    memberAuthentication.token = getOAuth10Helper().getToken();
+                    memberAuthentication.secret = getOAuth10Helper().getSecret();
                     memberAuthentication.expiry = 0;
                     memberAuthentication.network = mNetwork;
                     memberAuthentication.id = jobj.getString(Sid);
@@ -239,9 +232,9 @@ public class Twitter extends Client {
     @Nullable
     @Override
     public String getFeedResponse(int status_count) {
-        Request request = getOAuth().signRequest(new Request.Builder()
+        Request request = getOAuth10Helper().getBuilder()
                 .url(String.format(getFeedUrl(), getBaseUrl(), status_count))
-                .build());
+                .build();
         return SonetHttpClient.getResponse(request);
     }
 
@@ -271,8 +264,7 @@ public class Twitter extends Client {
                 appWidgetId,
                 account,
                 item.getString(Sid),
-                user.getString(Sid)
-        );
+                user.getString(Sid));
     }
 
     @Nullable
@@ -313,9 +305,9 @@ public class Twitter extends Client {
         last_status.close();
 
         // get all mentions since the oldest status for this account
-        Request request = getOAuth().signRequest(new Request.Builder()
+        Request request = getOAuth10Helper().getBuilder()
                 .url(String.format(getMentionsUrl(), getBaseUrl(), last_sid != null ? String.format(TWITTER_SINCE_ID, last_sid) : ""))
-                .build());
+                .build();
         String response = SonetHttpClient.getResponse(request);
 
         if (!TextUtils.isEmpty(response)) {
@@ -384,10 +376,10 @@ public class Twitter extends Client {
                         .add("long", longitude);
             }
 
-            Request request = getOAuth().signRequest(new Request.Builder()
+            Request request = getOAuth10Helper().getBuilder()
                     .url(String.format(getUpdateUrl(), getBaseUrl()))
                     .post(builder.build())
-                    .build());
+                    .build();
 
             result = SonetHttpClient.request(request);
 
@@ -417,12 +409,12 @@ public class Twitter extends Client {
     public boolean likeStatus(String statusId, String accountId, boolean doLike) {
         if (doLike) {
             // retweet
-            Request request = getOAuth().signRequest(new Request.Builder()
+            Request request = getOAuth10Helper().getBuilder()
                     .url(String.format(getRetweetUrl(), getBaseUrl(), statusId))
                     .post(new FormEncodingBuilder()
                             .add("http.protocol.expect-continue", Boolean.FALSE.toString())
                             .build())
-                    .build());
+                    .build();
             return SonetHttpClient.request(request);
         }
 
@@ -446,9 +438,9 @@ public class Twitter extends Client {
 
     @Override
     public String getCommentsResponse(String statusId) {
-        Request request = getOAuth().signRequest(new Request.Builder()
+        Request request = getOAuth10Helper().getBuilder()
                 .url(String.format(getMentionsUrl(), getBaseUrl(), String.format(TWITTER_SINCE_ID, statusId)))
-                .build());
+                .build();
         return SonetHttpClient.getResponse(request);
     }
 
@@ -484,9 +476,9 @@ public class Twitter extends Client {
     public LinkedHashMap<String, String> getLocations(String latitude, String longitude) {
         // anonymous requests are rate limited to 150 per hour
         // authenticated requests are rate limited to 350 per hour, so authenticate this!
-        Request request = getOAuth().signRequest(new Request.Builder()
+        Request request = getOAuth10Helper().getBuilder()
                 .url(String.format(getSearchUrl(), getBaseUrl(), latitude, longitude))
-                .build());
+                .build();
         String response = SonetHttpClient.getResponse(request);
 
         if (response != null) {
@@ -526,10 +518,10 @@ public class Twitter extends Client {
                     .add(Sstatus, tweet)
                     .add(Sin_reply_to_status_id, statusId);
 
-            Request request = getOAuth().signRequest(new Request.Builder()
+            Request request = getOAuth10Helper().getBuilder()
                     .url(String.format(getUpdateUrl(), getBaseUrl()))
                     .post(builder.build())
-                    .build());
+                    .build();
 
             success = SonetHttpClient.request(request);
 
@@ -551,9 +543,9 @@ public class Twitter extends Client {
 
     @Nullable
     private String getScreenName(String accountId) {
-        Request request = getOAuth().signRequest(new Request.Builder()
+        Request request = getOAuth10Helper().getBuilder()
                 .url(String.format(getUserUrl(), getBaseUrl(), accountId))
-                .build());
+                .build();
         String response = SonetHttpClient.getResponse(request);
 
         if (response != null) {

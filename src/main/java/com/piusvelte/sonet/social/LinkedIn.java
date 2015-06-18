@@ -14,7 +14,6 @@ import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
-import com.piusvelte.sonet.SonetOAuth;
 import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.Statuses;
@@ -70,8 +69,7 @@ public class LinkedIn extends Client {
     private static final String LINKEDIN_URL_ACCESS = "https://www.linkedin.com/uas/oauth2/accessToken";
     private static final String LINKEDIN_URL_ME = "%s:(id,first-name,last-name,picture-url)";
     private static final String LINKEDIN_URL_USER = "https://api.linkedin.com/v1/people/id=%s";
-    private static final String LINKEDIN_UPDATES = "%s/network/updates?type=APPS&type=CMPY&type=CONN&type=JOBS&type=JGRP&type=PICT&type=PRFU&type" +
-            "=RECU&type=PRFX&type=ANSW&type=QSTN&type=SHAR&type=VIRL";
+    private static final String LINKEDIN_UPDATES = "%s/shares?format=json";
     // TODO append &format=json instead
     private static final String[][] LINKEDIN_HEADERS = new String[][] { { "x-li-format", "json" } };
     private static final String LINKEDIN_IS_LIKED = "%s/network/updates/key=%s/is-liked";
@@ -198,14 +196,9 @@ public class LinkedIn extends Client {
         return getCallback().toString();
     }
 
-    @Override
-    boolean isOAuth10a() {
-        return false;
-    }
-
     @Nullable
     @Override
-    public String getAuthUrl(@NonNull SonetOAuth sonetOAuth) {
+    public String getAuthUrl() {
         return "https://www.linkedin.com/uas/oauth2/authorization?"
                 + "response_type=code&client_id=" + BuildConfig.LINKEDIN_KEY
                 + "&redirect_uri=" + getCallbackUrl()
@@ -214,7 +207,7 @@ public class LinkedIn extends Client {
     }
 
     @Override
-    public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
+    public MemberAuthentication getMemberAuthentication(@NonNull String authenticatedUrl) {
         String code = getParamValue(authenticatedUrl, "code");
 
         if (!TextUtils.isEmpty(code)) {

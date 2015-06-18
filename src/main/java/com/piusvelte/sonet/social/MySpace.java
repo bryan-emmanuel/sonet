@@ -14,7 +14,6 @@ import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
-import com.piusvelte.sonet.SonetOAuth;
 import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.Statuses;
@@ -46,7 +45,6 @@ import static com.piusvelte.sonet.Sonet.Sstatus;
 import static com.piusvelte.sonet.Sonet.SstatusId;
 import static com.piusvelte.sonet.Sonet.SthumbnailUrl;
 import static com.piusvelte.sonet.Sonet.SuserId;
-import static oauth.signpost.OAuth.OAUTH_VERIFIER;
 
 /**
  * Created by bemmanuel on 2/15/15.
@@ -73,9 +71,9 @@ public class MySpace extends Client {
     @Nullable
     @Override
     public String getProfileUrl(@NonNull String esid) {
-        Request request = getOAuth().signRequest(new Request.Builder()
+        Request request = getOAuth10Helper().getBuilder()
                 .url(String.format(MYSPACE_USER, MYSPACE_BASE_URL, esid))
-                .build());
+                .build();
         String response = SonetHttpClient.getResponse(request);
 
         if (!TextUtils.isEmpty(response)) {
@@ -95,9 +93,9 @@ public class MySpace extends Client {
     @Nullable
     @Override
     public String getProfilePhotoUrl(String esid) {
-        Request request = getOAuth().signRequest(new Request.Builder()
+        Request request = getOAuth10Helper().getBuilder()
                 .url(String.format(MYSPACE_URL_ME, MYSPACE_BASE_URL))
-                .build());
+                .build();
         String httpResponse = SonetHttpClient.getResponse(request);
 
         if (!TextUtils.isEmpty(httpResponse)) {
@@ -142,40 +140,31 @@ public class MySpace extends Client {
     }
 
     @Override
-    boolean isOAuth10a() {
-        return true;
-    }
+    public MemberAuthentication getMemberAuthentication(@NonNull String authenticatedUrl) {
+        if (getOAuth10Helper().getAccessToken(authenticatedUrl)) {
+            Request request = getOAuth10Helper().getBuilder()
+                    .url(String.format(MYSPACE_URL_ME, MYSPACE_BASE_URL))
+                    .build();
+            String httpResponse = SonetHttpClient.getResponse(request);
 
-    @Override
-    public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
-        String verifier = getParamValue(authenticatedUrl, OAUTH_VERIFIER);
+            if (!TextUtils.isEmpty(httpResponse)) {
+                try {
+                    JSONObject jobj = new JSONObject(httpResponse);
+                    JSONObject person = jobj.getJSONObject("person");
 
-        if (!TextUtils.isEmpty(verifier)) {
-            if (sonetOAuth.retrieveAccessToken(verifier)) {
-                Request request = sonetOAuth.signRequest(new Request.Builder()
-                        .url(String.format(MYSPACE_URL_ME, MYSPACE_BASE_URL))
-                        .build());
-                String httpResponse = SonetHttpClient.getResponse(request);
-
-                if (!TextUtils.isEmpty(httpResponse)) {
-                    try {
-                        JSONObject jobj = new JSONObject(httpResponse);
-                        JSONObject person = jobj.getJSONObject("person");
-
-                        if (person.has(SdisplayName) && person.has(Sid)) {
-                            MemberAuthentication memberAuthentication = new MemberAuthentication();
-                            memberAuthentication.username = person.getString(SdisplayName);
-                            memberAuthentication.token = sonetOAuth.getToken();
-                            memberAuthentication.secret = sonetOAuth.getTokenSecret();
-                            memberAuthentication.expiry = 0;
-                            memberAuthentication.network = mNetwork;
-                            memberAuthentication.id = person.getString(Sid);
-                            return memberAuthentication;
-                        }
-                    } catch (JSONException e) {
-                        if (BuildConfig.DEBUG) {
-                            Log.d(mTag, "error parsing me response: " + httpResponse, e);
-                        }
+                    if (person.has(SdisplayName) && person.has(Sid)) {
+                        MemberAuthentication memberAuthentication = new MemberAuthentication();
+                        memberAuthentication.username = person.getString(SdisplayName);
+                        memberAuthentication.token = getOAuth10Helper().getToken();
+                        memberAuthentication.secret = getOAuth10Helper().getSecret();
+                        memberAuthentication.expiry = 0;
+                        memberAuthentication.network = mNetwork;
+                        memberAuthentication.id = person.getString(Sid);
+                        return memberAuthentication;
+                    }
+                } catch (JSONException e) {
+                    if (BuildConfig.DEBUG) {
+                        Log.d(mTag, "error parsing me response: " + httpResponse, e);
                     }
                 }
             }
@@ -205,9 +194,9 @@ public class MySpace extends Client {
                 notificationSids.add(sid);
 
                 // get comments for current notifications
-                Request request = getOAuth().signRequest(new Request.Builder()
+                Request request = getOAuth10Helper().getBuilder()
                         .url(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, esid, sid))
-                        .build());
+                        .build();
                 String response = SonetHttpClient.getResponse(request);
 
                 if (!TextUtils.isEmpty(response)) {
@@ -245,9 +234,9 @@ public class MySpace extends Client {
     @Nullable
     @Override
     public String getFeedResponse(int status_count) {
-        Request request = getOAuth().signRequest(new Request.Builder()
+        Request request = getOAuth10Helper().getBuilder()
                 .url(String.format(MYSPACE_HISTORY, MYSPACE_BASE_URL))
-                .build());
+                .build();
         return SonetHttpClient.getResponse(request);
     }
 
@@ -357,9 +346,9 @@ public class MySpace extends Client {
                 notificationSids.add(sid);
 
                 // get comments for current notifications
-                Request request = getOAuth().signRequest(new Request.Builder()
+                Request request = getOAuth10Helper().getBuilder()
                         .url(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, esid, sid))
-                        .build());
+                        .build();
                 String response = SonetHttpClient.getResponse(request);
 
                 if (!TextUtils.isEmpty(response)) {
@@ -474,10 +463,10 @@ public class MySpace extends Client {
 
     @Override
     public boolean createPost(String message, String placeId, String latitude, String longitude, String photoPath, String[] tags) {
-        Request request = getOAuth().signRequest(new Request.Builder()
+        Request request = getOAuth10Helper().getBuilder()
                 .url(String.format(MYSPACE_URL_STATUSMOOD, MYSPACE_BASE_URL))
                 .put(RequestBody.create(MediaType.parse("application/json"), String.format(MYSPACE_STATUSMOOD_BODY, message)))
-                .build());
+                .build();
         return SonetHttpClient.request(request);
     }
 
@@ -514,9 +503,9 @@ public class MySpace extends Client {
     @Nullable
     @Override
     public String getCommentsResponse(String statusId) {
-        Request request = getOAuth().signRequest(new Request.Builder()
+        Request request = getOAuth10Helper().getBuilder()
                 .url(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mAccountEsid, statusId))
-                .build());
+                .build();
         return SonetHttpClient.getResponse(request);
     }
 
@@ -545,10 +534,10 @@ public class MySpace extends Client {
 
     @Override
     public boolean sendComment(@NonNull String statusId, @NonNull String message) {
-        Request request = getOAuth().signRequest(new Request.Builder()
+        Request request = getOAuth10Helper().getBuilder()
                 .url(String.format(MYSPACE_URL_STATUSMOODCOMMENTS, MYSPACE_BASE_URL, mAccountEsid, statusId))
                 .post(RequestBody.create(MediaType.parse("application/json"), String.format(MYSPACE_STATUSMOODCOMMENTS_BODY, message)))
-                .build());
+                .build();
         return SonetHttpClient.request(request);
     }
 

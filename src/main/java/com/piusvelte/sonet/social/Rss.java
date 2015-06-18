@@ -8,7 +8,6 @@ import android.util.Log;
 
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetHttpClient;
-import com.piusvelte.sonet.SonetOAuth;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -87,12 +86,7 @@ public class Rss extends Client {
     }
 
     @Override
-    boolean isOAuth10a() {
-        return false;
-    }
-
-    @Override
-    public MemberAuthentication getMemberAuthentication(@NonNull SonetOAuth sonetOAuth, @NonNull String authenticatedUrl) {
+    public MemberAuthentication getMemberAuthentication(@NonNull String authenticatedUrl) {
         return null;
     }
 
