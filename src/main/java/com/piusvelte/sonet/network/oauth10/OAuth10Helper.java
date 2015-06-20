@@ -98,9 +98,15 @@ public class OAuth10Helper {
                         }
                     }
                 }
+            } else {
+                if (BuildConfig.DEBUG) {
+                    Log.e(TAG, "unsuccessful getting token" + response.toString());
+                }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            if (BuildConfig.DEBUG) {
+                Log.e(TAG, "failed getting token", e);
+            }
         }
     }
 

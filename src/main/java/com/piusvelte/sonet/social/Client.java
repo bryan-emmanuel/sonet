@@ -236,10 +236,6 @@ abstract public class Client {
                 if (feedItems != null) {
                     parseCount = Math.min(feedItems.length(), status_count);
 
-                    if (BuildConfig.DEBUG) {
-                        Log.d(mTag, "got feed for account=" + account + "; count=" + parseCount);
-                    }
-
                     if (parseCount > 0) {
                         removeOldStatuses(widget, Long.toString(account));
 
@@ -643,8 +639,11 @@ abstract public class Client {
 
         if (entities.moveToFirst()) {
             while (!entities.isAfterLast()) {
-                Cursor s = getContentResolver().query(Statuses.getContentUri(mContext), new String[] { Statuses._ID },
-                        Statuses.ACCOUNT + "=? and " + Statuses.WIDGET + " !=?", new String[] { accountId, widgetId }, null);
+                Cursor s = getContentResolver().query(Statuses.getContentUri(mContext),
+                        new String[] { Statuses._ID },
+                        Statuses.ACCOUNT + "=? and " + Statuses.WIDGET + " !=?",
+                        new String[] { accountId, widgetId },
+                        null);
                 if (!s.moveToFirst()) {
                     // not in use, remove it
                     getContentResolver()

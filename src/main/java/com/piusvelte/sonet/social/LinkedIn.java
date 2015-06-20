@@ -69,15 +69,16 @@ public class LinkedIn extends Client {
     private static final String LINKEDIN_URL_ACCESS = "https://www.linkedin.com/uas/oauth2/accessToken";
     private static final String LINKEDIN_URL_ME = "%s:(id,first-name,last-name,picture-url)";
     private static final String LINKEDIN_URL_USER = "https://api.linkedin.com/v1/people/id=%s";
-    private static final String LINKEDIN_UPDATES = "%s/shares?format=json";
+    @Deprecated
+    private static final String LINKEDIN_UPDATES = "%s/network/updates?type=APPS&type=CMPY&type=CONN&type=JOBS&type=JGRP&type=PICT"
+            + "&type=PRFU&type=RECU&type=PRFX&type=ANSW&type=QSTN&type=SHAR&type=VIRL&format=json";
     // TODO append &format=json instead
     private static final String[][] LINKEDIN_HEADERS = new String[][] { { "x-li-format", "json" } };
     private static final String LINKEDIN_IS_LIKED = "%s/network/updates/key=%s/is-liked";
     private static final String LINKEDIN_UPDATE = "%s/network/updates/key=%s";
     private static final String LINKEDIN_UPDATE_COMMENTS = "%s/network/updates/key=%s/update-comments";
-    private static final String LINKEDIN_POST = "%s/person-activities";
-    private static final String LINKEDIN_POST_BODY = "<?xml version='1.0' encoding='UTF-8'?><activity " +
-            "locale=\"%s\"><content-type>linkedin-html</content-type><body>%s</body></activity>";
+    private static final String LINKEDIN_POST = "%s/shares?format-json";
+    private static final String LINKEDIN_POST_BODY = "{\"comment\":\"%s\",\"visibility\":{\"code\":\"anyone\"}}";
     private static final String LINKEDIN_COMMENT_BODY = "<?xml version='1.0' " +
             "encoding='UTF-8'?><update-comment><comment>%s</comment></update-comment>";
     private static final String LINKEDIN_LIKE_BODY = "<?xml version='1.0' encoding='UTF-8'?><is-liked>%s</is-liked>";
@@ -85,6 +86,7 @@ public class LinkedIn extends Client {
     private static final String IS_LIKED = "isLiked";
     private static final String IS_COMMENTABLE = "isCommentable";
 
+    @Deprecated
     public enum LinkedIn_UpdateTypes {
         ANSW("updated an answer"),
         APPS("updated the application "),
@@ -367,6 +369,7 @@ public class LinkedIn extends Client {
             Set<String> notificationSids,
             String[] notificationMessage,
             boolean doNotify) throws JSONException {
+        Log.d("Bryan", "item=" + item.toString(4));
         String updateType = item.getString(SupdateType);
         JSONObject updateContent = item.getJSONObject(SupdateContent);
         String update = LinkedIn_UpdateTypes.getMessage(updateType);
@@ -775,7 +778,7 @@ public class LinkedIn extends Client {
         Request request = signRequest(new Request.Builder()
                 .url(String.format(LINKEDIN_POST, LINKEDIN_BASE_URL))
                 .addHeader("Content-Type", "application/xml")
-                .post(RequestBody.create(MediaType.parse("application/xml"), String.format(LINKEDIN_POST_BODY, "", message))));
+                .post(RequestBody.create(MediaType.parse("application/json"), String.format(LINKEDIN_POST_BODY, "", message))));
         return SonetHttpClient.request(request);
     }
 
