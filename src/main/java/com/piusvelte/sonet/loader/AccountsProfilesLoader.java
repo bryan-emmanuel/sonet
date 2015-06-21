@@ -1,8 +1,12 @@
 package com.piusvelte.sonet.loader;
 
 import android.content.Context;
+import android.database.ContentObserver;
 import android.database.Cursor;
+import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.content.Loader;
 
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.provider.Accounts;
@@ -20,17 +24,26 @@ public class AccountsProfilesLoader extends BaseAsyncTaskLoader<List<HashMap<Str
 
     @NonNull
     private Context mContext;
+    @Nullable
+    private Cursor mCursor;
+    @NonNull
+    private ContentObserver mContentObserver;
 
     public AccountsProfilesLoader(Context context) {
         super(context);
         mContext = context.getApplicationContext();
+        mContentObserver = new ForceLoadObserver(this);
     }
 
     @Override
     public List<HashMap<String, String>> loadInBackground() {
+        if (mCursor != null) {
+            mCursor.close();
+        }
+
         List<HashMap<String, String>> accounts = new ArrayList<>();
 
-        Cursor cursor = mContext.getContentResolver().query(Accounts.getContentUri(mContext),
+        mCursor = mContext.getContentResolver().query(Accounts.getContentUri(mContext),
                 new String[] { Accounts._ID,
                         Accounts.TOKEN,
                         Accounts.SECRET,
@@ -40,39 +53,82 @@ public class AccountsProfilesLoader extends BaseAsyncTaskLoader<List<HashMap<Str
                 null,
                 null,
                 null);
+        mCursor.registerContentObserver(mContentObserver);
 
-        if (cursor.moveToFirst()) {
-            int idIndex = cursor.getColumnIndexOrThrow(Accounts._ID);
-            int tokenIndex = cursor.getColumnIndexOrThrow(Accounts.TOKEN);
-            int secretIndex = cursor.getColumnIndexOrThrow(Accounts.SECRET);
-            int serviceIndex = cursor.getColumnIndexOrThrow(Accounts.SERVICE);
-            int sidIndex = cursor.getColumnIndexOrThrow(Accounts.SID);
-            int usernameIndex = cursor.getColumnIndexOrThrow(Accounts.USERNAME);
+        if (mCursor.moveToFirst()) {
+            int idIndex = mCursor.getColumnIndexOrThrow(Accounts._ID);
+            int tokenIndex = mCursor.getColumnIndexOrThrow(Accounts.TOKEN);
+            int secretIndex = mCursor.getColumnIndexOrThrow(Accounts.SECRET);
+            int serviceIndex = mCursor.getColumnIndexOrThrow(Accounts.SERVICE);
+            int sidIndex = mCursor.getColumnIndexOrThrow(Accounts.SID);
+            int usernameIndex = mCursor.getColumnIndexOrThrow(Accounts.USERNAME);
 
-            while (!cursor.isAfterLast()) {
+            while (!mCursor.isAfterLast()) {
                 HashMap<String, String> account = new HashMap<>(4);
                 SonetCrypto sonetCrypto = SonetCrypto.getInstance(mContext);
-                String token = sonetCrypto.Decrypt(cursor.getString(tokenIndex));
-                String secret = sonetCrypto.Decrypt(cursor.getString(secretIndex));
-                int service = cursor.getInt(serviceIndex);
-                String sid = sonetCrypto.Decrypt(cursor.getString(sidIndex));
+                String token = sonetCrypto.Decrypt(mCursor.getString(tokenIndex));
+                String secret = sonetCrypto.Decrypt(mCursor.getString(secretIndex));
+                int service = mCursor.getInt(serviceIndex);
+                String sid = sonetCrypto.Decrypt(mCursor.getString(sidIndex));
 
                 Client client = new Client.Builder(mContext)
                         .setNetwork(service)
                         .setCredentials(token, secret)
                         .build();
 
-                account.put(Accounts._ID, Long.toString(cursor.getLong(idIndex)));
+                account.put(Accounts._ID, Long.toString(mCursor.getLong(idIndex)));
                 account.put(Accounts.SERVICE, Integer.toString(service));
                 account.put(Entity.PROFILE_URL, client.getProfilePhotoUrl(sid));
-                account.put(Accounts.USERNAME, cursor.getString(usernameIndex));
+                account.put(Accounts.USERNAME, mCursor.getString(usernameIndex));
                 accounts.add(account);
 
-                cursor.moveToNext();
+                mCursor.moveToNext();
             }
         }
 
-        cursor.close();
         return accounts;
+    }
+
+    @Override
+    public void onCanceled(List<HashMap<String, String>> data) {
+        super.onCanceled(data);
+
+        if (mCursor != null && !mCursor.isClosed()) {
+            mCursor.close();
+        }
+
+        mCursor = null;
+    }
+
+    @Override
+    protected void onReset() {
+        super.onReset();
+
+        if (mCursor != null && !mCursor.isClosed()) {
+            mCursor.close();
+        }
+
+        mCursor = null;
+    }
+
+    private static class ForceLoadObserver extends ContentObserver {
+
+        @NonNull
+        private Loader mLoader;
+
+        ForceLoadObserver(@NonNull Loader loader) {
+            super(new Handler());
+            mLoader = loader;
+        }
+
+        @Override
+        public boolean deliverSelfNotifications() {
+            return true;
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            mLoader.onContentChanged();
+        }
     }
 }

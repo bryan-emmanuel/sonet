@@ -47,6 +47,7 @@ import com.piusvelte.sonet.fragment.Feed;
 import com.piusvelte.sonet.fragment.NotificationsList;
 import com.piusvelte.sonet.fragment.Settings;
 import com.piusvelte.sonet.loader.AccountsProfilesLoader;
+import com.piusvelte.sonet.loader.AccountsProfilesLoaderCallback;
 import com.piusvelte.sonet.util.ScreenTransformation;
 import com.squareup.picasso.Picasso;
 
@@ -59,7 +60,7 @@ import java.util.List;
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 
 public class About extends BaseActivity implements AdapterView.OnItemClickListener, View.OnClickListener,
-        NavigationView.OnNavigationItemSelectedListener {
+        NavigationView.OnNavigationItemSelectedListener, AccountsProfilesLoaderCallback.OnAccountsLoadedListener {
     // TODO there should be nothing widget specific here
     private int[] mAppWidgetIds;
     // TODO there should be nothing widget specific here
@@ -92,7 +93,7 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
     private AccountProfileAdapter mDrawerAccountsAdapter;
     private ActionBarDrawerToggle mDrawerToggle;
     List<HashMap<String, String>> mAccounts = new ArrayList<>();
-    private AccountsProfilesLoaderCallback mAccountsProfilesLoaderCallback = new AccountsProfilesLoaderCallback(this);
+    private AccountsProfilesLoaderCallback mAccountsProfilesLoaderCallback = new AccountsProfilesLoaderCallback(this, LOADER_ACOUNT_PROFILES);
     private ScreenTransformation mScreenTransformation;
 
     public static Intent createIntent(@NonNull Context context) {
@@ -292,7 +293,13 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
         }
     }
 
-    private void setAccounts(List<HashMap<String, String>> accounts) {
+    @Override
+    public Context getContext() {
+        return this;
+    }
+
+    @Override
+    public void onAccountsLoaded(List<HashMap<String, String>> accounts) {
         mAccounts.clear();
 
         if (accounts != null) {
@@ -341,44 +348,6 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
         @Override
         public void onDrawerSlide(View drawerView, float slideOffset) {
             super.onDrawerSlide(drawerView, 0);
-        }
-    }
-
-    private static class AccountsProfilesLoaderCallback implements LoaderManager.LoaderCallbacks<List<HashMap<String, String>>> {
-
-        private About mAbout;
-
-        AccountsProfilesLoaderCallback(@NonNull About about) {
-            mAbout = about;
-        }
-
-        @Override
-        public Loader<List<HashMap<String, String>>> onCreateLoader(int id, Bundle args) {
-            switch (id) {
-                case LOADER_ACOUNT_PROFILES:
-                    return new AccountsProfilesLoader(mAbout);
-
-                default:
-                    return null;
-            }
-        }
-
-        @Override
-        public void onLoadFinished(Loader<List<HashMap<String, String>>> loader, List<HashMap<String, String>> data) {
-            switch (loader.getId()) {
-                case LOADER_ACOUNT_PROFILES:
-                    mAbout.setAccounts(data);
-                    break;
-            }
-        }
-
-        @Override
-        public void onLoaderReset(Loader<List<HashMap<String, String>>> loader) {
-            switch (loader.getId()) {
-                case LOADER_ACOUNT_PROFILES:
-                    mAbout.setAccounts(null);
-                    break;
-            }
         }
     }
 }

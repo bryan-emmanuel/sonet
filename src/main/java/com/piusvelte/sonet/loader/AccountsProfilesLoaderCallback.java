@@ -15,6 +15,7 @@ import java.util.List;
 public class AccountsProfilesLoaderCallback implements LoaderManager.LoaderCallbacks<List<HashMap<String, String>>> {
 
     private final int mLoaderId;
+    @NonNull
     private OnAccountsLoadedListener mListener;
 
     public AccountsProfilesLoaderCallback(@NonNull OnAccountsLoadedListener listener, int loaderId) {
@@ -40,7 +41,9 @@ public class AccountsProfilesLoaderCallback implements LoaderManager.LoaderCallb
 
     @Override
     public void onLoaderReset(Loader<List<HashMap<String, String>>> loader) {
-        // NO-OP
+        if (loader.getId() == mLoaderId) {
+            mListener.onAccountsLoaded(null);
+        }
     }
 
     public interface OnAccountsLoadedListener {
