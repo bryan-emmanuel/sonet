@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/drawer_account_background"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_alignBottom="@+id/drawer_accounts"
+        android:layout_alignTop="@+id/drawer_accounts"
+        android:minHeight="@dimen/nav_drawer_accounts_min_height"
+        android:scaleType="centerCrop" />
+
+    <GridView
+        android:id="@+id/drawer_accounts"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:columnWidth="@dimen/message_item_header_height"
+        android:gravity="center"
+        android:numColumns="auto_fit"
+        android:paddingBottom="@dimen/nav_drawer_accounts_padding"
+        android:paddingLeft="@dimen/material_padding"
+        android:paddingRight="@dimen/material_padding"
+        android:paddingTop="@dimen/nav_drawer_accounts_padding"
+        android:stretchMode="columnWidth"
+        tools:listitem="@layout/account_profile" />
+
+    <ImageView
+        android:id="@+id/empty_accounts"
+        android:layout_width="@dimen/message_item_header_height"
+        android:layout_height="@dimen/message_item_header_height"
+        android:paddingBottom="@dimen/nav_drawer_accounts_padding"
+        android:paddingLeft="@dimen/material_padding"
+        android:paddingRight="@dimen/material_padding"
+        android:paddingTop="@dimen/nav_drawer_accounts_padding"
+        android:src="@drawable/ic_person_add_grey600_48dp"
+        android:visibility="gone"
+        tools:visibility="visible" />
+</RelativeLayout>

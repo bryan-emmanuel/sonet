@@ -23,10 +23,10 @@ import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.DrawerLayout;
@@ -38,11 +38,9 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.Toast;
 
 import com.piusvelte.sonet.adapter.AccountProfileAdapter;
-import com.piusvelte.sonet.adapter.MenuItemAdapter;
 import com.piusvelte.sonet.fragment.AccountsList;
 import com.piusvelte.sonet.fragment.ConfirmationDialogFragment;
 import com.piusvelte.sonet.fragment.Feed;
@@ -60,7 +58,8 @@ import java.util.List;
 
 import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
 
-public class About extends BaseActivity implements AdapterView.OnItemClickListener, View.OnClickListener {
+public class About extends BaseActivity implements AdapterView.OnItemClickListener, View.OnClickListener,
+        NavigationView.OnNavigationItemSelectedListener {
     // TODO there should be nothing widget specific here
     private int[] mAppWidgetIds;
     // TODO there should be nothing widget specific here
@@ -86,17 +85,11 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
 
     private static final String DIALOG_ABOUT = "dialog:about";
 
-    private static final String FRAGMENT_ACCOUNT_DETAIL = "fragment:account_detail";
-
     private DrawerLayout mDrawerLayout;
-    private View mDrawerContainer;
+    private NavigationView mDrawerNav;
     private GridView mDrawerAccounts;
     private ImageView mDrawerAccountsBackground;
-    private ListView mDrawerPrimary;
-    private ListView mDrawerSecondary;
     private AccountProfileAdapter mDrawerAccountsAdapter;
-    private MenuItemAdapter mDrawerPrimaryAdapter;
-    private MenuItemAdapter mDrawerSecondaryAdapter;
     private ActionBarDrawerToggle mDrawerToggle;
     List<HashMap<String, String>> mAccounts = new ArrayList<>();
     private AccountsProfilesLoaderCallback mAccountsProfilesLoaderCallback = new AccountsProfilesLoaderCallback(this);
@@ -133,10 +126,9 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
             selectedPosition = DRAWER_FEED;
         }
 
-        mDrawerPrimary.setItemChecked(selectedPosition, true);
-        setContent(selectedPosition);
-        MenuItem selectedItem = mDrawerPrimaryAdapter.getItem(selectedPosition);
-        onOptionsItemSelected(selectedItem);
+        MenuItem menuItem = mDrawerNav.getMenu()
+                .getItem(selectedPosition);
+        onNavigationItemSelected(menuItem);
     }
 
     private void setupDrawer() {
@@ -148,34 +140,19 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
         };
         mDrawerLayout.setDrawerListener(mDrawerToggle);
 
-        mDrawerContainer = mDrawerLayout.findViewById(R.id.drawer_container);
+        mDrawerNav = (NavigationView) mDrawerLayout.findViewById(R.id.drawer_nav);
+        mDrawerNav.setNavigationItemSelectedListener(this);
 
-        mDrawerAccounts = (GridView) mDrawerContainer.findViewById(R.id.drawer_accounts);
-        mDrawerAccountsAdapter = new AccountProfileAdapter(this,
-                mAccounts
-        );
+        mDrawerAccounts = (GridView) mDrawerNav.findViewById(R.id.drawer_accounts);
+        mDrawerAccountsAdapter = new AccountProfileAdapter(this, mAccounts);
         mDrawerAccounts.setAdapter(mDrawerAccountsAdapter);
         mDrawerAccounts.setOnItemClickListener(this);
 
-        mDrawerAccountsBackground = (ImageView) mDrawerContainer.findViewById(R.id.drawer_account_background);
+        mDrawerAccountsBackground = (ImageView) mDrawerNav.findViewById(R.id.drawer_account_background);
 
-        View emptyAccounts = mDrawerContainer.findViewById(R.id.empty_accounts);
+        View emptyAccounts = mDrawerNav.findViewById(R.id.empty_accounts);
         emptyAccounts.setOnClickListener(this);
         mDrawerAccounts.setEmptyView(emptyAccounts);
-
-        mDrawerPrimary = (ListView) mDrawerContainer.findViewById(R.id.drawer_primary);
-        mDrawerPrimaryAdapter = new MenuItemAdapter(this, R.menu.menu_drawer_primary, android.R.layout.simple_list_item_activated_1);
-        mDrawerPrimary.setAdapter(mDrawerPrimaryAdapter);
-        mDrawerPrimary.setOnItemClickListener(this);
-
-        mDrawerSecondary = (ListView) mDrawerContainer.findViewById(R.id.drawer_secondary);
-        mDrawerSecondaryAdapter = new MenuItemAdapter(this, R.menu.menu_drawer_secondary, android.R.layout.simple_list_item_1);
-        mDrawerSecondary.setAdapter(mDrawerSecondaryAdapter);
-        mDrawerSecondary.setOnItemClickListener(this);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            mDrawerContainer.setFitsSystemWindows(true);
-        }
     }
 
     @Override
@@ -192,7 +169,7 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        if (mDrawerLayout.isDrawerOpen(mDrawerContainer)) {
+        if (mDrawerLayout.isDrawerOpen(mDrawerNav)) {
             menu.clear();
         }
 
@@ -203,57 +180,9 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
     public boolean onOptionsItemSelected(MenuItem item) {
         if (mDrawerToggle.onOptionsItemSelected(item)) {
             return true;
-        } else {
-            switch (item.getItemId()) {
-                // menu_drawer_primary
-                case R.id.menu_feed:
-                    getSupportFragmentManager().beginTransaction()
-                            .replace(R.id.content_fragment_container,
-                                    new Feed(),
-                                    FRAGMENT_CONTENT)
-                            .commit();
-                    return true;
-
-                case R.id.menu_about_default_settings:
-                    getSupportFragmentManager().beginTransaction()
-                            .replace(R.id.content_fragment_container,
-                                    Settings.newInstance(),
-                                    FRAGMENT_CONTENT)
-                            .commit();
-                    return true;
-
-                case R.id.menu_about_notifications:
-                    getSupportFragmentManager().beginTransaction()
-                            .replace(R.id.content_fragment_container,
-                                    new NotificationsList(),
-                                    FRAGMENT_CONTENT)
-                            .commit();
-                    return true;
-
-                case R.id.menu_accounts:
-                    getSupportFragmentManager().beginTransaction()
-                            .replace(R.id.content_fragment_container,
-                                    AccountsList.newInstance(),
-                                    FRAGMENT_CONTENT)
-                            .commit();
-                    return true;
-
-                // menu_drawer_secondary
-                case R.id.menu_refresh_all_widgets:
-                    Toast.makeText(this, R.string.refreshing, Toast.LENGTH_LONG).show();
-                    startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH)
-                            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
-                    return true;
-
-                case R.id.menu_about:
-                    ConfirmationDialogFragment.newInstance(R.string.about_title, R.string.about, -1)
-                            .show(getSupportFragmentManager(), DIALOG_ABOUT);
-                    return true;
-
-                default:
-                    return super.onOptionsItemSelected(item);
-            }
         }
+
+        return false;
     }
 
     @Override
@@ -274,34 +203,80 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
         }
     }
 
-    private void setContent(int position) {
-        MenuItem selectedItem = mDrawerPrimaryAdapter.getItem(position);
-        onOptionsItemSelected(selectedItem);
-        mDrawerLayout.closeDrawers();
-        getSupportActionBar().setTitle(selectedItem.getTitle());
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_feed:
+                item.setChecked(true);
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.content_fragment_container,
+                                new Feed(),
+                                FRAGMENT_CONTENT)
+                        .commit();
+                mDrawerLayout.closeDrawers();
+                getSupportActionBar().setTitle(item.getTitle());
+                supportInvalidateOptionsMenu();
+                return true;
+            case R.id.menu_about_default_settings:
+                item.setChecked(true);
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.content_fragment_container,
+                                Settings.newInstance(),
+                                FRAGMENT_CONTENT)
+                        .commit();
+                mDrawerLayout.closeDrawers();
+                getSupportActionBar().setTitle(item.getTitle());
+                supportInvalidateOptionsMenu();
+                return true;
+
+            case R.id.menu_about_notifications:
+                item.setChecked(true);
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.content_fragment_container,
+                                new NotificationsList(),
+                                FRAGMENT_CONTENT)
+                        .commit();
+                mDrawerLayout.closeDrawers();
+                getSupportActionBar().setTitle(item.getTitle());
+                supportInvalidateOptionsMenu();
+                return true;
+
+            case R.id.menu_accounts:
+                item.setChecked(true);
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.content_fragment_container,
+                                AccountsList.newInstance(),
+                                FRAGMENT_CONTENT)
+                        .commit();
+                mDrawerLayout.closeDrawers();
+                getSupportActionBar().setTitle(item.getTitle());
+                supportInvalidateOptionsMenu();
+                return true;
+
+            case R.id.menu_refresh_all_widgets:
+                Toast.makeText(this, R.string.refreshing, Toast.LENGTH_LONG).show();
+                startService(new Intent(this, SonetService.class).setAction(ACTION_REFRESH)
+                        .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, mAppWidgetIds));
+                mDrawerLayout.closeDrawers();
+                return true;
+
+            case R.id.menu_about:
+                ConfirmationDialogFragment.newInstance(R.string.about_title, R.string.about, -1)
+                        .show(getSupportFragmentManager(), DIALOG_ABOUT);
+                mDrawerLayout.closeDrawers();
+                return true;
+            default:
+                return false;
+        }
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         if (parent == mDrawerAccounts) {
-            mDrawerLayout.closeDrawers();
-            mDrawerPrimary.setItemChecked(DRAWER_ACCOUNTS, true);
-            setContent(DRAWER_ACCOUNTS);
-            supportInvalidateOptionsMenu();
-            // TODO got directly to account settings; animate the home bars to arrow and update toolbar title
-//            HashMap<String, String> account = mDrawerAccountsAdapter.getItem(position);
-//            getSupportFragmentManager().beginTransaction()
-//                    .add(Settings.newInstance(AccountAdapter.getAccountId(account),
-//                                    AccountAdapter.getAccountService(account),
-//                                    AccountAdapter.getAccountProfileUrl(account),
-//                                    AccountAdapter.getAccountUsername(account)),
-//                            FRAGMENT_ACCOUNT_DETAIL)
-//                    .addToBackStack(null)
-//                    .commit();
-        } else if (parent == mDrawerPrimary) {
-            setContent(position);
-        } else if (parent == mDrawerSecondary) {
-            onOptionsItemSelected(mDrawerSecondaryAdapter.getItem(position));
+            MenuItem menuItem = mDrawerNav.getMenu()
+                    .getItem(DRAWER_ACCOUNTS)
+                    .setChecked(true);
+            onNavigationItemSelected(menuItem);
         }
     }
 
@@ -309,9 +284,10 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.empty_accounts:
-                mDrawerPrimary.setItemChecked(DRAWER_ACCOUNTS, true);
-                setContent(DRAWER_ACCOUNTS);
-                supportInvalidateOptionsMenu();
+                MenuItem menuItem = mDrawerNav.getMenu()
+                        .getItem(DRAWER_ACCOUNTS)
+                        .setChecked(true);
+                onNavigationItemSelected(menuItem);
                 break;
         }
     }

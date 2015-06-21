@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+ * Sonet - Android Social Networking Widget
+ * Copyright (C) 2009 Bryan Emmanuel
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *  
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  
+ *  Bryan Emmanuel piusvelte@gmail.com
+-->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group
+        android:id="@+id/drawer_primary"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/menu_feed"
+            android:icon="@drawable/ic_list_grey600_24dp"
+            android:title="@string/feed" />
+        <item
+            android:id="@+id/menu_about_default_settings"
+            android:icon="@drawable/ic_settings_applications_grey600_24dp"
+            android:title="@string/defaultsettings" />
+        <item
+            android:id="@+id/menu_about_notifications"
+            android:icon="@drawable/ic_notifications_grey600_24dp"
+            android:title="@string/notifications" />
+        <item
+            android:id="@+id/menu_accounts"
+            android:icon="@drawable/ic_account_box_grey600_24dp"
+            android:title="@string/accounts" />
+    </group>
+
+    <group
+        android:id="@+id/drawer_secondary"
+        android:checkableBehavior="none">
+        <item
+            android:id="@+id/menu_refresh_all_widgets"
+            android:icon="@drawable/ic_refresh_grey600_24dp"
+            android:title="@string/refreshallwidgets" />
+        <item
+            android:id="@+id/menu_about"
+            android:icon="@drawable/ic_info_grey600_24dp"
+            android:title="@string/about_title" />
+    </group>
+</menu>
