@@ -4,8 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.location.Location;
-import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -41,8 +39,6 @@ import java.util.HashSet;
 import java.util.List;
 
 import static com.piusvelte.sonet.Sonet.FACEBOOK;
-import static com.piusvelte.sonet.Sonet.FOURSQUARE;
-import static com.piusvelte.sonet.Sonet.TWITTER;
 
 /**
  * Created by bemmanuel on 6/4/15.
@@ -117,21 +113,8 @@ public class CreatePost extends Fragment implements TextWatcher, View.OnKeyListe
         mMessage.addTextChangedListener(this);
         mMessage.setOnKeyListener(this);
 
-        LoaderManager loaderManager = getLoaderManager();
-
         if (savedInstanceState != null) {
             mMessage.setText(savedInstanceState.getString(STATE_MESSAGE));
-
-            if (loaderManager.hasRunningLoaders()) {
-                // TODO test this! >_<
-                if (loaderManager.getLoader(LOADER_SEND_POST) != null) {
-                    loaderManager.initLoader(LOADER_SEND_POST, null, mSendPostLoaderCallbacks);
-                } else if (loaderManager.getLoader(LOADER_PHOTO) != null) {
-                    loaderManager.initLoader(LOADER_PHOTO, null, mPhotoPathLoaderCallbacks);
-                } else if (loaderManager.getLoader(LOADER_ACCOUNT) != null) {
-                    loaderManager.initLoader(LOADER_ACCOUNT, null, this);
-                }
-            }
         }
     }
 
@@ -139,6 +122,19 @@ public class CreatePost extends Fragment implements TextWatcher, View.OnKeyListe
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         setHasOptionsMenu(true);
+
+        LoaderManager loaderManager = getLoaderManager();
+
+        if (loaderManager.hasRunningLoaders()) {
+            // TODO test this! >_<
+            if (loaderManager.getLoader(LOADER_SEND_POST) != null) {
+                loaderManager.initLoader(LOADER_SEND_POST, null, mSendPostLoaderCallbacks);
+            } else if (loaderManager.getLoader(LOADER_PHOTO) != null) {
+                loaderManager.initLoader(LOADER_PHOTO, null, mPhotoPathLoaderCallbacks);
+            } else if (loaderManager.getLoader(LOADER_ACCOUNT) != null) {
+                loaderManager.initLoader(LOADER_ACCOUNT, null, this);
+            }
+        }
     }
 
     @Override

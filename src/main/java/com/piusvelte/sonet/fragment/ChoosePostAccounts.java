@@ -79,17 +79,17 @@ public class ChoosePostAccounts extends ListFragment
         listView.setMultiChoiceModeListener(this);
         mAdapter = new PostAccountsAdapter(getActivity(), mAccounts, this);
         listView.setAdapter(mAdapter);
-
-        mLoadingView.setVisibility(View.VISIBLE);
-        getLoaderManager().initLoader(LOADER_ACCOUNTS,
-                null,
-                new AccountsProfilesLoaderCallback(this, LOADER_ACCOUNTS));
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         setHasOptionsMenu(true);
+
+        mLoadingView.setVisibility(View.VISIBLE);
+        getLoaderManager().initLoader(LOADER_ACCOUNTS,
+                null,
+                new AccountsProfilesLoaderCallback(this, LOADER_ACCOUNTS));
     }
 
     @Override

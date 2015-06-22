@@ -83,6 +83,11 @@ public class ChooseLocation extends BaseDialogFragment implements LoaderManager.
         listView.setEmptyView(view.findViewById(android.R.id.empty));
         listView.setOnItemClickListener(this);
         listView.setAdapter(mAdapter);
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
 
         mLoadingView.setVisibility(View.VISIBLE);
         getLoaderManager().initLoader(LOADER_LOCATIONS, getArguments(), this);

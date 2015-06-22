@@ -39,10 +39,6 @@ public class NotificationsList extends ListFragment implements LoaderManager.Loa
     private SimpleCursorAdapter mAdapter;
     private View mLoadingView;
 
-    public NotificationsList() {
-        setRetainInstance(true);
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.loading_list, container, false);
@@ -66,15 +62,15 @@ public class NotificationsList extends ListFragment implements LoaderManager.Loa
 
         registerForContextMenu(getListView());
         setListAdapter(mAdapter);
-
-        mLoadingView.setVisibility(View.VISIBLE);
-        getLoaderManager().initLoader(LOADER_NOTIFICATIONS, null, this);
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         setHasOptionsMenu(true);
+
+        mLoadingView.setVisibility(View.VISIBLE);
+        getLoaderManager().initLoader(LOADER_NOTIFICATIONS, null, this);
     }
 
     @Override

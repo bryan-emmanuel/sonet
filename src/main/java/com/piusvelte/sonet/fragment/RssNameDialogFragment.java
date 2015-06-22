@@ -73,6 +73,7 @@ public class RssNameDialogFragment extends BaseDialogFragment implements LoaderM
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
         mLoadingView.setVisibility(View.VISIBLE);
         getLoaderManager().initLoader(LOADER_RSS, getArguments(), this);
     }

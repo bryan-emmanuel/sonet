@@ -26,9 +26,9 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
+import android.support.v4.app.Fragment;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.text.TextUtils;
@@ -46,7 +46,6 @@ import com.piusvelte.sonet.fragment.ConfirmationDialogFragment;
 import com.piusvelte.sonet.fragment.Feed;
 import com.piusvelte.sonet.fragment.NotificationsList;
 import com.piusvelte.sonet.fragment.Settings;
-import com.piusvelte.sonet.loader.AccountsProfilesLoader;
 import com.piusvelte.sonet.loader.AccountsProfilesLoaderCallback;
 import com.piusvelte.sonet.util.ScreenTransformation;
 import com.squareup.picasso.Picasso;
@@ -66,7 +65,9 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
     // TODO there should be nothing widget specific here
     private AppWidgetManager mAppWidgetManager;
 
-    private static final String TAG = "About";
+    private static final String TAG = About.class.getSimpleName();
+
+    private static final String STATE_SELECTED_DRAWER_ITEM = TAG + ":state:selected_drawer_item";
 
     public static final int DRAWER_FEED = 0;
     public static final int DRAWER_SETTINGS = 1;
@@ -113,23 +114,36 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
 
         setupActionBar();
         setupDrawer();
-        setupContent();
+        setupContent(savedInstanceState);
         getSupportLoaderManager().initLoader(LOADER_ACOUNT_PROFILES, null, mAccountsProfilesLoaderCallback);
     }
 
-    private void setupContent() {
+    private void setupContent(@Nullable Bundle savedInstanceState) {
         int selectedPosition;
-        Intent intent = getIntent();
 
-        if (intent != null) {
-            selectedPosition = intent.getIntExtra(EXTRA_DRAWER_ITEM, DRAWER_FEED);
+        if (savedInstanceState != null) {
+            selectedPosition = savedInstanceState.getInt(STATE_SELECTED_DRAWER_ITEM, DRAWER_FEED);
         } else {
-            selectedPosition = DRAWER_FEED;
+            Intent intent = getIntent();
+
+            if (intent != null) {
+                selectedPosition = intent.getIntExtra(EXTRA_DRAWER_ITEM, DRAWER_FEED);
+            } else {
+                selectedPosition = DRAWER_FEED;
+            }
         }
 
         MenuItem menuItem = mDrawerNav.getMenu()
                 .getItem(selectedPosition);
-        onNavigationItemSelected(menuItem);
+
+        Fragment content = getSupportFragmentManager().findFragmentByTag(FRAGMENT_CONTENT);
+
+        if (content != null) {
+            menuItem.setChecked(true);
+            getSupportActionBar().setTitle(menuItem.getTitle());
+        } else {
+            onNavigationItemSelected(menuItem);
+        }
     }
 
     private void setupDrawer() {
@@ -160,6 +174,20 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         mDrawerToggle.syncState();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        Menu menu = mDrawerNav.getMenu();
+
+        for (int menuIndex = menu.size() - 1; menuIndex >= 0; menuIndex--) {
+            if (menu.getItem(menuIndex).isChecked()) {
+                outState.putInt(STATE_SELECTED_DRAWER_ITEM, menuIndex);
+                break;
+            }
+        }
     }
 
     @Override

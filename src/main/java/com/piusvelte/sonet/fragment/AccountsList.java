@@ -52,10 +52,6 @@ public class AccountsList extends ListFragment implements View.OnClickListener,
     private AccountAdapter mAdapter;
     private FloatingActionButton mFloatingActionButton;
 
-    public AccountsList() {
-        setRetainInstance(true);
-    }
-
     public static AccountsList newInstance() {
         return new AccountsList();
     }
@@ -75,6 +71,11 @@ public class AccountsList extends ListFragment implements View.OnClickListener,
 
         mAdapter = new AccountAdapter(getActivity(), mAccounts);
         setListAdapter(mAdapter);
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
         getLoaderManager().initLoader(LOADER_ACCOUNT_PROFILES,
                 null,
                 new AccountsProfilesLoaderCallback(this, LOADER_ACCOUNT_PROFILES));

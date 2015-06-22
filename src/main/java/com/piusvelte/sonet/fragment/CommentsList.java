@@ -140,13 +140,19 @@ public class CommentsList extends ListFragment
 
         setListAdapter(mAdapter);
 
-        LoaderManager loaderManager = getLoaderManager();
-
-        mLoadingView.setVisibility(View.VISIBLE);
-
         if (savedInstanceState != null) {
             mMessage.setText(savedInstanceState.getString(STATE_MESSAGE));
         }
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        setHasOptionsMenu(true);
+
+        mLoadingView.setVisibility(View.VISIBLE);
+
+        LoaderManager loaderManager = getLoaderManager();
 
         Bundle args = new Bundle();
         args.putString(ARG_DATA, getArguments().getString(ARG_DATA));
@@ -159,12 +165,6 @@ public class CommentsList extends ListFragment
         if (loaderManager.getLoader(LOADER_LIKE) != null) {
             loaderManager.initLoader(LOADER_LIKE, null, mLikeLoaderCallbacks);
         }
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        setHasOptionsMenu(true);
     }
 
     @Override

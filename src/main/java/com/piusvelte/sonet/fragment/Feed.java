@@ -47,10 +47,6 @@ public class Feed extends ListFragment implements LoaderManager.LoaderCallbacks<
     private FloatingActionButton mFloatingActionButton;
     private View mLoadingView;
 
-    public Feed() {
-        setRetainInstance(true);
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.loading_list, container, false);
@@ -83,15 +79,15 @@ public class Feed extends ListFragment implements LoaderManager.LoaderCallbacks<
                 0);
         mAdapter.setViewBinder(new WidgetsViewBinder(getActivity()));
         setListAdapter(mAdapter);
-
-        mLoadingView.setVisibility(View.VISIBLE);
-        getLoaderManager().initLoader(LOADER_FEED, null, this);
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         setHasOptionsMenu(true);
+
+        mLoadingView.setVisibility(View.VISIBLE);
+        getLoaderManager().initLoader(LOADER_FEED, null, this);
     }
 
     @Override

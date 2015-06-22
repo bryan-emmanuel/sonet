@@ -81,9 +81,7 @@ public class Settings extends ListFragment implements LoaderManager.LoaderCallba
 
     /** app-wide settings */
     public static Settings newInstance() {
-        Settings settings = newInstance(Sonet.INVALID_ACCOUNT_ID, INVALID_SERVICE, null, null);
-        settings.setRetainInstance(true);
-        return settings;
+        return newInstance(Sonet.INVALID_ACCOUNT_ID, INVALID_SERVICE, null, null);
     }
 
     @Override
@@ -144,6 +142,12 @@ public class Settings extends ListFragment implements LoaderManager.LoaderCallba
                 android.R.layout.simple_list_item_1));
 
         mLoadingView = view.findViewById(R.id.loading);
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
         mLoadingView.setVisibility(View.VISIBLE);
         getLoaderManager().initLoader(LOADER_WIDGET_SETTINGS, getArguments(), this);
     }
