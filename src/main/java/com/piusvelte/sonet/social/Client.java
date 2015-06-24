@@ -418,7 +418,7 @@ abstract public class Client {
     abstract public MemberAuthentication getMemberAuthentication(@NonNull String authenticatedUrl);
 
     @Nullable
-    public String getParamValue(@Nullable String url, @NonNull String name) {
+    public static String getParamValue(@Nullable String url, @NonNull String name) {
         if (TextUtils.isEmpty(url)) return null;
 
         name += "=";
