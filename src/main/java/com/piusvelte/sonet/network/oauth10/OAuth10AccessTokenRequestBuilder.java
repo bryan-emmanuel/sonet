@@ -4,7 +4,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
-import java.util.SortedSet;
+import java.util.Set;
 
 /**
  * Created by bemmanuel on 6/14/15.
@@ -24,7 +24,7 @@ public class OAuth10AccessTokenRequestBuilder extends OAuth10SigningRequestBuild
     }
 
     @Override
-    protected void onAddOAuthParameters(@NonNull SortedSet<String> parameters) {
+    protected void onAddOAuthParameters(@NonNull Set<String> parameters) {
         super.onAddOAuthParameters(parameters);
 
         if (!TextUtils.isEmpty(mVerifier)) {

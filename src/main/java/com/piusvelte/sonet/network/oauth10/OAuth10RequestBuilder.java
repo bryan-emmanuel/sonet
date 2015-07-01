@@ -16,6 +16,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -54,22 +55,9 @@ public abstract class OAuth10RequestBuilder extends Request.Builder {
         oauth_timestamp,
         oauth_nonce;
 
-        @Nullable
-        String getKeyQuotedValuePair(@NonNull SortedSet<String> parameters) {
-            for (String keyValuePair : parameters) {
-                if (keyValuePair.startsWith(name() + "=")) {
-                    int equalsDelimiterIndex = keyValuePair.indexOf("=") + 1;
-
-                    if (equalsDelimiterIndex >= 1) {
-                        return keyValuePair.substring(0, equalsDelimiterIndex)
-                                + "\"" + keyValuePair.substring(equalsDelimiterIndex) + "\"";
-                    }
-
-                    return keyValuePair;
-                }
-            }
-
-            return null;
+        @NonNull
+        String getNameValuePair(@NonNull String value) {
+            return name() + "=" + value;
         }
     }
 
@@ -116,19 +104,21 @@ public abstract class OAuth10RequestBuilder extends Request.Builder {
         return super.build();
     }
 
-    private void addOAuthParameters(@NonNull SortedSet<String> parameters) {
-        parameters.add(OAuthParameter.oauth_signature_method.name() + "=" + "HMAC-SHA1");
-        parameters.add(OAuthParameter.oauth_consumer_key.name() + "=" + mConsumerKey);
-        parameters.add(OAuthParameter.oauth_version.name() + "=" + "1.0");
-        parameters.add(OAuthParameter.oauth_timestamp.name() + "=" + Long.toString(System.currentTimeMillis() / 1000L));
-        parameters.add(OAuthParameter.oauth_nonce.name() + "=" + Long.toString((new Random()).nextLong()));
-        onAddOAuthParameters(parameters);
+    private Set<String> getOAuthParameters() {
+        Set<String> oAuthParameters = new HashSet<>();
+        oAuthParameters.add(OAuthParameter.oauth_signature_method.getNameValuePair("HMAC-SHA1"));
+        oAuthParameters.add(OAuthParameter.oauth_consumer_key.getNameValuePair(mConsumerKey));
+        oAuthParameters.add(OAuthParameter.oauth_version.getNameValuePair("1.0"));
+        oAuthParameters.add(OAuthParameter.oauth_timestamp.getNameValuePair(Long.toString(System.currentTimeMillis() / 1000L)));
+        oAuthParameters.add(OAuthParameter.oauth_nonce.getNameValuePair(Long.toString((new Random()).nextLong())));
+        onAddOAuthParameters(oAuthParameters);
+        return oAuthParameters;
     }
 
-    protected abstract void onAddOAuthParameters(@NonNull SortedSet<String> parameters);
+    protected abstract void onAddOAuthParameters(@NonNull Set<String> parameters);
 
     @NonNull
-    private SortedSet<String> getParameters() {
+    private Set<String> getSigningParameters() {
         SortedSet<String> keyValuePairs = new TreeSet<>();
 
         Set<String> keys = mUrl.queryParameterNames();
@@ -167,25 +157,22 @@ public abstract class OAuth10RequestBuilder extends Request.Builder {
     }
 
     private void signRequest() throws UnsupportedEncodingException {
-        SortedSet<String> parameters = getParameters();
-        addOAuthParameters(parameters);
+        Set<String> signingParameters = getSigningParameters();
+        Set<String> oAuthParameters = getOAuthParameters();
+        signingParameters.addAll(oAuthParameters);
 
         String signatureHeader = "OAuth ";
 
-        for (OAuthParameter parameter : OAuthParameter.values()) {
-            String keyQuotedValuePair = parameter.getKeyQuotedValuePair(parameters);
-
-            if (!TextUtils.isEmpty(keyQuotedValuePair)) {
-                signatureHeader += keyQuotedValuePair + ", ";
-            }
+        for (String oAuthParameter : oAuthParameters) {
+            signatureHeader += oAuthParameter.replace("=", "=\"") + "\", ";
         }
 
-        signatureHeader += "oauth_signature=\"" + URLEncoder.encode(createSignature(parameters), "UTF-8") + "\"";
+        signatureHeader += "oauth_signature=\"" + URLEncoder.encode(createSignature(signingParameters), "UTF-8") + "\"";
         addHeader("Authorization", signatureHeader);
     }
 
     @Nullable
-    private String createSignature(@NonNull SortedSet<String> parameters) {
+    private String createSignature(@NonNull Set<String> parameters) {
         try {
             Mac mac = Mac.getInstance("HmacSHA1");
             mac.init(createKey());
@@ -213,19 +200,20 @@ public abstract class OAuth10RequestBuilder extends Request.Builder {
         return new SecretKeySpec(keyBytes, "HmacSHA1");
     }
 
-    private String getSignatureBaseString(@NonNull SortedSet<String> parameters)
+    private String getSignatureBaseString(@NonNull Set<String> parameters)
             throws UnsupportedEncodingException {
-        String port;
+        return mMethod
+                + "&" + URLEncoder.encode(mUrl.scheme() + "://" + getPort() + mUrl.host() + mUrl.encodedPath(), "UTF-8")
+                + "&" + URLEncoder.encode(TextUtils.join("&", parameters), "UTF-8");
+    }
 
+    @NonNull
+    private String getPort() {
         if (!(mUrl.scheme().equals("http") && mUrl.port() == 80)
                 && !(mUrl.scheme().equals("https") && mUrl.port() == 443)) {
-            port = String.valueOf(mUrl.port());
-        } else {
-            port = "";
+            return String.valueOf(mUrl.port());
         }
 
-        return mMethod
-                + "&" + URLEncoder.encode(mUrl.scheme() + "://" + port + mUrl.host() + mUrl.encodedPath(), "UTF-8")
-                + "&" + URLEncoder.encode(TextUtils.join("&", parameters), "UTF-8");
+        return "";
     }
 }

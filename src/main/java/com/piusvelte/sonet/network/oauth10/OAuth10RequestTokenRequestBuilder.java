@@ -2,7 +2,7 @@ package com.piusvelte.sonet.network.oauth10;
 
 import android.support.annotation.NonNull;
 
-import java.util.SortedSet;
+import java.util.Set;
 
 /**
  * Created by bemmanuel on 6/14/15.
@@ -18,7 +18,7 @@ public class OAuth10RequestTokenRequestBuilder extends OAuth10RequestBuilder {
     }
 
     @Override
-    protected void onAddOAuthParameters(@NonNull SortedSet<String> parameters) {
+    protected void onAddOAuthParameters(@NonNull Set<String> parameters) {
         parameters.add(OAuthParameter.oauth_callback.name() + "=" + mCallbackUrl);
     }
 }

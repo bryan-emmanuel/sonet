@@ -127,14 +127,15 @@ public class OAuth10AccessTokenRequestBuilderTest {
                 .isNotEmpty();
 
         assertThat(authorization)
-                .isEqualTo("OAuth oauth_token=\"Token\", "
-                        + "oauth_verifier=\"Verifier\", "
-                        + "oauth_consumer_key=\"ConsumerKey\", "
-                        + "oauth_version=\"1.0\", "
-                        + "oauth_signature_method=\"HMAC-SHA1\", "
-                        + "oauth_timestamp=" + timestamp + ", "
-                        + "oauth_nonce=" + nonce + ", "
-                        + "oauth_signature=" + signature);
+                .startsWith("OAuth ")
+                .contains("oauth_consumer_key=\"ConsumerKey\", ")
+                .contains("oauth_nonce=" + nonce + ", ")
+                .contains("oauth_signature_method=\"HMAC-SHA1\", ")
+                .contains("oauth_timestamp=" + timestamp + ", ")
+                .contains("oauth_token=\"Token\", ")
+                .contains("oauth_verifier=\"Verifier\", ")
+                .contains("oauth_version=\"1.0\", ")
+                .endsWith("oauth_signature=" + signature);
     }
 
     @Nullable
