@@ -12,11 +12,12 @@ import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.piusvelte.okoauth.Helper;
 import com.piusvelte.sonet.BuildConfig;
 import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetCrypto;
-import com.piusvelte.sonet.network.oauth10.OAuth10Helper;
+import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.provider.Entity;
 import com.piusvelte.sonet.provider.Notifications;
 import com.piusvelte.sonet.provider.StatusImages;
@@ -56,7 +57,7 @@ abstract public class Client {
     String mSecret;
     String mAccountEsid;
     int mNetwork;
-    OAuth10Helper mOAuth10Helper;
+    Helper mOAuth10Helper;
 
     private SimpleDateFormat mSimpleDateFormat = null;
 
@@ -439,12 +440,12 @@ abstract public class Client {
 
     @Nullable
     public String getAuthUrl() {
-        return getOAuth10Helper().getTokenAuthorizationUrl();
+        return getOAuth10Helper().getTokenAuthorizationUrl(SonetHttpClient.getOkHttpClientInstance());
     }
 
-    OAuth10Helper getOAuth10Helper() {
+    Helper getOAuth10Helper() {
         if (mOAuth10Helper == null) {
-            mOAuth10Helper = new OAuth10Helper(getApiKey(),
+            mOAuth10Helper = new Helper(getApiKey(),
                     getApiSecret(),
                     mToken,
                     mSecret,

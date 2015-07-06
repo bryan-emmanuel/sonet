@@ -144,7 +144,7 @@ public class Twitter extends Client {
 
     @Override
     public MemberAuthentication getMemberAuthentication(@NonNull String authenticatedUrl) {
-        if (getOAuth10Helper().getAccessToken(authenticatedUrl)) {
+        if (getOAuth10Helper().getAccessToken(SonetHttpClient.getOkHttpClientInstance(), authenticatedUrl)) {
             Request request = getOAuth10Helper().getBuilder()
                     .url(getVerifyCredentialsUrl())
                     .build();

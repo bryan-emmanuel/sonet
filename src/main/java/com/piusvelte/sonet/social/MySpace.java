@@ -141,7 +141,7 @@ public class MySpace extends Client {
 
     @Override
     public MemberAuthentication getMemberAuthentication(@NonNull String authenticatedUrl) {
-        if (getOAuth10Helper().getAccessToken(authenticatedUrl)) {
+        if (getOAuth10Helper().getAccessToken(SonetHttpClient.getOkHttpClientInstance(), authenticatedUrl)) {
             Request request = getOAuth10Helper().getBuilder()
                     .url(String.format(MYSPACE_URL_ME, MYSPACE_BASE_URL))
                     .build();

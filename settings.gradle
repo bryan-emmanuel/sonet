@@ -1,2 +1,4 @@
 include 'Eidos'
 project(':Eidos').projectDir = new File('Eidos')
+include 'OKOAuth:app'
+project(':OKOAuth').projectDir = new File('OKOAuth')

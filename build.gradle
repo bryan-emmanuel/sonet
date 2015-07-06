@@ -98,12 +98,7 @@ dependencies {
     compile 'com.squareup.picasso:picasso:2.5.2'
 
     compile project(':Eidos')
-
-    testCompile 'junit:junit:4.12'
-    testCompile 'org.assertj:assertj-core:1.6.1'
-    testCompile 'org.powermock:powermock-module-junit4:1.6.2'
-    testCompile 'org.powermock:powermock-api-mockito:1.6.2'
-    testCompile 'org.powermock:powermock-mockito-release-full:1.6.2'
+    compile project(':OKOAuth:app')
 }
 
 def signing = System.properties['user.home'] + '/.signing/signing.gradle';
