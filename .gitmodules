@@ -1,6 +1,0 @@
-[submodule "core/Eidos"]
-	path = Eidos
-	url = https://github.com/piusvelte/Eidos.git
-[submodule "OKOAuth"]
-	path = OKOAuth
-	url = https://github.com/piusvelte/OKOAuth.git

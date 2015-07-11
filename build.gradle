@@ -14,6 +14,7 @@ task wrapper(type: Wrapper) {
 
 allprojects {
     repositories {
+        mavenLocal()
         mavenCentral()
     }
 }
@@ -96,9 +97,8 @@ dependencies {
     compile 'com.google.android.gms:play-services-ads:7.3.0'
     compile 'com.squareup.okhttp:okhttp:2.4.0'
     compile 'com.squareup.picasso:picasso:2.5.2'
-
-    compile project(':Eidos')
-    compile project(':OKOAuth:app')
+    compile 'com.piusvelte.okoauth:OKOAuth:1.0'
+    compile 'com.piusvelte.eidos:Eidos:1.0'
 }
 
 def signing = System.properties['user.home'] + '/.signing/signing.gradle';
