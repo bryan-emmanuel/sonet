@@ -94,11 +94,12 @@ dependencies {
     compile 'com.android.support:support-v4:22.1.1'
     compile 'com.android.support:appcompat-v7:22.1.1'
     compile 'com.android.support:design:22.2.0'
-    compile 'com.google.android.gms:play-services-ads:7.3.0'
+    compile 'com.google.android.gms:play-services-ads:7.5.0'
+    compile 'com.google.android.gms:play-services-plus:7.5.0'
     compile 'com.squareup.okhttp:okhttp:2.4.0'
     compile 'com.squareup.picasso:picasso:2.5.2'
-    compile 'com.piusvelte.okoauth:OKOAuth:1.0'
-    compile 'com.piusvelte.eidos:Eidos:1.0'
+    compile 'com.piusvelte.okoauth:OKOAuth:1.0@aar'
+    compile 'com.piusvelte.eidos:Eidos:1.0@aar'
 }
 
 def signing = System.properties['user.home'] + '/.signing/signing.gradle';
