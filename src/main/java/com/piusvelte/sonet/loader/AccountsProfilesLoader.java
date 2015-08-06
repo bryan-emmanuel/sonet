@@ -74,12 +74,14 @@ public class AccountsProfilesLoader extends BaseAsyncTaskLoader<List<HashMap<Str
                 Client client = new Client.Builder(mContext)
                         .setNetwork(service)
                         .setCredentials(token, secret)
+                        .setAccount(sid)
                         .build();
 
                 account.put(Accounts._ID, Long.toString(mCursor.getLong(idIndex)));
                 account.put(Accounts.SERVICE, Integer.toString(service));
-                account.put(Entity.PROFILE_URL, client.getProfilePhotoUrl(sid));
+                account.put(Entity.PROFILE_URL, client.getProfilePhotoUrl());
                 account.put(Accounts.USERNAME, mCursor.getString(usernameIndex));
+                account.put(Accounts.SID, sid);
                 accounts.add(account);
 
                 mCursor.moveToNext();

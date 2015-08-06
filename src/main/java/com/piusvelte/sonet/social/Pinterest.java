@@ -58,6 +58,12 @@ public class Pinterest extends Client {
 
     @Nullable
     @Override
+    public String getProfilePhotoUrl() {
+        return getProfilePhotoUrl(mAccountEsid);
+    }
+
+    @Nullable
+    @Override
     public String getProfilePhotoUrl(String esid) {
         return null;
     }
@@ -215,6 +221,10 @@ public class Pinterest extends Client {
     @Override
     public String getCommentPretext(String accountId) {
         return null;
+    }
+
+    @Override
+    public void onDelete() {
     }
 
     @Nullable

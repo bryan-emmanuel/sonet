@@ -90,6 +90,12 @@ public class Facebook extends Client {
 
     @Nullable
     @Override
+    public String getProfilePhotoUrl() {
+        return getProfilePhotoUrl(mAccountEsid);
+    }
+
+    @Nullable
+    @Override
     public String getProfilePhotoUrl(String esid) {
         return String.format(FACEBOOK_PICTURE, "me");
     }
@@ -653,6 +659,10 @@ public class Facebook extends Client {
     @Override
     public String getCommentPretext(String accountId) {
         return null;
+    }
+
+    @Override
+    public void onDelete() {
     }
 
     @Nullable

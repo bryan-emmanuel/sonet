@@ -258,17 +258,17 @@ public class About extends BaseActivity implements AdapterView.OnItemClickListen
                 supportInvalidateOptionsMenu();
                 return true;
 
-            case R.id.menu_about_notifications:
-                item.setChecked(true);
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.content_fragment_container,
-                                new NotificationsList(),
-                                FRAGMENT_CONTENT)
-                        .commit();
-                mDrawerLayout.closeDrawers();
-                getSupportActionBar().setTitle(item.getTitle());
-                supportInvalidateOptionsMenu();
-                return true;
+//            case R.id.menu_about_notifications:
+//                item.setChecked(true);
+//                getSupportFragmentManager().beginTransaction()
+//                        .replace(R.id.content_fragment_container,
+//                                new NotificationsList(),
+//                                FRAGMENT_CONTENT)
+//                        .commit();
+//                mDrawerLayout.closeDrawers();
+//                getSupportActionBar().setTitle(item.getTitle());
+//                supportInvalidateOptionsMenu();
+//                return true;
 
             case R.id.menu_accounts:
                 item.setChecked(true);

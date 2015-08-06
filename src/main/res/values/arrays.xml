@@ -40,13 +40,13 @@
 	<string-array name="service_entries">
 		<item>Twitter</item>
 		<item>Facebook</item>
-		<item>MySpace</item>
+		<!--<item>MySpace</item>-->
 		<!--<item>Buzz</item>-->
 		<item>Foursquare</item>
 		<item>LinkedIn</item>
 		<item>SMS</item>
 		<item>RSS</item>
-		<item>Identi.ca</item>
+		<!--<item>Identi.ca</item>-->
 		<item>Google\u002B</item>
 		<item>Pinterest</item>
 <!-- 		<item>Chatter</item> -->
@@ -54,13 +54,13 @@
 	<string-array name="service_values">
 		<item>0</item><!-- Twitter -->
 		<item>1</item><!-- Facebook -->
-		<item>2</item><!-- MySpace -->
+		<!--<item>2</item>&lt;!&ndash; MySpace &ndash;&gt;-->
 		<!--<item>3</item>Buzz-->
 		<item>4</item><!-- Foursquare -->
 		<item>5</item><!-- LinkedIn -->
 		<item>6</item><!-- SMS -->
 		<item>7</item><!-- RSS -->
-		<item>8</item><!-- Identi.ca -->
+		<!--<item>8</item>&lt;!&ndash; Identi.ca &ndash;&gt;-->
 		<item>9</item><!-- Google+ -->
 		<item>10</item><!-- Pinterest -->
 <!-- 		<item>11</item> -->

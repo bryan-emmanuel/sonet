@@ -1,5 +1,6 @@
 package com.piusvelte.sonet.social;
 
+import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -71,105 +72,220 @@ abstract public class Client {
     }
 
     public enum Network {
-        Twitter, Facebook, MySpace, Buzz, Foursquare, LinkedIn, Sms, Rss, IdentiCa, GooglePlus, Pinterest, Chatter;
+        Twitter {
+            @Override
+            public Client getClient(Context context, String token, String secret, String accountEntityId) {
+                return new Twitter(context, token, secret, accountEntityId, this.ordinal());
+            }
+
+            @Override
+            public boolean isLocationSupported() {
+                return true;
+            }
+
+            @Override
+            public int getIcon() {
+                return R.drawable.twitter;
+            }
+        },
+
+        Facebook {
+            @Override
+            public Client getClient(Context context, String token, String secret, String accountEntityId) {
+                return new Facebook(context, token, secret, accountEntityId, this.ordinal());
+            }
+
+            @Override
+            public boolean isLocationSupported() {
+                return true;
+            }
+
+            @Override
+            public int getIcon() {
+                return R.drawable.facebook;
+            }
+        },
+
+        MySpace {
+            @Override
+            public Client getClient(Context context, String token, String secret, String accountEntityId) {
+                return new MySpace(context, token, secret, accountEntityId, this.ordinal());
+            }
+
+            @Override
+            public boolean isLocationSupported() {
+                return false;
+            }
+
+            @Override
+            public int getIcon() {
+                return R.drawable.myspace;
+            }
+        },
+
+        Buzz {
+            @Override
+            public Client getClient(Context context, String token, String secret, String accountEntityId) {
+                return null;
+            }
+
+            @Override
+            public boolean isLocationSupported() {
+                return false;
+            }
+
+            @Override
+            public int getIcon() {
+                return R.drawable.buzz;
+            }
+        },
+
+        Foursquare {
+            @Override
+            public Client getClient(Context context, String token, String secret, String accountEntityId) {
+                return new Foursquare(context, token, secret, accountEntityId, this.ordinal());
+            }
+
+            @Override
+            public boolean isLocationSupported() {
+                return true;
+            }
+
+            @Override
+            public int getIcon() {
+                return R.drawable.foursquare;
+            }
+        },
+
+        LinkedIn {
+            @Override
+            public Client getClient(Context context, String token, String secret, String accountEntityId) {
+                return new LinkedIn(context, token, secret, accountEntityId, this.ordinal());
+            }
+
+            @Override
+            public boolean isLocationSupported() {
+                return false;
+            }
+
+            @Override
+            public int getIcon() {
+                return R.drawable.linkedin;
+            }
+        },
+
+        Sms {
+            @Override
+            public Client getClient(Context context, String token, String secret, String accountEntityId) {
+                throw new IllegalArgumentException("SMS is not a SocialClient");
+            }
+
+            @Override
+            public boolean isLocationSupported() {
+                return false;
+            }
+
+            @Override
+            public int getIcon() {
+                return R.drawable.sms;
+            }
+        },
+
+        Rss {
+            @Override
+            public Client getClient(Context context, String token, String secret, String accountEntityId) {
+                return new Rss(context, token, secret, accountEntityId, this.ordinal());
+            }
+
+            @Override
+            public boolean isLocationSupported() {
+                return false;
+            }
+
+            @Override
+            public int getIcon() {
+                return R.drawable.rss;
+            }
+        },
+
+        IdentiCa {
+            @Override
+            public Client getClient(Context context, String token, String secret, String accountEntityId) {
+                return new IdentiCa(context, token, secret, accountEntityId, this.ordinal());
+            }
+
+            @Override
+            public boolean isLocationSupported() {
+                return false;
+            }
+
+            @Override
+            public int getIcon() {
+                return R.drawable.identica;
+            }
+        },
+
+        GooglePlus {
+            @Override
+            public Client getClient(Context context, String token, String secret, String accountEntityId) {
+                return new GooglePlus(context, token, secret, accountEntityId, this.ordinal());
+            }
+
+            @Override
+            public boolean isLocationSupported() {
+                return false;
+            }
+
+            @Override
+            public int getIcon() {
+                return R.drawable.googleplus;
+            }
+        },
+
+        Pinterest {
+            @Override
+            public Client getClient(Context context, String token, String secret, String accountEntityId) {
+                return new Pinterest(context, token, secret, accountEntityId, this.ordinal());
+            }
+
+            @Override
+            public boolean isLocationSupported() {
+                return false;
+            }
+
+            @Override
+            public int getIcon() {
+                return R.drawable.buzz;// TODO replace
+            }
+        },
+
+        Chatter {
+            @Override
+            public Client getClient(Context context, String token, String secret, String accountEntityId) {
+                return new Chatter(context, token, secret, accountEntityId, this.ordinal());
+            }
+
+            @Override
+            public boolean isLocationSupported() {
+                return false;
+            }
+
+            @Override
+            public int getIcon() {
+                return R.drawable.salesforce;
+            }
+        };
 
         public static Network get(int network) {
             return Network.values()[network];
         }
 
-        public Client getClient(Context context, String token, String secret, String accountEntityId) {
-            switch (this) {
-                case Twitter:
-                    return new Twitter(context, token, secret, accountEntityId, this.ordinal());
+        abstract public Client getClient(Context context, String token, String secret, String accountEntityId);
 
-                case Facebook:
-                    return new Facebook(context, token, secret, accountEntityId, this.ordinal());
-
-                case MySpace:
-                    return new MySpace(context, token, secret, accountEntityId, this.ordinal());
-
-                case Foursquare:
-                    return new Foursquare(context, token, secret, accountEntityId, this.ordinal());
-
-                case LinkedIn:
-                    return new LinkedIn(context, token, secret, accountEntityId, this.ordinal());
-
-                case Sms:
-                    throw new IllegalArgumentException("SMS is not a SocialClient");
-
-                case Rss:
-                    return new Rss(context, token, secret, accountEntityId, this.ordinal());
-
-                case IdentiCa:
-                    return new IdentiCa(context, token, secret, accountEntityId, this.ordinal());
-
-                case GooglePlus:
-                    return new GooglePlus(context, token, secret, accountEntityId, this.ordinal());
-
-                case Pinterest:
-                    return new Pinterest(context, token, secret, accountEntityId, this.ordinal());
-
-                case Chatter:
-                    return new Chatter(context, token, secret, accountEntityId, this.ordinal());
-
-                default:
-                    throw new IllegalArgumentException("Unsupported network: " + this);
-            }
-        }
-
-        public boolean isLocationSupported() {
-            switch (this) {
-                case Twitter:
-                case Facebook:
-                case Foursquare:
-                    return true;
-
-                default:
-                    return false;
-            }
-        }
+        abstract public boolean isLocationSupported();
 
         @DrawableRes
-        public int getIcon() {
-            switch (this) {
-                case Twitter:
-                    return R.drawable.twitter;
-
-                case Facebook:
-                    return R.drawable.facebook;
-
-                case MySpace:
-                    return R.drawable.myspace;
-
-                case Foursquare:
-                    return R.drawable.foursquare;
-
-                case LinkedIn:
-                    return R.drawable.linkedin;
-
-                case Sms:
-                    return R.drawable.sms;
-
-                case Rss:
-                    return R.drawable.rss;
-
-                case IdentiCa:
-                    return R.drawable.identica;
-
-                case GooglePlus:
-                    return R.drawable.googleplus;
-
-                case Pinterest:
-                    // TODO replace this
-                    return R.drawable.buzz;
-
-                case Chatter:
-                    return R.drawable.salesforce;
-
-                default:
-                    throw new IllegalArgumentException("Unsupported network: " + this);
-            }
-        }
+        abstract public int getIcon();
     }
 
     public static class Builder {
@@ -182,6 +298,13 @@ abstract public class Client {
 
         public Builder(@NonNull Context context) {
             mContext = context.getApplicationContext();
+        }
+
+        public static Builder from(@NonNull Client client) {
+            return new Builder(client.mContext)
+                    .setNetwork(client.mNetwork)
+                    .setCredentials(client.mToken, client.mSecret)
+                    .setAccount(client.mAccountEsid);
         }
 
         public Builder setNetwork(Network network) {
@@ -301,6 +424,9 @@ abstract public class Client {
     abstract public String getProfileUrl(@NonNull String esid);
 
     @Nullable
+    abstract public String getProfilePhotoUrl();
+
+    @Nullable
     abstract public String getProfilePhotoUrl(String esid);
 
     @Nullable
@@ -340,6 +466,8 @@ abstract public class Client {
     abstract public boolean isCommentable(String statusId);
 
     abstract public String getCommentPretext(String accountId);
+
+    abstract public void onDelete();
 
     public List<HashMap<String, String>> getComments(@NonNull String statusId, boolean time24hr) {
         List<HashMap<String, String>> parsedComments = new ArrayList<>();
@@ -417,6 +545,21 @@ abstract public class Client {
     abstract public String getCallbackUrl();
 
     abstract public MemberAuthentication getMemberAuthentication(@NonNull String authenticatedUrl);
+
+    public boolean hasConnectionError() {
+        return false;
+    }
+
+    /**
+     * Attempt to resolve a connection error {@link #hasConnectionError()}
+     *
+     * @param activity
+     * @param requestCode
+     * @return {@code True} if resolution is attempted
+     */
+    public boolean resolveConnectionError(@NonNull Activity activity, int requestCode) {
+        return false;
+    }
 
     @Nullable
     public static String getParamValue(@Nullable String url, @NonNull String name) {
@@ -645,11 +788,13 @@ abstract public class Client {
                         Statuses.ACCOUNT + "=? and " + Statuses.WIDGET + " !=?",
                         new String[] { accountId, widgetId },
                         null);
+
                 if (!s.moveToFirst()) {
                     // not in use, remove it
                     getContentResolver()
                             .delete(Entity.getContentUri(mContext), Entity._ID + "=?", new String[] { Long.toString(entities.getLong(0)) });
                 }
+
                 s.close();
                 entities.moveToNext();
             }

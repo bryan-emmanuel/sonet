@@ -1,6 +1,8 @@
 package com.piusvelte.sonet.social;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.IntentSender;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.annotation.NonNull;
@@ -8,14 +10,22 @@ import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.plus.Moments;
+import com.google.android.gms.plus.People;
+import com.google.android.gms.plus.Plus;
+import com.google.android.gms.plus.model.moments.ItemScope;
+import com.google.android.gms.plus.model.moments.Moment;
+import com.google.android.gms.plus.model.moments.MomentBuffer;
+import com.google.android.gms.plus.model.people.Person;
+import com.google.android.gms.plus.model.people.PersonBuffer;
 import com.piusvelte.sonet.BuildConfig;
 import com.piusvelte.sonet.R;
 import com.piusvelte.sonet.SonetCrypto;
 import com.piusvelte.sonet.SonetHttpClient;
 import com.piusvelte.sonet.provider.Notifications;
-import com.squareup.okhttp.FormEncodingBuilder;
 import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -46,18 +56,81 @@ import static com.piusvelte.sonet.Sonet.Surl;
  */
 public class GooglePlus extends Client {
 
-    private static final String GOOGLEPLUS_AUTHORIZE = "https://accounts.google.com/o/oauth2/auth?client_id=%s&redirect_uri=%s&scope=https://www" +
-            ".googleapis.com/auth/plus.me&response_type=code";
-    private static final String GOOGLE_ACCESS = "https://accounts.google.com/o/oauth2/token";
     private static final String GOOGLEPLUS_BASE_URL = "https://www.googleapis.com/plus/v1/";
-    private static final String GOOGLEPLUS_URL_ME = "%speople/me?fields=displayName,id&access_token=%s";
     private static final String GOOGLEPLUS_ACTIVITIES = "%speople/%s/activities/%s?maxResults=%s&access_token=%s";
     private static final String GOOGLEPLUS_ACTIVITY = "%sactivities/%s?access_token=%s";
     private static final String GOOGLEPLUS_PROFILE = "https://plus.google.com/%s";
-    private static final String GOOGLEPLUS_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+    private static final String GOOGLEPLUS_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
+
+    private static GoogleApiClient sGoogleApiClient;
+
+    /** ConnectionResult used for resolving connection failure */
+    private ConnectionResult mConnectionResult;
 
     public GooglePlus(Context context, String token, String secret, String accountEsid, int network) {
         super(context, token, secret, accountEsid, network);
+    }
+
+    private boolean connectClient() {
+        if (BuildConfig.DEBUG) {
+            Log.d(mTag, "GoogleApiClient connect, is connected?" + (sGoogleApiClient != null && sGoogleApiClient.isConnected()));
+        }
+
+        if (sGoogleApiClient == null) {
+            sGoogleApiClient = new GoogleApiClient.Builder(mContext)
+                    .addApi(Plus.API)
+                    .addScope(Plus.SCOPE_PLUS_LOGIN)
+                    .addScope(Plus.SCOPE_PLUS_PROFILE)
+                    .setAccountName(mAccountEsid)
+                    .build();
+            mConnectionResult = sGoogleApiClient.blockingConnect();
+
+            if (mConnectionResult.isSuccess()) {
+                if (BuildConfig.DEBUG) {
+                    Log.d(mTag, "GoogleApiClient connected");
+                }
+
+                mConnectionResult = null;
+                return true;
+            } else {
+                if (BuildConfig.DEBUG) {
+                    Log.d(mTag, "GoogleApiClient connect failed; code=" + mConnectionResult.getErrorCode() + ", " + mConnectionResult.toString());
+                }
+            }
+
+            sGoogleApiClient = null;
+            return false;
+        } else if (!sGoogleApiClient.isConnected()) {
+            sGoogleApiClient = null;
+            return connectClient();
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean hasConnectionError() {
+        return mConnectionResult != null;
+    }
+
+    @Override
+    public boolean resolveConnectionError(@NonNull Activity activity, int requestCode) {
+        if (hasConnectionError()) {
+            try {
+                mConnectionResult.startResolutionForResult(activity, requestCode);
+                mConnectionResult = null;
+                return true;
+            } catch (IntentSender.SendIntentException e) {
+                if (BuildConfig.DEBUG) {
+                    Log.e(mTag, "error resolving connection error", e);
+                }
+
+                mConnectionResult = null;
+                return false;
+            }
+        }
+
+        return false;
     }
 
     @Nullable
@@ -68,14 +141,60 @@ public class GooglePlus extends Client {
 
     @Nullable
     @Override
-    public String getProfilePhotoUrl(String esid) {
+    public String getProfilePhotoUrl() {
+        synchronized (GooglePlus.class) {
+            if (connectClient()) {
+                Person person = Plus.PeopleApi.getCurrentPerson(sGoogleApiClient);
+
+                if (person.hasImage()) {
+                    Person.Image image = person.getImage();
+
+                    if (image.hasUrl()) {
+                        return image.getUrl();
+                    }
+                }
+            }
+        }
+
         return null;
     }
 
     @Nullable
     @Override
+    public String getProfilePhotoUrl(String esid) {
+        String url = null;
+
+        synchronized (GooglePlus.class) {
+            if (connectClient()) {
+                People.LoadPeopleResult result = Plus.PeopleApi.load(sGoogleApiClient, esid).await();
+
+                if (result != null && result.getStatus().isSuccess()) {
+                    PersonBuffer buffer = result.getPersonBuffer();
+
+                    if (buffer.getCount() > 0) {
+                        Person person = buffer.get(0);
+
+                        if (person.hasImage()) {
+                            Person.Image image = person.getImage();
+
+                            if (image.hasUrl()) {
+                                url = image.getUrl();
+                            }
+                        }
+                    }
+
+                    buffer.close();
+                }
+            }
+        }
+
+        return url;
+    }
+
+    @Nullable
+    @Override
     public Uri getCallback() {
-        return null;//Uri.parse("http://localhost")
+        return null;
     }
 
     @Override
@@ -100,98 +219,27 @@ public class GooglePlus extends Client {
 
     @Nullable
     private String getAccessToken(@NonNull String refreshToken) {
-        RequestBody form = new FormEncodingBuilder()
-                .add("client_id", BuildConfig.GOOGLECLIENT_ID)
-                .add("client_secret", BuildConfig.GOOGLECLIENT_SECRET)
-                .add("refresh_token", refreshToken)
-                .add("grant_type", "authorization_code")
-                .build();
-
-        Request request = new Request.Builder()
-                .url(GOOGLE_ACCESS)
-                .post(form)
-                .build();
-
-        String response = SonetHttpClient.getResponse(request);
-
-        if (!TextUtils.isEmpty(response)) {
-            try {
-                JSONObject j = new JSONObject(response);
-
-                if (j.has("access_token")) {
-                    return j.getString("access_token");
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-
         return null;
     }
 
     @Override
     public MemberAuthentication getMemberAuthentication(@NonNull String authenticatedUrl) {
-        // get the access_token
-        String[] title = authenticatedUrl.split("=");
+        synchronized (GooglePlus.class) {
+            if (connectClient()) {
+                Person person = Plus.PeopleApi.getCurrentPerson(sGoogleApiClient);
 
-        if (title.length > 0) {
-            String code = title[1];
+                if (BuildConfig.DEBUG) {
+                    Log.d(mTag, "getMemberAuthentication; person=" + person);
+                }
 
-            if (!TextUtils.isEmpty(code)) {
-                RequestBody form = new FormEncodingBuilder()
-                        .add("code", code)
-                        .add("client_id", BuildConfig.GOOGLECLIENT_ID)
-                        .add("client_secret", BuildConfig.GOOGLECLIENT_SECRET)
-                        .add("redirect_uri", "urn:ietf:wg:oauth:2.0:oob")
-                        .add("grant_type", "authorization_code")
-                        .build();
+                if (person != null) {
+                    MemberAuthentication memberAuthentication = new MemberAuthentication();
+                    memberAuthentication.username = person.getDisplayName();
+                    // person.getId() is the "id", but the @gmail account is what's required to authenticate
+                    memberAuthentication.id = mAccountEsid;
+                    memberAuthentication.network = mNetwork;
 
-                Request request = new Request.Builder()
-                        .url(GOOGLE_ACCESS)
-                        .post(form)
-                        .build();
-
-                String response = SonetHttpClient.getResponse(request);
-
-                try {
-                    if (!TextUtils.isEmpty(response)) {
-                        JSONObject j = new JSONObject(response);
-                        if (j.has("access_token") && j.has("refresh_token")) {
-                            String refresh_token = j.getString("refresh_token");
-
-                            request = new Request.Builder()
-                                    .url(String.format(GOOGLEPLUS_URL_ME, GOOGLEPLUS_BASE_URL, j.getString("access_token")))
-                                    .build();
-
-                            response = SonetHttpClient.getResponse(request);
-                            if (!TextUtils.isEmpty(response)) {
-                                try {
-                                    JSONObject jObj = new JSONObject(response);
-
-                                    if (jObj.has(Sid) && jObj.has(SdisplayName)) {
-                                        MemberAuthentication memberAuthentication = new MemberAuthentication();
-                                        memberAuthentication.username = jObj.getString(SdisplayName);
-                                        memberAuthentication.token = refresh_token;
-                                        memberAuthentication.secret = "";
-                                        memberAuthentication.expiry = 0;
-                                        memberAuthentication.network = mNetwork;
-                                        memberAuthentication.id = jObj.getString(Sid);
-                                        return memberAuthentication;
-                                    }
-                                } catch (JSONException e) {
-                                    if (BuildConfig.DEBUG) {
-                                        Log.d(mTag, e.toString());
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        return null;
-                    }
-                } catch (JSONException e) {
-                    if (BuildConfig.DEBUG) {
-                        Log.d(mTag, e.toString());
-                    }
+                    return memberAuthentication;
                 }
             }
         }
@@ -202,7 +250,7 @@ public class GooglePlus extends Client {
     @Nullable
     @Override
     public String getAuthUrl() {
-        return String.format(GOOGLEPLUS_AUTHORIZE, BuildConfig.GOOGLECLIENT_ID, "urn:ietf:wg:oauth:2.0:oob");
+        return null;
     }
 
     @Nullable
@@ -261,35 +309,95 @@ public class GooglePlus extends Client {
         return notificationSids;
     }
 
+    @Override
+    public String getFeed(int appWidgetId,
+            String widget,
+            long account,
+            int status_count,
+            boolean time24hr,
+            boolean display_profile,
+            int notifications) {
+        String[] notificationMessage = new String[1];
+        Set<String> notificationSids = null;
+        boolean doNotify = notifications != 0;
+
+        if (doNotify) {
+            notificationSids = getNotificationStatusIds(account, notificationMessage);
+        }
+
+        synchronized (GooglePlus.class) {
+            if (connectClient()) {
+                Moments.LoadMomentsResult result = Plus.MomentsApi.load(sGoogleApiClient).await();
+
+                if (BuildConfig.DEBUG) {
+                    Log.d(mTag, "feed result=" + result);
+                }
+
+                if (result != null && result.getStatus().isSuccess()) {
+                    MomentBuffer buffer = result.getMomentBuffer();
+                    int parseCount = Math.min(buffer.getCount(), status_count);
+
+                    if (BuildConfig.DEBUG) {
+                        Log.d(mTag, "feed count=" + parseCount);
+                    }
+
+                    if (parseCount > 0) {
+                        removeOldStatuses(widget, Long.toString(account));
+
+                        for (int i = 0; i < parseCount; i++) {
+                            Moment moment = buffer.get(i);
+
+                            if (BuildConfig.DEBUG) {
+                                Log.d(mTag, "moment=" + moment.toString());
+                            }
+
+                            String statusId = moment.getId();
+                            long date = parseDate(moment.getStartDate(), GOOGLEPLUS_DATE_FORMAT);
+
+                            ItemScope creator = moment.getResult();
+                            String entityId = creator.getId();
+                            String name = creator.getGivenName() + " " + creator.getFamilyName();
+                            String image = creator.getImage();
+                            String content = creator.getDescription();
+
+                            addStatusItem(date,
+                                    name,
+                                    image,
+                                    String.format(getString(R.string.messageWithCommentCount), content, 0),
+                                    time24hr,
+                                    appWidgetId,
+                                    account,
+                                    statusId,
+                                    entityId,
+                                    new ArrayList<String[]>());
+                        }
+                    }
+
+                    buffer.close();
+                }
+            }
+        }
+
+        if (doNotify) {
+            getNotificationMessage(account, notificationMessage);
+            return notificationMessage[0];
+        }
+
+        return null;
+    }
+
     @Nullable
     @Override
     public String getFeedResponse(int status_count) {
-        String accessToken = getAccessToken(mToken);
-
-        if (!TextUtils.isEmpty(accessToken)) {
-            Request request = new Request.Builder()
-                    .url(String.format(GOOGLEPLUS_ACTIVITIES, GOOGLEPLUS_BASE_URL, "me", "public", status_count, accessToken))
-                    .build();
-
-            return SonetHttpClient.getResponse(request);
-        }
-
         return null;
     }
 
     @Nullable
     @Override
     public JSONArray parseFeed(@NonNull String response) throws JSONException {
-        JSONObject r = new JSONObject(response);
-
-        if (r.has(Sitems)) {
-            return r.getJSONArray(Sitems);
-        }
-
         return null;
     }
 
-    @Nullable
     @Override
     public void addFeedItem(@NonNull JSONObject item,
             boolean display_profile,
@@ -299,62 +407,9 @@ public class GooglePlus extends Client {
             Set<String> notificationSids,
             String[] notificationMessage,
             boolean doNotify) throws JSONException {
-
-        if (item.has(Sactor) && item.has(Sobject)) {
-            JSONObject friendObj = item.getJSONObject(Sactor);
-            JSONObject object = item.getJSONObject(Sobject);
-
-            if (item.has(Sid) && friendObj.has(Sid) && friendObj.has(SdisplayName) && item.has(Spublished) && object.has(Sreplies) && object
-                    .has(SoriginalContent)) {
-                String sid = item.getString(Sid);
-                String esid = friendObj.getString(Sid);
-                String friend = friendObj.getString(SdisplayName);
-                String originalContent = object.getString(SoriginalContent);
-
-                if ((originalContent == null) || (originalContent.length() == 0)) {
-                    originalContent = object.getString(Scontent);
-                }
-
-                String photo = null;
-
-                if (display_profile && friendObj.has(Simage)) {
-                    JSONObject image = friendObj.getJSONObject(Simage);
-                    if (image.has(Surl)) {
-                        photo = image.getString(Surl);
-                    }
-                }
-
-                long date = parseDate(item.getString(Spublished), GOOGLEPLUS_DATE_FORMAT);
-                int commentCount = 0;
-                JSONObject replies = object.getJSONObject(Sreplies);
-//                String notification = null;
-
-                if (replies.has(StotalItems)) {
-                    commentCount = replies.getInt(StotalItems);
-                }
-
-//                if (doNotify && notification != null) {
-//                    // new notification
-//                    addNotification(sid, esid, friend, originalContent, date, account, notification);
-//                    updateNotificationMessage(notificationMessage, notification);
-//                }
-
-                addStatusItem(date,
-                        friend,
-                        photo,
-                        String.format(getString(R.string.messageWithCommentCount), originalContent, commentCount),
-                        time24hr,
-                        appWidgetId,
-                        account,
-                        sid,
-                        esid,
-                        new ArrayList<String[]>()
-                );
-            }
-        }
+        // NO-OP
     }
 
-    @Nullable
     @Override
     public void getNotificationMessage(long account, String[] notificationMessage) {
         // NO-OP
@@ -362,6 +417,7 @@ public class GooglePlus extends Client {
 
     @Override
     public void getNotifications(long account, String[] notificationMessage) {
+        // deprecated
         Cursor currentNotifications = getContentResolver().query(Notifications.getContentUri(mContext),
                 new String[] { Notifications._ID, Notifications.SID, Notifications.UPDATED, Notifications.CLEARED, Notifications.ESID },
                 Notifications.ACCOUNT + "=?", new String[] { Long.toString(account) }, null);
@@ -513,6 +569,15 @@ public class GooglePlus extends Client {
     @Override
     public String getCommentPretext(String accountId) {
         return null;
+    }
+
+    @Override
+    public void onDelete() {
+        synchronized (GooglePlus.class) {
+            if (connectClient()) {
+                Plus.AccountApi.revokeAccessAndDisconnect(sGoogleApiClient).await();
+            }
+        }
     }
 
     @Nullable

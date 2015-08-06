@@ -94,6 +94,12 @@ public class Twitter extends Client {
 
     @Nullable
     @Override
+    public String getProfilePhotoUrl() {
+        return getProfilePhotoUrl(mAccountEsid);
+    }
+
+    @Nullable
+    @Override
     public String getProfilePhotoUrl(String esid) {
         Request request = getOAuth10Helper().getBuilder()
                 .url(String.format(getUserUrl(), getBaseUrl(), esid))
@@ -434,6 +440,10 @@ public class Twitter extends Client {
     @Override
     public String getCommentPretext(String accountId) {
         return "@" + getScreenName(accountId) + " ";
+    }
+
+    @Override
+    public void onDelete() {
     }
 
     @Override

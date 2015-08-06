@@ -31,3 +31,5 @@ proguard/
 
 gradle.properties
 .gradle/
+
+google-services.json

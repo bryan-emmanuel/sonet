@@ -55,6 +55,12 @@ public class Rss extends Client {
 
     @Nullable
     @Override
+    public String getProfilePhotoUrl() {
+        return null;
+    }
+
+    @Nullable
+    @Override
     public String getProfilePhotoUrl(String esid) {
         return null;
     }
@@ -267,6 +273,10 @@ public class Rss extends Client {
     @Override
     public String getCommentPretext(String accountId) {
         return null;
+    }
+
+    @Override
+    public void onDelete() {
     }
 
     @Nullable

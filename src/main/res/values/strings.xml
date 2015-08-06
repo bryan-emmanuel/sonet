@@ -119,4 +119,5 @@
     <string name="drawer_open">Drawer Open</string>
     <string name="drawer_closed">Drawer Closed</string>
     <string name="feed">Feed</string>
+    <string name="select_account">Select an account</string>
 </resources>

@@ -18,8 +18,8 @@ import java.util.List;
  */
 public class AccountProfileAdapter extends AccountAdapter {
 
-    public AccountProfileAdapter(Context context, List<HashMap<String, String>> account) {
-        super(context, account);
+    public AccountProfileAdapter(Context context, List<HashMap<String, String>> accounts) {
+        super(context, accounts);
     }
 
     @Override

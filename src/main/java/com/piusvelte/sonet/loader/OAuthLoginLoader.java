@@ -26,7 +26,7 @@ public class OAuthLoginLoader extends BaseAsyncTaskLoader<OAuthLoginLoader.OAuth
         return oAuthLoginLoaderResult;
     }
 
-    public class OAuthLoginLoaderResult {
+    public static class OAuthLoginLoaderResult {
 
         public OAuthLoginLoaderResult(@NonNull Context context, int network) {
             client = new Client.Builder(context)

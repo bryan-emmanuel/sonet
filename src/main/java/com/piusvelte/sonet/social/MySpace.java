@@ -92,6 +92,12 @@ public class MySpace extends Client {
 
     @Nullable
     @Override
+    public String getProfilePhotoUrl() {
+        return getProfilePhotoUrl(mAccountEsid);
+    }
+
+    @Nullable
+    @Override
     public String getProfilePhotoUrl(String esid) {
         Request request = getOAuth10Helper().getBuilder()
                 .url(String.format(MYSPACE_URL_ME, MYSPACE_BASE_URL))
@@ -498,6 +504,10 @@ public class MySpace extends Client {
     @Override
     public String getCommentPretext(String accountId) {
         return null;
+    }
+
+    @Override
+    public void onDelete() {
     }
 
     @Nullable

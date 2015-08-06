@@ -153,6 +153,12 @@ public class LinkedIn extends Client {
 
     @Nullable
     @Override
+    public String getProfilePhotoUrl() {
+        return getProfilePhotoUrl(mAccountEsid);
+    }
+
+    @Nullable
+    @Override
     public String getProfilePhotoUrl(String esid) {
         Request request = signRequest(new Request.Builder()
                 .url(String.format(LINKEDIN_URL_ME, LINKEDIN_BASE_URL)));
@@ -855,6 +861,10 @@ public class LinkedIn extends Client {
     @Override
     public String getCommentPretext(String accountId) {
         return null;
+    }
+
+    @Override
+    public void onDelete() {
     }
 
     @Nullable

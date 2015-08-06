@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ListFragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -22,8 +24,8 @@ import com.piusvelte.sonet.Sonet;
 import com.piusvelte.sonet.SonetService;
 import com.piusvelte.sonet.adapter.AccountAdapter;
 import com.piusvelte.sonet.loader.AccountsProfilesLoaderCallback;
+import com.piusvelte.sonet.loader.DeleteAccountLoader;
 import com.piusvelte.sonet.provider.Accounts;
-import com.piusvelte.sonet.service.AccountUpdateService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,9 +37,10 @@ import static com.piusvelte.sonet.Sonet.ACTION_REFRESH;
  * Created by bemmanuel on 4/19/15.
  */
 public class AccountsList extends ListFragment implements View.OnClickListener,
-        AccountsProfilesLoaderCallback.OnAccountsLoadedListener {
+        AccountsProfilesLoaderCallback.OnAccountsLoadedListener, LoaderManager.LoaderCallbacks<Boolean> {
 
     private static final int LOADER_ACCOUNT_PROFILES = 0;
+    private static final int LOADER_ACCOUNT_DELETE = 1;
 
     private static final int DELETE_ID = 0;
 
@@ -45,8 +48,12 @@ public class AccountsList extends ListFragment implements View.OnClickListener,
 
     private static final String FRAGMENT_ACCOUNT_DETAIL = "fragment:account_detail";
 
-    private static final int REQUEST_ADD_ACCOUNT = 1;
-    private static final int REQUEST_REFRESH = 2;
+    private static final int REQUEST_ADD_ACCOUNT = 0;
+    private static final int REQUEST_REFRESH = 1;
+
+    private static final String ARG_ACCOUNT_ID = "account_id";
+    private static final String ARG_SERVICE = "service";
+    private static final String ARG_SERVICE_ID = "service_id";
 
     private List<HashMap<String, String>> mAccounts = new ArrayList<>();
     private AccountAdapter mAdapter;
@@ -121,10 +128,15 @@ public class AccountsList extends ListFragment implements View.OnClickListener,
     public boolean onContextItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case DELETE_ID:
-                getActivity().startService(AccountUpdateService.obtainIntent(getActivity(),
-                        AccountUpdateService.ACTION_DELETE,
-                        ((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).id,
-                        AppWidgetManager.INVALID_APPWIDGET_ID));
+                AdapterView.AdapterContextMenuInfo menuInfo = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+                HashMap<String, String> account = mAccounts.get(menuInfo.position);
+
+                Bundle args = new Bundle();
+                args.putLong(ARG_ACCOUNT_ID, menuInfo.id);
+                args.putInt(ARG_SERVICE, Integer.parseInt(account.get(Accounts.SERVICE)));
+                args.putString(ARG_SERVICE_ID, account.get(Accounts.SID));
+
+                getLoaderManager().restartLoader(LOADER_ACCOUNT_DELETE, args, this);
                 return true;
 
             default:
@@ -151,23 +163,19 @@ public class AccountsList extends ListFragment implements View.OnClickListener,
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
             case REQUEST_ADD_ACCOUNT:
-                startActivityForResult(new Intent(getActivity(), OAuthLogin.class)
-                        .putExtra(Accounts.SERVICE,
-                                Integer.parseInt(getResources().getStringArray(R.array.service_values)[ItemsDialogFragment.getWhich(data, 0)]))
-                        .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
-                        .putExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID)
-                        , REQUEST_REFRESH);
+                if (resultCode == Activity.RESULT_OK) {
+                    int service = Integer.parseInt(getResources().getStringArray(R.array.service_values)[ItemsDialogFragment.getWhich(data, 0)]);
+                    startActivityForResult(new Intent(getActivity(), OAuthLogin.class)
+                            .putExtra(Accounts.SERVICE, service)
+                            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
+                            .putExtra(Sonet.EXTRA_ACCOUNT_ID, Sonet.INVALID_ACCOUNT_ID)
+                            , REQUEST_REFRESH);
+                }
                 break;
 
             case REQUEST_REFRESH:
                 if (resultCode == Activity.RESULT_OK) {
-                    Eidos.requestBackup(getActivity());
-                    getActivity().startService(new Intent(getActivity(), SonetService.class)
-                            .setAction(ACTION_REFRESH)
-                            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[] { AppWidgetManager.INVALID_APPWIDGET_ID }));
-                    getLoaderManager().restartLoader(LOADER_ACCOUNT_PROFILES,
-                            null,
-                            new AccountsProfilesLoaderCallback(this, LOADER_ACCOUNT_PROFILES));
+                    refresh();
                 }
                 break;
 
@@ -175,6 +183,16 @@ public class AccountsList extends ListFragment implements View.OnClickListener,
                 super.onActivityResult(requestCode, resultCode, data);
                 break;
         }
+    }
+
+    private void refresh() {
+        Eidos.requestBackup(getActivity());
+        getActivity().startService(new Intent(getActivity(), SonetService.class)
+                .setAction(ACTION_REFRESH)
+                .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[] { AppWidgetManager.INVALID_APPWIDGET_ID }));
+        getLoaderManager().restartLoader(LOADER_ACCOUNT_PROFILES,
+                null,
+                new AccountsProfilesLoaderCallback(this, LOADER_ACCOUNT_PROFILES));
     }
 
     @Override
@@ -201,5 +219,33 @@ public class AccountsList extends ListFragment implements View.OnClickListener,
         }
 
         mAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public Loader<Boolean> onCreateLoader(int id, Bundle args) {
+        switch (id) {
+            case LOADER_ACCOUNT_DELETE:
+                return new DeleteAccountLoader(getActivity(),
+                        args.getLong(ARG_ACCOUNT_ID),
+                        args.getInt(ARG_SERVICE),
+                        args.getString(ARG_SERVICE_ID));
+
+            default:
+                return null;
+        }
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Boolean> loader, Boolean data) {
+        switch (loader.getId()) {
+            case LOADER_ACCOUNT_DELETE:
+                // NO-OP
+                break;
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Boolean> loader) {
+        // NO-OP
     }
 }

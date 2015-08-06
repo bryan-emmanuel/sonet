@@ -30,6 +30,16 @@ public class IdentiCa extends Twitter {
 
     @Nullable
     @Override
+    public String getProfilePhotoUrl() {
+        return getProfilePhotoUrl(mAccountEsid);
+    }
+
+    @Override
+    public void onDelete() {
+    }
+
+    @Nullable
+    @Override
     public Uri getCallback() {
         return Uri.parse("sonet://identi.ca");
     }

@@ -86,6 +86,12 @@ public class Foursquare extends Client {
 
     @Nullable
     @Override
+    public String getProfilePhotoUrl() {
+        return getProfilePhotoUrl(mAccountEsid);
+    }
+
+    @Nullable
+    @Override
     public String getProfilePhotoUrl(String esid) {
         String httpResponse = SonetHttpClient.httpResponse(String.format(FOURSQUARE_URL_ME, FOURSQUARE_BASE_URL, mToken));
 
@@ -546,6 +552,10 @@ public class Foursquare extends Client {
     @Override
     public String getCommentPretext(String accountId) {
         return null;
+    }
+
+    @Override
+    public void onDelete() {
     }
 
     @Nullable
