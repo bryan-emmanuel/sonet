@@ -269,7 +269,8 @@ public class StatusesLoader extends AsyncTask<Integer, String, Integer> {
             Notification notification = new Notification(R.drawable.notification, mSonetService.mNotify, System.currentTimeMillis());
             notification.setLatestEventInfo(mSonetService.getBaseContext(), "New messages", mSonetService.mNotify,
                     PendingIntent.getActivity(mSonetService, 0,
-                            About.createIntent(mSonetService, About.DRAWER_NOTIFICATIONS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            About.createIntent(mSonetService, About.DRAWER_FEED/**About.DRAWER_NOTIFICATIONS*/)
+                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP), 0));
             notification.defaults |= notifications;
             ((NotificationManager) mSonetService.getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);

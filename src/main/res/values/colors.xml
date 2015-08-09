@@ -27,4 +27,6 @@
     <!--<color name="colorSecondaryText">#727272</color>-->
     <!--<color name="colorDivider">#B6B6B6</color>-->
 
+    <color name="account_profiles_expander_background">#4EFFFFFF</color>
+
 </resources>

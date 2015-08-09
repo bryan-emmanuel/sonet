@@ -1,20 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="@dimen/message_item_header_height"
-    android:layout_height="@dimen/message_item_header_height">
+    android:id="@+id/account_profile"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:minWidth="@dimen/message_item_header_height"
+    tools:layout_width="@dimen/message_item_header_height">
 
     <ImageView
         android:id="@+id/profile"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="@dimen/message_item_header_height"
+        android:layout_height="@dimen/message_item_header_height"
+        android:layout_centerHorizontal="true"
         tools:src="@drawable/ic_account_box_grey600_48dp" />
 
     <ImageView
         android:id="@+id/icon"
         android:layout_width="@dimen/material_padding"
         android:layout_height="@dimen/material_padding"
-        android:layout_gravity="bottom|right"
+        android:layout_alignBottom="@+id/profile"
+        android:layout_alignRight="@+id/profile"
         tools:src="@drawable/icon" />
 
-</FrameLayout>
+</RelativeLayout>

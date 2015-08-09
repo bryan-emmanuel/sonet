@@ -196,7 +196,7 @@ public class SMSLoader extends AsyncTask<SmsMessage, String, int[]> {
                     PendingIntent
                             .getActivity(mSonetService,
                                     0,
-                                    About.createIntent(mSonetService, About.DRAWER_NOTIFICATIONS),
+                                    About.createIntent(mSonetService, About.DRAWER_FEED/**About.DRAWER_NOTIFICATIONS*/),
                                     0));
             notification.defaults |= notifications;
             ((NotificationManager) mSonetService.getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
