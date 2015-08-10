@@ -139,83 +139,39 @@ public class ChoosePostAccounts extends ListFragment
 
     @Override
     public void onAccountsLoaded(List<HashMap<String, String>> accounts) {
-        mLoadingView.setVisibility(View.GONE);
-        mAdapter.clearSelection();
-        mAccounts.clear();
+        if (isAdded()) {
+            mLoadingView.setVisibility(View.GONE);
 
-        if (accounts != null) {
-            mAccounts.addAll(accounts);
-        }
-
-        mAdapter.notifyDataSetChanged();
-
-        if (accounts != null) {
-            List<Account> selection = getArguments().getParcelableArrayList(ARG_SELECTED_ACCOUNTS);
-
-            if (selection != null) {
-                int position = 0;
-
-                for (HashMap<String, String> account : accounts) {
-                    for (ChoosePostAccounts.Account selectedAccount : selection) {
-                        if (AccountAdapter.getAccountId(account) == selectedAccount.id) {
-                            getListView().setItemChecked(position, true);
-                        }
-                    }
-
-                    position++;
-                }
-            }
-        } else {
             mAdapter.clearSelection();
+            mAccounts.clear();
+
+            if (accounts != null) {
+                mAccounts.addAll(accounts);
+            }
+
+            mAdapter.notifyDataSetChanged();
+
+            if (accounts != null) {
+                List<Account> selection = getArguments().getParcelableArrayList(ARG_SELECTED_ACCOUNTS);
+
+                if (selection != null) {
+                    int position = 0;
+
+                    for (HashMap<String, String> account : accounts) {
+                        for (ChoosePostAccounts.Account selectedAccount : selection) {
+                            if (AccountAdapter.getAccountId(account) == selectedAccount.id) {
+                                getListView().setItemChecked(position, true);
+                            }
+                        }
+
+                        position++;
+                    }
+                }
+            } else {
+                mAdapter.clearSelection();
+            }
         }
     }
-
-//    private static class MultiChoiceAdapter extends CursorAdapter {
-//
-//        private List<Long> selectedIds = new ArrayList<>();
-//        private LayoutInflater mInflater;
-//        private int mIdIndex;
-//        private int mUsernameIndex;
-//        private ListView mListView;
-//
-//        public MultiChoiceAdapter(Context context, Cursor c, ListView listView) {
-//            super(context, c, false);
-//            mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-//            mListView = listView;
-//        }
-//
-//        @Override
-//        public Cursor swapCursor(Cursor newCursor) {
-//            Cursor oldCursor = super.swapCursor(newCursor);
-//
-//            if (newCursor != null) {
-//                mIdIndex = newCursor.getColumnIndexOrThrow(Accounts._ID);
-//                mUsernameIndex = newCursor.getColumnIndexOrThrow(Accounts.USERNAME);
-//            } else {
-//                mIdIndex = 0;
-//                mUsernameIndex = 0;
-//            }
-//
-//            return oldCursor;
-//        }
-//
-//        @Override
-//        public void bindView(View view, Context context, Cursor cursor) {
-//            CheckedTextView text = (CheckedTextView) view.findViewById(android.R.id.text1);
-//            text.setText(cursor.getString(mUsernameIndex));
-//            mListView.setItemChecked(cursor.getPosition(),
-//                    selectedIds.contains(cursor.getLong(mIdIndex)));
-//        }
-//
-//        @Override
-//        public View newView(Context context, Cursor cursor, ViewGroup parent) {
-//            return mInflater.inflate(R.layout.multichoice_item, parent, false);
-//        }
-//
-//        public List<Long> getSelectedIds() {
-//            return selectedIds;
-//        }
-//    }
 
     public static List<Account> getAccounts(@NonNull Intent intent) {
         return intent.getParcelableArrayListExtra(ARG_SELECTED_ACCOUNTS);
