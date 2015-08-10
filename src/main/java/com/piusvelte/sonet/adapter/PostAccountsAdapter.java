@@ -1,10 +1,14 @@
 package com.piusvelte.sonet.adapter;
 
 import android.content.Context;
+import android.support.annotation.AnimRes;
+import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -67,7 +71,7 @@ public class PostAccountsAdapter extends BaseAdapter {
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, View convertView, ViewGroup parent) {
         final ViewHolder viewHolder;
 
         if (convertView == null) {
@@ -106,21 +110,69 @@ public class PostAccountsAdapter extends BaseAdapter {
                 viewHolder.friend.setText(network + ": " + getAccountUsername(account));
             }
 
-            // TODO animations
             if (mSelection.contains(position)) {
-                viewHolder.check.setVisibility(View.VISIBLE);
+                if (viewHolder.profile.getVisibility() == View.VISIBLE) {
+                    int offset = mContext.getResources().getInteger(android.R.integer.config_shortAnimTime);
 
-                if (Client.Network.get(getAccountService(account)).isLocationSupported()) {
-                    viewHolder.location.setVisibility(View.VISIBLE);
-                    viewHolder.location.setOnClickListener(new LocationClickListener(mOnLocationClickListener, position));
+                    animateVisibility(viewHolder.profile, R.anim.width_collapse, View.INVISIBLE, 0);
+                    animateVisibility(viewHolder.check, R.anim.width_expand, View.VISIBLE, offset);
+
+                    if (Client.Network.get(getAccountService(account)).isLocationSupported()) {
+                        viewHolder.location.setOnClickListener(new LocationClickListener(mOnLocationClickListener, position));
+                        animateVisibility(viewHolder.location, R.anim.slide_left_in, View.VISIBLE, offset);
+                    } else {
+                        viewHolder.location.setVisibility(View.GONE);
+                        viewHolder.location.setOnClickListener(null);
+                    }
                 }
-            } else {
-                viewHolder.check.setVisibility(View.GONE);
-                viewHolder.location.setVisibility(View.GONE);
+            } else if (viewHolder.profile.getVisibility() != View.VISIBLE) {
+                int offset = mContext.getResources().getInteger(android.R.integer.config_shortAnimTime);
+
+                animateVisibility(viewHolder.check, R.anim.width_collapse, View.GONE, 0);
+
+                if (viewHolder.location.getVisibility() == View.VISIBLE) {
+                    animateVisibility(viewHolder.location, R.anim.slide_right_out, View.GONE, 0);
+                }
+
+                animateVisibility(viewHolder.profile, R.anim.width_expand, View.VISIBLE, offset);
             }
         }
 
         return convertView;
+    }
+
+    private void animateVisibility(@NonNull final View view, @AnimRes int animResId, final int visibility, int offset) {
+        Animation animation = AnimationUtils.loadAnimation(mContext, animResId);
+        animation.setStartOffset(offset);
+
+        switch (visibility) {
+            case View.VISIBLE:
+                view.setVisibility(visibility);
+                break;
+
+            case View.INVISIBLE:
+                // intentional fall-through
+            case View.GONE:
+                animation.setAnimationListener(new Animation.AnimationListener() {
+                    @Override
+                    public void onAnimationStart(Animation animation) {
+                        // NO-OP
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+                        view.setVisibility(visibility);
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {
+                        // NO-OP
+                    }
+                });
+                break;
+        }
+
+        view.startAnimation(animation);
     }
 
     public void setSelection(int position, boolean isSelected) {
